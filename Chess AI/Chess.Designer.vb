@@ -42,6 +42,7 @@ Partial Class Chess
         Me.Gld = New System.Windows.Forms.ToolStripMenuItem()
         Me.Grn = New System.Windows.Forms.ToolStripMenuItem()
         Me.Ppl = New System.Windows.Forms.ToolStripMenuItem()
+        Me.Red = New System.Windows.Forms.ToolStripMenuItem()
         Me.Mon = New System.Windows.Forms.ToolStripMenuItem()
         Me.ColourChangerButton = New System.Windows.Forms.Button()
         Me.WP8 = New System.Windows.Forms.PictureBox()
@@ -103,6 +104,23 @@ Partial Class Chess
         Me.QuiescenceBox = New System.Windows.Forms.CheckBox()
         Me.AITerminator = New System.Windows.Forms.Button()
         Me.AIEndlessMode = New System.Windows.Forms.CheckBox()
+        Me.TrainingStart = New System.Windows.Forms.Button()
+        Me.TimerLabel = New System.Windows.Forms.Label()
+        Me.MoveDisplayer = New System.Windows.Forms.Label()
+        Me.WLeaderBoardGrid = New System.Windows.Forms.DataGridView()
+        Me.UserIndex = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.Username = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.UserScore = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.UserDate = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.BLeaderBoardGrid = New System.Windows.Forms.DataGridView()
+        Me.DataGridViewTextBoxColumn1 = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.DataGridViewTextBoxColumn2 = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.DataGridViewTextBoxColumn3 = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.DataGridViewTextBoxColumn4 = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.TrainingScore = New System.Windows.Forms.Label()
+        Me.TrainingTimer = New System.Windows.Forms.Timer(Me.components)
+        Me.InfoBtn = New System.Windows.Forms.Button()
+        Me.UseBook = New System.Windows.Forms.CheckBox()
         Me.ColourChanger.SuspendLayout()
         CType(Me.WP8, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WP7, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -154,6 +172,8 @@ Partial Class Chess
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.WLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'FENTextBox
@@ -268,9 +288,9 @@ Partial Class Chess
         'ColourChanger
         '
         Me.ColourChanger.ImageScalingSize = New System.Drawing.Size(24, 24)
-        Me.ColourChanger.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.Def, Me.LBlu, Me.DBlu, Me.Gld, Me.Grn, Me.Ppl, Me.Mon})
+        Me.ColourChanger.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.Def, Me.LBlu, Me.DBlu, Me.Gld, Me.Grn, Me.Ppl, Me.Red, Me.Mon})
         Me.ColourChanger.Name = "ContextMenuStrip1"
-        Me.ColourChanger.Size = New System.Drawing.Size(136, 158)
+        Me.ColourChanger.Size = New System.Drawing.Size(136, 180)
         '
         'Def
         '
@@ -307,6 +327,12 @@ Partial Class Chess
         Me.Ppl.Name = "Ppl"
         Me.Ppl.Size = New System.Drawing.Size(135, 22)
         Me.Ppl.Text = "Purple"
+        '
+        'Red
+        '
+        Me.Red.Name = "Red"
+        Me.Red.Size = New System.Drawing.Size(135, 22)
+        Me.Red.Text = "Red"
         '
         'Mon
         '
@@ -969,6 +995,187 @@ Partial Class Chess
         Me.AIEndlessMode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         Me.AIEndlessMode.UseVisualStyleBackColor = True
         '
+        'TrainingStart
+        '
+        Me.TrainingStart.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.TrainingStart.Location = New System.Drawing.Point(9, 12)
+        Me.TrainingStart.Name = "TrainingStart"
+        Me.TrainingStart.Size = New System.Drawing.Size(282, 43)
+        Me.TrainingStart.TabIndex = 7
+        Me.TrainingStart.Text = "Start!"
+        Me.TrainingStart.UseVisualStyleBackColor = True
+        Me.TrainingStart.Visible = False
+        '
+        'TimerLabel
+        '
+        Me.TimerLabel.AutoSize = True
+        Me.TimerLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.TimerLabel.Location = New System.Drawing.Point(31, 70)
+        Me.TimerLabel.Name = "TimerLabel"
+        Me.TimerLabel.Size = New System.Drawing.Size(235, 24)
+        Me.TimerLabel.TabIndex = 9
+        Me.TimerLabel.Text = "Time Left: 20.0 Seconds"
+        Me.TimerLabel.Visible = False
+        '
+        'MoveDisplayer
+        '
+        Me.MoveDisplayer.Font = New System.Drawing.Font("Microsoft Sans Serif", 72.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.MoveDisplayer.Location = New System.Drawing.Point(9, 203)
+        Me.MoveDisplayer.Name = "MoveDisplayer"
+        Me.MoveDisplayer.Size = New System.Drawing.Size(284, 152)
+        Me.MoveDisplayer.TabIndex = 9
+        Me.MoveDisplayer.Text = "h8"
+        Me.MoveDisplayer.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.MoveDisplayer.Visible = False
+        '
+        'WLeaderBoardGrid
+        '
+        Me.WLeaderBoardGrid.AllowUserToAddRows = False
+        Me.WLeaderBoardGrid.AllowUserToDeleteRows = False
+        Me.WLeaderBoardGrid.AllowUserToResizeColumns = False
+        Me.WLeaderBoardGrid.AllowUserToResizeRows = False
+        Me.WLeaderBoardGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.WLeaderBoardGrid.Columns.AddRange(New System.Windows.Forms.DataGridViewColumn() {Me.UserIndex, Me.Username, Me.UserScore, Me.UserDate})
+        Me.WLeaderBoardGrid.Enabled = False
+        Me.WLeaderBoardGrid.Location = New System.Drawing.Point(9, 155)
+        Me.WLeaderBoardGrid.MultiSelect = False
+        Me.WLeaderBoardGrid.Name = "WLeaderBoardGrid"
+        Me.WLeaderBoardGrid.ReadOnly = True
+        Me.WLeaderBoardGrid.RowHeadersVisible = False
+        Me.WLeaderBoardGrid.RowHeadersWidth = 21
+        Me.WLeaderBoardGrid.ScrollBars = System.Windows.Forms.ScrollBars.None
+        Me.WLeaderBoardGrid.ShowEditingIcon = False
+        Me.WLeaderBoardGrid.Size = New System.Drawing.Size(282, 240)
+        Me.WLeaderBoardGrid.TabIndex = 28
+        Me.WLeaderBoardGrid.TabStop = False
+        Me.WLeaderBoardGrid.Visible = False
+        '
+        'UserIndex
+        '
+        Me.UserIndex.Frozen = True
+        Me.UserIndex.HeaderText = "W"
+        Me.UserIndex.Name = "UserIndex"
+        Me.UserIndex.ReadOnly = True
+        Me.UserIndex.Width = 21
+        '
+        'Username
+        '
+        Me.Username.Frozen = True
+        Me.Username.HeaderText = "Name"
+        Me.Username.Name = "Username"
+        Me.Username.ReadOnly = True
+        Me.Username.Width = 130
+        '
+        'UserScore
+        '
+        Me.UserScore.Frozen = True
+        Me.UserScore.HeaderText = "Score"
+        Me.UserScore.Name = "UserScore"
+        Me.UserScore.ReadOnly = True
+        Me.UserScore.Width = 50
+        '
+        'UserDate
+        '
+        Me.UserDate.Frozen = True
+        Me.UserDate.HeaderText = "Date"
+        Me.UserDate.Name = "UserDate"
+        Me.UserDate.ReadOnly = True
+        Me.UserDate.Width = 80
+        '
+        'BLeaderBoardGrid
+        '
+        Me.BLeaderBoardGrid.AllowUserToAddRows = False
+        Me.BLeaderBoardGrid.AllowUserToDeleteRows = False
+        Me.BLeaderBoardGrid.AllowUserToResizeColumns = False
+        Me.BLeaderBoardGrid.AllowUserToResizeRows = False
+        Me.BLeaderBoardGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.BLeaderBoardGrid.Columns.AddRange(New System.Windows.Forms.DataGridViewColumn() {Me.DataGridViewTextBoxColumn1, Me.DataGridViewTextBoxColumn2, Me.DataGridViewTextBoxColumn3, Me.DataGridViewTextBoxColumn4})
+        Me.BLeaderBoardGrid.Enabled = False
+        Me.BLeaderBoardGrid.Location = New System.Drawing.Point(9, 155)
+        Me.BLeaderBoardGrid.MultiSelect = False
+        Me.BLeaderBoardGrid.Name = "BLeaderBoardGrid"
+        Me.BLeaderBoardGrid.ReadOnly = True
+        Me.BLeaderBoardGrid.RowHeadersVisible = False
+        Me.BLeaderBoardGrid.RowHeadersWidth = 21
+        Me.BLeaderBoardGrid.ScrollBars = System.Windows.Forms.ScrollBars.None
+        Me.BLeaderBoardGrid.ShowEditingIcon = False
+        Me.BLeaderBoardGrid.Size = New System.Drawing.Size(282, 240)
+        Me.BLeaderBoardGrid.TabIndex = 29
+        Me.BLeaderBoardGrid.TabStop = False
+        Me.BLeaderBoardGrid.Visible = False
+        '
+        'DataGridViewTextBoxColumn1
+        '
+        Me.DataGridViewTextBoxColumn1.Frozen = True
+        Me.DataGridViewTextBoxColumn1.HeaderText = "B"
+        Me.DataGridViewTextBoxColumn1.Name = "DataGridViewTextBoxColumn1"
+        Me.DataGridViewTextBoxColumn1.ReadOnly = True
+        Me.DataGridViewTextBoxColumn1.Width = 21
+        '
+        'DataGridViewTextBoxColumn2
+        '
+        Me.DataGridViewTextBoxColumn2.Frozen = True
+        Me.DataGridViewTextBoxColumn2.HeaderText = "Name"
+        Me.DataGridViewTextBoxColumn2.Name = "DataGridViewTextBoxColumn2"
+        Me.DataGridViewTextBoxColumn2.ReadOnly = True
+        Me.DataGridViewTextBoxColumn2.Width = 130
+        '
+        'DataGridViewTextBoxColumn3
+        '
+        Me.DataGridViewTextBoxColumn3.Frozen = True
+        Me.DataGridViewTextBoxColumn3.HeaderText = "Score"
+        Me.DataGridViewTextBoxColumn3.Name = "DataGridViewTextBoxColumn3"
+        Me.DataGridViewTextBoxColumn3.ReadOnly = True
+        Me.DataGridViewTextBoxColumn3.Width = 50
+        '
+        'DataGridViewTextBoxColumn4
+        '
+        Me.DataGridViewTextBoxColumn4.Frozen = True
+        Me.DataGridViewTextBoxColumn4.HeaderText = "Date"
+        Me.DataGridViewTextBoxColumn4.Name = "DataGridViewTextBoxColumn4"
+        Me.DataGridViewTextBoxColumn4.ReadOnly = True
+        Me.DataGridViewTextBoxColumn4.Width = 80
+        '
+        'TrainingScore
+        '
+        Me.TrainingScore.BackColor = System.Drawing.Color.Transparent
+        Me.TrainingScore.Font = New System.Drawing.Font("Microsoft Sans Serif", 27.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.TrainingScore.Location = New System.Drawing.Point(114, 330)
+        Me.TrainingScore.Name = "TrainingScore"
+        Me.TrainingScore.Size = New System.Drawing.Size(74, 52)
+        Me.TrainingScore.TabIndex = 30
+        Me.TrainingScore.Text = "0"
+        Me.TrainingScore.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.TrainingScore.Visible = False
+        '
+        'TrainingTimer
+        '
+        '
+        'InfoBtn
+        '
+        Me.InfoBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.InfoBtn.Location = New System.Drawing.Point(7, 570)
+        Me.InfoBtn.Name = "InfoBtn"
+        Me.InfoBtn.Size = New System.Drawing.Size(18, 23)
+        Me.InfoBtn.TabIndex = 31
+        Me.InfoBtn.Text = "?"
+        Me.InfoBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+        Me.InfoBtn.UseVisualStyleBackColor = True
+        Me.InfoBtn.Visible = False
+        '
+        'UseBook
+        '
+        Me.UseBook.AutoSize = True
+        Me.UseBook.Enabled = False
+        Me.UseBook.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.UseBook.Location = New System.Drawing.Point(977, 455)
+        Me.UseBook.Name = "UseBook"
+        Me.UseBook.Size = New System.Drawing.Size(136, 19)
+        Me.UseBook.TabIndex = 26
+        Me.UseBook.Text = "Use Opening Book?"
+        Me.UseBook.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.UseBook.UseVisualStyleBackColor = True
+        '
         'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -976,7 +1183,12 @@ Partial Class Chess
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.InfoBtn)
+        Me.Controls.Add(Me.TrainingScore)
+        Me.Controls.Add(Me.BLeaderBoardGrid)
+        Me.Controls.Add(Me.WLeaderBoardGrid)
         Me.Controls.Add(Me.AITerminator)
+        Me.Controls.Add(Me.UseBook)
         Me.Controls.Add(Me.AIEndlessMode)
         Me.Controls.Add(Me.QuiescenceBox)
         Me.Controls.Add(Me.UserTimeBar)
@@ -988,10 +1200,13 @@ Partial Class Chess
         Me.Controls.Add(Me.ProgressBar)
         Me.Controls.Add(Me.UndoFENChange)
         Me.Controls.Add(Me.Credits)
+        Me.Controls.Add(Me.MoveDisplayer)
+        Me.Controls.Add(Me.TimerLabel)
         Me.Controls.Add(Me.CurrentAIDepth)
         Me.Controls.Add(Me.CurrentAIMove)
         Me.Controls.Add(Me.CurrentAIEval)
         Me.Controls.Add(Me.CheckLabel)
+        Me.Controls.Add(Me.TrainingStart)
         Me.Controls.Add(Me.UndoMove)
         Me.Controls.Add(Me.FENExport)
         Me.Controls.Add(Me.Reset_Btn)
@@ -1104,6 +1319,8 @@ Partial Class Chess
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.WLeaderBoardGrid, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -1187,4 +1404,22 @@ Partial Class Chess
     Friend WithEvents QuiescenceBox As CheckBox
     Friend WithEvents AITerminator As Button
     Friend WithEvents AIEndlessMode As System.Windows.Forms.CheckBox
+    Friend WithEvents Red As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents TrainingStart As Button
+    Friend WithEvents TimerLabel As Label
+    Friend WithEvents MoveDisplayer As Label
+    Friend WithEvents WLeaderBoardGrid As DataGridView
+    Friend WithEvents BLeaderBoardGrid As DataGridView
+    Friend WithEvents UserIndex As DataGridViewTextBoxColumn
+    Friend WithEvents Username As DataGridViewTextBoxColumn
+    Friend WithEvents UserScore As DataGridViewTextBoxColumn
+    Friend WithEvents UserDate As DataGridViewTextBoxColumn
+    Friend WithEvents DataGridViewTextBoxColumn1 As DataGridViewTextBoxColumn
+    Friend WithEvents DataGridViewTextBoxColumn2 As DataGridViewTextBoxColumn
+    Friend WithEvents DataGridViewTextBoxColumn3 As DataGridViewTextBoxColumn
+    Friend WithEvents DataGridViewTextBoxColumn4 As DataGridViewTextBoxColumn
+    Friend WithEvents TrainingScore As Label
+    Friend WithEvents TrainingTimer As Timer
+    Friend WithEvents InfoBtn As Button
+    Friend WithEvents UseBook As System.Windows.Forms.CheckBox
 End Class

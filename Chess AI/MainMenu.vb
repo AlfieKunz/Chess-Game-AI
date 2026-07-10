@@ -4,9 +4,11 @@
 'Will be the first section of code that the user sees, and provides the starting 
 'point for instantiating all theother classes & forms in my program.
 Public Class MainMenu
+    Private Const PlayAnimation As Boolean = True
     Dim PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
     Dim SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
     Dim ColourScheme As String 'Colour code from the text file.
+    Dim OpeningBook(50000, 1) As String
     'Startup sound effect - sounds taken from Chess.com.
     ReadOnly Sound_Startup As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Sounds\Chess_Startup.wav"
@@ -15,16 +17,17 @@ Public Class MainMenu
     Private Sub MainMenu_Load() Handles Me.Load
         'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
         Try
-            FileOpen(1, Application.StartupPath & "\ColourPreferences.txt", OpenMode.Input)
+            FileOpen(1, Application.StartupPath & "\Assets\ColourPreferences.txt", OpenMode.Input)
             ColourScheme = LineInput(1)
             FileClose(1)
         Catch ex As Exception
             ColourScheme = "def"
         End Try
         CreateColourProfile(ColourScheme)
-        'Sets up the text, buttons and objects.
+        'Sets up the text, buttons, objects and opening book.
         SetupOptions()
         SetupPieces()
+        If Not (PlayAnimation OrElse WP8.Visible) Then RetrieveOpeningBook()
     End Sub
 
     Private Sub CreateColourProfile(ByVal Code As String)
@@ -43,6 +46,9 @@ Public Class MainMenu
         ElseIf LCase(Code) = "ppl" Then
             PrimaryColour = Color.MediumPurple
             SecondaryColour = Color.MistyRose
+        ElseIf LCase(Code) = "red" Then
+            PrimaryColour = Color.FromArgb(195, 55, 55)
+            SecondaryColour = Color.LavenderBlush
         ElseIf LCase(Code) = "mon" Then
             PrimaryColour = Color.DimGray
             SecondaryColour = Color.Silver
@@ -175,20 +181,27 @@ Public Class MainMenu
         Title.Location = New Point(104, 160)
         Title.BringToFront()
 
-        OnePlayer.Visible = False
-        OnePlayer.Location = New Point(127.5, 232.5)
-        OnePlayer.FlatAppearance.BorderSize = 0
-        OnePlayer.BringToFront()
+        PlayBtn.Visible = False
+        PlayBtn.Location = New Point(127.5, 232.5)
+        PlayBtn.FlatAppearance.BorderSize = 0
+        PlayBtn.BringToFront()
 
-        TwoPlayer.Visible = False
-        TwoPlayer.Location = New Point(352.5, 232.5)
+        PlayOptions.Visible = False
+        PlayOptions.Location = New Point(112.5, 225)
+        PlayOptions.BringToFront()
+
+        OnePlayer.FlatAppearance.BorderSize = 0
         TwoPlayer.FlatAppearance.BorderSize = 0
-        TwoPlayer.BringToFront()
 
         Analysis.Visible = False
-        Analysis.Location = New Point(127.5, 307.5)
+        Analysis.Location = New Point(352.5, 232.5)
         Analysis.FlatAppearance.BorderSize = 0
         Analysis.BringToFront()
+
+        Training.Visible = False
+        Training.Location = New Point(127.5, 307.5)
+        Training.FlatAppearance.BorderSize = 0
+        Training.BringToFront()
 
         ExitBtn.Visible = False
         ExitBtn.Location = New Point(352.5, 307.5)
@@ -204,7 +217,7 @@ Public Class MainMenu
         MyBase.Refresh()
         Dim TempColour As String
         Try
-            FileOpen(1, Application.StartupPath & "\ColourPreferences.txt", OpenMode.Input)
+            FileOpen(1, Application.StartupPath & "\Assets\ColourPreferences.txt", OpenMode.Input)
             TempColour = LineInput(1)
             FileClose(1)
             If TempColour <> ColourScheme Then
@@ -216,125 +229,176 @@ Public Class MainMenu
         MyBase.Refresh()
 
         Dim AlreadyBooted As Boolean
-        If WP8.Visible = True Then AlreadyBooted = True
-        'Shows the checkerboard pattern over time. This is achieved by having 8 Rectangles which slowly move right off the screen.
-        'These 8 Rectangles are made to be out-of-sync, so each Rectangle moves in the cycle after the one above it.
-        'This gives the illusion of the checkerboard pattern being slowly constructed.
-        For n = 1 To 15
-            RowHider1.Left += 75
-            If n >= 2 Then RowHider2.Left += 75
-            If n >= 3 Then RowHider3.Left += 75
-            If n >= 4 Then RowHider4.Left += 75
-            If n >= 5 Then RowHider5.Left += 75
-            If n >= 6 Then RowHider6.Left += 75
-            If n >= 7 Then RowHider7.Left += 75
-            If n >= 8 Then RowHider8.Left += 75
-            Application.DoEvents()
-            Thread.Sleep(100)
-        Next
-        Thread.Sleep(50)
+        If WP8.Visible Then AlreadyBooted = True
+        If PlayAnimation Then
+            If Not AlreadyBooted Then
+                'Uses multithreading to simultaneously retrieve the opening book, and play the opening animation.
+                Dim OpeningBookThread As New Task(AddressOf RetrieveOpeningBook)
+                OpeningBookThread.Start()
+            End If
 
+            'Shows the checkerboard pattern over time. This is achieved by having 8 Rectangles which slowly move right off the screen.
+            'These 8 Rectangles are made to be out-of-sync, so each Rectangle moves in the cycle after the one above it.
+            'This gives the illusion of the checkerboard pattern being slowly constructed.
+            For n = 1 To 15
+                RowHider1.Left += 75
+                If n >= 2 Then RowHider2.Left += 75
+                If n >= 3 Then RowHider3.Left += 75
+                If n >= 4 Then RowHider4.Left += 75
+                If n >= 5 Then RowHider5.Left += 75
+                If n >= 6 Then RowHider6.Left += 75
+                If n >= 7 Then RowHider7.Left += 75
+                If n >= 8 Then RowHider8.Left += 75
+                Application.DoEvents()
+                Thread.Sleep(100)
+            Next
+            Thread.Sleep(50)
+        Else
+            For n = 1 To 8
+                Me.Controls.Find("RowHider" & n, True).Single().Visible = False
+            Next
+        End If
         'Slowly makes the pieces on the board visible (in a spiral pattern).
         WK1.Visible = True
         WQ1.Visible = True
         BK1.Visible = True
         BQ1.Visible = True
-        Application.DoEvents()
-        Thread.Sleep(150)
+        Wait()
         WB1.Visible = True
         WB2.Visible = True
         BB1.Visible = True
         BB2.Visible = True
-        Application.DoEvents()
-        Thread.Sleep(150)
+        Wait()
         WN1.Visible = True
         WN2.Visible = True
         BN1.Visible = True
         BN2.Visible = True
-        Application.DoEvents()
-        Thread.Sleep(150)
+        Wait()
         WR1.Visible = True
         WR2.Visible = True
         BR1.Visible = True
         BR2.Visible = True
-        Application.DoEvents()
-        Thread.Sleep(150)
+        Wait()
         WP1.Visible = True
         WP2.Visible = True
         BP1.Visible = True
         BP2.Visible = True
-        Application.DoEvents()
-        Thread.Sleep(150)
+        Wait()
         WP3.Visible = True
         WP4.Visible = True
         BP3.Visible = True
         BP4.Visible = True
-        Application.DoEvents()
-        Thread.Sleep(150)
+        Wait()
         WP5.Visible = True
         WP6.Visible = True
         BP5.Visible = True
         BP6.Visible = True
-        Application.DoEvents()
-        Thread.Sleep(150)
+        Wait()
         WP7.Visible = True
         WP8.Visible = True
         BP7.Visible = True
         BP8.Visible = True
-        Application.DoEvents()
-        Thread.Sleep(150)
+        Wait()
 
         'Makes the labels & buttons visible, then audibly notifies the user that they can choose a menu option.
         Title.Visible = True
-        OnePlayer.Visible = True
-        TwoPlayer.Visible = True
+        PlayBtn.Visible = True
+        Training.Visible = True
         Analysis.Visible = True
         ExitBtn.Visible = True
         Credits.Visible = True
         If Not AlreadyBooted Then Sound_Startup.Play()
     End Sub
+    Private Sub Wait()
+        If PlayAnimation Then
+            Application.DoEvents()
+            Thread.Sleep(150)
+        End If
+    End Sub
+
+    'Subroutine that stores the chess opening book into the 2D array 'Opening Book'
+    Private Sub RetrieveOpeningBook()
+        Dim Timer As New Stopwatch
+        Try
+            Timer.Start()
+            'Opens opening book from file.
+            FileOpen(1, Application.StartupPath & "\Assets\OpeningBook.txt", OpenMode.Input)
+            Dim Line As String = LineInput(1)
+            Dim Counter As UInt16 = 1
+            OpeningBook(0, 0) = Line.Substring(0, Line.IndexOf("#")) 'Retrieves total position count.
+            While Not EOF(1)
+                Line = LineInput(1)
+                'Separates FEN position from possible moves, then stores in array.
+                OpeningBook(Counter, 0) = Line.Substring(0, Line.IndexOf("#"))
+                OpeningBook(Counter, 1) = Line.Substring(Line.IndexOf("#") + 1, Line.Length - Line.IndexOf("#") - 1)
+                Counter += 1
+            End While
+            FileClose(1)
+            Timer.Stop()
+            Console.WriteLine("Opening Book Successfully Retrieved in: " & Math.Round(Timer.Elapsed.TotalMilliseconds, 1) & "ms.")
+        Catch ex As Exception 'Could not successfully retrieve book - make a note on OpeningBook.
+            Timer.Stop()
+            Console.WriteLine("Error when retrieving opening book.")
+            OpeningBook(0, 0) = "ERROR"
+        End Try
+    End Sub
 
 
     'Controls for the buttons.
-    Private Sub OnePlayer_MouseEnter() Handles OnePlayer.MouseEnter
-        'Grows the Button.
-        OnePlayer.Size = New Size(150, 75)
-        OnePlayer.Left -= 15
-        OnePlayer.Top -= 7.5
-        OnePlayer.Font = New Font("Microsoft Sans Serif", 24, FontStyle.Bold)
+    Private Sub PlayBtn_MouseEnter() Handles PlayBtn.MouseEnter
+        PlayBtn.Visible = False
+        PlayOptions.Visible = True
     End Sub
+    Private Sub PlayOptions_MouseLeave() Handles PlayOptions.MouseLeave
+        PlayOptions.Visible = False
+        PlayBtn.Visible = True
+    End Sub
+
     Private Sub OnePlayer_MouseLeave() Handles OnePlayer.MouseLeave
-        'Shrinks the Button.
-        OnePlayer.Size = New Size(120, 60)
-        OnePlayer.Left += 15
-        OnePlayer.Top += 7.5
-        OnePlayer.Font = New Font("Microsoft Sans Serif", 18, FontStyle.Bold)
+        If Not TwoPlayer.ClientRectangle.Contains(TwoPlayer.PointToClient(MousePosition)) Then
+            PlayOptions.Visible = False
+            PlayBtn.Visible = True
+        End If
     End Sub
     Private Sub OnePlayer_Click() Handles OnePlayer.Click
-        Dim Customisation As New OnePlayerCustomisation
+        Dim Customisation = New OnePlayerCustomisation(OpeningBook)
         Customisation.Show()
         Me.Hide()
     End Sub
 
-    Private Sub TwoPlayer_MouseEnter() Handles TwoPlayer.MouseEnter
-        'Grows the Button.
-        TwoPlayer.Size = New Size(150, 75)
-        TwoPlayer.Left -= 15
-        TwoPlayer.Top -= 7.5
-        TwoPlayer.Font = New Font("Microsoft Sans Serif", 24, FontStyle.Bold)
-    End Sub
     Private Sub TwoPlayer_MouseLeave() Handles TwoPlayer.MouseLeave
-        'Shrinks the Button.
-        TwoPlayer.Size = New Size(120, 60)
-        TwoPlayer.Left += 15
-        TwoPlayer.Top += 7.5
-        TwoPlayer.Font = New Font("Microsoft Sans Serif", 18, FontStyle.Bold)
+        If Not OnePlayer.ClientRectangle.Contains(OnePlayer.PointToClient(MousePosition)) Then
+            PlayOptions.Visible = False
+            PlayBtn.Visible = True
+        End If
     End Sub
     Private Sub TwoPlayer_Click() Handles TwoPlayer.Click
         Dim Customisation As New TwoPlayerCustomisation
         Customisation.Show()
         Me.Hide()
     End Sub
+
+
+    Private Sub Training_MouseEnter() Handles Training.MouseEnter
+        'Grows the Button.
+        Training.Size = New Size(150, 75)
+        Training.Left -= 15
+        Training.Top -= 7.5
+        Training.Font = New Font("Microsoft Sans Serif", 24, FontStyle.Bold)
+    End Sub
+    Private Sub Training_MouseLeave() Handles Training.MouseLeave
+        'Shrinks the Button.
+        Training.Size = New Size(120, 60)
+        Training.Left += 15
+        Training.Top += 7.5
+        Training.Font = New Font("Microsoft Sans Serif", 18, FontStyle.Bold)
+    End Sub
+    Private Sub Training_Click() Handles Training.Click
+        Dim Customisation As New TrainingCustomisation
+        Customisation.Show()
+        Me.Hide()
+    End Sub
+
 
     Private Sub Analysis_MouseEnter() Handles Analysis.MouseEnter
         'Grows the Button.
@@ -351,7 +415,13 @@ Public Class MainMenu
         Analysis.Font = New Font("Microsoft Sans Serif", 18, FontStyle.Bold)
     End Sub
     Private Sub Analysis_Click() Handles Analysis.Click
-        Dim ChessGame As New Chess()
+        'Creates the chess game (if Opening Book could not be retrieved then do not pass book.
+        Dim ChessGame As Chess
+        If OpeningBook(0, 0) = "ERROR" Then
+            ChessGame = New Chess()
+        Else
+            ChessGame = New Chess(OpeningBook)
+        End If
         ChessGame.Show()
         Me.Hide()
     End Sub
@@ -376,7 +446,18 @@ Public Class MainMenu
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v5.2)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.0)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
+    Private Sub OnePlayer_Click(sender As Object, e As EventArgs) Handles OnePlayer.Click
+
+    End Sub
+
+    Private Sub OnePlayer_MouseEnter(sender As Object, e As EventArgs) Handles OnePlayer.MouseEnter
+
+    End Sub
+
+    Private Sub OnePlayer_MouseLeave(sender As Object, e As EventArgs) Handles OnePlayer.MouseLeave
+
+    End Sub
 End Class

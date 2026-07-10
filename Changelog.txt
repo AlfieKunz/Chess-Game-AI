@@ -1,3 +1,4 @@
-Endgame heuristics
-Minor AI improvements
-Preparation for NEA
+Val() Perfomance improvements
+Piece Animations
+Opening Book
+Training Modes (Coordinate & Move Practice)

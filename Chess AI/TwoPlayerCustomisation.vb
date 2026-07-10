@@ -24,7 +24,7 @@ Public Class TwoPlayerCustomisation
             UserStartingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         End If
         'Instantiates a new game of Chess.
-        Dim ChessGame As New Chess(2, UserStartingFEN, 0, True)
+        Dim ChessGame As New Chess(2, UserStartingFEN, 0, True, Nothing)
         ChessGame.Show()
     End Sub
 
