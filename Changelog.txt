@@ -1,1 +1,1 @@
-Addition of Alpha Beta Pruning.
+Addition of Row Multithreading.
