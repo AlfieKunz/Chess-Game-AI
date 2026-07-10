@@ -1,5 +1,8 @@
 ﻿Imports System.Threading
 
+'Class that allows the user to access the full extent of my program.
+'Will be the first section of code that the user sees, and provides the starting 
+'point for instantiating all theother classes & forms in my program.
 Public Class MainMenu
     Dim PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
     Dim SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
