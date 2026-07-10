@@ -1,1 +1,1 @@
-Variable Depth
+Addition of Alpha Beta Pruning.
