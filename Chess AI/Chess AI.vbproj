@@ -92,6 +92,12 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OnePlayerCustomisation.Designer.vb">
+      <DependentUpon>OnePlayerCustomisation.vb</DependentUpon>
+    </Compile>
+    <Compile Include="OnePlayerCustomisation.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Chess.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -121,8 +127,17 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="TwoPlayerCustomisation.Designer.vb">
+      <DependentUpon>TwoPlayerCustomisation.vb</DependentUpon>
+    </Compile>
+    <Compile Include="TwoPlayerCustomisation.vb">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="OnePlayerCustomisation.resx">
+      <DependentUpon>OnePlayerCustomisation.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Chess.resx">
       <DependentUpon>Chess.vb</DependentUpon>
     </EmbeddedResource>
@@ -131,9 +146,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
       <CustomToolNamespace>My.Resources</CustomToolNamespace>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TwoPlayerCustomisation.resx">
+      <DependentUpon>TwoPlayerCustomisation.vb</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -159,19 +177,11 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\arrow-computer-icons-drop-down-list-arrow.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\arrow-computer-icons-drop-down-list-arrow1.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\9c4679b53a732e5fd7493555db6e832e.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="128bit.ico" />
     <Content Include="Icon.ico" />
-    <None Include="Resources\uiehf.png" />
-    <None Include="Resources\test.jpg" />
+    <None Include="Resources\CopySymbol.png" />
+    <None Include="Resources\Cursor192.cur" />
+    <None Include="Resources\Cursor32.cur" />
+    <None Include="Resources\Cursor16.cur" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,3 +1,2 @@
-UI Updates
-Move Ordering
-Quiescence Prototype
+Small AI Improvements
+Last Version Before AI Multithreading redesign.
