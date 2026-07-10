@@ -1,4 +1,4 @@
-﻿'Working Version of Chess, along with AI using MiniMax and Alpha Beta Pruning. Created by Alfie Kunz - 8158.
+﻿'Working Version of Chess, along with AI using NegaMax and Alpha Beta Pruning. Created by Alfie Kunz - 8158.
 Imports System.Threading
 Imports System.Text.RegularExpressions
 Imports System.Security.Cryptography
@@ -19,9 +19,10 @@ Imports Microsoft.SqlServer
 'a computer-friendly interface (for the AI to use). This also instantiates the AI class and interacts with it.
 Partial Public Class Chess 'ew- danny
 
-    Private SharedAlgorithms As New CoreMethods 'Calls all objects from the CoreMethods class.
+    Private Helper As New CoreMethods 'Calls all objects from the CoreMethods class.
     Private BoardHistory As New GameHistory
     Private GeneralOptions As String = GlobalConstants.DefaultGeneralOptions
+    Private ReadOnly OpeningBook As New List(Of OpeningBookEntry)
 
 
     'Here are the computer's primary "eyes" - MasterBoard (which contains each piece's location on the board) and,
@@ -33,7 +34,7 @@ Partial Public Class Chess 'ew- danny
     Private GameMode As Byte = 3 '1 = 1-Player, 2 = 2-Player, 3 = Analysis, 4 = Puzzles, 5 = Coordinate Practice, 6 = Move Practice.
 
     'FEN = Standard Chess notation that displays where all the pieces on the board are supposed to go.
-    Private StartingFEN As String = GlobalConstants.InitialFENPosition
+    Private StartingFEN As String = GlobalConstants.StartingFENPosition
     Private CurrentFEN, PreviousFEN, InvalidInput As String
     Private PlayerTurn As Boolean = True 'True = Is White's Turn, False = Is Black's Turn
     Private UserPlayer As Boolean = True 'Represents what colour the user is playing with.
@@ -48,75 +49,57 @@ Partial Public Class Chess 'ew- danny
 
     'Sets up sound effects. All sounds used by Chess.com
     Private ReadOnly Sound_Move As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Move.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Move.wav"
     }
     Private ReadOnly Sound_Capture As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Capture.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Capture.wav"
     }
     Private ReadOnly Sound_Check As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Check.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Check.wav"
     }
     Private ReadOnly Sound_Castle As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Castle.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Castle.wav"
     }
     Private ReadOnly Sound_Checkmate As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Checkmate.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Checkmate.wav"
     }
     Private ReadOnly Sound_Stalemate As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Stalemate.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Stalemate.wav"
     }
     Private ReadOnly Sound_GameOver As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_GameOver.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_GameOver.wav"
     }
 
 
 
-
-
-    'Note: to calibrate systems after each move...
-    '   AnimateMove() if needed
-    '   Current player Is no longer In check
-    '   MakeMove() (dependant on player & circumstances)
-    '   FixTFTable of opposite player.
-    '   Copy SquareHistory index 0&1 To index 2&3
-    '   Copy New move into index 0&1 of SquareHistory (making sure to flip for Not OrientForWhite)
-    '   ResetLMS() if AI move
-    '   FlipBoard() if autoflipper Is on, Or otherwise just do Checkerboard.Refresh()
-    '   CheckChecker()
-    '   Reverse PlayerTurn
-    '   PreviousFEN = CurrentFEN, then calculate New CurrentFEN
-    '   Reconfigure AI
-    '   EnforceENdStates()
-    '   Output FEN To input box For specific game modes.
-    '   OutputDebugInfo()
 
 
     'Constructor methods for the Chess Class.
     Public Sub New()
         Me.New(New List(Of OpeningBookEntry))
     End Sub
-    Public Sub New(ByVal Mode As SByte)
-        Me.New(Mode, GlobalConstants.InitialFENPosition)
+    Public Sub New(ByVal Mode As Byte)
+        Me.New(Mode, GlobalConstants.StartingFENPosition)
     End Sub
     Public Sub New(ByVal Mode As Byte, ByVal UserStartingFEN As String)
-        Me.New(Mode, UserStartingFEN, 0, New AISearchSettings(), False, True, Nothing)
+        Me.New(Mode, UserStartingFEN, 0, New AISearchSettings(), False, False, True, Nothing)
     End Sub
 
-    Public Sub New(ByRef InputBook As List(Of OpeningBookEntry)) 'Call used for a standard game of chess (usually in Analysis Mode).
+    Public Sub New(ByRef InputBook As List(Of OpeningBookEntry)) 'Call used for a standard game of chess (usually in Analysis Mode / Remote Mode).
         GameRunning = False
-        InitializeComponent() ' This call is required by the designer.
+        InitializeComponent() 'This call is required by the designer.
         'Loads the opening book into the system.
         If InputBook IsNot Nothing AndAlso InputBook.Count > 0 Then OpeningBook.AddRange(InputBook) : UseBook.Enabled = True
     End Sub
 
     'The below constructor method rearranges the location of objects on the form (to save space on the screen).
     'This will be called for 1-Player Games and 2-Player Games.
-    Public Sub New(ByVal Mode As Byte, ByVal UserStartingFEN As String, ByVal UserTimeForSearch As Decimal, ByVal UserSearchSettings As AISearchSettings, ByVal UserAICanSearchOnUsersTurn As Boolean, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry))
+    Public Sub New(ByVal Mode As Byte, ByVal UserStartingFEN As String, ByVal UserTimeForSearch As Decimal, ByVal UserSearchSettings As AISearchSettings, ByVal UserAICanSearchOnUsersTurn As Boolean, ByVal UserAdvancedSearchTime As Boolean, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry))
         Me.New(InputBook)
         GameMode = Mode
         StartingFEN = UserStartingFEN
 
-        'Shrinks the size of the forms, and modifies the obejct now off-screen to better suit the GUI.
+        'Shrinks the size of the forms, and modifies the objects now off-screen to better suit the GUI.
         Me.Size = New Size(916, 639)
         AIMoveBtn.Visible = False
         InputTextBox.ReadOnly = True
@@ -139,7 +122,7 @@ Partial Public Class Chess 'ew- danny
         Credits.Location = New Point(78.5, 575)
 
 
-        If Mode = 1 Then 'Mode-Specific Movement - 1P Mode.
+        If Mode <= 1 Then 'Mode-Specific Movement - 1P Mode & Remote Mode.
             'Hides / sets appropriate objects.
             AutoOutputterPanel.Visible = True
             FlipperButton.Visible = False
@@ -151,10 +134,12 @@ Partial Public Class Chess 'ew- danny
             UserPlayer = PlayAsWhite
             'Calibrates AI settings based on the user's requirements.
             If InputBook.Count > 0 Then UseBook.Checked = True
-            TimeForSearch = UserTimeForSearch
-            SearchSettings.CopyFrom(UserSearchSettings)
-            AICanSearchOnUsersTurn = UserAICanSearchOnUsersTurn
-
+            If UserTimeForSearch > 0 Then
+                AIHandles.TimeForSearch = UserTimeForSearch
+                If UserAdvancedSearchTime Then AIHandles.AdvancedTimeForSearch = UserTimeForSearch
+                SearchSettings.CopyFrom(UserSearchSettings)
+                AICanSearchOnUsersTurn = UserAICanSearchOnUsersTurn
+            End If
         ElseIf Mode = 2 Then '2P Mode
             AutoOutputterPanel.Visible = True
             FlipperButton.Top -= 100
@@ -169,7 +154,7 @@ Partial Public Class Chess 'ew- danny
         ElseIf Mode = 4 Then 'Puzzles mode
             'Selects, then loads a random puzzle database from the Database folder.
             Static RND As New Random()
-            Dim PuzzleFileNames As String() = Directory.GetFiles(Application.StartupPath & "\Assets\Puzzle Database\", "*.txt")
+            Dim PuzzleFileNames As String() = Directory.GetFiles(GlobalConstants.StartupPath & "\Assets\Puzzle Database\", "*.txt")
             Dim SampleIndex As Byte = RND.Next(1, PuzzleFileNames.Length)
 
             Dim Timer As New Stopwatch
@@ -177,17 +162,17 @@ Partial Public Class Chess 'ew- danny
             Try
                 Timer.Start()
                 'Opens puzzle database from file using StreamReader.
-                Using SR As New StreamReader(Application.StartupPath & "\Assets\Puzzle Database\" & CStr(SampleIndex) & ".txt", Encoding.UTF8, True, 16384)
+                Using SR As New StreamReader(GlobalConstants.StartupPath & "\Assets\Puzzle Database\" & CStr(SampleIndex) & ".txt", Encoding.UTF8, True, 16384)
                     While Not SR.EndOfStream
                         TempEntry = New PuzzleEntry(SR.ReadLine())
-                        PuzzleSampleDatabase.Add(TempEntry)
+                        TrainingMode.PuzzleSampleDatabase.Add(TempEntry)
                     End While
                 End Using
                 'Loads extra hard puzzles from database.
-                Using SR As New StreamReader(Application.StartupPath & "\Assets\Puzzle Database\Extra Hard Puzzles.txt", Encoding.UTF8, True, 4096)
+                Using SR As New StreamReader(GlobalConstants.StartupPath & "\Assets\Puzzle Database\Extra Hard Puzzles.txt", Encoding.UTF8, True, 4096)
                     While Not SR.EndOfStream
                         TempEntry = New PuzzleEntry(SR.ReadLine())
-                        PuzzleSampleDatabase.Add(TempEntry)
+                        TrainingMode.PuzzleSampleDatabase.Add(TempEntry)
                     End While
                 End Using
                 Timer.Stop()
@@ -204,7 +189,7 @@ Partial Public Class Chess 'ew- danny
 
             LoadPuzzleRatings()
             SearchSettings.OutputToConsole = False
-            TimeForSearch = Decimal.MaxValue 'Makes sure there isn't a puzzle timer on the initial puzzle.
+            AIHandles.TimeForSearch = Decimal.MaxValue 'Makes sure there isn't a puzzle timer on the initial puzzle.
             StartingFEN = GetRndPuzzle() 'Sets Random Puzzle to be starting position.
 
             'Calibrates objects specific to the puzzle mode.
@@ -257,13 +242,51 @@ Partial Public Class Chess 'ew- danny
         End If
     End Sub
 
+    'Constructor Subroutines for the Remote Mode feature.
+    Public Sub New(ByVal UsingRemoteMode As Boolean, ByVal UserStartingFEN As String, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry))
+        Me.New(UsingRemoteMode, UserStartingFEN, PlayAsWhite, InputBook, 0, Nothing, False, False)
+        'Removes all the objects that are not intrinsic to Remote Mode.
+        RemoteMode.AIEnabled = False
+        Dim ObjectsToRemove() As Object = {ProgressBar, CurrentAIDepth, CurrentAIMove, CurrentAIEval, AITerminator}
+        For Each Item In ObjectsToRemove
+            Item.Visible = False
+        Next
+        RemoteModeBtn.Top += 36
+    End Sub
+    Public Sub New(ByVal UsingRemoteMode As Boolean, ByVal UserStartingFEN As String, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry), ByVal UserTimeForSearch As Decimal, ByVal UserSearchSettings As AISearchSettings, ByVal UserAICanSearchOnUsersTurn As Boolean, ByVal UserAdvancedSearchTime As Boolean)
+        'Positions the Form.
+        Me.New(1, UserStartingFEN, UserTimeForSearch, UserSearchSettings, UserAICanSearchOnUsersTurn, UserAdvancedSearchTime, PlayAsWhite, InputBook)
+        'Sets up & positions all objects used for Remote Mode.
+        GameMode = 0
+        RemoteMode = New RemoteModeInfo With {
+            .IsEnabled = True,
+            .AIEnabled = True
+        }
+        UndoMove.Visible = False
+
+        CheckLabel.Top -= 50
+        ProgressBar.Top += 75
+        CurrentAIDepth.Top += 60
+        CurrentAIMove.Top += 60
+        CurrentAIEval.Top += 60
+        RemoteModeBtn.Visible = True
+        AITerminator.Location = New Point(59, 243)
+        AITerminator.Size = New Size(181, 43)
+        AITerminator.Enabled = False
+        AITerminator.Visible = True
+
+        InfoBtn.Visible = True
+    End Sub
+
+
 
     'Subroutine that sets up the chess system.
     Private Sub Form_Load() Handles Me.Load
         Dim StartupStopwatch As New Stopwatch
         StartupStopwatch.Start()
         Application.EnableVisualStyles()
-        DoubleBuffered = True 'For smoother piece moving animations.
+        Me.DoubleBuffered = True 'For smoother piece moving animations.
+        Me.KeyPreview = True 'For handling CTRL in Board Edit Mode.
         Console.OutputEncoding = System.Text.Encoding.UTF8
         Randomize()
 
@@ -303,7 +326,7 @@ Partial Public Class Chess 'ew- danny
         Dim FENErrorMessage As String = ""
         Dim FENIsValid As Boolean = False
         Dim CustomisationForm As Form = Nothing 'We first locate the cusomisation form (if the user used it).
-        If GameMode = 1 Then
+        If GameMode <= 1 Then
             CustomisationForm = CType(Application.OpenForms("OnePlayerCustomisation"), OnePlayerCustomisation)
         ElseIf GameMode = 2 Then
             CustomisationForm = CType(Application.OpenForms("TwoPlayerCustomisation"), TwoPlayerCustomisation)
@@ -313,22 +336,22 @@ Partial Public Class Chess 'ew- danny
         If FENErrorDetection(StartingFEN, False, FENErrorMessage) Then 'First step of error-detection.
             Try
                 'Forms the chessboard, along with the required variables.
-                MasterBoard = SharedAlgorithms.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                MasterBoard = Helper.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                 DisplayPieces()
                 'Forms the TFTable for the players.
                 If PlayerTurn Then
-                    SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                    Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
                 Else
-                    SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                    Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
                 End If
                 If GameMode <> 3 Then CustomisationForm.Close() 'Closes the customisation form.
                 CheckChecker(False)
                 FENIsValid = True
             Catch ex As Exception 'FEN is not valid, as the board could not be constructed - provide error message.
                 If MsgBox("Starting Position Rejected - Invalid FEN Code. Please Input a Genuinine FEN and try again." & vbCr & "Please Click 'Retry' to enter another FEN, or Click 'Cancel' to Start the Game with the Standard Starting Position.", vbCritical + vbRetryCancel + vbApplicationModal) = 4 Then
-                    'The user wants to enter another FEN.
-                    Me.Close()
-                End If
+                'The user wants to enter another FEN.
+                Me.Close()
+            End If
             End Try
         Else
             'Displays the appropriate error message, as stated by the FENErrorDetection Sub.
@@ -342,12 +365,12 @@ Partial Public Class Chess 'ew- danny
         If Not FENIsValid AndAlso Application.OpenForms().OfType(Of Chess).Any Then 'If customisation form hasn't been closed.
             'Sets the board to the standard FEN postion, and forms variables & objects.
             CustomisationForm.Close()
-            StartingFEN = GlobalConstants.InitialFENPosition
-            MasterBoard = SharedAlgorithms.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+            StartingFEN = GlobalConstants.StartingFENPosition
+            MasterBoard = Helper.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
             DisplayPieces()
-            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
             'Resets Black's TFTable.
-            Array.Copy(SharedAlgorithms.MasterTrueTable, MasterBlackTFTable, 64)
+            Array.Copy(Helper.MasterTrueTable, MasterBlackTFTable, 64)
         End If
 
 
@@ -366,20 +389,20 @@ Partial Public Class Chess 'ew- danny
                 Console.ForegroundColor = ConsoleColor.Green
                 GameRunning = True
                 Console.WriteLine(vbCrLf & vbCrLf & "The Game has Begun.")
-                Console.ResetColor()
+                Console.ForegroundColor = ConsoleColor.White
             End If
 
             'Creates our AI (for legal move generation).
             CurrentFEN = StartingFEN
             MainAI = New AI(CurrentFEN)
             MainAI.ConfigureSettings(SearchSettings, False)
-            MasterZobristValue = SharedAlgorithms.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+            MasterZobristValue = Helper.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant))
 
             LoadUserProfile()
 
             StartupStopwatch.Stop()
             Console.WriteLine("Startup Time: " & StartupStopwatch.Elapsed.TotalMilliseconds & " Milliseconds.")
-            If GameMode <= 3 Then OutputDebugInfo()
+            If GameMode <= 3 AndAlso GameMode > 0 Then OutputDebugInfo()
 
             AddHandler Me.Shown, AddressOf Form1_Load_AfterWindowShown 'After all the core elements have been configured, show the
             'form window to the user, then run the non-core elements of the class.
@@ -389,14 +412,24 @@ Partial Public Class Chess 'ew- danny
     'Subroutine containing all the code that will be performed upon boot-up, after the Chess form has been shown to the user.
     Private Sub Form1_Load_AfterWindowShown()
         EnforceEndStates(False) 'Checks for end positions in the starting FEN.
-        InitialMemoryUsage = (Process.GetCurrentProcess()).WorkingSet64 'Calibrates the initial memory usage of the program.
+        AIHandles.InitialMemoryUsage = (Process.GetCurrentProcess()).WorkingSet64 'Calibrates the initial memory usage of the program.
         If GameMode < 3 Then
-            If GameMode = 1 AndAlso Not (UserPlayer = PlayerTurn) Then
+            If GameMode = 0 Then
+                Dim FirstRemoteModeSession As Boolean = System.IO.File.Exists(GlobalConstants.StartupPath & "\Assets\User\FirstRemoteModeSession.txt")
+                If (Not FirstRemoteModeSession) OrElse InfoBtn_Click() = 6 Then
+                    If FirstRemoteModeSession Then System.IO.File.Delete(GlobalConstants.StartupPath & "\Assets\User\FirstRemoteModeSession.txt")
+                    RemoteModeBtn.Enabled = True
+                    PreviousFEN = StartingFEN
+                    GameRunning = False
+                End If
+            ElseIf GameMode = 1 AndAlso UserPlayer <> PlayerTurn Then
                 'The AI needs to make the first move.
                 InitialiseAISystem()
                 PreviousFEN = CurrentFEN
             Else 'Prevents the user from undoing the starting move.
                 PreviousFEN = StartingFEN
+                'Notifies the user that they are to make the first move.
+                If GameMode = 1 Then Me.Text = "[Your Turn...]  " + GlobalConstants.ProgramName
             End If
             InputTextBox.Text = StartingFEN
             InputTextBox.Select(InputTextBox.Text.Length, 0) 'Stops the TextBox from being highlighted.
@@ -417,24 +450,33 @@ Partial Public Class Chess 'ew- danny
     Private Sub AssignImagesToPieces()
         'All images are taken from the 'cburnett' piece theme of Lichess.org - an open source, charity chess website.
         'Please see here for information about using these assets: https://lichess.org/contact#help-authorize.
-        Dim Colour As String = "W"
-        For x = 0 To 11 Step 6
-            PieceArray(x).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "King.png")
-            PieceArray(x + 1).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Queen.png")
-            PieceArray(x + 2).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Bishop.png")
-            PieceArray(x + 3).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Knight.png")
-            PieceArray(x + 4).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Rook.png")
-            PieceArray(x + 5).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Pawn.png")
-            Colour = "B"
+        Dim Colour As String
+        For Each Piece In PieceArray
+            Colour = Piece.Name(0)
+            Select Case Piece.Name(1)
+                Case "K"
+                    Piece.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "King.png")
+                Case "Q"
+                    Piece.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Queen.png")
+                Case "B"
+                    Piece.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Bishop.png")
+                Case "N"
+                    Piece.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Knight.png")
+                Case "R"
+                    Piece.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Rook.png")
+                Case "P"
+                    Piece.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Pawn.png")
+            End Select
         Next
     End Sub
+
 
     'Subroutine that calibrates the settings of the user. Can be called by the settings form when settings are modified.
     Public Sub LoadUserProfile()
         'Sets the program settings (from txt file). If all else fails, use the default settings.
         Dim ColourScheme, TempGeneralOptions As String
         Try
-            FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
+            FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
             ColourScheme = LineInput(1)
             AnimationSpeed = Val(LineInput(1))
             TempGeneralOptions = LineInput(1)
@@ -443,16 +485,16 @@ Partial Public Class Chess 'ew- danny
             If GameMode >= 3 Then TempGeneralOptions = TempGeneralOptions.Remove(5, 1).Insert(5, "F")
             'Invisible pieces are not supported in the training modes - forcibly disable this control.
             If GameMode > 3 Then TempGeneralOptions = TempGeneralOptions.Remove(6, 1).Insert(6, "F")
-            If GameMode > 1 Then FixedSearchDepth = Val(LineInput(1))
+            If GameMode > 1 Then AIHandles.FixedSearchDepth = Val(LineInput(1))
         Catch ex As Exception
             'Default settings.
             ColourScheme = "def"
             AnimationSpeed = GlobalConstants.DefaultAnimationSpeed
             TempGeneralOptions = GlobalConstants.DefaultGeneralOptions
-            FixedSearchDepth = 0
+            AIHandles.FixedSearchDepth = 0
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
         End Try
         FileClose(1)
 
@@ -522,115 +564,6 @@ Partial Public Class Chess 'ew- danny
         Checkerboard.Refresh()
     End Sub
 
-
-
-    'Outputs the board position, along with the TFTables & King positions (to the console).
-    'Used for debugging purposes.
-    Private Sub OutputDebugInfo()
-        Console.ForegroundColor = ConsoleColor.DarkYellow
-        'Outputs the current FEN.
-        Console.WriteLine(vbCrLf & vbCrLf & "FEN: " & CurrentFEN)
-        Console.ResetColor()
-        Console.Write(" Board:" & New String(" ", 6))
-        If PlayerTurn Then Console.WriteLine("WhiteTFTable:") Else Console.WriteLine("BlackTFTable:")
-
-        'If the board is flipped in black's favour, rotate the output of the board (and the TFTable) 180 degrees.
-        Dim StartValue, EndValue, StepValue As SByte
-        If OrientForWhite Then
-            StartValue = 0
-            EndValue = 7
-            StepValue = 1
-        Else
-            StartValue = 7
-            EndValue = 0
-            StepValue = -1
-        End If
-
-        For y = StartValue To EndValue Step StepValue
-            For x = StartValue To EndValue Step StepValue
-                'Outputs the board position.
-                If MasterBoard(x, y) = " " Then
-                    If (x + y) Mod 2 = 0 Then
-                        'Square is a light-coloured square.
-                        Console.ForegroundColor = ConsoleColor.White
-                    Else 'Square is a dark-coloured square.
-                        Console.ForegroundColor = ConsoleColor.Gray
-                    End If
-                    Console.Write(ChrW(&H25AB)) 'Empty cell symbol.
-                Else
-                    'Colours piece depending if it is white's or black's piece.
-                    If Char.IsUpper(MasterBoard(x, y)) Then
-                        Console.ForegroundColor = ConsoleColor.White
-                    Else
-                        Console.ForegroundColor = ConsoleColor.DarkGray
-                    End If
-                    Console.Write(MasterBoard(x, y))
-                End If
-            Next
-            Console.ResetColor()
-
-            'Outputs the TFTable of the player to move.
-            Console.Write(New String(" ", 7))
-            For x = StartValue To EndValue Step StepValue
-                'Colours the indexes depending if it is True, False, or the position of the player's king.
-                If PlayerTurn Then
-                    If x & y = MasterWKPos Then
-                        Console.ForegroundColor = ConsoleColor.DarkYellow
-                    ElseIf MasterWInCheck >= 128 AndAlso ((x << 3) Or y) = (MasterWInCheck And 63) Then
-                        Console.ForegroundColor = ConsoleColor.White
-                    ElseIf MasterWhiteTFTable(x, y) = "T" Then
-                        Console.ForegroundColor = ConsoleColor.Green
-                    ElseIf MasterWhiteTFTable(x, y) = "F" Then
-                        Console.ForegroundColor = ConsoleColor.Red
-                    Else
-                        Console.ForegroundColor = ConsoleColor.Blue
-                    End If
-                    Console.Write(MasterWhiteTFTable(x, y))
-                Else
-                    If x & y = MasterBKPos Then
-                        Console.ForegroundColor = ConsoleColor.DarkYellow
-                    ElseIf MasterBInCheck >= 128 AndAlso ((x << 3) Or y) = (MasterBInCheck And 63) Then
-                        Console.ForegroundColor = ConsoleColor.White
-                    ElseIf MasterBlackTFTable(x, y) = "T" Then
-                        Console.ForegroundColor = ConsoleColor.Green
-                    ElseIf MasterBlackTFTable(x, y) = "F" Then
-                        Console.ForegroundColor = ConsoleColor.Red
-                    Else
-                        Console.ForegroundColor = ConsoleColor.Blue
-                    End If
-                    Console.Write(MasterBlackTFTable(x, y))
-                End If
-            Next
-            Console.ResetColor()
-
-            'Outputs the information of the player.
-            If Not OrientForWhite Then y = 7 - y
-            If y Mod 2 = 0 Then
-                Console.Write(New String(" ", 7))
-                If y = 0 Then
-                    Console.Write("Player: ")
-                    If PlayerTurn Then
-                        Console.ForegroundColor = ConsoleColor.White
-                        Console.WriteLine("White")
-                    Else
-                        Console.ForegroundColor = ConsoleColor.DarkGray
-                        Console.WriteLine("Black")
-                    End If
-                End If
-                If y = 2 Then Console.WriteLine("WKPos: " & SharedAlgorithms.CoorToPGNConverter(MasterWKPos))
-                If y = 4 Then Console.WriteLine("BKPos: " & SharedAlgorithms.CoorToPGNConverter(MasterBKPos))
-                If y = 6 Then Console.WriteLine("En Passant: " & SharedAlgorithms.CoorToPGNConverter(MasterEnPassant))
-            Else
-                Console.WriteLine()
-            End If
-            If Not OrientForWhite Then y = 7 - y
-        Next
-
-        'Outputs the Hash Value.
-        Console.ForegroundColor = ConsoleColor.Magenta
-        Console.WriteLine("Zobrist Hash Value: " & MasterZobristValue.ToString("X16")) 'Outputs Zobrist Key in Hexadecimal.
-        Console.ResetColor()
-    End Sub
 
 
 
@@ -704,7 +637,7 @@ Partial Public Class Chess 'ew- danny
         Else
             CheckForInvalidGameStates = False
         End If
-        Console.ResetColor()
+        Console.ForegroundColor = ConsoleColor.White
     End Function
 
 
@@ -712,10 +645,13 @@ Partial Public Class Chess 'ew- danny
     'Supports multiple moves.
     Private Sub EnterMovesIntoSystem(ByVal Moves As String, ByVal NeedsFormatting As Boolean, OutputToTextBox As Boolean)
         'Formats PGN Moves. Some PGN Moves also contain move numbers - my program needs to remove these to interpret the moves.
-        Dim FormattedPGN As String
+        Dim FormattedPGN As String = ""
         If NeedsFormatting Then
             Try
-                If Moves.IndexOf(" ") = -1 Then Moves = Moves.Replace(",", " ")
+                Moves = Regex.Replace(Moves, "[\(\[\{].*?[\)\]\}]", String.Empty) 'Removes pairs of brackets, and everything inside them.
+                Moves = Moves.Replace(",", " ") 'Generalises format.
+                Moves = Regex.Replace(Moves, "\s{2,}", " ").Trim(" ") 'Puts everything onto one line, and removes double-spaces.
+
                 For n = 0 To Moves.Length - 1
                     Select Case Moves(n)
                         Case "0" To "9"
@@ -747,7 +683,7 @@ Partial Public Class Chess 'ew- danny
                 Else
                     Console.ForegroundColor = ConsoleColor.DarkRed
                     Console.WriteLine("Move Unable to be Formatted.")
-                    Console.ResetColor()
+                    Console.ForegroundColor = ConsoleColor.White
                 End If
                 Exit Sub
             End Try
@@ -774,10 +710,10 @@ Partial Public Class Chess 'ew- danny
                     Try
                         If PlayerTurn Then
                             'Attempts to convert the PGN move to my program's Move format.
-                            TempMove = SharedAlgorithms.ConvertToMove(TempPGNMove, MasterBoard, True, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWhiteTFTable)
-                            If TempMove.EndState = "a" Then
+                            TempMove = Helper.ConvertToMove(TempPGNMove, MasterBoard, True, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWhiteTFTable)
+                            If TempMove.Code = "a" Then
                                 Throw New Exception("Invalid Move.")
-                            ElseIf TempMove.EndState = "c" Then
+                            ElseIf TempMove.Code = "c" Then
                                 Throw New Exception("Collision.")
                             End If
                             'Checks for all the legal moves that this piece can make, then compare these to the user's input move.
@@ -797,10 +733,10 @@ Partial Public Class Chess 'ew- danny
                             AnimateMove(TempMove)
                             MakeMove(MasterBoard, TempMove, MasterWCanCastle, MasterWKPos, MasterEnPassant, GeneralOptions(0) = "T")
                         Else 'Similar code for the black pieces.
-                            TempMove = SharedAlgorithms.ConvertToMove(TempPGNMove, MasterBoard, False, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBlackTFTable)
-                            If TempMove.EndState = "a" Then
+                            TempMove = Helper.ConvertToMove(TempPGNMove, MasterBoard, False, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBlackTFTable)
+                            If TempMove.Code = "a" Then
                                 Throw New Exception("Invalid Move.")
-                            ElseIf TempMove.EndState = "c" Then
+                            ElseIf TempMove.Code = "c" Then
                                 Throw New Exception("Collision.")
                             End If
                             PieceMoving.LegalMoves = MainAI.ReturnPiecesLegalMoves(TempMove.OldMoveX, TempMove.OldMoveY)
@@ -820,28 +756,28 @@ Partial Public Class Chess 'ew- danny
                     Catch ex As Exception
                         'Unable to perform move - assume move is invalid.
                         'Revert position to undo the effects of the invalid move.
-                        MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                        MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                         DisplayPieces()
                         If Not FirstMove Then OutputDebugInfo()
                         'Constructs and outputs the error message.
                         Dim OutputResponce As String
-                        If TempMove.EndState = "a" Then OutputResponce = "Invalid" Else OutputResponce = "Illegal"
+                        If TempMove.Code = "a" Then OutputResponce = "Invalid" Else OutputResponce = "Illegal"
                         If OutputToTextBox Then
                             InvalidInput = InputTextBox.Text
                             UndoFENChange.Visible = True
-                            If TempMove.EndState = "c" Then
+                            If TempMove.Code = "c" Then
                                 InputTextBox.Text = "Move (" & TempPGNMove & ") has Multiple Interpretations. Consider adding constraint(s) (eg: Nbd7)..."
                             Else
                                 InputTextBox.Text = "Move (" & TempPGNMove & ") is " & OutputResponce & ". Please Input a valid set of Moves and try again."
                             End If
                         Else
                             Console.ForegroundColor = ConsoleColor.DarkRed
-                            If TempMove.EndState = "c" Then
+                            If TempMove.Code = "c" Then
                                 Console.WriteLine("Move (" & TempPGNMove & ") has Multiple Interpretations. Consider adding constraint(s) (eg: Nbd7)...")
                             Else
                                 Console.WriteLine("Move (" & TempPGNMove & ") is " & OutputResponce & ".")
                             End If
-                            Console.ResetColor()
+                            Console.ForegroundColor = ConsoleColor.White
                         End If
                         Exit Sub
                     End Try
@@ -850,10 +786,10 @@ Partial Public Class Chess 'ew- danny
                         'Updates TFTable for appropriate player.
                         If PlayerTurn Then
                             MasterWInCheck = 0 'Player is no longer in check.
-                            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
                         Else
                             MasterBInCheck = 0 'Player is no longer in check.
-                            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
                         End If
 
                         'Update Previously Used Squares, then flips the board if necessary.
@@ -881,11 +817,11 @@ Partial Public Class Chess 'ew- danny
                         'Ends the turn, then calculates the new position's FEN.
                         PlayerTurn = Not PlayerTurn
                         If FirstMove Then PreviousFEN = CurrentFEN
-                        CurrentFEN = SharedAlgorithms.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
+                        CurrentFEN = Helper.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
                         MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI.
                         EnforceEndStates(FirstMove)
                         'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
-                        If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GameRunning Then TempPGNMove &= "+"
+                        If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GameRunning AndAlso TempPGNMove.Last() <> "+" Then TempPGNMove &= "+"
                         BoardHistory.PushPGN(TempPGNMove)
 
                         FirstMove = False
@@ -907,7 +843,7 @@ Partial Public Class Chess 'ew- danny
     'Subroutine that makes a move on the board, given coordinates. Includes castling (& rights) and pawn promotion.
     'Note: This algorithm is very similar to the MakeMove subroutine in the CoreMethods Class, however here material
     'count is not taken into account, and there is an option for sounds to be played when a move is made. This is removed
-    'in the CoreMethods version of this algorithm for efficiency purposes for MiniMax (less IF statements).
+    'in the CoreMethods version of this algorithm for efficiency purposes for NegaMax (less IF statements).
     Private Sub MakeMove(ByVal Board(,) As Char, ByVal TempMove As Move, ByRef CanCastle As CanCastle, ByRef KPos As String, ByRef EnPassant As String, ByVal MakeSounds As Boolean)
         Dim OldCoorX As String = TempMove.OldMoveX
         Dim OldCoorY As String = TempMove.OldMoveY
@@ -921,7 +857,7 @@ Partial Public Class Chess 'ew- danny
             If TempPiece = "P" Then
                 'Code for Promoting Pawns and En Passant. Also increments the material count.
                 If NewCoorY = 0 Then
-                    TempPiece = If(TempMove.EndState = "", "Q", TempMove.EndState)
+                    TempPiece = If(TempMove.Code = "", "Q", TempMove.Code)
                 ElseIf NewCoorX & NewCoorY = EnPassant Then
                     Board(NewCoorX, 3) = " "
                     If MakeSounds Then Sound_Capture.Play()
@@ -955,7 +891,7 @@ Partial Public Class Chess 'ew- danny
             'Identical Code for the Black Pieces.
             If TempPiece = "p" Then
                 If NewCoorY = 7 Then
-                    TempPiece = If(TempMove.EndState = "", "q", LCase(TempMove.EndState))
+                    TempPiece = If(TempMove.Code = "", "q", LCase(TempMove.Code))
                 ElseIf NewCoorX & NewCoorY = EnPassant Then
                     Board(NewCoorX, 4) = " "
                     If MakeSounds Then Sound_Capture.Play()
@@ -1003,14 +939,13 @@ Partial Public Class Chess 'ew- danny
     'detect any of these end states, then it stops the game and/or notifies the user (depending on gamemode).
     Private Function EnforceEndStates(ByVal NormalMove As Boolean) As Char
         'Adds the new board position's hash value to the Game History.
-        MasterZobristValue = SharedAlgorithms.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+        MasterZobristValue = Helper.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant))
         BoardHistory.PushZobrist(MasterZobristValue, NormalMove) 'NormalMove specifies if the move is a move that the user or the AI has made,
         'or whether it is a move formed by, for example, undoing the board position. Depending on which it is, GameHistory will store
         'the previous state to its buffer (allowing the state to be undone, if needed).
 
-        Dim TempMove As New Move
-        TempMove = MainAI.CheckForEndState() 'Checks for endstates in the current position.
-        Select Case TempMove.EndState
+        Dim TempMove As Move = MainAI.CheckForEndState() 'Checks for endstates in the current position.
+        Select Case TempMove.Code
             Case "c" 'Position is checkmate.
                 If GeneralOptions(7) = "T" Then
                     'When I told Hammad that I had created "Hammad Mode" for him, he was annoyed that I didn't
@@ -1039,7 +974,7 @@ Partial Public Class Chess 'ew- danny
         'Draw by insufficient material is then checked for. In principle, if it is physically impossible for one
         'player to checkmate the other (such as king vs king, or king vs king + a knight / bishop), then the
         'position is delared 'dead' and the game ends in a draw.
-        Dim TempMaterialCount As UInt16() = SharedAlgorithms.CountMaterial(MasterBoard)
+        Dim TempMaterialCount As Integer() = Helper.CountMaterial(MasterBoard)
         If TempMaterialCount(0) + TempMaterialCount(1) = 0 Then 'only kings remain.
             CheckLabel.Text = "     Draw!     "
             If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
@@ -1047,7 +982,7 @@ Partial Public Class Chess 'ew- danny
             Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("The Game has Ended. Cause = Draw by Insufficient Material (K v K).")
             If GameMode < 3 Then NotifyGameEnd("d")
-        ElseIf TempMaterialCount(0) + TempMaterialCount(1) = SharedAlgorithms.ReturnPieceValue("B") Then 'could be king vs king + knight / bishop.
+        ElseIf TempMaterialCount(0) + TempMaterialCount(1) = GlobalConstants.PieceWeight.Bishop Then 'could be king vs king + knight / bishop.
             For y = 0 To 7
                 For x = 0 To 7
                     'scans for knights / bishops.
@@ -1063,7 +998,7 @@ Partial Public Class Chess 'ew- danny
                     End If
                 Next
             Next
-        ElseIf TempMaterialCount(0) = SharedAlgorithms.ReturnPieceValue("B") AndAlso TempMaterialCount(1) = SharedAlgorithms.ReturnPieceValue("B") Then 'only possibility is king + bishop vs king + bishop (of same type).
+        ElseIf TempMaterialCount(0) = GlobalConstants.PieceWeight.Bishop AndAlso TempMaterialCount(1) = GlobalConstants.PieceWeight.Bishop Then 'only possibility is king + bishop vs king + bishop (of same type).
             Dim NoOfBishopsFound As SByte
             Dim BishopType As Boolean 'True = Light, False = Dark
             For y = 0 To 7
@@ -1111,13 +1046,14 @@ Partial Public Class Chess 'ew- danny
             Console.WriteLine("The Game has Ended. Cause = Draw by Three-fold Repetition.")
             If GameMode < 3 Then NotifyGameEnd("d")
         End If
-        Return TempMove.EndState
+        Return TempMove.Code
     End Function
 
     'Notifies the user if the game has concluded - giving them an appropriate message and an option to play again.
     'If they deny, then they are sent back to the main menu.
     Private Sub NotifyGameEnd(ByVal EndState As Char)
-        Console.ResetColor()
+        Me.Text = GlobalConstants.ProgramName 'Resets Program Name.
+        Console.ForegroundColor = ConsoleColor.White
         Dim Text As String
         If GameMode = 1 Then
             If EndState = "c" Then
@@ -1157,6 +1093,7 @@ Partial Public Class Chess 'ew- danny
         Dim UserOption As Byte = MsgBox(Text & vbCr & "Would you Like to Play Again?", vbInformation + vbYesNoCancel + vbApplicationModal)
         If UserOption = 6 Then
             'User wants to play again - reset the board.
+            If GameMode = 0 Then ManuallyDisconnectFromInterface() 'User wants to play again - abort the Interface Connection.
             Reset_Btn_Click()
             PreviousFEN = CurrentFEN
         ElseIf UserOption = 7 Then 'Quit.

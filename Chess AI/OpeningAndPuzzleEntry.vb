@@ -15,9 +15,11 @@
 
 'Class that holds a position in my Opening Book. Contains the FEN string for the position, along with all the moves which stem from that
 'position (along with how frequently they occur)
+Imports System.Reflection
+
 Public Class OpeningBookEntry
-    Private FEN As String
-    Private Details As String
+    Private ReadOnly FEN As String
+    Private ReadOnly Details As String
     Private HasBeenComputed As Boolean
 
     Private Count As UInt32 'Total number of times this position has been reached in the book.
@@ -93,6 +95,7 @@ Public Class OpeningBookEntry
             If WeightedMoveCountIndex >= RNDValue Then Return MoveList(n) 'Move has been selected.
             RNDValue -= WeightedMoveCountIndex
         Next
+        Return ""
     End Function
 
 End Class
@@ -105,8 +108,8 @@ End Class
 'searching for a random puzzle - the puzzle database is sorted by rating), the puzzle's FEN, and the set of puzzle moves (note: 
 'the 2nd move of MoveList is the first puzzle move to find).
 Public Class PuzzleEntry
-    Private Rating As Int16
-    Private Details As String
+    Private ReadOnly Rating As Int16
+    Private ReadOnly Details As String
     Private HasBeenComputed As Boolean
 
     Private FEN As String
@@ -132,12 +135,13 @@ Public Class PuzzleEntry
         'Constructs the moves from the string of puzzle moves, then adds this to the MoveList attribute.
         Dim TempMove As Move
         For Each Entry In MoveInfo
-            TempMove = New Move
-            TempMove.OldMoveX = Entry(0)
-            TempMove.OldMoveY = Entry(1)
-            TempMove.NewMoveX = Entry(3)
-            TempMove.NewMoveY = Entry(4)
-            If Entry.Length > 5 Then TempMove.EndState = UCase(Entry(Entry.Length - 1)) 'Adds promotion flag to move, if needed.
+            TempMove = New Move With {
+                .OldMoveX = Entry(0),
+                .OldMoveY = Entry(1),
+                .NewMoveX = Entry(3),
+                .NewMoveY = Entry(4)
+            }
+            If Entry.Length > 5 Then TempMove.Code = UCase(Entry(Entry.Length - 1)) 'Adds promotion flag to move, if needed.
             MoveList.Add(TempMove)
         Next
 
@@ -152,15 +156,15 @@ Public Class PuzzleEntry
         Return FEN
     End Function
 
-    Public Function GetMove(ByVal Index As Byte)
+    Public Function GetMove(ByVal Index As Byte) As Move
         'Retrieves a specific move in the list.
-        Return MoveList(Index)
+        Return If(HasBeenComputed, MoveList(Index), Nothing)
     End Function
     Public Function GetAllMoves() As List(Of Move)
-        Return MoveList
+        Return If(HasBeenComputed, MoveList, Nothing)
     End Function
     Public Function GetMoveCount() As Byte
-        Return MoveList.Count
+        Return If(HasBeenComputed, MoveList.Count, Nothing)
     End Function
 
 End Class

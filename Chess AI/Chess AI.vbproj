@@ -68,6 +68,9 @@
   <PropertyGroup>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -109,11 +112,19 @@
     <Compile Include="Chess_GUIObjects.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Chess_RemoteMode.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Chess_TrainingModules.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="CoreMethods.vb" />
     <Compile Include="GameHistory.vb" />
+    <Compile Include="My Project\Resources2.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="OpeningAndPuzzleEntry.vb" />
     <Compile Include="OnePlayerCustomisation.Designer.vb">
       <DependentUpon>OnePlayerCustomisation.vb</DependentUpon>
@@ -186,6 +197,7 @@
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
       <CustomToolNamespace>My.Resources</CustomToolNamespace>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources2.Designer.vb</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Settings.resx">
       <DependentUpon>Settings.vb</DependentUpon>
@@ -201,6 +213,7 @@
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>
     </None>
+    <None Include="app.manifest" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>

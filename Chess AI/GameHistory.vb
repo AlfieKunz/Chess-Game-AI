@@ -3,12 +3,12 @@
 Public Class GameHistory
 
     'Stacks for the Zobrist values. 'Buffer' holds the GameHistory of the previous position (used in case the user undos their move).
-    Private ZobristMain(GlobalConstants.MaxPositionsPerGame - 1) As UInt64
-    Private ZobristBuffer(GlobalConstants.MaxPositionsPerGame - 1) As UInt64
+    Private ReadOnly ZobristMain(GlobalConstants.MaxPositionsPerGame - 1) As UInt64
+    Private ReadOnly ZobristBuffer(GlobalConstants.MaxPositionsPerGame - 1) As UInt64
 
     'Stacks for the PGN values.
-    Private PGNMain(GlobalConstants.MaxPositionsPerGame - 1) As String
-    Private PGNBuffer(GlobalConstants.MaxPositionsPerGame - 1) As String
+    Private ReadOnly PGNMain(GlobalConstants.MaxPositionsPerGame - 1) As String
+    Private ReadOnly PGNBuffer(GlobalConstants.MaxPositionsPerGame - 1) As String
 
     Private MainSize, BufferSize As UInt16 '= Index of last item + 1
 
@@ -21,7 +21,7 @@ Public Class GameHistory
     Public Sub Swap()
         Dim TempZobrist(1023) As UInt64
         Dim TempPGN(1023) As String
-        Dim TempSize As Int16
+        Dim TempSize As UInt16
         Array.Copy(ZobristMain, TempZobrist, MainSize)
         Array.Copy(PGNMain, TempPGN, MainSize)
         TempSize = MainSize
@@ -49,11 +49,11 @@ Public Class GameHistory
         If MainSize < GlobalConstants.MaxPositionsPerGame - 1 Then
             If MoveArray Then Move()
             ZobristMain(MainSize) = Value
-            MainSize += 1
+            MainSize += 1US
         Else
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error when adding Position Data to GameHistory: Array Full.")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
         End If
     End Sub
 
@@ -67,7 +67,7 @@ Public Class GameHistory
     'Function that removes the lastly-added position (FIFO structure) from the GameHistory array.
     Public Function PopZobrist() As UInt64
         If MainSize > 0 Then
-            MainSize -= 1
+            MainSize -= 1US
             Return ZobristMain(MainSize)
         Else 'The array is empty.
             Return 0
@@ -75,12 +75,12 @@ Public Class GameHistory
     End Function
 
     'Function that checks how many times the input Zobrist Key is present in the GameHistory array (used to enforce three-fold repetition).
-    Public Function CheckNoOfZobristOccurances(ByVal Value As UInt64) As Byte
+    Public Function CheckNoOfZobristOccurances(ByVal Value As UInt64) As Int16
         CheckNoOfZobristOccurances = 0
         For n = 0 To MainSize - 1
             If ZobristMain(n) = Value Then
-                CheckNoOfZobristOccurances += 1
-                If CheckNoOfZobristOccurances = 3 Then Exit For 'There will never be >3 occurances, as if this were true then the game would end.
+                CheckNoOfZobristOccurances += 1S
+                If CheckNoOfZobristOccurances = 3S Then Exit For 'There will never be >3 occurances, as if this were true then the game would end.
             End If
         Next
     End Function
@@ -107,7 +107,7 @@ Public Class GameHistory
                 If n Mod 2 = 1 Then GetFormattedPGNString &= (n \ 2 + 1) & ". "
                 GetFormattedPGNString &= PGNMain(n) & " "
             Next
-            GetFormattedPGNString = GetFormattedPGNString.TrimEnd(" ")
+            GetFormattedPGNString = GetFormattedPGNString.TrimEnd(" "c)
             'If the game has been terminated, we add the # symbol at the end to represent this.
             If GameEnded Then GetFormattedPGNString &= "#"
         End If

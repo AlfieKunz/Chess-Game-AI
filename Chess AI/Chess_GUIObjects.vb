@@ -5,22 +5,30 @@ Imports System.Threading
 Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 
 'Class that holds all the methods referring to GUI controls in the Chess form (ie: buttons, text boxes, sliders, etc).
-Partial Public Class Chess
+Partial Public Class Chess 'GUI Objects
 
     Private OrientForWhite As Boolean = True 'Represents which way the board is flipped.
 
     'Below are the variables used in the Board Edit Mode, that form a backup of the current position
     '(in case the user cancels their edit).
-    Private BoardEditMode, BoardEditPlayerMove As Boolean
-    Private BoardEditBackup(7, 7) As Char
-    Private BoardEditInputBackup, BoardEditEnPassant As String
-    Private BoardEditWCanCastle As New CanCastle
-    Private BoardEditBCanCastle As New CanCastle
+    Public Structure BoardEditInfo
+        Public isEnabled, PlayerMove As Boolean
+        Public BoardBackup(,) As Char
+        Public InputBackup, EnPassant As String
+        Public WCanCastle As CanCastle
+        Public BCanCastle As CanCastle
+        Public CTRLKeyDown As Boolean
+    End Structure
+    Private BoardEdit As New BoardEditInfo With {
+        .BoardBackup = New Char(7, 7) {},
+        .WCanCastle = New CanCastle,
+        .BCanCastle = New CanCastle
+    }
 
     'Sends the FEN a user types in to be converted & displayed.
     Private Sub InputButton_Click() Handles InputButton.Click
         InputTextBox.Text = InputTextBox.Text.Trim(" ")
-        If InputTextBox.Text <> "" AndAlso InputTextBox.Text <> CurrentFEN AndAlso Not ComputerIsSearching Then
+        If Not (InputTextBox.Text = "" OrElse InputTextBox.Text = CurrentFEN OrElse ComputerIsSearching OrElse PieceIsMoving) Then
             'Checks for first form of validation (if the 2nd letter is "o", then that usually implies that 
             'the TextBox contains an error message.
             If InputTextBox.Text.Length > 1 AndAlso InputTextBox.Text(1) <> "o" Then
@@ -31,24 +39,23 @@ Partial Public Class Chess
                     EnterMovesIntoSystem(InputTextBox.Text, True, True)
                 ElseIf FENErrorDetection(InputTextBox.Text, True, "") Then 'Is a Valid FEN.
                     If UndoFENChange.Visible = True Then UndoFENChange.Visible = False
-
                     Dim TempFEN As String = PreviousFEN
                     'Try displaying the FEN on the board graphically. If this fails, then the FEN is invalid.
                     'In this case, the board is reset to the previous position.
                     Try
                         PreviousFEN = CurrentFEN
-                        MasterBoard = SharedAlgorithms.FENConverter(InputTextBox.Text, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-                        DisplayPieces()
+                        MasterBoard = Helper.FENConverter(InputTextBox.Text, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                        AnimateBoard(PreviousFEN)
                     Catch ex As Exception
                         InvalidInput = InputTextBox.Text
                         PreviousFEN = TempFEN
-                        MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                        MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                         DisplayPieces()
                         UndoFENChange.Visible = True
-                        InputTextBox.Text = "Position Rejected - Invalid FEN Code. Please Input a Genuinine FEN and try again."
+                        InputTextBox.Text = "Position Rejected - Invalid FEN Code (" & ex.Message.TrimEnd("."c) & "). Please Input a Genuinine FEN and try again."
                     End Try
 
-                    If UndoFENChange.Visible = False Then AcceptFENIntoSystem(InputTextBox.Text, True)
+                    If UndoFENChange.Visible = False Then AcceptFENIntoSystem(InputTextBox.Text, False)
                 End If
             End If
         End If
@@ -76,17 +83,17 @@ Partial Public Class Chess
         'Resets Check and Castling Properties.
         MasterWInCheck = 0
         MasterBInCheck = 0
-        SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
-        SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+        Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+        Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
         'Final logical detection of invalid board positions.
         If Not CheckForInvalidGameStates() AndAlso GeneralOptions(0) = "T" Then Sound_Move.Play()
         CheckChecker(False)
 
         'Recalibrates AI and resets AI move info.
         MainAI.Reconfigure(CurrentFEN, True)
-        CurrentDepth = 2
-        CurrentMove = "-"
-        CurrentEvaluation = "-"
+        AIHandles.CurrentDepth = 2
+        AIHandles.CurrentMove = "-"
+        AIHandles.CurrentEvaluation = "-"
         CurrentAIDepth.Text = "Current Depth: -"
         CurrentAIMove.Text = "Current Move: -"
         CurrentAIEval.Text = "Evaluation: -"
@@ -105,7 +112,7 @@ Partial Public Class Chess
 
     'Resets the board to the starting position and sets white to move.
     Private Sub Reset_Btn_Click() Handles Reset_Btn.Click
-        If Not (ComputerIsSearching OrElse (CurrentFEN = StartingFEN AndAlso GameRunning)) Then
+        If Not (ComputerIsSearching OrElse PieceIsMoving OrElse (CurrentFEN = StartingFEN AndAlso GameRunning)) Then
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
             PreviousFEN = CurrentFEN
             CurrentFEN = StartingFEN
@@ -113,7 +120,7 @@ Partial Public Class Chess
             MasterWInCheck = 0
             MasterBInCheck = 0
             'Can assume that the StartingFEN is valid, so we display it graphically.
-            MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+            MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
             'Edits location of Previously Used Squares.
             SquareHistory(2, 0) = SquareHistory(0, 0)
             SquareHistory(2, 1) = SquareHistory(0, 1)
@@ -126,13 +133,22 @@ Partial Public Class Chess
             Checkerboard.Refresh()
             'Resets TrueFalse Table, then check for Checks.
             If PlayerTurn Then
-                SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
             Else
-                SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
             End If
-            DisplayPieces()
+            AnimateBoard(PreviousFEN)
             CheckChecker(False)
-            If (PlayerTurn Xor OrientForWhite) AndAlso Not (GameMode = 1 AndAlso (UserPlayer Xor Not OrientForWhite)) Then FlipBoard()
+
+            Select Case GameMode
+                Case 0
+                    FlipBoard()
+                Case 1
+                    If UserPlayer Xor OrientForWhite Then FlipBoard()
+                Case Else
+                    If PlayerTurn Xor OrientForWhite Then FlipBoard()
+            End Select
+
             GameRunning = True
             If GameMode < 3 Then
                 InputTextBox.Text = StartingFEN
@@ -141,9 +157,9 @@ Partial Public Class Chess
 
             'Recalibrates AI and resets AI move info.
             MainAI.Reconfigure(CurrentFEN, True)
-            CurrentDepth = 2
-            CurrentMove = "-"
-            CurrentEvaluation = "-"
+            AIHandles.CurrentDepth = 2
+            AIHandles.CurrentMove = "-"
+            AIHandles.CurrentEvaluation = "-"
             CurrentAIDepth.Text = "Current Depth: -"
             CurrentAIMove.Text = "Current Move: -"
             CurrentAIEval.Text = "Evaluation: -"
@@ -191,7 +207,7 @@ Partial Public Class Chess
     Private Sub UndoMove_Click() Handles UndoMove.Click
         'If CurrentFEN = PreviousFEN then it is implied that it is the starting position.
         'The user should not be able to undo in this circumstance.
-        If Not ComputerIsSearching AndAlso Not (CurrentFEN = PreviousFEN) Then
+        If Not (ComputerIsSearching OrElse PieceIsMoving OrElse (CurrentFEN = PreviousFEN)) Then
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
             If AIIsSearchingOnUsersTurn Then MainAI.ABORTSearch()
             Dim TempSH(1, 1) As SByte 'Temp Square History array.
@@ -201,8 +217,8 @@ Partial Public Class Chess
             MasterWInCheck = 0
             MasterBInCheck = 0
             'Converts the FEN to a board position, and displays it.
-            MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-            DisplayPieces()
+            MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+            AnimateBoard(PreviousFEN)
             'Swaps location of Previously Used Squares.
             Array.Copy(SquareHistory, TempSH, 4)
             SquareHistory(0, 0) = SquareHistory(2, 0)
@@ -222,9 +238,9 @@ Partial Public Class Chess
             GameRunning = True
             'Resets TrueFalse Tables, then checks for Checks.
             If PlayerTurn Then
-                SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
             Else
-                SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
             End If
             If GeneralOptions(0) = "T" Then Sound_Move.Play()
             CheckChecker(False)
@@ -253,27 +269,18 @@ Partial Public Class Chess
         If Not ComputerIsSearching Then
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
 
-            If Not BoardEditMode Then
+            If Not BoardEdit.isEnabled Then
                 'Creates a backup of the baord, then erases it (new position containing only kings in their starting positions).
-                Array.Copy(MasterBoard, BoardEditBackup, 64)
-                For y = 0 To 7
-                    For x = 0 To 7
-                        MasterBoard(x, y) = " "
-                    Next
-                Next
-                MasterBoard(4, 0) = "k"
-                MasterBoard(4, 7) = "K"
+                Array.Copy(MasterBoard, BoardEdit.BoardBackup, 64)
+                'Clears check information, then calibrates the GUI ready for BoardEditHandles.BoardEditMode.
+                If MasterWInCheck >= 128 Then WK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WKing.png")
+                If MasterBInCheck >= 128 Then BK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\BKing.png")
 
-                'Clears check information, then calibrates the GUI ready for BoardEditMode.
-                If MasterWInCheck >= 128 Then WK1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WKing.png")
-                If MasterBInCheck >= 128 Then BK1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\BKing.png")
-
-                DisplayPieces()
                 CalibrateBoardEditorObjectHandling()
             Else
                 'Attempt to submit the user's FEN into the system. If it is invalid, an appropriate message is displayed.
                 If FENErrorDetection(InputTextBox.Text, False, FENErrorMessage) Then
-                    MasterBoard = SharedAlgorithms.FENConverter(InputTextBox.Text, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                    MasterBoard = Helper.FENConverter(InputTextBox.Text, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                     AcceptFENIntoSystem(InputTextBox.Text, False) 'Assume the FEN is valid = submit it into the system.
                     CalibrateBoardEditorObjectHandling() 'Resets the GUI to its original layout.
                 Else
@@ -288,14 +295,15 @@ Partial Public Class Chess
 
     'Subroutine that acts as the 'Cancel' Button for the Board Edit Mode.
     Private Sub BoardEditCancelBtn_Click() Handles BoardEditCancelBtn.Click
+        Dim OldFEN As String = InputTextBox.Text
         CalibrateBoardEditorObjectHandling()
         'Reconstructs MasterBoard from its backup, and recalibrates the GUI & its current position.
-        Array.Copy(BoardEditBackup, MasterBoard, 64)
+        Array.Copy(BoardEdit.BoardBackup, MasterBoard, 64)
         If GeneralOptions(4) = "T" Then
-            If MasterWInCheck >= 128 Then WK1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WKingCheck.png")
-            If MasterBInCheck >= 128 Then BK1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\BKingCheck.png")
+            If MasterWInCheck >= 128 Then WK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WKingCheck.png")
+            If MasterBInCheck >= 128 Then BK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\BKingCheck.png")
         End If
-        DisplayPieces()
+        AnimateBoard(OldFEN)
     End Sub
 
     'Method that handles the core GUI changes due to the Board Edit Mode.
@@ -305,38 +313,44 @@ Partial Public Class Chess
     CurrentAIEval, UserTimeBar, UserTimeBox, QuiescenceBox, PieceHeatMapBox, UseBook, AIEndlessMode}
         Dim ObjectsToDisable() As Object = {Reset_Btn, InputButton, FENExport, PGNExport, UndoMove, NodeTestBtn}
         For Each Item In ObjectsToRemove
-            Item.Visible = BoardEditMode
+            Item.Visible = BoardEdit.isEnabled
         Next
-        If AIEndlessMode.Checked Then AutoResetter.Visible = BoardEditMode
+        If AIEndlessMode.Checked Then AutoResetter.Visible = BoardEdit.isEnabled
         For Each Item In ObjectsToDisable
-            Item.Enabled = BoardEditMode
+            Item.Enabled = BoardEdit.isEnabled
         Next
 
-        BoardEditMode = Not BoardEditMode
-        BoardEditPanel.Visible = BoardEditMode
+        BoardEdit.isEnabled = Not BoardEdit.isEnabled
+        BoardEditPanel.Visible = BoardEdit.isEnabled
+        InputTextBox.ReadOnly = BoardEdit.isEnabled
 
-        If BoardEditMode Then
+        If BoardEdit.isEnabled Then
             'Shows the Board Edit Buttons (Save & Cancel Changes), along with all the core controls to this mode.
             BoardEditorBtn.Width = 90
             BoardEditCancelBtn.Visible = True
+            BoardEditDiscardBtn.Visible = True
             BoardEditorBtn.Text = "Save Changes:"
             Checkerboard.Width += 225 'We increase the Width of Checkerboard, as we will be needing to place the template pieces to it's right.
             ExitBtn.Top += 15
 
-            BoardEditInputBackup = InputTextBox.Text
-            BoardEditWhiteMove.Checked = True
-            BoardEditWKSBox.Checked = True
-            BoardEditWQSBox.Checked = True
-            BoardEditBKSBox.Checked = True
-            BoardEditBQSBox.Checked = True
+            BoardEdit.InputBackup = InputTextBox.Text
 
-            'Resets the backup board attributes for the base position set in Board Edit Mode.
-            BoardEditPlayerMove = True
-            BoardEditWCanCastle.CanCastle()
-            BoardEditBCanCastle.CanCastle()
-            BoardEditEnPassant = "-"
+            'Copies data from the current position.
+            BoardEditWhiteMove.Checked = PlayerTurn
+            BoardEditBlackMove.Checked = Not PlayerTurn
+            BoardEditWKSBox.Checked = MasterWCanCastle.KS
+            BoardEditWQSBox.Checked = MasterWCanCastle.QS
+            BoardEditBKSBox.Checked = MasterBCanCastle.KS
+            BoardEditBQSBox.Checked = MasterBCanCastle.QS
 
-            InputTextBox.Text = "5k3/8/8/8/8/8/8/5K3 w KQkq - 0 1"
+            'Resets the backup board attributes for the current position.
+            BoardEdit.PlayerMove = PlayerTurn
+            BoardEdit.WCanCastle.CopyFrom(MasterWCanCastle)
+            BoardEdit.BCanCastle.CopyFrom(MasterBCanCastle)
+            BoardEdit.EnPassant = MasterEnPassant
+            If MasterEnPassant <> "-" Then HandleBoardEditEnPassantClick(Val(MasterEnPassant(0)), Val(MasterEnPassant(1)))
+
+            InputTextBox.Text = CurrentFEN
 
             'Adds template pieces (one of each type) to the right of Checkerboard - allowing the user to drag pieces onto the board.
             Dim NewPiece As PictureBox
@@ -356,10 +370,11 @@ Partial Public Class Chess
             'Removes all Board Edit Mode GUI objects, and resets the checkerboard to its normal size.
             BoardEditorBtn.Width = 194
             BoardEditCancelBtn.Visible = False
+            BoardEditDiscardBtn.Visible = False
             BoardEditorBtn.Text = "Board Editor Mode:"
             Checkerboard.Width -= 225
             ExitBtn.Top -= 15
-            InputTextBox.Text = BoardEditInputBackup
+            InputTextBox.Text = BoardEdit.InputBackup
             ResetLMS(False)
 
             'Removes all template pieces.
@@ -374,30 +389,67 @@ Partial Public Class Chess
         Checkerboard.Refresh()
     End Sub
 
+    'Subroutine that sets the BoardEdit board to the base position (ie: that with only 2 kings).
+    Private Sub BoardEditDiscardBtn_Click() Handles BoardEditDiscardBtn.Click
+        'Sets the board, and the FEN.
+        For y = 0 To 7
+            For x = 0 To 7
+                MasterBoard(x, y) = " "
+            Next
+        Next
+        MasterBoard(4, 0) = "k"
+        MasterBoard(4, 7) = "K"
+        InputTextBox.Text = "4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1"
+
+        'Resets the backup board attributes for the base position set in Board Edit Mode.
+        BoardEditWhiteMove.Checked = True
+        BoardEditWKSBox.Checked = True
+        BoardEditWQSBox.Checked = True
+        BoardEditBKSBox.Checked = True
+        BoardEditBQSBox.Checked = True
+
+        BoardEdit.PlayerMove = True
+        BoardEdit.WCanCastle.CanCastle()
+        BoardEdit.BCanCastle.CanCastle()
+        If BoardEdit.EnPassant <> "-" Then BoardEdit.EnPassant = "-" : ResetLMS(True) 'Updates EnPassant Square flag (if it is set).
+
+        DisplayPieces()
+    End Sub
+
+    'Subroutines that handle when the CTRL key is pressed in BoardEdit Mode. If the user has a piece in their hands, they may be wanting to copy it (note
+    'that the HandleBoardEditHandles.BoardEditModeCopy sub only runs when the mouse is actually moved; if the piece is static then no copying will be done).
+    Private Sub BoardEditCTRLDown(sender As Object, e As KeyEventArgs) Handles MyBase.KeyDown
+        If BoardEdit.isEnabled AndAlso e.Control AndAlso Not BoardEdit.CTRLKeyDown Then
+            'User is holding the CTRL key in BoardEdit mode. 
+            BoardEdit.CTRLKeyDown = True 'Makes sure no more iterations can run.
+            If PieceMoving.IsMovingPiece Then HandleBoardEditModeCopy(PieceMoving.Piece)
+        End If
+    End Sub
+    Private Sub BoardEditCTRLUp(sender As Object, e As KeyEventArgs) Handles MyBase.KeyUp
+        If BoardEdit.CTRLKeyDown AndAlso e.KeyCode = Keys.ControlKey Then BoardEdit.CTRLKeyDown = False 'Resets the Key Controls when the key is lifted.
+    End Sub
+
 
 
     'Below are all the handles for editing with the board, its pieces, and its parameters, for the Board Edit Mode.
     Private Sub HandleBoardEditModeDrop(ByVal Piece As PictureBox, ByVal SnapPieceLocation As Point, ByVal OldPosition As Point)
         'Subroutine for handling a piece being dropped onto the board (or off the board).
-        Dim CoorX As SByte = SnapPieceLocation.X / 75
-        Dim CoorY As SByte = SnapPieceLocation.Y / 75
+        Dim CoorX As SByte = SnapPieceLocation.X \ 75
+        Dim CoorY As SByte = SnapPieceLocation.Y \ 75
         If Not OrientForWhite Then CoorX = 7 - CoorX : CoorY = 7 - CoorY
+        Dim ValidMove As Boolean = True
 
         'If the piece is not within the confines of the board, remove it (unless it is a king, which cannot be removed).
         If CoorX >= 0 AndAlso CoorY >= 0 AndAlso CoorX < 8 AndAlso CoorY < 8 Then
 
             If Piece.Name(1) = "P" AndAlso (CoorY = 0 OrElse CoorY = 7) Then
                 'The user is attempting to place a pawn on the 1st or 8th row (which is illegal) - move the pawn back.
-                Piece.Location = OldPosition
-                Exit Sub
-            End If
-
-            If MasterBoard(CoorX, CoorY) <> " " Then
+                ValidMove = False
+            ElseIf MasterBoard(CoorX, CoorY) <> " " Then
 
                 If UCase(MasterBoard(CoorX, CoorY)) = "K" Then
                     'The user is attempting to capture a king - move the attacking piece back.
-                    Piece.Location = OldPosition
-                    Exit Sub
+                    ValidMove = False
                 Else
                     'The capture move is legit - remove the captured piece from the board.
                     For Each Box In PieceArray
@@ -408,29 +460,35 @@ Partial Public Class Chess
                         End If
                     Next
                 End If
-
             End If
-            'Snap the moved piece at its new location, then save this to MasterBoard.
-            Piece.Location = SnapPieceLocation
-            If OldPosition.X < 600 Then MasterBoard(OldPosition.X / 75, OldPosition.Y / 75) = " "
-            MasterBoard(CoorX, CoorY) = If(Piece.Name(0) = "W", Piece.Name(1), LCase(Piece.Name(1)))
-
-            'Checks to see if the En-Passant Square is still legal (eg: the capturing pawn may have been captured).
-            'If not, remove the En-Passant Square.
-            If BoardEditEnPassant <> "-" AndAlso Not SharedAlgorithms.CheckEnPassantSquareIsLegal(MasterBoard, BoardEditEnPassant, BoardEditPlayerMove) Then
-                BoardEditEnPassant = "-"
-                ResetLMS(True)
+            If ValidMove Then
+                'Snap the moved piece at its new location, then save this to MasterBoard.
+                Piece.Location = SnapPieceLocation
+                'If OldPosition.X < 600 Then MasterBoard(OldPosition.X \ 75, OldPosition.Y \ 75) = " "
+                MasterBoard(CoorX, CoorY) = If(Piece.Name(0) = "W", Piece.Name(1), LCase(Piece.Name(1)))
             End If
-            'Puts the user's custom position's FEN into the FEN box, so that the user can copy it easily.
-            InputTextBox.Text = SharedAlgorithms.ConvertToFEN(MasterBoard, BoardEditWCanCastle, BoardEditBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(BoardEditEnPassant), BoardEditPlayerMove)
 
         ElseIf Piece.Name(1) = "K" Then
-            Piece.Location = OldPosition
+            ValidMove = False
         Else
             'The piece has left the confines of the board - remove it.
             Piece.Visible = False
             Piece.Location = New Point(-100, -100)
-            If OldPosition.X < 600 Then MasterBoard(OldPosition.X / 75, OldPosition.Y / 75) = " " : InputTextBox.Text = SharedAlgorithms.ConvertToFEN(MasterBoard, BoardEditWCanCastle, BoardEditBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(BoardEditEnPassant), BoardEditPlayerMove)
+        End If
+
+        If ValidMove Then
+            'Checks to see if the En-Passant Square is still legal (eg: the capturing pawn may have been captured).
+            'If not, remove the En-Passant Square.
+            If BoardEdit.EnPassant <> "-" AndAlso Not Helper.CheckEnPassantSquareIsLegal(MasterBoard, BoardEdit.EnPassant, BoardEdit.PlayerMove) Then
+                BoardEdit.EnPassant = "-"
+                ResetLMS(True)
+            End If
+
+            'Puts the user's custom position's FEN into the FEN box, so that the user can copy it easily.
+            InputTextBox.Text = Helper.ConvertToFEN(MasterBoard, BoardEdit.WCanCastle, BoardEdit.BCanCastle, Helper.ConvertStringToBitCoor(BoardEdit.EnPassant), BoardEdit.PlayerMove)
+        Else
+            Piece.Location = OldPosition
+            If OldPosition.X < 600 Then MasterBoard(OldPosition.X \ 75, OldPosition.Y \ 75) = If(Piece.Name(0) = "W", Piece.Name(1), LCase(Piece.Name(1)))
         End If
 
         Checkerboard.Refresh()
@@ -445,7 +503,7 @@ Partial Public Class Chess
         'Only allow the user to copy their piece if it is within the confines of the board, and if they are not trying to copy a piece over a king.
         If (CoorX >= 0 AndAlso CoorY >= 0 AndAlso CoorX < 8 AndAlso CoorY < 8) AndAlso Piece.Name(1) <> "K" Then
             Dim PieceSymbol As Char = If(Piece.Name(0) = "W", Piece.Name(1), LCase(Piece.Name(1)))
-            If MasterBoard(CoorX, CoorY) = " " OrElse Not (MasterBoard(CoorX, CoorY) = PieceSymbol OrElse UCase(MasterBoard(CoorX, CoorY)) = "K") Then
+            If MasterBoard(CoorX, CoorY) = " " OrElse Not (UCase(MasterBoard(CoorX, CoorY)) = "K") Then
                 'Stops the user from placing pawns on invalid ranks (rank 1 & rank 8).
                 If Not (Piece.Name(1) = "P" AndAlso (CoorY = 0 OrElse CoorY = 7)) Then
                     'Creates a new cloned piece, based on the template piece that the user is holding.
@@ -466,9 +524,9 @@ Partial Public Class Chess
 
                     MasterBoard(CoorX, CoorY) = PieceSymbol
                     'Checks to see if EnPassant is still legal. If not, remove it.
-                    If BoardEditEnPassant <> "-" AndAlso Not SharedAlgorithms.CheckEnPassantSquareIsLegal(MasterBoard, BoardEditEnPassant, BoardEditPlayerMove) Then BoardEditEnPassant = "-" : ResetLMS(True)
+                    If BoardEdit.EnPassant <> "-" AndAlso Not Helper.CheckEnPassantSquareIsLegal(MasterBoard, BoardEdit.EnPassant, BoardEdit.PlayerMove) Then BoardEdit.EnPassant = "-" : ResetLMS(True)
                     'Puts the user's custom position's FEN into the FEN box.
-                    InputTextBox.Text = SharedAlgorithms.ConvertToFEN(MasterBoard, BoardEditWCanCastle, BoardEditBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(BoardEditEnPassant), BoardEditPlayerMove)
+                    InputTextBox.Text = Helper.ConvertToFEN(MasterBoard, BoardEdit.WCanCastle, BoardEdit.BCanCastle, Helper.ConvertStringToBitCoor(BoardEdit.EnPassant), BoardEdit.PlayerMove)
                 End If
             End If
         End If
@@ -480,27 +538,27 @@ Partial Public Class Chess
         'Enable / Disable the BoardEdit board info, depending on the check state of the GUI parameters.
         Select Case sender.Name
             Case "BoardEditWhiteMove", "BoardEditBlackMove"
-                BoardEditPlayerMove = BoardEditWhiteMove.Checked
+                BoardEdit.PlayerMove = BoardEditWhiteMove.Checked
             Case "BoardEditWKSBox"
-                BoardEditWCanCastle.KS = BoardEditWKSBox.Checked
+                BoardEdit.WCanCastle.KS = BoardEditWKSBox.Checked
             Case "BoardEditWQSBox"
-                BoardEditWCanCastle.QS = BoardEditWQSBox.Checked
+                BoardEdit.WCanCastle.QS = BoardEditWQSBox.Checked
             Case "BoardEditBKSBox"
-                BoardEditBCanCastle.KS = BoardEditBKSBox.Checked
+                BoardEdit.BCanCastle.KS = BoardEditBKSBox.Checked
             Case "BoardEditBQSBox"
-                BoardEditBCanCastle.QS = BoardEditBQSBox.Checked
+                BoardEdit.BCanCastle.QS = BoardEditBQSBox.Checked
         End Select
 
         'Updates the user's current FEN onto the FEN text box, to represent these updated parameters.
-        InputTextBox.Text = SharedAlgorithms.ConvertToFEN(MasterBoard, BoardEditWCanCastle, BoardEditBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(BoardEditEnPassant), BoardEditPlayerMove)
+        InputTextBox.Text = Helper.ConvertToFEN(MasterBoard, BoardEdit.WCanCastle, BoardEdit.BCanCastle, Helper.ConvertStringToBitCoor(BoardEdit.EnPassant), BoardEdit.PlayerMove)
     End Sub
 
     'Handle which allows the user to specify the location of the En-Passant square on the board. Contains error handling, so that the user
     'can only place the En-Passant square in a valid position.
     Private Sub HandleBoardEditEnPassantClick(ByVal XCoor As SByte, ByVal YCoor As SByte)
-        If SharedAlgorithms.CheckEnPassantSquareIsLegal(MasterBoard, XCoor & YCoor, BoardEditPlayerMove) Then
+        If Helper.CheckEnPassantSquareIsLegal(MasterBoard, XCoor & YCoor, BoardEdit.PlayerMove) Then
             'Assume the square is correct - edit the Board Edit parameters, then display this En-Passant square on the GUI (using a grey rectangle around this square).
-            BoardEditEnPassant = XCoor & YCoor
+            BoardEdit.EnPassant = XCoor & YCoor
             ResetLMS(False)
             'Highlights the En-Passant square on LMS.
             If OrientForWhite Then
@@ -510,21 +568,24 @@ Partial Public Class Chess
             End If
         Else
             'Resets the EnPassant information.
-            BoardEditEnPassant = "-"
+            BoardEdit.EnPassant = "-"
             ResetLMS(False)
         End If
         Checkerboard.Refresh()
         'Updates the user's FEN into the FEN box.
-        InputTextBox.Text = SharedAlgorithms.ConvertToFEN(MasterBoard, BoardEditWCanCastle, BoardEditBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(BoardEditEnPassant), BoardEditPlayerMove)
+        InputTextBox.Text = Helper.ConvertToFEN(MasterBoard, BoardEdit.WCanCastle, BoardEdit.BCanCastle, Helper.ConvertStringToBitCoor(BoardEdit.EnPassant), BoardEdit.PlayerMove)
     End Sub
+
 
 
 
 
     'Subroutine which rotates the board 180 degreees in favour of the other player.
     Private Sub FlipperButton_Click() Handles FlipperButton.Click
-        FlipBoard()
-        OutputDebugInfo()
+        If Not PieceIsMoving Then
+            FlipBoard()
+            OutputDebugInfo()
+        End If
     End Sub
     Private Sub FlipBoard()
         If ClickMoveMode Then ClickMoveMode = False : ResetLMS(False)
@@ -581,14 +642,25 @@ Partial Public Class Chess
     'Also updates TimeBox.
     Private Sub UserTimeBar_ValueChanged() Handles UserTimeBar.ValueChanged
         'Updates UserTimeBox.
-        UserTimeBox.Text = "Time For Search: " & Math.Max(UserTimeBar.Value / 2, 0.1) & " seconds."
-        'Gives the UserTimeBox a red highlight if the time allocated might not be enough for a search to complete (estimate).
-        If (SearchSettings.UseQuiescence AndAlso UserTimeBar.Value < 4) OrElse Not SearchSettings.UseQuiescence AndAlso UserTimeBar.Value < 2 Then
-            UserTimeBox.BackColor = Color.LightCoral
-        Else
-            UserTimeBox.BackColor = Color.WhiteSmoke
-        End If
-        TimeForSearch = Math.Max(UserTimeBar.Value / 2, 0.1)
+        Select Case UserTimeBar.Value
+            Case 0 'Lowest Possible Time For Search.
+                AIHandles.TimeForSearch = 0.1
+            Case < 20 'Between 0.25 and 5 seconds, increment in 0.25 seconds.
+                AIHandles.TimeForSearch = UserTimeBar.Value / 4
+            Case < 50 'Between 5 and 20 seconds, increment in 0.5 seconds.
+                AIHandles.TimeForSearch = (UserTimeBar.Value - 10) / 2
+            Case Else 'Between 20 and 30 seconds, increment in 1 second.
+                AIHandles.TimeForSearch = UserTimeBar.Value - 30
+        End Select
+        UserTimeBox.Text = $"Time For Search: {AIHandles.TimeForSearch} seconds."
+        ChangeUserTimeBarBackColour()
+    End Sub
+    'Method that gives the UserTimeBox a red highlight if the time allocated might not be enough for a search to complete (estimate).
+    Private Sub ChangeUserTimeBarBackColour()
+        Dim ThresholdValue As Integer = 1
+        If SearchSettings.UseQuiescence Then ThresholdValue += 3
+        If SearchSettings.UsePieceHeatMaps Then ThresholdValue += 2
+        UserTimeBox.BackColor = If(UserTimeBar.Value < Math.Min(ThresholdValue, 5), Color.LightCoral, Color.WhiteSmoke)
     End Sub
     'Subroutine that allows the user to enter in the time for the AI to search - the user's input
     'is reflected on the TimeBar and the TimeBox. Includes error detection.
@@ -601,7 +673,7 @@ Partial Public Class Chess
                     'Displays text box popup to user, where they can enter their time.
                     Temp = InputBox("Please input how long you want the AI to search for (in seconds):" & vbCrLf & vbCrLf & "Min Time = 0.1s, Max Time = 600s." & vbCrLf & "0 = Infinity (Indefinite Search)", "Time Inputter")
                     If Temp = "" OrElse Temp = " " Then 'Cancel / Exit button was pressed - abort.
-                        UserTime = TimeForSearch
+                        UserTime = AIHandles.TimeForSearch
                         Exit While
                     End If
                     UserTime = Math.Round(CDec(Temp), 1)
@@ -610,14 +682,14 @@ Partial Public Class Chess
                     Else 'Input was outside the given range - displays appropriate message.
                         If MsgBox("Invalid Number - Please make sure your input is in the correct range.", vbCritical + vbRetryCancel + vbApplicationModal) = 2 Then
                             'User has cancelled - revert back to original time.
-                            UserTime = TimeForSearch
+                            UserTime = AIHandles.TimeForSearch
                             Exit While
                         End If
                     End If
                 Catch ex As Exception 'Input was not a decimal / integer number - displays appropriate message.
                     If MsgBox("Invalid Entry - Please make sure that your input is in the correct format.", vbCritical + vbRetryCancel + vbApplicationModal) = 2 Then
                         'User has cancelled - revert back to original time.
-                        UserTime = TimeForSearch
+                        UserTime = AIHandles.TimeForSearch
                         Exit While
                     End If
                 End Try
@@ -632,7 +704,7 @@ Partial Public Class Chess
             Else
                 UserTimeBox.Text = "Time For Search: " & UserTime & " seconds."
             End If
-            TimeForSearch = UserTime
+            AIHandles.TimeForSearch = UserTime
         End If
         Me.ActiveControl = Nothing 'Stops the cursor from appearing in the box.
     End Sub
@@ -643,15 +715,12 @@ Partial Public Class Chess
         If QuiescenceBox.Checked Then SearchSettings.UseQuiescence = True : Else SearchSettings.UseQuiescence = False
         'Colours UserTimeBox red if the TimeForSearch setting the user has chosen is likely to not be enough time for the AI
         'to compelete a search in.
-        If (SearchSettings.UseQuiescence AndAlso UserTimeBar.Value < 4) OrElse Not SearchSettings.UseQuiescence AndAlso UserTimeBar.Value < 2 Then
-            UserTimeBox.BackColor = Color.LightCoral
-        Else
-            UserTimeBox.BackColor = Color.WhiteSmoke
-        End If
+        ChangeUserTimeBarBackColour()
     End Sub
     Private Sub PieceHeatMapBox_CheckedChanged() Handles PieceHeatMapBox.CheckedChanged
         'Toggles Piece Heat Maps depending on the state of the box.
         If PieceHeatMapBox.Checked Then SearchSettings.UsePieceHeatMaps = True : Else SearchSettings.UsePieceHeatMaps = False
+        ChangeUserTimeBarBackColour()
     End Sub
 
     'Subroutine that terminates the AI search, and displays on the board the AI's current move.
@@ -681,6 +750,7 @@ Partial Public Class Chess
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
             'Creates a new thread for the Node Test to run on, then starts the search.
             ComputerIsSearching = True
+            Me.Text = "[Running Test...]  " + GlobalConstants.ProgramName
             Dim NodeTestThread As New Task(AddressOf InstantiateNodeTest)
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency 'Relaxes garbage collection during the NegaMax search.
             NodeTestThread.Start()
@@ -699,6 +769,7 @@ Partial Public Class Chess
         'Stops the Node Test, then displays an appropriate message.
         MainAI.ABORTSearch()
         ComputerIsSearching = False
+        Me.Text = GlobalConstants.ProgramName
         GCSettings.LatencyMode = GCLatencyMode.Interactive 'Resets garbage collection mode.
         Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(("Node Test Terminated (by user).").PadRight(48) & vbCrLf)
@@ -718,10 +789,29 @@ Partial Public Class Chess
         End If
     End Sub
 
+    'Button that displays information about the training modes.
+    Private Function InfoBtn_Click() As MsgBoxResult Handles InfoBtn.Click
+        Select Case GameMode
+            Case 0
+                If MsgBox("Welcome to Remote Mode!" + vbCrLf + "In this mode, the program will attempt to locate an interactive chess interface on your screen, and interact with it either via human interaction, or via this program's AI." + vbCrLf + "Note that this program will have full control of your mouse during this mode - to temporarily suspent this control, please press the SHIFT key." + vbCrLf + vbCrLf + "For this feature to work as intended, please ensure that this program does not obstruct (in any way) the chess interface to control, the chess interface board is set to the provided FEN, and that all move animations & board highlights are turned off. The program will also work at its best with a simple board layout, and with 'Automatic Queen Promotion' turned off." + vbCrLf + vbCrLf + "WARNING: The use of this feature to play against other humans online (using this program's AI) is a bannable offence on most online chess websites. By using this feature, you take responsibility for any restrictions, bans, limits, etc that your account may face as a result." + vbCrLf + vbCrLf + "Do you want to proceed?", vbInformation + vbYesNo) = 6 Then
+                    Return MsgBoxResult.Yes
+                Else
+                    ExitBtn_Click()
+                End If
+            Case 4
+                Return MsgBox("• In this training mode, you will be given a chess position, where the side to move only has one winning move. You will need to find that winning move, and play it on the board." & vbCrLf & "• Getting a puzzle correct will increase your rating, getting it incorrect will decrease your rating." & vbCrLf & "• If you cannot find the move(s), you can either take a hint (which displays the piece to move, but will halve the potential rating gain), or give up to reveal the move." & vbCrLf & "• The AI will search on the position in the background, and (if the toggle is set to AI mode) will automatically play its moves on the board." & vbCrLf & "• The AI will be set to its maximum difficulty during its search." & vbCrLf & "• Note: when modifying settings, your changes will be implemented on the next move / puzzle." & vbCrLf & "• Please note that you can only reset the puzzle ratings once the current puzzle has been solved / deemed as being incorrect.", vbInformation + vbApplicationModal, "Instructions")
+            Case 5
+                Return MsgBox("• In this training game, you will be given a chess coordinate (in standard chess notation), and will be tasked with clicking the corresponding square on the chessboard as fast as you can." & vbCrLf & "• If you click the correct square, it will light up in green, and you will be given a new coordinate to click." & vbCrLf & "• Click the most coordinates you can in 20 seconds, and try to get a place on the leaderboard!" & vbCrLf & "• Clicking the 'Flip Board' button will rotate the board 180°, so that each coordinate will be from black's point of view.", vbInformation + vbApplicationModal, "Instructions")
+            Case 6
+                Return MsgBox("• In this training game, you will be given a random chess position along with a possible move (in standard chess notation). You will need to play that move as fast as you can." & vbCrLf & "• If you make the correct move, that square will light up in green, and you will be given a new move to make." & vbCrLf & "• After " & GlobalConstants.TrainingMovesPerPosition & " moves are made in a position, a new random position will be generated." & vbCrLf & "• Complete the most moves you can in 30 seconds, and try to get a place on the leaderboard!" & vbCrLf & "• Clicking the 'Flip Board' button will rotate the board 180°, so that each move will be from black's point of view." & vbCrLf & vbCrLf & "• Note: Regardless of whether the board is flipped or not, only the white pieces will need to be moved.", vbInformation + vbApplicationModal, "Instructions")
+        End Select
+        Return 0
+    End Function
+
     'Button that returns the user back to the Main Menu. 
     Private Sub ExitBtn_Click() Handles ExitBtn.Click
         If MainAI IsNot Nothing Then AICanSearchOnUsersTurn = False : MainAI.ABORTSearch()
-        If GameMode = 4 Then PuzzleSampleDatabase = Nothing 'Clears the puzzle database to save memory.
+        If GameMode = 4 Then TrainingMode.PuzzleSampleDatabase = Nothing 'Clears the puzzle database to save memory.
 
         'Locates MainMenu Form and shows it.
         Dim Menu As Form = CType(Application.OpenForms("MainMenu"), MainMenu)
@@ -744,7 +834,7 @@ Partial Public Class Chess
         'Loads the Lifetime stats file, then assigns each line to their appropriate variable.
         Dim LifetimePositions, LifetimeTranspositions, LifetimeCheckmates As UInt64
         Try
-            Using SR As New StreamReader(Application.StartupPath & "\Assets\User\AIStats.txt", Encoding.UTF8, True)
+            Using SR As New StreamReader(GlobalConstants.StartupPath & "\Assets\User\AIStats.txt", Encoding.UTF8, True)
                 LifetimePositions = SR.ReadLine()
                 LifetimeTranspositions = SR.ReadLine()
                 LifetimeCheckmates = SR.ReadLine()
@@ -754,10 +844,10 @@ Partial Public Class Chess
             'An error occured when reading from the file.
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Unable to retrieve AI lifetime stats.")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
         End Try
 
-        Dim CreditsMessage As String = Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2024)"
+        Dim CreditsMessage As String = Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2025)"
         If CanRetrieveStats Then
             MsgBox(CreditsMessage & vbCrLf & vbCrLf & vbCrLf & "Lifetime AI Statistics:" & vbCrLf & "Positions Searched: " & LifetimePositions.ToString("N0") & vbCrLf & "Transpositions Found: " & LifetimeTranspositions.ToString("N0") & vbCrLf & "Checkmates Made: " & LifetimeCheckmates.ToString("N0"), vbInformation, "Credits")
         Else

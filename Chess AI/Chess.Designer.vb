@@ -122,6 +122,9 @@ Partial Class Chess
         Me.BoardEditWQSBox = New System.Windows.Forms.CheckBox()
         Me.BoardEditBKSBox = New System.Windows.Forms.CheckBox()
         Me.BoardEditWKSBox = New System.Windows.Forms.CheckBox()
+        Me.RemoteModeBtn = New System.Windows.Forms.Button()
+        Me.RemoteModeTimer = New System.Windows.Forms.Timer(Me.components)
+        Me.BoardEditDiscardBtn = New System.Windows.Forms.Button()
         Me.ColourChanger.SuspendLayout()
         CType(Me.BP1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.BR1, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -357,7 +360,7 @@ Partial Class Chess
         Me.BB1.BackColor = System.Drawing.Color.Transparent
         Me.BB1.Image = CType(resources.GetObject("BB1.Image"), System.Drawing.Image)
         Me.BB1.InitialImage = Nothing
-        Me.BB1.Location = New System.Drawing.Point(518, 96)
+        Me.BB1.Location = New System.Drawing.Point(518, 177)
         Me.BB1.Name = "BB1"
         Me.BB1.Size = New System.Drawing.Size(75, 75)
         Me.BB1.TabIndex = 0
@@ -368,7 +371,7 @@ Partial Class Chess
         Me.BQ1.BackColor = System.Drawing.Color.Transparent
         Me.BQ1.Image = CType(resources.GetObject("BQ1.Image"), System.Drawing.Image)
         Me.BQ1.InitialImage = Nothing
-        Me.BQ1.Location = New System.Drawing.Point(437, 96)
+        Me.BQ1.Location = New System.Drawing.Point(437, 177)
         Me.BQ1.Name = "BQ1"
         Me.BQ1.Size = New System.Drawing.Size(75, 75)
         Me.BQ1.TabIndex = 0
@@ -379,7 +382,7 @@ Partial Class Chess
         Me.BK1.BackColor = System.Drawing.Color.Transparent
         Me.BK1.Image = CType(resources.GetObject("BK1.Image"), System.Drawing.Image)
         Me.BK1.InitialImage = Nothing
-        Me.BK1.Location = New System.Drawing.Point(356, 96)
+        Me.BK1.Location = New System.Drawing.Point(356, 177)
         Me.BK1.Name = "BK1"
         Me.BK1.Size = New System.Drawing.Size(75, 75)
         Me.BK1.TabIndex = 0
@@ -390,7 +393,7 @@ Partial Class Chess
         Me.WP1.BackColor = System.Drawing.Color.Transparent
         Me.WP1.Image = CType(resources.GetObject("WP1.Image"), System.Drawing.Image)
         Me.WP1.InitialImage = Nothing
-        Me.WP1.Location = New System.Drawing.Point(518, 176)
+        Me.WP1.Location = New System.Drawing.Point(518, 96)
         Me.WP1.Name = "WP1"
         Me.WP1.Size = New System.Drawing.Size(75, 75)
         Me.WP1.TabIndex = 0
@@ -401,7 +404,7 @@ Partial Class Chess
         Me.WR1.BackColor = System.Drawing.Color.Transparent
         Me.WR1.Image = CType(resources.GetObject("WR1.Image"), System.Drawing.Image)
         Me.WR1.InitialImage = Nothing
-        Me.WR1.Location = New System.Drawing.Point(437, 177)
+        Me.WR1.Location = New System.Drawing.Point(437, 96)
         Me.WR1.Name = "WR1"
         Me.WR1.Size = New System.Drawing.Size(75, 75)
         Me.WR1.TabIndex = 0
@@ -412,7 +415,7 @@ Partial Class Chess
         Me.WN1.BackColor = System.Drawing.Color.Transparent
         Me.WN1.Image = CType(resources.GetObject("WN1.Image"), System.Drawing.Image)
         Me.WN1.InitialImage = Nothing
-        Me.WN1.Location = New System.Drawing.Point(356, 177)
+        Me.WN1.Location = New System.Drawing.Point(356, 96)
         Me.WN1.Name = "WN1"
         Me.WN1.Size = New System.Drawing.Size(75, 75)
         Me.WN1.TabIndex = 0
@@ -510,7 +513,7 @@ Partial Class Chess
         Me.UserTimeBar.Name = "UserTimeBar"
         Me.UserTimeBar.Size = New System.Drawing.Size(164, 45)
         Me.UserTimeBar.TabIndex = 25
-        Me.UserTimeBar.Value = 20
+        Me.UserTimeBar.Value = 30
         '
         'CurrentAIMove
         '
@@ -1183,13 +1186,38 @@ Partial Class Chess
         Me.BoardEditWKSBox.Text = "King Side"
         Me.BoardEditWKSBox.UseVisualStyleBackColor = True
         '
+        'RemoteModeBtn
+        '
+        Me.RemoteModeBtn.Enabled = False
+        Me.RemoteModeBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.RemoteModeBtn.Location = New System.Drawing.Point(62, 154)
+        Me.RemoteModeBtn.Name = "RemoteModeBtn"
+        Me.RemoteModeBtn.Size = New System.Drawing.Size(175, 49)
+        Me.RemoteModeBtn.TabIndex = 27
+        Me.RemoteModeBtn.Text = "Connect To Interface"
+        Me.RemoteModeBtn.UseVisualStyleBackColor = True
+        Me.RemoteModeBtn.Visible = False
+        '
+        'BoardEditDiscardBtn
+        '
+        Me.BoardEditDiscardBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.BoardEditDiscardBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.BoardEditDiscardBtn.Location = New System.Drawing.Point(137, 264)
+        Me.BoardEditDiscardBtn.Name = "BoardEditDiscardBtn"
+        Me.BoardEditDiscardBtn.Size = New System.Drawing.Size(26, 26)
+        Me.BoardEditDiscardBtn.TabIndex = 37
+        Me.BoardEditDiscardBtn.Text = "X"
+        Me.BoardEditDiscardBtn.UseVisualStyleBackColor = True
+        Me.BoardEditDiscardBtn.Visible = False
+        '
         'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(1182, 592)
+        Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.BoardEditDiscardBtn)
         Me.Controls.Add(Me.BoardEditPanel)
         Me.Controls.Add(Me.AutoResetter)
         Me.Controls.Add(Me.AutoOutputterPanel)
@@ -1198,6 +1226,7 @@ Partial Class Chess
         Me.Controls.Add(Me.HumanModeBtn)
         Me.Controls.Add(Me.InfoBtn)
         Me.Controls.Add(Me.TrainingScore)
+        Me.Controls.Add(Me.RemoteModeBtn)
         Me.Controls.Add(Me.NodeTestStopBtn)
         Me.Controls.Add(Me.NodeTestBtn)
         Me.Controls.Add(Me.AITerminator)
@@ -1260,7 +1289,7 @@ Partial Class Chess
         Me.Controls.Add(Me.MoveDisplayer)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximizeBox = False
-        Me.MaximumSize = New System.Drawing.Size(1200, 638)
+        Me.MaximumSize = New System.Drawing.Size(1200, 639)
         Me.Name = "Chess"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Chess Game & Artificial Intelligence"
@@ -1388,4 +1417,7 @@ Partial Class Chess
     Friend WithEvents BoardEditBKSBox As CheckBox
     Friend WithEvents BoardEditWKSBox As CheckBox
     Friend WithEvents BoardEditTipLabel As Label
+    Friend WithEvents RemoteModeBtn As Button
+    Friend WithEvents RemoteModeTimer As Timer
+    Friend WithEvents BoardEditDiscardBtn As Button
 End Class
