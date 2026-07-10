@@ -73,16 +73,6 @@ Partial Public Class CoreMethods
     End Function
 
 
-    'Subroutine which sets the default settings of the AISearchSettings structure.
-    Public Sub SetDefaultAISearchSettings(ByRef SearchSettings As AISearchSettings)
-        SearchSettings.UseQuiescence = True
-        SearchSettings.UsePieceHeatMaps = True
-        SearchSettings.OutputToConsole = True
-        SearchSettings.OutputPath = True
-        SearchSettings.StableSearch = True
-        SearchSettings.ReturnBestMove = True
-        SearchSettings.UpdateLifetimeStats = True
-    End Sub
 
 
     'Function which puts the required pieces in a FEN board position into an 8x8 board array.

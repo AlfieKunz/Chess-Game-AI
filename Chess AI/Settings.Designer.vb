@@ -100,7 +100,7 @@ Partial Class Settings
         '
         Me.SpeedSetter.LargeChange = 1
         Me.SpeedSetter.Location = New System.Drawing.Point(343, 290)
-        Me.SpeedSetter.Maximum = 3
+        Me.SpeedSetter.Maximum = 4
         Me.SpeedSetter.Name = "SpeedSetter"
         Me.SpeedSetter.Size = New System.Drawing.Size(224, 45)
         Me.SpeedSetter.TabIndex = 1
@@ -225,11 +225,11 @@ Partial Class Settings
         '
         Me.AnimationInfo.AutoSize = True
         Me.AnimationInfo.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationInfo.Location = New System.Drawing.Point(345, 322)
+        Me.AnimationInfo.Location = New System.Drawing.Point(343, 322)
         Me.AnimationInfo.Name = "AnimationInfo"
-        Me.AnimationInfo.Size = New System.Drawing.Size(222, 16)
+        Me.AnimationInfo.Size = New System.Drawing.Size(230, 16)
         Me.AnimationInfo.TabIndex = 19
-        Me.AnimationInfo.Text = "Off              Fast         Medium         Slow"
+        Me.AnimationInfo.Text = "Off       VFast       Fast     Medium    Slow"
         '
         'PictureBox3
         '

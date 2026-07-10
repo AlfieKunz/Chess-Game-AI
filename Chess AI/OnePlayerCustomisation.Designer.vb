@@ -34,6 +34,7 @@ Partial Class OnePlayerCustomisation
         Me.Panel1 = New System.Windows.Forms.Panel()
         Me.Panel2 = New System.Windows.Forms.Panel()
         Me.White = New System.Windows.Forms.RadioButton()
+        Me.RNDSide = New System.Windows.Forms.RadioButton()
         Me.Black = New System.Windows.Forms.RadioButton()
         Me.InfoBtn = New System.Windows.Forms.Button()
         Me.UseBook = New System.Windows.Forms.CheckBox()
@@ -41,7 +42,7 @@ Partial Class OnePlayerCustomisation
         Me.QuiescenceBox = New System.Windows.Forms.CheckBox()
         Me.UserTimeBar = New System.Windows.Forms.TrackBar()
         Me.UserTimeBox = New System.Windows.Forms.TextBox()
-        Me.RNDSide = New System.Windows.Forms.RadioButton()
+        Me.AISearchOnUsersTurnBox = New System.Windows.Forms.CheckBox()
         CType(Me.DifficultySlider, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.Panel1.SuspendLayout()
         Me.Panel2.SuspendLayout()
@@ -164,6 +165,18 @@ Partial Class OnePlayerCustomisation
         Me.White.Text = "Play as White"
         Me.White.UseVisualStyleBackColor = True
         '
+        'RNDSide
+        '
+        Me.RNDSide.AutoSize = True
+        Me.RNDSide.Checked = True
+        Me.RNDSide.Location = New System.Drawing.Point(193, 3)
+        Me.RNDSide.Name = "RNDSide"
+        Me.RNDSide.Size = New System.Drawing.Size(86, 17)
+        Me.RNDSide.TabIndex = 16
+        Me.RNDSide.TabStop = True
+        Me.RNDSide.Text = "Play as RND"
+        Me.RNDSide.UseVisualStyleBackColor = True
+        '
         'Black
         '
         Me.Black.AutoSize = True
@@ -253,17 +266,20 @@ Partial Class OnePlayerCustomisation
         Me.UserTimeBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
         Me.UserTimeBox.Visible = False
         '
-        'RNDSide
+        'AISearchOnUsersTurnBox
         '
-        Me.RNDSide.AutoSize = True
-        Me.RNDSide.Checked = True
-        Me.RNDSide.Location = New System.Drawing.Point(193, 3)
-        Me.RNDSide.Name = "RNDSide"
-        Me.RNDSide.Size = New System.Drawing.Size(86, 17)
-        Me.RNDSide.TabIndex = 16
-        Me.RNDSide.TabStop = True
-        Me.RNDSide.Text = "Play as RND"
-        Me.RNDSide.UseVisualStyleBackColor = True
+        Me.AISearchOnUsersTurnBox.AutoSize = True
+        Me.AISearchOnUsersTurnBox.Checked = True
+        Me.AISearchOnUsersTurnBox.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.AISearchOnUsersTurnBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AISearchOnUsersTurnBox.Location = New System.Drawing.Point(52, 317)
+        Me.AISearchOnUsersTurnBox.Name = "AISearchOnUsersTurnBox"
+        Me.AISearchOnUsersTurnBox.Size = New System.Drawing.Size(180, 19)
+        Me.AISearchOnUsersTurnBox.TabIndex = 30
+        Me.AISearchOnUsersTurnBox.Text = "AI Searches in Background?"
+        Me.AISearchOnUsersTurnBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.AISearchOnUsersTurnBox.UseVisualStyleBackColor = True
+        Me.AISearchOnUsersTurnBox.Visible = False
         '
         'OnePlayerCustomisation
         '
@@ -272,6 +288,7 @@ Partial Class OnePlayerCustomisation
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.LightGray
         Me.ClientSize = New System.Drawing.Size(284, 331)
+        Me.Controls.Add(Me.AISearchOnUsersTurnBox)
         Me.Controls.Add(Me.PieceHeatMapBox)
         Me.Controls.Add(Me.QuiescenceBox)
         Me.Controls.Add(Me.UserTimeBar)
@@ -320,4 +337,5 @@ Partial Class OnePlayerCustomisation
     Friend WithEvents UserTimeBar As TrackBar
     Friend WithEvents UserTimeBox As TextBox
     Friend WithEvents RNDSide As RadioButton
+    Friend WithEvents AISearchOnUsersTurnBox As CheckBox
 End Class

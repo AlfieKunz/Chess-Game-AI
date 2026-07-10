@@ -48,43 +48,39 @@ Public Class OnePlayerCustomisation
 
         'Calibrates the user's AI difficulty settings.
         Dim UserTimeForSearch As Decimal
-        Dim UserQuiescence As Boolean
-        Dim UserPieceHeatMaps As Boolean
+        Dim UserSearchSettings As New AISearchSettings
+        UserSearchSettings.OutputPath = False
+        Dim UserAICanSearchOnUsersTurn As Boolean
 
         If Not UseBook.Checked Then OpeningBook.Clear()
         If DifficultySlider.Value = 1 Then
             'User has selected a custom difficulty - choose their settings based on their options.
             UserTimeForSearch = Math.Max(UserTimeBar.Value / 2, 0.1)
-            UserQuiescence = QuiescenceBox.Checked
-            UserPieceHeatMaps = PieceHeatMapBox.Checked
+            UserSearchSettings.UseQuiescence = QuiescenceBox.Checked
+            UserSearchSettings.UsePieceHeatMaps = PieceHeatMapBox.Checked
+            UserAICanSearchOnUsersTurn = AISearchOnUsersTurnBox.Checked
         ElseIf DifficultySlider.Value = 2 Then
             UserTimeForSearch = 1
-            UserQuiescence = False
-            UserPieceHeatMaps = False
+            UserSearchSettings.UseQuiescence = False
+            UserSearchSettings.UsePieceHeatMaps = False
         ElseIf DifficultySlider.Value = 3 Then
             UserTimeForSearch = 3
-            UserQuiescence = False
-            UserPieceHeatMaps = True
+            UserSearchSettings.UseQuiescence = False
         ElseIf DifficultySlider.Value = 4 Then
             UserTimeForSearch = 3
-            UserQuiescence = True
-            UserPieceHeatMaps = False
+            UserSearchSettings.UsePieceHeatMaps = False
         ElseIf DifficultySlider.Value = 5 Then
             UserTimeForSearch = 5
-            UserQuiescence = True
-            UserPieceHeatMaps = True
         ElseIf DifficultySlider.Value = 6 Then
             UserTimeForSearch = 10
-            UserQuiescence = True
-            UserPieceHeatMaps = True
+            UserAICanSearchOnUsersTurn = True
         Else
             UserTimeForSearch = 30
-            UserQuiescence = True
-            UserPieceHeatMaps = True
+            UserAICanSearchOnUsersTurn = True
         End If
 
         'Initialises a new game of Chess.
-        Dim ChessGame As New Chess(1, UserStartingFEN, UserTimeForSearch, UserQuiescence, UserPieceHeatMaps, PlayAsWhite, OpeningBook)
+        Dim ChessGame As New Chess(1, UserStartingFEN, UserTimeForSearch, UserSearchSettings, UserAICanSearchOnUsersTurn, PlayAsWhite, OpeningBook)
         ChessGame.Show()
     End Sub
 
@@ -99,7 +95,7 @@ Public Class OnePlayerCustomisation
 
     'Button that displays information regarding the various AI difficulties.
     Private Sub Button1_Click() Handles InfoBtn.Click
-        MsgBox("Beginner: 1s per search, Quiescence off, Piece Heat Maps off." & vbCrLf & "Easy: 3s per search, Quiescence off, Piece Heat Maps on." & vbCrLf & "Medium: 3s per search, Quiescence on, Piece Heat Maps off." & vbCrLf & "Hard: 5s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "Expert: 10s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "Pain: 30s per search, Quiescence on, Piece Heat Maps on.", vbInformation + vbApplicationModal, "AI Difficulty Information")
+        MsgBox("• Beginner: 1s per search, Quiescence off, Piece Heat Maps off." & vbCrLf & "• Easy: 3s per search, Quiescence off, Piece Heat Maps on." & vbCrLf & "• Medium: 3s per search, Quiescence on, Piece Heat Maps off." & vbCrLf & "• Hard: 5s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• Expert: 10s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• Pain: 30s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• (From difficulties 'Expert' and onwards, the AI will search on the position in the background, on the User's turn.)", vbInformation + vbApplicationModal, "AI Difficulty Information")
     End Sub
     'Button that takes the user back to the main menu.
     Private Sub BackBtn_Click() Handles BackBtn.Click
@@ -127,18 +123,20 @@ Public Class OnePlayerCustomisation
             AIDiffLabel2.ForeColor = Color.RoyalBlue
             'Modifies the layout of the screen to add these new customisation options, by moving
             'object down.
-            Me.Height += 130 'Makes the form grow in height.
-            Panel2.Top += 130
-            UseBook.Top += 130
-            StartBtn.Top += 130
-            InfoBtn.Top += 130
-            BackBtn.Top += 130
+            Dim Scalar As UInt16 = 155
+            Me.Height += Scalar 'Makes the form grow in height.
+            Panel2.Top += Scalar
+            UseBook.Top += Scalar
+            StartBtn.Top += Scalar
+            InfoBtn.Top += Scalar
+            BackBtn.Top += Scalar
 
             'Toggles the custom difficulty options.
             UserTimeBox.Visible = True
             UserTimeBar.Visible = True
             QuiescenceBox.Visible = True
             PieceHeatMapBox.Visible = True
+            AISearchOnUsersTurnBox.Visible = True
 
         ElseIf DifficultySlider.Value = 2 Then
             AIDiffLabel2.Text = "Beginner"
@@ -174,6 +172,7 @@ Public Class OnePlayerCustomisation
         UserTimeBar.Visible = False
         QuiescenceBox.Visible = False
         PieceHeatMapBox.Visible = False
+        AISearchOnUsersTurnBox.Visible = False
 
         'Resets all objects back to their initial values.
         Me.Height = 370

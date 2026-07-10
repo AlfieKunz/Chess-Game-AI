@@ -1,7 +1,9 @@
 ﻿'This class contains my Chess AI, which involves the MiniMax algorithm with Alpha-Beta Pruning.
 'This class is modular from my Chess class - being constructed only from the FEN position, and only returning a Move (see the structure below).
 'Some other interacting is done, however, such as allowing the AI to be remotely aborted.
+Imports System.ComponentModel
 Imports System.IO
+Imports System.Runtime
 Imports System.Text
 
 Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
@@ -11,7 +13,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
     Private HasBeenInstantiated As Boolean 'The AI will not perform methods if it has not been fully instantiated with a FEN.
     'Below are the details that the AI requires for a search. Please see their counterparts in the Chess form for their info.
-    Private PrimaryBoard(7, 7), PrimaryTFTable(7, 7) As Char
+    Private PrimaryBoard(7, 7), PrimaryTFTable(7, 7), MiniMaxTFTable(7, 7) As Char
     Private PrimaryMeCanCastle, PrimaryEnemyCanCastle As New CanCastle
     Private PrimaryMeInCheck As New InCheck
     Private PrimaryMeKPos, PrimaryEnemyKPos As String
@@ -49,7 +51,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     'Stored as a list so that the overall size of the Table can be reduced (would need to be 2^64 elements large otherwise).
     'Therefore, multiple positions will be stored in the same 'list' entry in the Table, so we then need to perform a linear search
     'on the list to find the exact position we need.
-    Private TranspositionTable((2 ^ 20) - 1) As List(Of TTEntry)
+    Private TranspositionTable() As List(Of TTEntry)
     Private Structure TTEntry
         Dim IsPopulated As Boolean
         Dim Key As UInt64 'Zobrist Key of position - used to pinpoint the correct board.
@@ -84,6 +86,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
     'Subroutine which converts a user's input FEN into all the details needed to conduct a MiniMax search.
     Public Sub Reconfigure(ByVal FEN As String, ByVal ResetTT As Boolean)
+        Dim BasePseudoLegalMoves(,) As String
         'Converts the user's FEN into a board position, then resets checking rules.
         HighestSuccessfulQuiescenceDepth = 1
         PrimaryBoard = FENConverter(FEN, PrimaryMeCanCastle, PrimaryEnemyCanCastle, PrimaryMeKPos, PrimaryEnemyKPos, PrimaryEnPassant, PlayerTurn)
@@ -92,7 +95,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             'Creates the TFTable for the white pieces, then creates king symbol.
             FixTFTables(PrimaryBoard, True, PrimaryTFTable, PrimaryMeKPos, PrimaryMeInCheck, PrimaryEnPassant)
             KingSymbol = "K"
-            BasePieceMoves = CreateMoves(PrimaryBoard, True, PrimaryTFTable, PrimaryEnemyKPos, PrimaryMeInCheck, PrimaryMeCanCastle, PrimaryEnPassant, False, 0, "", "")
+            BasePseudoLegalMoves = CreateMoves(PrimaryBoard, True, PrimaryTFTable, PrimaryEnemyKPos, PrimaryMeInCheck, PrimaryMeCanCastle, PrimaryEnPassant, False, 0, "", "")
             'Creates the Zobrist Value for the position.
             BaseZobristValue = ZobristHashPosition(PrimaryBoard, True, PrimaryMeCanCastle, PrimaryEnemyCanCastle, PrimaryEnPassant)
         Else
@@ -109,9 +112,63 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             'Creates the TFTable for the black pieces, then creates king symbol.
             FixTFTables(PrimaryBoard, False, PrimaryTFTable, PrimaryMeKPos, PrimaryMeInCheck, PrimaryEnPassant)
             KingSymbol = "k"
-            BasePieceMoves = CreateMoves(PrimaryBoard, False, PrimaryTFTable, PrimaryEnemyKPos, PrimaryMeInCheck, PrimaryMeCanCastle, PrimaryEnPassant, False, 0, "", "")
+            BasePseudoLegalMoves = CreateMoves(PrimaryBoard, False, PrimaryTFTable, PrimaryEnemyKPos, PrimaryMeInCheck, PrimaryMeCanCastle, PrimaryEnPassant, False, 0, "", "")
             BaseZobristValue = ZobristHashPosition(PrimaryBoard, False, PrimaryEnemyCanCastle, PrimaryMeCanCastle, PrimaryEnPassant)
         End If
+
+
+        'Filters the moves in the base position, so that only legal moves exist (rather than pseudo-legal moves).
+        If BasePseudoLegalMoves Is Nothing Then
+            'No pseudo-legal moves detected - hence no legal moves in the position.
+            BasePieceMoves = Nothing
+        ElseIf PrimaryMeInCheck.IsInCheck Then
+            Dim TempMeInCheck As New InCheck
+            Dim NoOfLegalMoves As Byte = BasePseudoLegalMoves.GetUpperBound(0) + 1 'Assume all moves are legal, unless proven otherwise.
+            For n = 0 To BasePseudoLegalMoves.GetUpperBound(0) 'For each move.
+                'If the user is in check, eliminate the moves that do not escape check.
+                If PrimaryBoard(Val(BasePseudoLegalMoves(n, 0)(0)), Val(BasePseudoLegalMoves(n, 0)(1))) = KingSymbol Then
+                    'King moves are Not considered, as the player's TFTable will ensure that all king moves are legal.
+                    TempMeInCheck.IsInCheck = False
+                Else
+                    'Runs move through the DoesMoveResolveCheck algorithm.
+                    TempMeInCheck.CopyFrom(PrimaryMeInCheck)
+                    If DoesMoveResolveCheck(PrimaryBoard, PlayerTurn, BasePseudoLegalMoves(n, 0)(0), BasePseudoLegalMoves(n, 0)(1), BasePseudoLegalMoves(n, 1)(0), BasePseudoLegalMoves(n, 1)(1), TempMeInCheck, PrimaryEnPassant) Then
+                        'Move has resolved check.
+                        TempMeInCheck.NotInCheck()
+                    End If
+                End If
+                If TempMeInCheck.IsInCheck Then
+                    'Player is still in check, and hence the move is not legal - remove it from the array.
+                    BasePseudoLegalMoves(n, 0) = ""
+                    BasePseudoLegalMoves(n, 1) = ""
+                    NoOfLegalMoves -= 1
+                End If
+            Next
+            If NoOfLegalMoves = 0 Then
+                'No legal moves detected.
+                BasePieceMoves = Nothing
+            Else
+                'Copy all the legal moves to BasePieceMoves.
+                ReDim BasePieceMoves(NoOfLegalMoves - 1, 1)
+                Dim Index As Byte
+                For n = 0 To BasePseudoLegalMoves.GetUpperBound(0)
+                    If BasePseudoLegalMoves(n, 0) <> "" Then
+                        'Copies legal move.
+                        BasePieceMoves(Index, 0) = BasePseudoLegalMoves(n, 0)
+                        BasePieceMoves(Index, 1) = BasePseudoLegalMoves(n, 1)
+                        Index += 1
+                    End If
+                Next
+
+            End If
+        Else
+            'The player is not in check, and hence all the Pseudo-Legal moves are legal.
+            'Copy the BasePseudoLegalMoves array to the BasePieceMoves array.
+            ReDim BasePieceMoves(BasePseudoLegalMoves.GetUpperBound(0), 1)
+            Array.Copy(BasePseudoLegalMoves, BasePieceMoves, BasePieceMoves.Length)
+        End If
+
+
         'Finds the material count of the board.
         PrimaryMaterialCount = CountMaterial(PrimaryBoard)
         'Resets KillerMoves.
@@ -182,14 +239,13 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
     'Subroutine which copies a parameter's settings to the AI's SearchSettings.
     Public Sub ConfigureSettings(ByVal UserSearchSettings As AISearchSettings)
-        SearchSettings.UseQuiescence = UserSearchSettings.UseQuiescence
-        SearchSettings.UsePieceHeatMaps = UserSearchSettings.UsePieceHeatMaps
-        SearchSettings.OutputToConsole = UserSearchSettings.OutputToConsole
-        SearchSettings.OutputPath = UserSearchSettings.OutputPath
-        SearchSettings.StableSearch = UserSearchSettings.StableSearch
-        SearchSettings.ReturnBestMove = UserSearchSettings.ReturnBestMove
-        SearchSettings.UpdateLifetimeStats = UserSearchSettings.UpdateLifetimeStats
+        SearchSettings.CopyFrom(UserSearchSettings)
     End Sub
+
+    'Function which retrieves all the legal moves in the base position.
+    Public Function GetLegalMoves() As String(,)
+        Return BasePieceMoves
+    End Function
 
 
     'Setter & Getter Functions for the ABORT attribute.
@@ -204,9 +260,10 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     'Algorithm that finds the AI's 'Best Move' for a given position, using the MiniMax algorithm.
     Public Function Search(ByVal Depth As SByte) As Move
         Dim BestMove As New Move
+        Dim CurrentMove As New Move
         If SearchSettings.ReturnBestMove Then BestMove.Score = -32767 Else BestMove.Score = 32767 '+ or - infinity.
 
-        If HasBeenInstantiated AndAlso Depth > 0 Then
+        If HasBeenInstantiated AndAlso Depth > 0 AndAlso BasePieceMoves IsNot Nothing Then
             'Creates alpha (white's best move) and beta (black's best move).
             Dim CurrentScore As Int16
             Dim Alpha As Int16 = -32767
@@ -217,115 +274,131 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             TranspositionsFound = 0
             CheckmatesFound = 0
             HighestQuiescenceDepth = 1
-            If BasePieceMoves IsNot Nothing Then 'If any move exists...
-                'Creates temp variables.
-                MasterDepth = Depth
-                Dim TempBoard(7, 7) As Char
-                Dim TempMaterialCount(1) As Int16
-                Dim TempMeKPos As String
-                Dim TempMeCanCastle As New CanCastle
-                Dim TempMeInCheck As New InCheck
-                Dim TempZobristValue As UInt64
-                Dim TempEnPassant As String
 
-                For n = 0 To BasePieceMoves.GetUpperBound(0) 'for each move...
-                    'If the user is in check, eliminate the moves that do not escape check. King moves are not considered
-                    'as the player's TFTable will ensure that all king moves are legal.
-                    If PrimaryMeInCheck.IsInCheck AndAlso PrimaryBoard(Val(BasePieceMoves(n, 0)(0)), Val(BasePieceMoves(n, 0)(1))) <> KingSymbol Then
-                        'Runs move through the DoesMoveResolveCheck algorithm.
-                        TempMeInCheck.CopyFrom(PrimaryMeInCheck)
-                        If DoesMoveResolveCheck(PrimaryBoard, PlayerTurn, BasePieceMoves(n, 0)(0), BasePieceMoves(n, 0)(1), BasePieceMoves(n, 1)(0), BasePieceMoves(n, 1)(1), TempMeInCheck, PrimaryEnPassant) Then
-                            'Move has resolved check.
-                            TempMeInCheck.NotInCheck()
+            'Creates temp variables.
+            MasterDepth = Depth
+            Dim TempBoard(7, 7) As Char
+            Dim TempMaterialCount(1) As Int16
+            Dim TempMeKPos As String
+            Dim TempMeCanCastle As New CanCastle
+            Dim TempZobristValue As UInt64
+            Dim TempEnPassant As String
+            If SearchSettings.OutputToConsole Then
+                Console.ForegroundColor = ConsoleColor.DarkCyan
+                If Not SearchSettings.OutputMoveDebugInfo Then Console.Write("Searching at a Depth of " & MasterDepth & "...") : Console.SetCursorPosition(0, Console.CursorTop)
+            End If
+
+            For n = 0 To BasePieceMoves.GetUpperBound(0) 'for each move...
+
+                If SearchSettings.OutputToConsole AndAlso SearchSettings.OutputMoveDebugInfo Then
+                    'Outputs the move that is currently being searched on, to the console.
+                    CurrentMove.OldMoveX = BasePieceMoves(n, 0)(0)
+                    CurrentMove.OldMoveY = BasePieceMoves(n, 0)(1)
+                    CurrentMove.NewMoveX = BasePieceMoves(n, 1)(0)
+                    CurrentMove.NewMoveY = BasePieceMoves(n, 1)(1)
+                    Dim StringToOutput As String = "Searching at a Depth of " & MasterDepth & " - Processing Move: " & MoveConverter(PrimaryBoard, CurrentMove, PrimaryEnPassant) & " (" & n + 1 & "/" & BasePieceMoves.GetUpperBound(0) + 1 & ")"
+                    Console.Write(StringToOutput.PadRight(64))
+                    'Moves the Console Cursor Position 1 up, so that the newly-written string can be replaced by the next move.
+                    Console.SetCursorPosition(0, Console.CursorTop)
+                End If
+
+                'Copies board info to temp variables.
+                Array.Copy(PrimaryBoard, TempBoard, 64)
+                Array.Copy(PrimaryMaterialCount, TempMaterialCount, 2)
+                TempMeKPos = PrimaryMeKPos
+                TempMeCanCastle.CopyFrom(PrimaryMeCanCastle)
+                TempEnPassant = PrimaryEnPassant
+                TempZobristValue = BaseZobristValue
+                'Makes move on temp board, then calls MiniMax for this new position.
+                MakeMove(TempBoard, BasePieceMoves(n, 0)(0), BasePieceMoves(n, 0)(1), BasePieceMoves(n, 1)(0), BasePieceMoves(n, 1)(1), TempMeCanCastle, TempMeKPos, TempMaterialCount, TempEnPassant, TempZobristValue)
+
+                If TempMaterialCount(0) + TempMaterialCount(1) = 0 Then
+                    'Enforce draw by repetition.
+                    TotalPositionsSearched += 1
+                    CurrentScore = 0
+                ElseIf Depth = 1 AndAlso Not SearchSettings.UseQuiescence Then
+                    'We have reached a leaf position - return the evaluation for this position.
+                    TotalPositionsSearched += 1
+                    If PlayerTurn Then
+                        CurrentScore = Evaluate(TempBoard, TempMaterialCount, TempMeKPos, PrimaryEnemyKPos)
+                    Else
+                        CurrentScore = -Evaluate(TempBoard, TempMaterialCount, PrimaryEnemyKPos, TempMeKPos)
+                    End If
+                ElseIf PlayerTurn Then
+                    CurrentScore = MiniMax(TempBoard, Depth - 1, False, TempMeCanCastle, PrimaryEnemyCanCastle, TempMeKPos, PrimaryEnemyKPos, TempEnPassant, TempMaterialCount, TempZobristValue, Alpha, Beta)
+                Else
+                    'Alpha & Beta are replaced with -Beta & -Alpha so that all moves' scores are given in context
+                    'of the player to move. This is so that the largest number will always be the best score.
+                    CurrentScore = -MiniMax(TempBoard, Depth - 1, True, PrimaryEnemyCanCastle, TempMeCanCastle, PrimaryEnemyKPos, TempMeKPos, TempEnPassant, TempMaterialCount, TempZobristValue, -Beta, -Alpha)
+                End If
+
+                'Code for selecting the best move in the position.
+                If ABORT Then
+                    'Latest, unfinished move will not be considered.
+                    Exit For
+                Else
+                    If SearchSettings.ReturnBestMove Then
+                        Alpha = Math.Max(Alpha, CurrentScore)
+                        If CurrentScore > BestMove.Score Then
+                            'Move has been beaten (better) - replace it.
+                            BestMove.Score = CurrentScore
+                            BestMove.OldMoveX = BasePieceMoves(n, 0)(0)
+                            BestMove.OldMoveY = BasePieceMoves(n, 0)(1)
+                            BestMove.NewMoveX = BasePieceMoves(n, 1)(0)
+                            BestMove.NewMoveY = BasePieceMoves(n, 1)(1)
                         End If
                     Else
-                        TempMeInCheck.IsInCheck = False
-                    End If
-                    If Not TempMeInCheck.IsInCheck Then 'Therefore, is a legal move.
-                        'Copies board info to temp variables.
-                        Array.Copy(PrimaryBoard, TempBoard, 64)
-                        Array.Copy(PrimaryMaterialCount, TempMaterialCount, 2)
-                        TempMeKPos = PrimaryMeKPos
-                        TempMeCanCastle.CopyFrom(PrimaryMeCanCastle)
-                        TempEnPassant = PrimaryEnPassant
-                        TempZobristValue = BaseZobristValue
-                        'Makes move on temp board, then calls MiniMax for this new position.
-                        MakeMove(TempBoard, BasePieceMoves(n, 0)(0), BasePieceMoves(n, 0)(1), BasePieceMoves(n, 1)(0), BasePieceMoves(n, 1)(1), TempMeCanCastle, TempMeKPos, TempMaterialCount, TempEnPassant, TempZobristValue)
-                        If TempMaterialCount(0) + TempMaterialCount(1) = 0 Then
-                            'Enforce draw by repetition.
-                            TotalPositionsSearched += 1
-                            CurrentScore = 0
-                        ElseIf Depth = 1 AndAlso Not SearchSettings.UseQuiescence Then
-                            'We have reached a leaf position - return the evaluation for this position.
-                            TotalPositionsSearched += 1
-                            If PlayerTurn Then
-                                CurrentScore = Evaluate(TempBoard, TempMaterialCount, TempMeKPos, PrimaryEnemyKPos)
-                            Else
-                                CurrentScore = -Evaluate(TempBoard, TempMaterialCount, PrimaryEnemyKPos, TempMeKPos)
-                            End If
-                        ElseIf PlayerTurn Then
-                            CurrentScore = MiniMax(TempBoard, Depth - 1, False, TempMeCanCastle, PrimaryEnemyCanCastle, TempMeKPos, PrimaryEnemyKPos, TempEnPassant, TempMaterialCount, TempZobristValue, Alpha, Beta)
-                        Else
-                            'Alpha & Beta are replaced with -Beta & -Alpha so that all moves' scores are given in context
-                            'of the player to move. This is so that the largest number will always be the best score.
-                            CurrentScore = -MiniMax(TempBoard, Depth - 1, True, PrimaryEnemyCanCastle, TempMeCanCastle, PrimaryEnemyKPos, TempMeKPos, TempEnPassant, TempMaterialCount, TempZobristValue, -Beta, -Alpha)
+                        Beta = Math.Min(Beta, CurrentScore)
+                        If CurrentScore < BestMove.Score Then
+                            'Move has been beaten (worse) - replace it.
+                            BestMove.Score = CurrentScore
+                            BestMove.OldMoveX = BasePieceMoves(n, 0)(0)
+                            BestMove.OldMoveY = BasePieceMoves(n, 0)(1)
+                            BestMove.NewMoveX = BasePieceMoves(n, 1)(0)
+                            BestMove.NewMoveY = BasePieceMoves(n, 1)(1)
                         End If
-
-                        'Code for selecting the best move in the position.
-                        If ABORT Then
-                            'Latest, unfinished move will not be considered.
-                            Exit For
-                        Else
-                            If SearchSettings.ReturnBestMove Then
-                                Alpha = Math.Max(Alpha, CurrentScore)
-                                If CurrentScore > BestMove.Score Then
-                                    'Move has been beaten (better) - replace it.
-                                    BestMove.Score = CurrentScore
-                                    BestMove.OldMoveX = BasePieceMoves(n, 0)(0)
-                                    BestMove.OldMoveY = BasePieceMoves(n, 0)(1)
-                                    BestMove.NewMoveX = BasePieceMoves(n, 1)(0)
-                                    BestMove.NewMoveY = BasePieceMoves(n, 1)(1)
-                                End If
-                            Else
-                                Beta = Math.Min(Beta, CurrentScore)
-                                If CurrentScore < BestMove.Score Then
-                                    'Move has been beaten (worse) - replace it.
-                                    BestMove.Score = CurrentScore
-                                    BestMove.OldMoveX = BasePieceMoves(n, 0)(0)
-                                    BestMove.OldMoveY = BasePieceMoves(n, 0)(1)
-                                    BestMove.NewMoveX = BasePieceMoves(n, 1)(0)
-                                    BestMove.NewMoveY = BasePieceMoves(n, 1)(1)
-                                End If
-                            End If
-                        End If
-
                     End If
-                Next
-            End If
+                End If
+            Next
+
 
             'Formats the score inside the correct range, then flips score if it is black to move.
             BestMove.Score /= 100
             If Not PlayerTurn Then BestMove.Score = -BestMove.Score
             HighestSuccessfulQuiescenceDepth = Math.Abs(HighestQuiescenceDepth) + MasterDepth
+            'Erases the information from the MoveDebug Information.
+            If SearchSettings.OutputToConsole AndAlso SearchSettings.OutputMoveDebugInfo Then Console.Write(New String(" ", 64)) : Console.SetCursorPosition(0, Console.CursorTop)
 
             If Math.Abs(BestMove.Score) = 327.67 Then
                 'Search either had 0 legal moves, or has been terminated so early that no move could be successfully searched.
                 BestMove.EndState = "a" 'Note for aborted search.
                 If SearchSettings.OutputToConsole Then
                     Console.ForegroundColor = ConsoleColor.DarkGreen
-                    Console.WriteLine("Depth Of " & Depth & " Incomplete.")
+                    Console.WriteLine(("Depth Of " & Depth & " Incomplete.").PadRight(30))
                     Console.ResetColor()
                 End If
                 If Not ABORT Then Return BestMove
             ElseIf SearchSettings.OutputToConsole Then
+                If Math.Abs(BestMove.Score) >= 295 Then
+                    'Calibrates checkmate score.
+                    If BestMove.Score > 0 Then
+                        BestMove.Score -= 0.01
+                    Else
+                        BestMove.Score += 0.01
+                    End If
+                End If
+
                 Console.ForegroundColor = ConsoleColor.DarkGreen
                 Console.Write("Depth Of " & Depth)
                 If SearchSettings.UseQuiescence Then Console.Write("-" & GetHighestQuiescenceDepth()) 'Retrieves the maximum reached depth via Quiescence (if enabled).
                 If ABORT Then Console.Write(" Incomplete. Predicted ") Else Console.Write(" Completed. ")
                 OutputMoveInfo(BestMove) 'Outputs the diagnostics for the current search.
+
                 If SearchSettings.OutputPath Then Console.WriteLine("Path = " & GenerateBestMoveLine(BestMove)) 'Generates the path of 'best moves' leading from this position.
             End If
+
             If SearchSettings.OutputToConsole Then Console.WriteLine("Positions searched = " & TotalPositionsSearched.ToString("N0") & vbCrLf & "Transpositions Found: " & TranspositionsFound.ToString("N0") & vbCrLf & "Checkmates Found: " & CheckmatesFound.ToString("N0") & vbCr)
+
             If SearchSettings.UpdateLifetimeStats Then
                 'Increments lifetime stats.
                 LifetimePositions += TotalPositionsSearched
@@ -334,7 +407,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             End If
         Else 'AI not correctly instantiated.
             Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("Error when Attempting Search - FEN Position not set / Depth set too low.")
+            Console.WriteLine("Error when Attempting Search - FEN Position not set correctly / Depth set too low.")
             Console.ResetColor()
             BestMove.EndState = "a"
         End If
@@ -370,6 +443,24 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     End Function
 
 
+    'Function that performs a shallow (depth of 2, no Quiescence) search on the position, that is assumed to take
+    'up almost no time. Used to test if a position is valid, to test AI features (+ debugging), and to perform
+    'a simple search on the position, in case the main AI search cannot be completed in time.
+    Public Function PerformTestSearch() As Move
+        Dim TempQuiescenceOption As Boolean = SearchSettings.UseQuiescence
+        SearchSettings.UseQuiescence = False
+        Dim TestSearchMove As New Move
+        TestSearchMove = Search(2)
+        SearchSettings.UseQuiescence = TempQuiescenceOption
+        Return TestSearchMove
+    End Function
+
+    Public Sub EnableMoveDebugInfo()
+        SearchSettings.OutputMoveDebugInfo = True
+    End Sub
+
+
+
     Public Function GetHighestQuiescenceDepth() As Byte
         Return HighestSuccessfulQuiescenceDepth
     End Function
@@ -389,7 +480,8 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         Console.ResetColor()
     End Sub
 
-    'Function that generates the line containing the best sequence of moves, as found by the AI, generated by following the TranspositionTable 'best move' trail.
+    'Function that generates the line containing the best sequence of moves, as found by the AI,
+    'generated by following the TranspositionTable 'best move' trail.
     Private Function GenerateBestMoveLine(ByVal BestMove As Move) As String
         Dim BestLine As String = MoveConverter(PrimaryBoard, BestMove, PrimaryEnPassant)
         Dim TempMove As Move = BestMove
@@ -434,7 +526,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             If TranspositionTable(EntryInTT) IsNot Nothing Then
                 For n = 0 To TranspositionTable(EntryInTT).Count - 1
                     If (TranspositionTable(EntryInTT))(n).Key = TempZobristValue Then
-                        'Position found in transposition table - store this.
+                        'Position found in transposition table - retrieve this.
                         TempTTEntry = (TranspositionTable(EntryInTT))(n)
                         Exit For
                     End If
@@ -474,55 +566,37 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     End Sub
 
 
+    'Function which calculates the length of the TranspositionTable Entry (List), which contains the most entries
+    '(used to determine how 'full' the TranspositionTable is, for debugging purposes).
+    Public Function GetLongestTTList() As UInt32
+        For n = 0 To TranspositionTable.Length - 1
+            If TranspositionTable(n) IsNot Nothing Then GetLongestTTList = Math.Max(GetLongestTTList, TranspositionTable(n).Count)
+        Next
+    End Function
+
+
 
 
     'Function that returns all the legal moves of a given piece on the board.
     'Used for when the user is attempting to move a piece on the GUI.
     Public Function ReturnPiecesLegalMoves(ByVal CoorX As String, ByVal CoorY As String) As String()
-        Dim LegalMoves(27) As String
-        If HasBeenInstantiated Then
-            Dim TotalMoves As Byte = 0
-            'Creates the pseudo-legal moves for the chosen player.
-            Dim PieceMoves() As String
-            If PlayerTurn AndAlso Char.IsUpper(PrimaryBoard(CoorX, CoorY)) Then
-                PieceMoves = WhitePieceLegalMoves(PrimaryBoard, CoorX, CoorY, PrimaryTFTable, PrimaryMeInCheck, PrimaryMeCanCastle, PrimaryEnPassant)
-            ElseIf Not (PlayerTurn OrElse Char.IsUpper(PrimaryBoard(CoorX, CoorY))) Then
-                PieceMoves = BlackPieceLegalMoves(PrimaryBoard, CoorX, CoorY, PrimaryTFTable, PrimaryMeInCheck, PrimaryMeCanCastle, PrimaryEnPassant)
-            Else
-                Console.ForegroundColor = ConsoleColor.DarkRed
-                Console.WriteLine("Error - Illegal to Move Piece.")
-                Console.ResetColor()
-                LegalMoves(0) = TotalMoves
-                Return LegalMoves
-            End If
-            If PieceMoves IsNot Nothing Then 'If any move exists...
-                Dim TempMeInCheck As New InCheck 'Creates temp check class.
-                For n = 0 To PieceMoves.Length - 1 'for each move...
-                    'If the user is in check, eliminate the moves that do not escape check. King moves are not considered
-                    'as the player's TFTable will ensure that all king moves are legal.
-                    If PrimaryMeInCheck.IsInCheck AndAlso PrimaryBoard(CoorX, CoorY) <> KingSymbol Then
-                        'Runs move through the DoesMoveResolveCheck algorithm.
-                        TempMeInCheck.CopyFrom(PrimaryMeInCheck)
-                        If DoesMoveResolveCheck(PrimaryBoard, PlayerTurn, CoorX, CoorY, PieceMoves(n)(0), PieceMoves(n)(1), TempMeInCheck, PrimaryEnPassant) Then
-                            'Move has resolved check.
-                            TempMeInCheck.NotInCheck()
-                        End If
-                    Else
-                        TempMeInCheck.IsInCheck = False
-                    End If
-                    If Not TempMeInCheck.IsInCheck Then
-                        'The move is legal - update the list of the piece's legal moves.
-                        TotalMoves += 1
-                        LegalMoves(TotalMoves) = PieceMoves(n)
-                    End If
-                Next
-            End If
-            'Make the first index of the array to be the total amount of legal moves.
-            'This helps know how many indexes of the array to check when looking for legal moves.
-            LegalMoves(0) = TotalMoves
+        Dim LegalMoves(26) As String
+        If HasBeenInstantiated AndAlso BasePieceMoves IsNot Nothing Then
+            Dim NoOfLegalMoves As Byte
+            'Loops through all of the legal moves in the position, and makes a note of all of them that involve
+            'the piece that is wanting to move.
+            For n = 0 To BasePieceMoves.GetUpperBound(0)
+                If CoorX & CoorY = BasePieceMoves(n, 0) Then
+                    'Move found - add it to LegalMoves.
+                    LegalMoves(NoOfLegalMoves) = BasePieceMoves(n, 1)
+                    NoOfLegalMoves += 1
+                End If
+            Next
+            'Resizes the array to the correct size.
+            If NoOfLegalMoves = 0 Then Return Nothing Else Array.Resize(LegalMoves, NoOfLegalMoves)
         Else 'AI not correctly instantiated.
             Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("Error when Attempting Search - FEN Position not set.")
+            Console.WriteLine("Error when Attempting Search - FEN Position not set / no Legal Moves in Position.")
             Console.ResetColor()
         End If
         Return LegalMoves
@@ -532,47 +606,29 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     Public Function CheckForEndState() As Move
         Dim CurrentMove As New Move
         If HasBeenInstantiated Then
-            CurrentMove.EndState = "c" 'Result defaults to checkmate unless proven otherwise.
-            Dim TotalMoves As Byte = 0
-            'Creates the pseudo-legal moves for the chosen player.
-            If BasePieceMoves IsNot Nothing Then 'If any move exists...
-                Dim TempMeInCheck As New InCheck 'Creates temp check class.
-                For n = 0 To BasePieceMoves.GetUpperBound(0) 'for each move...
-                    'If the user is in check, eliminate the moves that do not escape check. King moves are not considered
-                    'as the player's TFTable will ensure that all king moves are legal.
-                    If PrimaryMeInCheck.IsInCheck AndAlso PrimaryBoard(Val(BasePieceMoves(n, 0)(0)), Val(BasePieceMoves(n, 0)(1))) <> KingSymbol Then
-                        'Runs move through the DoesMoveResolveCheck algorithm.
-                        TempMeInCheck.CopyFrom(PrimaryMeInCheck)
-                        If DoesMoveResolveCheck(PrimaryBoard, PlayerTurn, BasePieceMoves(n, 0)(0), BasePieceMoves(n, 0)(1), BasePieceMoves(n, 1)(0), BasePieceMoves(n, 1)(1), TempMeInCheck, PrimaryEnPassant) Then
-                            'Move has resolved check.
-                            TempMeInCheck.NotInCheck()
-                        End If
-                    Else
-                        TempMeInCheck.IsInCheck = False
-                    End If
-                    If Not TempMeInCheck.IsInCheck Then
-                        'Therefore is a legal move. This means that there is no checkmate / stalemate.
-                        TotalMoves += 1
-                        If TotalMoves > 1 Then
-                            'Multiple moves detected/
-                            CurrentMove.EndState = "f"
-                            Return CurrentMove
-                        Else 'Only one (forced) move detected - note Move info.
-                            CurrentMove.OldMoveX = BasePieceMoves(n, 0)(0)
-                            CurrentMove.OldMoveY = BasePieceMoves(n, 0)(1)
-                            CurrentMove.NewMoveX = BasePieceMoves(n, 1)(0)
-                            CurrentMove.NewMoveY = BasePieceMoves(n, 1)(1)
-                            CurrentMove.EndState = "o"
-                        End If
-                    End If
-                Next
-            ElseIf Not PrimaryMeInCheck.IsInCheck Then
-                'Position is a stalemate.
-                CurrentMove.EndState = "s"
+            If BasePieceMoves Is Nothing Then
+                'No legal moves in the position - hence the player is either in checkmate, or is in a stalemate.
+                If PrimaryMeInCheck.IsInCheck Then
+                    CurrentMove.EndState = "c" 'Checkmate flag.
+                Else
+                    CurrentMove.EndState = "s" 'Stalemate flag.
+                End If
+            Else
+                If BasePieceMoves.GetUpperBound(0) = 0 Then
+                    'Only one legal move in the position - make a note of this move.
+                    CurrentMove.OldMoveX = BasePieceMoves(0, 0)(0)
+                    CurrentMove.OldMoveY = BasePieceMoves(0, 0)(1)
+                    CurrentMove.NewMoveX = BasePieceMoves(0, 1)(0)
+                    CurrentMove.NewMoveY = BasePieceMoves(0, 1)(1)
+                    CurrentMove.EndState = "o" 'One move flag.
+                Else
+                    'Multiple moves detected - flag accordingly.
+                    CurrentMove.EndState = "f"
+                End If
             End If
         Else 'AI not correctly instantiated.
             Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("Error when Attempting Search - FEN Position not set.")
+            Console.WriteLine("Error when Attempting Search - FEN Position not set / no Legal Moves in Position.")
             Console.ResetColor()
             CurrentMove.EndState = "a"
         End If
@@ -599,6 +655,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
 
         Dim PieceValueDif As Int16 'Difference in weight between the capturing piece, and the piece being captured.
+
         If isWhite Then
             For y = 0 To 7
                 For x = 0 To 7
@@ -1006,14 +1063,14 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         Dim TempTTEntry As New TTEntry
         'Hashes Zobrist key to find the location of the Entry in the Table.
         Dim EntryInTT As UInt32 = ZobristValue >> 44
-        Dim IndexInTT As Byte
+        Dim IndexInTT, OldFlag As Byte
         'Searches for position in TranspositionTable.
         If TranspositionTable(EntryInTT) IsNot Nothing Then
             For n = 0 To TranspositionTable(EntryInTT).Count - 1
                 If (TranspositionTable(EntryInTT))(n).Key = ZobristValue Then
                     'Entry has been found - copy this to TempTTEntry.
                     IndexInTT = n
-                    TempTTEntry = (TranspositionTable(EntryInTT))(n)
+                    TempTTEntry = TranspositionTable(EntryInTT)(n)
                     Exit For
                 End If
             Next
@@ -1043,6 +1100,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
             End If
             If depth > 0 Then
+                OldFlag = TempTTEntry.Flag
                 TempTTEntry.Flag = 4 'flags that the position is currently being searched on - if child nodes also detect this position,
                 'then we return a draw (three-fold repetition).
                 TempTTEntry.Depth = depth
@@ -1054,6 +1112,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             End If
 
         ElseIf depth > 0 Then
+            OldFlag = 4
             'Creates a new TTEntry for the current position, as it could not be found in the Transposition Table.
             TempTTEntry.IsPopulated = True
             TempTTEntry.Key = ZobristValue
@@ -1066,8 +1125,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
         If isWhite Then
             'Creates and forms the TFTable for the player to move.
-            Dim WhiteTFTable(7, 7) As Char
-            FixTFTables(Board, True, WhiteTFTable, WKPos, WInCheck, EnPassant)
+            FixTFTables(Board, True, MiniMaxTFTable, WKPos, WInCheck, EnPassant)
             If Not (depth > 0 OrElse WInCheck.IsInCheck) Then 'Quiescence mode activated.
                 'Evaluation of board is the current move to beat.
                 BestMove = Evaluate(Board, MaterialCount, WKPos, BKPos)
@@ -1082,7 +1140,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             'Assumes Flag to be Upper bound, unless proven otherwise.
             TempTTEntry.Flag = 2
             'Creates the pseudo-legal moves for the chosen player.
-            Dim PieceMoves(,) As String = CreateMoves(Board, True, WhiteTFTable, BKPos, WInCheck, WCanCastle, EnPassant, Not (depth > 0 OrElse WInCheck.IsInCheck), MasterDepth - depth, TempTTEntry.BestMoveOld, TempTTEntry.BestMoveNew) 'If Quiescence mode is activated then use capture moves only.
+            Dim PieceMoves(,) As String = CreateMoves(Board, True, MiniMaxTFTable, BKPos, WInCheck, WCanCastle, EnPassant, Not (depth > 0 OrElse WInCheck.IsInCheck), MasterDepth - depth, TempTTEntry.BestMoveOld, TempTTEntry.BestMoveNew) 'If Quiescence mode is activated then use capture moves only.
             If PieceMoves IsNot Nothing Then 'If any move exists...
                 'Creates temp variables.
                 Dim TempBoard(7, 7) As Char
@@ -1132,9 +1190,18 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                         End If
 
                         If ABORT Then
-                            'Removes the current position's entry in the Transposition Table (to prevent leftover "4"
+                            'Resets the current position's entry in the Transposition Table (to prevent leftover "4"
                             'entries from affecting future searches), then exits search immediately.
-                            If depth > 0 Then TranspositionTable(EntryInTT).RemoveAt(IndexInTT)
+                            If depth > 0 Then
+                                If OldFlag = 4 Then
+                                    'Entry in the Transposition Table is a newly-added one - remove it.
+                                    TranspositionTable(EntryInTT).RemoveAt(IndexInTT)
+                                Else
+                                    TempTTEntry = TranspositionTable(EntryInTT)(IndexInTT)
+                                    TempTTEntry.Flag = OldFlag
+                                    TranspositionTable(EntryInTT)(IndexInTT) = TempTTEntry
+                                End If
+                            End If
                             Return 0
                         End If
 
@@ -1147,12 +1214,16 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                                 TempTTEntry.BestMoveNew = PieceMoves(n, 1)
                                 'We now have proof that the move is not an upper bound, as the move was able to produce
                                 'a valid evaluation - replace it with 'exact'.
-                                If Not SearchSettings.StableSearch Then TempTTEntry.Flag = 0
+                                'Alfie Note 3/8/23: Fun Fact! The below IF statement (checking against Alpha / Beta) seems to 
+                                'eliminate (as far as I can tell) all of the instability I've been having in my Transposition Table.
+                                'I've been bug hunting for this for like 6 FREAKING MONTHS AND ALL IT TOOK WAS ONE STUPID IF CHECK!?!?!?
+                                'I would be dancing around my room with excitement, but I'm mostly just angry that it took me this
+                                'long to figure this out lmaoo. Still pretty happy & relieved, though :DD.
+                                If Not SearchSettings.StableSearch AndAlso BestMove > Alpha Then TempTTEntry.Flag = 0
                             End If
 
                             Alpha = Math.Max(Alpha, BestMove) 'Alpha = best move found for white.
-                            'Move was too strong for player; opponent will not choose this branch.
-                            If Beta <= Alpha Then
+                            If Beta <= Alpha Then 'Move was too strong for player; opponent will not choose this branch.
                                 If Board(Val(PieceMoves(n, 1)(0)), Val(PieceMoves(n, 1)(1))) = " " AndAlso (KillerMoves(MasterDepth - depth, 0) <> PieceMoves(n, 0) & PieceMoves(n, 1)) Then
                                     'The pruned move is not a capture move - add move to KillerMoves(), in the hope that the move
                                     'is also possible in sibling positions. If this move is detected, it is searched earlier.
@@ -1160,6 +1231,16 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                                     KillerMoves(MasterDepth - depth, 0) = PieceMoves(n, 0) & PieceMoves(n, 1)
                                 End If
 
+                                If Math.Abs(BestMove) >= 29500 Then
+                                    'This sub-position leads to an inevitable checkmate. However, as this position is 1 move further
+                                    'away to that checkmate, subtlety diminish the value of this position, so that the fastest
+                                    'possible checkmating path will be chosen by the AI.
+                                    If BestMove > 0 Then
+                                        BestMove -= 1
+                                    Else
+                                        BestMove += 1
+                                    End If
+                                End If
                                 If depth > 0 Then
                                     'Store position & its detail in the Transposition Table.
                                     TempTTEntry.Score = BestMove
@@ -1174,10 +1255,10 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                     End If
                 Next
             End If
+
         Else 'Near-identical code for the black side.
 
-            Dim BlackTFTable(7, 7) As Char
-            FixTFTables(Board, False, BlackTFTable, BKPos, BInCheck, EnPassant)
+            FixTFTables(Board, False, MiniMaxTFTable, BKPos, BInCheck, EnPassant)
             If Not (depth > 0 OrElse BInCheck.IsInCheck) Then
                 BestMove = Evaluate(Board, MaterialCount, WKPos, BKPos)
                 Beta = Math.Min(Beta, BestMove)
@@ -1189,7 +1270,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             End If
 
             TempTTEntry.Flag = 1
-            Dim PieceMoves(,) As String = CreateMoves(Board, False, BlackTFTable, WKPos, BInCheck, BCanCastle, EnPassant, Not (depth > 0 OrElse BInCheck.IsInCheck), MasterDepth - depth, TempTTEntry.BestMoveOld, TempTTEntry.BestMoveNew)
+            Dim PieceMoves(,) As String = CreateMoves(Board, False, MiniMaxTFTable, WKPos, BInCheck, BCanCastle, EnPassant, Not (depth > 0 OrElse BInCheck.IsInCheck), MasterDepth - depth, TempTTEntry.BestMoveOld, TempTTEntry.BestMoveNew)
             If PieceMoves IsNot Nothing Then
                 Dim TempBoard(7, 7) As Char
                 Dim TempMaterialCount(1) As Int16
@@ -1230,7 +1311,15 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                         End If
 
                         If ABORT Then
-                            If depth > 0 Then TranspositionTable(EntryInTT).RemoveAt(IndexInTT)
+                            If depth > 0 Then
+                                If OldFlag = 4 Then
+                                    TranspositionTable(EntryInTT).RemoveAt(IndexInTT)
+                                Else
+                                    TempTTEntry = TranspositionTable(EntryInTT)(IndexInTT)
+                                    TempTTEntry.Flag = OldFlag
+                                    TranspositionTable(EntryInTT)(IndexInTT) = TempTTEntry
+                                End If
+                            End If
                             Return 0
                         End If
 
@@ -1239,7 +1328,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                             If depth > 0 Then
                                 TempTTEntry.BestMoveOld = PieceMoves(n, 0)
                                 TempTTEntry.BestMoveNew = PieceMoves(n, 1)
-                                If Not SearchSettings.StableSearch Then TempTTEntry.Flag = 0
+                                If Not SearchSettings.StableSearch AndAlso BestMove < Beta Then TempTTEntry.Flag = 0
                             End If
 
                             Beta = Math.Min(Beta, BestMove) 'Beta = best move found for white.
@@ -1249,6 +1338,13 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                                     KillerMoves(MasterDepth - depth, 0) = PieceMoves(n, 0) & PieceMoves(n, 1)
                                 End If
 
+                                If Math.Abs(BestMove) >= 29500 Then
+                                    If BestMove > 0 Then
+                                        BestMove -= 1
+                                    Else
+                                        BestMove += 1
+                                    End If
+                                End If
                                 If depth > 0 Then
                                     TempTTEntry.Score = BestMove
                                     TempTTEntry.Flag = 2
@@ -1263,18 +1359,27 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             End If
         End If
 
-        If Math.Abs(BestMove) = 32767 Then
-            'No legal move found for the player.
-            If WInCheck.IsInCheck Then
-                'Checkmate for white: return -(30000 + depth) so that the quickest path to checkmate is chosen by the AI.
-                BestMove = -(30000 - (MasterDepth - depth))
-                CheckmatesFound += 1
-            ElseIf BInCheck.IsInCheck Then
-                'Checkmate for black: return (30000 + depth) so that the quickest path to checkmate is chosen by the AI.
-                BestMove = (30000 - (MasterDepth - depth))
-                CheckmatesFound += 1
-            Else 'Stalemate: return 0
-                BestMove = 0
+        If Math.Abs(BestMove) >= 29500 Then
+            If Math.Abs(BestMove) = 32767 Then
+                'No legal move found for the player.
+                If WInCheck.IsInCheck Then
+                    'Checkmate for white.
+                    BestMove = -30000
+                    CheckmatesFound += 1
+                ElseIf BInCheck.IsInCheck Then
+                    'Checkmate for black.
+                    BestMove = 30000
+                    CheckmatesFound += 1
+                Else 'Stalemate: return 0.
+                    BestMove = 0
+                End If
+            Else
+                'Position leads to checkmate. Diminish score to reflect longer path to checkmate.
+                If BestMove > 0 Then
+                    BestMove -= 1
+                Else
+                    BestMove += 1
+                End If
             End If
             TempTTEntry.Flag = 5 'Represents an end-state in the Transposition Table.
         End If

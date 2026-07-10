@@ -13,13 +13,13 @@ Partial Public Class CoreMethods
 
     'Sub that populates KnightLegalMoveArray
     Public Sub PopulateKnightLegalMoveArray()
-        Dim LegalMoveArray(27) As String
+        Dim LegalMoveArray(26) As String
         Dim Counter As SByte
 
         For CoorY = 0 To 7
             For CoorX = 0 To 7
                 'Resets the LegalMoveArray structure.
-                For n = 0 To 27
+                For n = 0 To 26
                     LegalMoveArray(n) = Nothing
                 Next
                 Counter = 1
@@ -85,7 +85,7 @@ Partial Public Class CoreMethods
     'for each type of piece, comments will only be included for the first appearance of a particular method / technique.
     'For more in-depth commenting & info, please see the section on Pseudo-legal Move Generation in my Project Report (Design). 
     Public Function WhitePieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef WhiteTFTable(,) As Char, ByVal WInCheck As InCheck, ByRef WCanCastle As CanCastle, ByVal EnPassant As String) As String()
-        Dim LegalMoveArray(27) As String
+        Dim LegalMoveArray(26) As String
         Dim n As Byte
 
         If Board(CoorX, CoorY) = "P" Then 'Legal Moves for the Pawn (along with First Moves).
@@ -303,7 +303,7 @@ Partial Public Class CoreMethods
 
     'As the below subroutine is very similar to its equivilant 'WhitePieceLegalMoves' function, commenting will be limited.
     Public Function BlackPieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef BlackTFTable(,) As Char, ByVal BInCheck As InCheck, ByRef BCanCastle As CanCastle, ByVal EnPassant As String) As String()
-        Dim LegalMoveArray(27) As String
+        Dim LegalMoveArray(26) As String
         Dim n As Byte
 
         If Board(CoorX, CoorY) = "p" Then 'Legal Moves for the Pawn (along with First Moves.)
@@ -506,7 +506,6 @@ Partial Public Class CoreMethods
 
     Public Sub WhitePieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef BlackTFTable(,) As Char, ByVal BKPos As String, ByRef BInCheck As InCheck, ByVal EnPassant As String)
         Dim CheckingPiece As String = " "
-        Dim PiecePutsPlayerInCheck As Boolean
 
         If Board(CoorX, CoorY) = "P" Then 'Legal Moves for the Pawn (along with First Moves).
             If CoorX > 0 Then
