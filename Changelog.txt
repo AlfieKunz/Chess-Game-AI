@@ -1,4 +1,2 @@
-Check visualisation
-LegalMove implementation, instead of pseudolegal chess.
-FENExport button.
-Board resetter.
+AI with MiniMax implementation (black side only)
+Depth of 1 Search.
