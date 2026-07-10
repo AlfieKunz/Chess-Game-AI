@@ -1,12 +1,28 @@
-Puzzle mode, with AI implementation.
-Transposition Table redesign & major bug fixes (but still has instability). D:
-Maintaining Transposition Table across multiple moves.
-AI perfomance increases.
-Many, many bug fixes.
-Move list in CreateMoves & PieceLegalMoves with shrunk array.
-Redesigned, larger opening book with weighed moves & faster load times.
-Integer Evaluations (rather than decimal ones).
-Tweeked PieceHeatMaps.
-Uses last (ABORTed) search iteration for Best Move.
-Extra information for AI moves, along with Lifetime Stats.
-Best Path Output (using Transposition Table).
+~~~~~~~~  New Features  ~~~~~~~~
+- 'king dead' text for Hammad Mode Checkmate.
+- Toggle to disable non-essential GUI elements when the AI is searching (improves low TimeForSearch situations).
+- More Compact & Refined Debug Info Console Output.
+- Added AI Method to calculate the length of the TranspositionTable Entry (List), which contains the most entries (used to determine how 'full' the TranspositionTable is).
+- Option for the AI to search on the position on the user's turn (which fills the TranspositionTable in preparation for the AI's move) - 1-Player Mode only.
+- TT data is retained upon ABORTing a search, meaning that some positions can be accessed quicker.
+- Restructuring of how BasePieceMoves is generated (contains only legal moves vs pseudo-legal moves).
+- Restructuring of how the main Chess.vb form interacts with pieces (due to restructuring of BasePieceMoves).
+- Option to output the details of the Current Move the AI is searching on (OutputMoveDebugInfo in SearchSettings) - toggles when the searching process becomes lengthy.
+- Added 'VFast' Animation Speed Option (and set default speed to 'Fast').
+- General Code Condensing :).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+~~~~~~~~~  Bug Fixes  ~~~~~~~~~
+- (pretty much) NO INSTABILITY IN THE TRANSPOSITION TABLE WOOOOOOOOOOOO LET'S GOOOOOO, HELLL YEAHHHHHH :DDDDDDDDDDDDDD - FINALLY!!
+- Fixed PictureBox Transparency Issue (with PictureBoxes not overlapping correctly) - finally!!
+- Smoother PictureBox movement on the GUI - no stuttering or flickering :))).
+- Bug fixes for a single search not having enough time to complete.
+- Fixed hidden MainMenu bug.
+- Fixed 'Sound Off' Toggle so that it works with Puzzle Mode.
+- Board Debug Info now flips in black's favour.
+- Fixed bug where checkmate scores are incorrectly retrieved from the Transposition Table.
+- Memory Management tools to help prevent the system from crashing during long searches.
+- Error handling for 'Move Practice' Training Mode not being able to find a valid position.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

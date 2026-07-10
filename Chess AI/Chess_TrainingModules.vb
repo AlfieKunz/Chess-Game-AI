@@ -153,7 +153,7 @@ Partial Public Class Chess
         'Stops the AI from searching on the position, and disables the puzzle timer.
         CancelAIPuzzleSearch()
         ResetPuzzleTimer()
-        If AutoAdvanceOnComplete.Checked Then Thread.Sleep(500) 'Allows the correct / incorrect sound to play.
+        If AutoAdvanceOnComplete.Checked Then Thread.Sleep(450) 'Allows the correct / incorrect sound to play.
 
         'Changes the mode from User to AI (or vice versa), if neeeded.
         If HumanModeBtn.Checked <> UserPuzzleMode Then
@@ -270,7 +270,7 @@ Partial Public Class Chess
         If NoOfPuzzleMovesComplete * 2 >= PuzzleSampleDatabase(CurrentPuzzleIndex).GetMoveCount() Then
             'The last move of the puzzle has just been played; the puzzle is complete.
             If Not UserPuzzleMode Then AIStopwatch.Stop() : UpdateAIPuzzleInfoLabel(True) 'Stops the AI's search.
-            Sound_Correct.Play()
+            If GeneralOptions(0) = "T" Then Sound_Correct.Play()
             'If the NextPuzzle Button is visible, then the user has had help in completing the puzzle - therefore don't award rating.
             If Not NextPuzzleBtn.Visible Then CalculateRatingGained(UserPuzzleMode, True) : GainedRatingLabel.ForeColor = Color.Green : Application.DoEvents()
             'Stops the user from modifying the board, or from affecting the (now complete) puzzle.
@@ -317,7 +317,7 @@ Partial Public Class Chess
     Private Sub GiveUpBtn_Click() Handles GiveUpBtn.Click
         If Not PieceIsMoving Then 'Prevents the position from changing if an animation is taking place.
             CancelAIPuzzleSearch()
-            Sound_Incorrect.Play()
+            If GeneralOptions(0) = "T" Then Sound_Incorrect.Play()
             Thread.Sleep(100) 'Gives the sound enough time to play before the position changes.
             CalculateRatingLost(UserPuzzleMode, GiveUpBtn.Enabled) 'Decrements the user's / the AI's puzzle rating.
             'Note that the user / the AI should not be penelised multiple times per puzzle, so if the GiveUp Button
@@ -452,6 +452,49 @@ Partial Public Class Chess
         AIStopwatch.Restart()
         AIThread.Start()
     End Sub
+
+    'Function which tests the AI's current move against the puzzle's correct move. If the function returns True, then
+    'the AI will stop its search (due to it getting the move correct, or its time expiring).
+    Private Function HandleAIPuzzleGuess() As Boolean
+        If MainAI.GetABORTState() Then
+            'Time to search on puzzle has expired - stop the search process.
+            AIStopwatch.Stop()
+            Return True
+        Else
+            'Checks if the AI's move matches the puzzle's correct move.
+            'Fetches the correct puzzle move.
+            Dim CorrectMove As New Move
+            CorrectMove = PuzzleSampleDatabase(CurrentPuzzleIndex).GetMove(NoOfPuzzleMovesComplete * 2 + 1)
+            Console.Write("Correct Puzzle Move: ")
+            If Math.Abs(AIBestMove.Score) >= 295 OrElse ((CorrectMove.OldMoveX = AIBestMove.OldMoveX AndAlso CorrectMove.OldMoveY = AIBestMove.OldMoveY) AndAlso (CorrectMove.NewMoveX = AIBestMove.NewMoveX AndAlso CorrectMove.NewMoveY = AIBestMove.NewMoveY)) Then
+                'AI's move is correct (or is a checkmating pattern, which we assume is correct; sometimes there are puzzles
+                'containing multiple ways to checkmate, but only one method is accepted, so if our AI produces a valid
+                'checkmating pattern then we just say that the move is correct).
+                If UserPuzzleMode Then AIStopwatch.Stop()
+                Console.ForegroundColor = ConsoleColor.Green
+                Console.WriteLine("Yes" & vbCrLf)
+                Console.ResetColor()
+                Me.Invoke(Sub()
+                              'Notify to the system that the AI's move is correct - meaning that GUI elements
+                              'are updated, and the next puzzle move is played (if AIPuzzleMode is enabled).
+                              UpdateAIPuzzleInfoLabel(True)
+                              If Not UserPuzzleMode Then
+                                  CancelAIPuzzleSearch()
+                                  PlayNextPuzzleMove(NoOfPuzzleMovesComplete * 2 + 1, False)
+                                  PuzzleMoveCompleted()
+                              End If
+                          End Sub)
+                Return True
+            Else
+                'AI's move does not match the correct puzzle move - flag as incorrect.
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("No")
+                Console.ResetColor()
+            End If
+        End If
+        Return False 'Move is incorrect - continue searching.
+    End Function
+
     Private Sub CancelAIPuzzleSearch()
         'Stops the AI from searching on the position.
         MainAI.ABORTSearch()
@@ -693,22 +736,31 @@ Partial Public Class Chess
         Dim NewFEN As String
         Const FENsInFile As UInt16 = 10000
         Dim NoOfRetries As Byte
-        While True
-            'Picks a random line from the file.
-            NewFEN = System.IO.File.ReadAllLines(Application.StartupPath & "\Assets\RandomFENs.txt")(Math.Truncate(Rnd() * FENsInFile))
-            'Applies that FEN to Masterboard and calibrates board info.
-            MasterBoard = SharedAlgorithms.FENConverter(NewFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-            MasterWInCheck.NotInCheck()
-            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterEnPassant)
-            'If White is not in check, generate all the legal moves in the position.
-            If Not MasterWInCheck.IsInCheck Then
-                MovesInPosition = MainAI.CreateMoves(MasterBoard, True, MasterWhiteTFTable, MasterBKPos, MasterWInCheck, MasterWCanCastle, MasterEnPassant, False, 0, "", "")
-                If MovesInPosition.GetUpperBound(0) > MovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
-            End If
-            NoOfRetries += 1
-        End While
+        Try
+            While True
+                'Picks a random line from the file.
+                NewFEN = System.IO.File.ReadAllLines(Application.StartupPath & "\Assets\RandomFENs.txt")(Math.Truncate(Rnd() * FENsInFile))
+                'Applies that FEN to Masterboard and calibrates board info.
+                MasterBoard = SharedAlgorithms.FENConverter(NewFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                MasterWInCheck.NotInCheck()
+                SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterEnPassant)
+                'If White is not in check, generate all the legal moves in the position.
+                MainAI.Reconfigure(NewFEN, True)
+                If Not MasterWInCheck.IsInCheck Then
+                    MovesInPosition = MainAI.GetLegalMoves()
+                    If MovesInPosition.GetUpperBound(0) >= MovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
+                End If
+                NoOfRetries += 1
+                If NoOfRetries = 20 Then Throw New Exception("Too many attempts.")
+            End While
+        Catch ex As Exception
+            Console.ForegroundColor = ConsoleColor.DarkRed
+            Console.WriteLine("Unable to find a valid Training Position in the databse.")
+            Console.ResetColor()
+            MsgBox("Error: Unable to retrieve a valid position from the database." & vbCrLf & "Returning to the Main Menu...", vbCritical + vbOKOnly + vbApplicationModal)
+            ExitBtn_Click()
+        End Try
 
-        MainAI.Reconfigure(NewFEN, True)
         Console.ForegroundColor = ConsoleColor.Green
         Console.WriteLine("New Position: " & NewFEN)
         If NoOfRetries > 0 Then Console.ForegroundColor = ConsoleColor.Red : Console.WriteLine("Number of Retries: " & NoOfRetries)
@@ -752,6 +804,7 @@ Partial Public Class Chess
         Else
             BLeaderBoardGrid.Visible = False
         End If
+        Console.WriteLine()
         'Starts countdown.
         MoveDisplayer.Visible = True
         MoveDisplayer.Text = "3"

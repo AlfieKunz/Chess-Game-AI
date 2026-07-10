@@ -73,7 +73,7 @@ Public Class Settings
         Catch ex As Exception
             'Sets all settings to their default values.
             ColourScheme = "def"
-            AnimationSpeed = 3
+            AnimationSpeed = 2
             GeneralOptions = "TTTTTFFF"
             FixedSearchDepth = 0
         End Try
@@ -140,12 +140,20 @@ Public Class Settings
     'Subroutine that saves the user's settings to the UserProfile file, whenever any settings are modified.
     Private Sub SaveSettings()
         'Writes the colour preferences to a file (creates the file if one does not exist).
-        FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Output)
-        PrintLine(1, ColourScheme)
-        PrintLine(1, CStr(AnimationSpeed))
-        PrintLine(1, GeneralOptions)
-        PrintLine(1, FixedSearchDepth)
-        FileClose(1)
+        Try
+            FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Output)
+            PrintLine(1, ColourScheme)
+            PrintLine(1, CStr(AnimationSpeed))
+            PrintLine(1, GeneralOptions)
+            PrintLine(1, FixedSearchDepth)
+            FileClose(1)
+        Catch ex As Exception
+            FileClose(1)
+            Console.ForegroundColor = ConsoleColor.DarkRed
+            Console.WriteLine("Unable to Save Settings. Please try again...")
+            Console.ResetColor()
+        End Try
+
         'Finds the 'chess' parent form, and runs one of its subroutines which configures the user's new settings.
         For Each TempForm As Form In Application.OpenForms
             If TempForm.Name = "Chess" Then
@@ -475,6 +483,8 @@ Public Class Settings
                 Case 0
                     Constant = 1
                 Case 1
+                    Constant = 5
+                Case 2
                     Constant = 25
                 Case Else
                     Constant = 75
@@ -485,12 +495,12 @@ Public Class Settings
                     'Moves the piece one 'step' towards its destination square.
                     Piece.Left -= n * (75 * (SquareHistory(0, 0) - SquareHistory(1, 0)) / Constant)
                     Piece.Top -= n * (75 * (2 - SquareHistory(1, 1)) / Constant)
-                    If AnimationSpeed = 2 Then Piece.Refresh() Else Application.DoEvents() 'Updates the visuals of the piece (in different ways depending on the Animation Speed).
+                    If AnimationSpeed = 3 Then Piece.Refresh() Else Application.DoEvents() 'Updates the visuals of the piece (in different ways depending on the Animation Speed).
                 Next
                 'Completes the move, then waits depending on what the animation speed is (faster speed = less time to wait).
                 Checkerboard.Refresh()
                 If SoundBtn.Checked Then Sound_Move.Play()
-                If n = 1 Then Thread.Sleep(400 + ((3 - AnimationSpeed) * 100)) 'Stalls in between the move.
+                If n = 1 Then Thread.Sleep(400 + ((4 - AnimationSpeed) * 100)) 'Stalls in between the move.
             Next
             AnimationRunning = False
         End If

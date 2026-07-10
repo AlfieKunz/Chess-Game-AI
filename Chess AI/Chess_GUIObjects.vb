@@ -1,5 +1,6 @@
 ﻿Imports System.IO
 Imports System.Text
+Imports System.Threading
 
 'Class that holds all the methods referring to GUI controls in the Chess form (ie: buttons, text boxes, sliders, etc).
 Partial Public Class Chess
@@ -14,7 +15,7 @@ Partial Public Class Chess
                 'Performs tests on the input to determine whether the user is inputting a FEN or a series of PGN moves.
                 If GameRunning AndAlso (InputTextBox.Text.IndexOf("/") = -1 OrElse (InputTextBox.Text.IndexOf(".") > -1 OrElse (InputTextBox.Text.IndexOf(" ") > 1 AndAlso InputTextBox.Text.IndexOf(" ") < 10))) Then
                     'Can assume that input is a move / moves.
-                    EnterMovesIntoSystem(InputTextBox.Text, True)
+                    EnterMovesIntoSystem(InputTextBox.Text, True, True)
                 ElseIf FENErrorDetection(InputTextBox.Text, True, "") Then 'Is a Valid FEN.
                     If UndoFENChange.Visible = True Then UndoFENChange.Visible = False
                     'Resets Check and Castling Properties.
@@ -92,7 +93,7 @@ Partial Public Class Chess
 
     'Resets the board to the starting position and sets white to move.
     Private Sub Reset_Btn_Click() Handles Reset_Btn.Click
-        If Not (ComputerIsSearching OrElse CurrentFEN = StartingFEN) Then
+        If Not (ComputerIsSearching OrElse (CurrentFEN = StartingFEN AndAlso GameRunning)) Then
             PreviousFEN = CurrentFEN
             CurrentFEN = StartingFEN
             'Resets Check Properties.
@@ -100,7 +101,6 @@ Partial Public Class Chess
             MasterBInCheck.NotInCheck()
             'Can assume that the StartingFEN is valid, so we display it graphically.
             MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-            DisplayPieces()
             'Edits location of Previously Used Squares.
             SquareHistory(2, 0) = SquareHistory(0, 0)
             SquareHistory(2, 1) = SquareHistory(0, 1)
@@ -117,6 +117,7 @@ Partial Public Class Chess
             Else
                 SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterBInCheck, MasterEnPassant)
             End If
+            DisplayPieces()
             CheckChecker(False)
             If (PlayerTurn Xor OrientForWhite) AndAlso Not (GameMode = 1 AndAlso (UserPlayer Xor Not OrientForWhite)) Then FlipBoard()
             GameRunning = True
@@ -163,6 +164,7 @@ Partial Public Class Chess
         'If CurrentFEN = PreviousFEN then it is implied that it is the starting position.
         'The user should not be able to undo in this circumstance.
         If Not ComputerIsSearching AndAlso Not (CurrentFEN = PreviousFEN) Then
+            If AIIsSearchingOnUsersTurn Then MainAI.ABORTSearch()
             Dim TempSH(1, 1) As SByte 'Temp Square History array.
             Dim TempFEN As String = CurrentFEN
             CurrentFEN = PreviousFEN
@@ -202,6 +204,7 @@ Partial Public Class Chess
 
             If GameMode < 3 Then FENExport_Click()
             'Recalibrates AI, then checks for end positions.
+            If AIIsSearchingOnUsersTurn Then Thread.Sleep(5) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
             MainAI.Reconfigure(CurrentFEN, False)
             BoardHistory.Swap()
             EnforceEndStates(False)
@@ -210,7 +213,11 @@ Partial Public Class Chess
     End Sub
 
     'Subroutine which rotates the board 180 degreees in favour of the other player.
-    Private Sub FlipBoard() Handles FlipperButton.Click
+    Private Sub FlipperButton_Click() Handles FlipperButton.Click
+        FlipBoard()
+        OutputDebugInfo()
+    End Sub
+    Private Sub FlipBoard()
         OrientForWhite = Not OrientForWhite
         'Reorientates Previously used squares.
         SquareHistory(0, 0) = 7 - SquareHistory(0, 0)
@@ -354,14 +361,13 @@ Partial Public Class Chess
 
     'Button that returns the user back to the Main Menu. 
     Private Sub ExitBtn_Click() Handles ExitBtn.Click
-        If MainAI IsNot Nothing Then MainAI.ABORTSearch()
+        If MainAI IsNot Nothing Then AICanSearchOnUsersTurn = False : MainAI.ABORTSearch()
         If GameMode = 4 Then PuzzleSampleDatabase = Nothing : GC.Collect() 'Clears the puzzle database to save memory.
         'Locates MainMenu Form and shows it.
         Dim Menu As Form = CType(Application.OpenForms("MainMenu"), MainMenu)
         'Closes the settings form, if it exists.
         Dim Settings As Form = CType(Application.OpenForms("Settings"), Settings)
         If Settings IsNot Nothing Then Settings.Close()
-        Console.Clear()
         Me.Close() 'Closes the current form.
         Menu.Show()
     End Sub
@@ -385,7 +391,7 @@ Partial Public Class Chess
             Console.ResetColor()
         End Try
 
-        Dim CreditsMessage As String = Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v8.0)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)"
+        Dim CreditsMessage As String = Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v8.1)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)"
         If CanRetrieveStats Then
             MsgBox(CreditsMessage & vbCrLf & vbCrLf & vbCrLf & "Lifetime AI Statistics:" & vbCrLf & "Positions Searched: " & LifetimePositions.ToString("N0") & vbCrLf & "Transpositions Found: " & LifetimeTranspositions.ToString("N0") & vbCrLf & "Checkmates Made: " & LifetimeCheckmates.ToString("N0"), vbInformation + vbApplicationModal, "Credits")
         Else
