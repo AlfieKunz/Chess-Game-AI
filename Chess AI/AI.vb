@@ -17,8 +17,23 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
     Private Shared KingSymbol As Char '"K" for white, "k" for black. Used for helping to resolve checks.
     Private UseQuiescence As Boolean 'Set by the user - determines whether the AI will use the Quiescence algorithm.
+    Public Shared HammadMode As Boolean 'A version of the AI that makes the theoretical worst moves.
     Private TotalPositionsSearched As UInt32
     Public ABORT As Boolean 'Controlled by the thread handlers - an AI is aborted if another AI has
+
+    Private MasterDepth As SByte 'The Surface Depth of the search, as set by the user.
+    Private KillerMoves(100, 1) As String 'Array containing Killer Moves, non-capture moves which caused an alpha-beta cut off.
+    'If we detect killer moves in sibling positions, we search them first.
+
+    'Arrays that the CreateMoves function uses (delared before to save processing time in the search process).
+    Private CaptureMoves(19, 1) As String 'Min size = 19
+    Private OtherCaptureMoves(19, 1) As String 'Min size = 19
+    Private PawnPromotionMoves(7, 1) As String 'Min size = 7
+    Private GoodMoves(49, 1) As String 'Min size = 49
+    Private OtherMoves(99, 1) As String 'Min size = 99
+    Private BadMoves(49, 1) As String 'Min size = 49
+    Private TerribleMoves(49, 1) As String 'Min size = 49
+
     'found a mating pattern, or if the AI has ran out of time.
 
     'Constructor methods.
@@ -39,7 +54,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             'Creates the TFTable for the white pieces, then creates king symbol.
             FixTFTables(PrimaryBoard, True, PrimaryTFTable, PrimaryMeKPos, PrimaryMeInCheck, NotInCheck, PrimaryEnPassant)
             KingSymbol = "K"
-            BasePieceMoves = CreateMoves(PrimaryBoard, True, PrimaryTFTable, PrimaryEnemyKPos, PrimaryMeInCheck, NotInCheck, PrimaryMeCanCastle, PrimaryEnPassant, False)
+            BasePieceMoves = CreateMoves(PrimaryBoard, True, PrimaryTFTable, PrimaryEnemyKPos, PrimaryMeInCheck, NotInCheck, PrimaryMeCanCastle, PrimaryEnPassant, False, 0)
         Else
             'Swaps the Primary & Enemy Castling privileges, along with the Primary & Enemy King privileges.
             'This is because, for the AI, all variables are in context of which player the AI is controlling,
@@ -54,7 +69,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             'Creates the TFTable for the black pieces, then creates king symbol.
             FixTFTables(PrimaryBoard, False, PrimaryTFTable, PrimaryMeKPos, NotInCheck, PrimaryMeInCheck, PrimaryEnPassant)
             KingSymbol = "k"
-            BasePieceMoves = CreateMoves(PrimaryBoard, False, PrimaryTFTable, PrimaryEnemyKPos, NotInCheck, PrimaryMeInCheck, PrimaryMeCanCastle, PrimaryEnPassant, False)
+            BasePieceMoves = CreateMoves(PrimaryBoard, False, PrimaryTFTable, PrimaryEnemyKPos, NotInCheck, PrimaryMeInCheck, PrimaryMeCanCastle, PrimaryEnPassant, False, 0)
         End If
         'Finds the material count of the board.
         PrimaryMaterialCount = CountMaterial(PrimaryBoard)
@@ -65,7 +80,8 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     'Algorithm that finds the AI's 'Best Move' for a given position, using the MiniMax algorithm.
     Public Function Search(ByVal Depth As SByte, ByVal UserQuiescence As Boolean) As Move
         Dim BestMove As New Move
-        BestMove.Score = Integer.MinValue
+        If HammadMode Then BestMove.Score = Integer.MaxValue Else BestMove.Score = Integer.MinValue
+
         If HasBeenInstantiated AndAlso Depth > 0 Then
             UseQuiescence = UserQuiescence
             'Creates alpha (white's best move) and beta (black's best move).
@@ -76,6 +92,8 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             TotalPositionsSearched = 0
             If BasePieceMoves(0, 0) > 0 Then 'If any move exists...
                 'Creates temp variables.
+                MasterDepth = Depth
+                'clear killermoves.
                 Dim TempBoard(7, 7) As Char
                 Dim TempMaterialCount(1) As SByte
                 Dim TempMeKPos As String
@@ -126,15 +144,29 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                             'of the player to move. This is so that the largest number will always be the best score.
                             CurrentScore = -MiniMax(TempBoard, Depth - 1, True, PrimaryEnemyCanCastle, TempMeCanCastle, PrimaryEnemyKPos, TempMeKPos, TempEnPassant, TempMaterialCount, -Beta, -Alpha)
                         End If
-                        Alpha = Math.Max(Alpha, CurrentScore)
-                        If CurrentScore > BestMove.Score Then
-                            'Move has been beaten - replace it.
-                            BestMove.Score = CurrentScore
-                            BestMove.OldMoveX = BasePieceMoves(n, 0)(0)
-                            BestMove.OldMoveY = BasePieceMoves(n, 0)(1)
-                            BestMove.NewMoveX = BasePieceMoves(n, 1)(0)
-                            BestMove.NewMoveY = BasePieceMoves(n, 1)(1)
+
+                        'Code for selecting the best move in the position.
+                        If HammadMode Then
+                            If CurrentScore < BestMove.Score Then
+                                'Move has been beaten (worse) - replace it.
+                                BestMove.Score = CurrentScore
+                                BestMove.OldMoveX = BasePieceMoves(n, 0)(0)
+                                BestMove.OldMoveY = BasePieceMoves(n, 0)(1)
+                                BestMove.NewMoveX = BasePieceMoves(n, 1)(0)
+                                BestMove.NewMoveY = BasePieceMoves(n, 1)(1)
+                            End If
+                        Else
+                            Alpha = Math.Max(Alpha, CurrentScore)
+                            If CurrentScore > BestMove.Score Then
+                                'Move has been beaten (better) - replace it.
+                                BestMove.Score = CurrentScore
+                                BestMove.OldMoveX = BasePieceMoves(n, 0)(0)
+                                BestMove.OldMoveY = BasePieceMoves(n, 0)(1)
+                                BestMove.NewMoveX = BasePieceMoves(n, 1)(0)
+                                BestMove.NewMoveY = BasePieceMoves(n, 1)(1)
+                            End If
                         End If
+
                     End If
                 Next
             End If
@@ -257,23 +289,20 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
 
     'Function which creates and orders all the pseudo-legal moves a player can make, given certain criteria.
-    Public Function CreateMoves(ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal TrueFalseTable(,) As Char, ByVal KPos As String, ByVal WInCheck As InCheck, ByVal BInCheck As InCheck, ByVal CanCastle As CanCastle, ByVal EnPassant As String, ByVal OnlyCaptures As Boolean) As String(,)
+    Public Function CreateMoves(ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal TrueFalseTable(,) As Char, ByVal KPos As String, ByVal WInCheck As InCheck, ByVal BInCheck As InCheck, ByVal CanCastle As CanCastle, ByVal EnPassant As String, ByVal OnlyCaptures As Boolean, ByVal KillerDepth As SByte) As String(,)
         Dim PieceMoves(27) As String
         'Creates category arrays, along with their lengths variables.
         Dim AmazingCaptureMoves(200, 1) As String
-        Dim CaptureMoves(19, 1) As String
-        Dim OtherCaptureMoves(19, 1) As String
-        Dim PawnPromotionMoves(7, 1) As String
-        Dim GoodMoves(49, 1) As String
-        Dim OtherMoves(99, 1) As String
-        Dim BadMoves(49, 1) As String
-        Dim TerribleMoves(49, 1) As String
+        Dim TempKillerMoves(1, 1) As String
+
+        'Variables that handle the KillerMoves array - first determines if the correct KillerMove index is empty.
+        Dim PieceMayBeKillerOne, PieceMayBeKillerTwo As Boolean
+        Dim PieceKillerOneFull As Boolean = KillerMoves(KillerDepth, 0) IsNot Nothing
+        Dim PieceKillerTwoFull As Boolean = KillerMoves(KillerDepth, 1) IsNot Nothing
 
         Dim ArrLens(7) As Byte 'Represents the number of moves in each move category array.
         ArrLens(0) = 1
 
-        'dx and dy represent the horizontal & vertical distances between the piece and the enemy king.
-        Dim dx, dy As Byte
         Dim PieceValueDif As SByte 'Difference in weight between the capturing piece, and the piece being captured.
         If isWhite Then
             For y = 0 To 7
@@ -281,6 +310,12 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                     If Char.IsUpper(Board(x, y)) Then
                         'Generates the moves that the piece can make.
                         PieceMoves = WhitePieceLegalMoves(Board, x, y, TrueFalseTable, WInCheck, CanCastle, EnPassant)
+                        'Determines if the piece that is moving could be a match in KillerMoves() - if the coordinates of
+                        'the moving piece match the first two digits of the required index in KillerMoves() then one of
+                        'the piece's moves may be a match. If not, we don't involve killer moves in the move ordering algorithm.
+                        If PieceKillerOneFull AndAlso x & y = KillerMoves(KillerDepth, 0).Substring(0, 2) Then PieceMayBeKillerOne = True Else PieceMayBeKillerOne = False
+                        If PieceKillerTwoFull AndAlso x & y = KillerMoves(KillerDepth, 1).Substring(0, 2) Then PieceMayBeKillerTwo = True Else PieceMayBeKillerTwo = False
+
                         If PieceMoves(0) IsNot Nothing Then 'If there are any moves...
                             For n = 1 To Val(PieceMoves(0)) - 1 'for each move...
                                 If Board(Val(PieceMoves(n)(0)), Val(PieceMoves(n)(1))) <> " " Then '= capture move.
@@ -303,34 +338,46 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                                         ArrLens(2) += 1
                                     End If
                                 ElseIf Not OnlyCaptures Then 'Non-Capture moves are not considered when Quiescence mode has been activated.
-                                    'Finds distances between piece & enemy piece.
-                                    dx = Math.Abs(Val(KPos(0)) - Val(PieceMoves(n)(0)))
-                                    dy = Math.Abs(Val(KPos(1)) - Val(PieceMoves(n)(1)))
-                                    If PieceMoves(n)(1) = "0" AndAlso Board(x, y) = "P" Then 'User is promoting a pawn.
-                                        'Ammend move list.
-                                        PawnPromotionMoves(ArrLens(3), 0) = x & y
-                                        PawnPromotionMoves(ArrLens(3), 1) = PieceMoves(n)
-                                        ArrLens(3) += 1
-                                    ElseIf Board(Math.Max(Val(PieceMoves(n)(0)) - 1, 0), Math.Max(Val(PieceMoves(n)(1)) - 1, 0)) = "p" OrElse Board(Math.Min(Val(PieceMoves(n)(0)) + 1, 7), Math.Max(Val(PieceMoves(n)(1)) - 1, 0)) = "p" Then
-                                        'New square is controlled by an enemy pawn - ammend move list.
-                                        TerribleMoves(ArrLens(7), 0) = x & y
-                                        TerribleMoves(ArrLens(7), 1) = PieceMoves(n)
-                                        ArrLens(7) += 1
-                                    ElseIf TrueFalseTable(Val(PieceMoves(n)(0)), Val(PieceMoves(n)(1))) = "F" Then
-                                        'Piece is positioned on a "False" on the TFTable, meaning the square is controlled by an enemy piece.
-                                        'Ammend move list.
-                                        BadMoves(ArrLens(6), 0) = x & y
-                                        BadMoves(ArrLens(6), 1) = PieceMoves(n)
-                                        ArrLens(6) += 1
-                                    ElseIf (Board(x, y) = "R" OrElse Board(x, y) = "B" OrElse Board(x, y) = "Q") AndAlso (dx = 0 OrElse dy = 0 OrElse dx = dy) Then
-                                        'Piece may influece king's motion - leading to a possible check. Ammend move list.
-                                        GoodMoves(ArrLens(4), 0) = x & y
-                                        GoodMoves(ArrLens(4), 1) = PieceMoves(n)
-                                        ArrLens(4) += 1
-                                    Else 'Is a regular move. Ammend move list.
-                                        OtherMoves(ArrLens(5), 0) = x & y
-                                        OtherMoves(ArrLens(5), 1) = PieceMoves(n)
-                                        ArrLens(5) += 1
+                                    'Determines if the move is a direct match with the required index in KillerMoves(). If there is one,
+                                    'the move is added to the TempKillerMoves
+                                    If PieceMayBeKillerOne AndAlso x & y & PieceMoves(n) = KillerMoves(KillerDepth, 0) Then
+                                        TempKillerMoves(0, 0) = x & y
+                                        TempKillerMoves(0, 1) = PieceMoves(n)
+                                        'Prevents more moves from being added to this index.
+                                        PieceKillerOneFull = False
+                                        PieceMayBeKillerOne = False
+                                    ElseIf PieceMayBeKillerTwo AndAlso x & y & PieceMoves(n) = KillerMoves(KillerDepth, 1) Then
+                                        TempKillerMoves(1, 0) = x & y
+                                        TempKillerMoves(1, 1) = PieceMoves(n)
+                                        PieceKillerTwoFull = False
+                                        PieceMayBeKillerTwo = False
+                                    Else
+                                        If Board(x, y) = "P" AndAlso Val(PieceMoves(n)(1)) <= 1 Then 'User is promoting a pawn.
+                                            'Ammend move list.
+                                            PawnPromotionMoves(ArrLens(3), 0) = x & y
+                                            PawnPromotionMoves(ArrLens(3), 1) = PieceMoves(n)
+                                            ArrLens(3) += 1
+                                        ElseIf Val(PieceMoves(n)(1)) >= 2 AndAlso (Board(Math.Max(Val(PieceMoves(n)(0)) - 1, 0), Val(PieceMoves(n)(1)) - 1) = "p" OrElse Board(Math.Min(Val(PieceMoves(n)(0)) + 1, 7), Val(PieceMoves(n)(1)) - 1) = "p") Then
+                                            'New square is controlled by an enemy pawn - ammend move list.
+                                            TerribleMoves(ArrLens(7), 0) = x & y
+                                            TerribleMoves(ArrLens(7), 1) = PieceMoves(n)
+                                            ArrLens(7) += 1
+                                        ElseIf Math.Max(Math.Abs(Val(KPos(0)) - Val(PieceMoves(n)(0))), Math.Abs(Val(KPos(1)) - Val(PieceMoves(n)(1)))) <= 3 Then
+                                            'Piece moves to a location close to the enemy king - leading to a possible check / attack.
+                                            GoodMoves(ArrLens(4), 0) = x & y
+                                            GoodMoves(ArrLens(4), 1) = PieceMoves(n)
+                                            ArrLens(4) += 1
+                                        ElseIf TrueFalseTable(Val(PieceMoves(n)(0)), Val(PieceMoves(n)(1))) = "F" Then
+                                            'Piece is positioned on a "False" on the TFTable, meaning the square is controlled by an enemy piece.
+                                            'Ammend move list.
+                                            BadMoves(ArrLens(6), 0) = x & y
+                                            BadMoves(ArrLens(6), 1) = PieceMoves(n)
+                                            ArrLens(6) += 1
+                                        Else 'Is a regular move. Ammend move list.
+                                            OtherMoves(ArrLens(5), 0) = x & y
+                                            OtherMoves(ArrLens(5), 1) = PieceMoves(n)
+                                            ArrLens(5) += 1
+                                        End If
                                     End If
                                 End If
                             Next
@@ -343,6 +390,9 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 For x = 0 To 7
                     If Char.IsLower(Board(x, y)) Then
                         PieceMoves = BlackPieceLegalMoves(Board, x, y, TrueFalseTable, BInCheck, CanCastle, EnPassant)
+                        If PieceKillerOneFull AndAlso x & y = KillerMoves(KillerDepth, 0).Substring(0, 2) Then PieceMayBeKillerOne = True Else PieceMayBeKillerOne = False
+                        If PieceKillerTwoFull AndAlso x & y = KillerMoves(KillerDepth, 1).Substring(0, 2) Then PieceMayBeKillerTwo = True Else PieceMayBeKillerTwo = False
+
                         If PieceMoves(0) IsNot Nothing Then
                             For n = 1 To Val(PieceMoves(0)) - 1
                                 If Board(Val(PieceMoves(n)(0)), Val(PieceMoves(n)(1))) <> " " Then
@@ -361,28 +411,38 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                                         ArrLens(2) += 1
                                     End If
                                 ElseIf Not OnlyCaptures Then
-                                    dx = Math.Abs(Val(KPos(0)) - Val(PieceMoves(n)(0)))
-                                    dy = Math.Abs(Val(KPos(1)) - Val(PieceMoves(n)(1)))
-                                    If PieceMoves(n)(1) = "7" AndAlso Board(x, y) = "p" Then
-                                        PawnPromotionMoves(ArrLens(3), 0) = x & y
-                                        PawnPromotionMoves(ArrLens(3), 1) = PieceMoves(n)
-                                        ArrLens(3) += 1
-                                    ElseIf Board(Math.Max(Val(PieceMoves(n)(0)) - 1, 0), Math.Min(Val(PieceMoves(n)(1)) + 1, 7)) = "P" OrElse Board(Math.Min(Val(PieceMoves(n)(0)) + 1, 7), Math.Min(Val(PieceMoves(n)(1)) + 1, 7)) = "P" Then
-                                        TerribleMoves(ArrLens(7), 0) = x & y
-                                        TerribleMoves(ArrLens(7), 1) = PieceMoves(n)
-                                        ArrLens(7) += 1
-                                    ElseIf TrueFalseTable(Val(PieceMoves(n)(0)), Val(PieceMoves(n)(1))) = "F" Then
-                                        BadMoves(ArrLens(6), 0) = x & y
-                                        BadMoves(ArrLens(6), 1) = PieceMoves(n)
-                                        ArrLens(6) += 1
-                                    ElseIf (Board(x, y) = "r" OrElse Board(x, y) = "b" OrElse Board(x, y) = "q") AndAlso (dx = 0 OrElse dy = 0 OrElse dx = dy) Then
-                                        GoodMoves(ArrLens(4), 0) = x & y
-                                        GoodMoves(ArrLens(4), 1) = PieceMoves(n)
-                                        ArrLens(4) += 1
+                                    If PieceMayBeKillerOne AndAlso x & y & PieceMoves(n) = KillerMoves(KillerDepth, 0) Then
+                                        TempKillerMoves(0, 0) = x & y
+                                        TempKillerMoves(0, 1) = PieceMoves(n)
+                                        PieceKillerOneFull = False
+                                        PieceMayBeKillerOne = False
+                                    ElseIf PieceMayBeKillerTwo AndAlso x & y & PieceMoves(n) = KillerMoves(KillerDepth, 1) Then
+                                        TempKillerMoves(1, 0) = x & y
+                                        TempKillerMoves(1, 1) = PieceMoves(n)
+                                        PieceKillerTwoFull = False
+                                        PieceMayBeKillerTwo = False
                                     Else
-                                        OtherMoves(ArrLens(5), 0) = x & y
-                                        OtherMoves(ArrLens(5), 1) = PieceMoves(n)
-                                        ArrLens(5) += 1
+                                        If Board(x, y) = "p" AndAlso Val(PieceMoves(n)(1)) >= 6 Then
+                                            PawnPromotionMoves(ArrLens(3), 0) = x & y
+                                            PawnPromotionMoves(ArrLens(3), 1) = PieceMoves(n)
+                                            ArrLens(3) += 1
+                                        ElseIf Val(PieceMoves(n)(1)) <= 5 AndAlso (Board(Math.Max(Val(PieceMoves(n)(0)) - 1, 0), Val(PieceMoves(n)(1)) + 1) = "P" OrElse Board(Math.Min(Val(PieceMoves(n)(0)) + 1, 7), Val(PieceMoves(n)(1)) + 1) = "P") Then
+                                            TerribleMoves(ArrLens(7), 0) = x & y
+                                            TerribleMoves(ArrLens(7), 1) = PieceMoves(n)
+                                            ArrLens(7) += 1
+                                        ElseIf Math.Max(Math.Abs(Val(KPos(0)) - Val(PieceMoves(n)(0))), Math.Abs(Val(KPos(1)) - Val(PieceMoves(n)(1)))) <= 3 Then
+                                            GoodMoves(ArrLens(4), 0) = x & y
+                                            GoodMoves(ArrLens(4), 1) = PieceMoves(n)
+                                            ArrLens(4) += 1
+                                        ElseIf TrueFalseTable(Val(PieceMoves(n)(0)), Val(PieceMoves(n)(1))) = "F" Then
+                                            BadMoves(ArrLens(6), 0) = x & y
+                                            BadMoves(ArrLens(6), 1) = PieceMoves(n)
+                                            ArrLens(6) += 1
+                                        Else
+                                            OtherMoves(ArrLens(5), 0) = x & y
+                                            OtherMoves(ArrLens(5), 1) = PieceMoves(n)
+                                            ArrLens(5) += 1
+                                        End If
                                     End If
                                 End If
                             Next
@@ -399,6 +459,17 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         Array.Copy(OtherCaptureMoves, 0, AmazingCaptureMoves, 2 * (ArrLens(0) + ArrLens(1)), 2 * ArrLens(2))
         ArrLens(0) += ArrLens(1) + ArrLens(2)
         If Not OnlyCaptures Then 'Copies all the non-capture moves to the main array.
+
+            If TempKillerMoves(0, 0) IsNot Nothing Then
+                Array.Copy(TempKillerMoves, 0, AmazingCaptureMoves, 2 * ArrLens(0), 2)
+                ArrLens(0) += 1
+            End If
+            If TempKillerMoves(1, 0) IsNot Nothing Then
+                Array.Copy(TempKillerMoves, 2, AmazingCaptureMoves, 2 * ArrLens(0), 2)
+                ArrLens(0) += 1
+            End If
+
+
             If ArrLens(3) > 0 Then Array.Copy(PawnPromotionMoves, 0, AmazingCaptureMoves, 2 * ArrLens(0), 2 * ArrLens(3))
             Array.Copy(GoodMoves, 0, AmazingCaptureMoves, 2 * (ArrLens(0) + ArrLens(3)), 2 * ArrLens(4))
             Array.Copy(OtherMoves, 0, AmazingCaptureMoves, 2 * (ArrLens(0) + ArrLens(3) + ArrLens(4)), 2 * ArrLens(5))
@@ -544,8 +615,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         TotalPositionsSearched += 1
         'Creates moves & checking rules.
         Dim CurrentMove, BestMove As Decimal
-        Dim WInCheck As New InCheck
-        Dim BInCheck As New InCheck
+        Dim WInCheck, BInCheck As New InCheck
 
         If isWhite Then
             'Creates and forms the TFTable for the player to move.
@@ -563,7 +633,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             End If
             'Creates the pseudo-legal moves for the chosen player.
             Dim PieceMoves(200, 1) As String
-            PieceMoves = CreateMoves(Board, True, WhiteTFTable, BKPos, WInCheck, BInCheck, WCanCastle, EnPassant, Not (depth > 0 OrElse WInCheck.IsInCheck)) 'If Quiescence mode is activated then use capture moves only.
+            PieceMoves = CreateMoves(Board, True, WhiteTFTable, BKPos, WInCheck, BInCheck, WCanCastle, EnPassant, Not (depth > 0 OrElse WInCheck.IsInCheck), MasterDepth - depth) 'If Quiescence mode is activated then use capture moves only.
             If PieceMoves(0, 0) > 0 Then 'If any move exists...
                 'Creates temp variables.
                 Dim TempBoard(7, 7) As Char
@@ -610,6 +680,12 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                             Alpha = Math.Max(Alpha, BestMove) 'Alpha = best move found for white.
                             'Move was too strong for player; opponent will not choose this branch.
                             If Beta <= Alpha Then
+                                If Board(Val(PieceMoves(n, 1)(0)), Val(PieceMoves(n, 1)(1))) = " " AndAlso (KillerMoves(MasterDepth - depth, 0) <> PieceMoves(n, 0) & PieceMoves(n, 1)) Then
+                                    'The pruned move is not a capture move - add move to KillerMoves(), in the hope that the move
+                                    'is also possible in sibling positions. If this move is detected, it is searched earlier.
+                                    KillerMoves(MasterDepth - depth, 1) = KillerMoves(MasterDepth - depth, 0)
+                                    KillerMoves(MasterDepth - depth, 0) = PieceMoves(n, 0) & PieceMoves(n, 1)
+                                End If
                                 Return BestMove 'Alpha-Beta Pruning - return best move.
                             End If
                         End If
@@ -629,7 +705,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 BestMove = Integer.MaxValue
             End If
             Dim PieceMoves(200, 1) As String
-            PieceMoves = CreateMoves(Board, False, BlackTFTable, WKPos, WInCheck, BInCheck, BCanCastle, EnPassant, Not (depth > 0 OrElse BInCheck.IsInCheck))
+            PieceMoves = CreateMoves(Board, False, BlackTFTable, WKPos, WInCheck, BInCheck, BCanCastle, EnPassant, Not (depth > 0 OrElse BInCheck.IsInCheck), MasterDepth - depth)
             If PieceMoves(0, 0) > 0 Then
                 Dim TempBoard(7, 7) As Char
                 Dim TempMaterialCount(1) As SByte
@@ -667,6 +743,10 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                             BestMove = CurrentMove
                             Beta = Math.Min(Beta, BestMove) 'Beta = best move found for white.
                             If Beta <= Alpha Then
+                                If Board(Val(PieceMoves(n, 1)(0)), Val(PieceMoves(n, 1)(1))) = " " AndAlso (KillerMoves(MasterDepth - depth, 0) <> PieceMoves(n, 0) & PieceMoves(n, 1)) Then
+                                    KillerMoves(MasterDepth - depth, 1) = KillerMoves(MasterDepth - depth, 0)
+                                    KillerMoves(MasterDepth - depth, 0) = PieceMoves(n, 0) & PieceMoves(n, 1)
+                                End If
                                 Return BestMove
                             End If
                         End If
@@ -697,6 +777,12 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     Private Function Evaluate(ByVal MaterialCount() As SByte, ByVal WKPos As String, ByVal BKPos As String) As Decimal
         'Finds difference in material between both sides.
         Dim Score As Decimal = MaterialCount(0) - MaterialCount(1)
+
+        'If a player has a lot of material, then score positions where the player's king is safe, as being more advantageous.
+        'Feature currently not in use due to efficiency decreasing too significantly.
+        'If MaterialCount(0) > 15 Then Score -= KingHeatSquares(Val(WKPos(1)), Val(WKPos(0))) / 25
+        'If MaterialCount(1) > 15 Then Score += KingHeatSquares(7 - Val(BKPos(1)), Val(BKPos(0))) / 25
+
         'If the opponent has little material left, we try to find positions where the opponent king is close to
         'the edge / corner of the board, and where the kings are closer together. This can help find a checkmate.
         If MaterialCount(0) <= 12 OrElse MaterialCount(1) <= 12 Then
@@ -716,5 +802,17 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         End If
         Return Math.Round(Score, 2) 'Prevents huge floating point numbers from entering the system.
     End Function
+
+    '2D Array that states roughly what squares an ideal king should be on the board (lower number = more advantageous).
+    'Feature used to reward players if their king is safe (currently not in use).
+    Public ReadOnly KingHeatSquares As Decimal(,) = {
+       {12, 14, 14, 16, 16, 14, 14, 12},
+       {12, 14, 14, 16, 16, 14, 14, 12},
+       {12, 14, 14, 16, 16, 14, 14, 12},
+       {12, 14, 14, 16, 16, 14, 14, 12},
+       {10, 12, 12, 14, 14, 14, 14, 10},
+       {8, 10, 10, 10, 10, 10, 10, 8},
+       {3, 3, 6, 6, 6, 6, 3, 3},
+       {2, 0, 4, 6, 6, 4, 0, 2}}
 
 End Class

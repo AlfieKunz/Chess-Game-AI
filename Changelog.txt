@@ -1,3 +1,4 @@
-Improved Opening Book
-LegalMove Redesign
-PGN addition to FEN inputter.
+Addition of Settings form.
+Hammad Mode :DD
+KillerMoves in move ordering.
+Generation Redesign.

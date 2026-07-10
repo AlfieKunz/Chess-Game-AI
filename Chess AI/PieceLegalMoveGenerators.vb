@@ -22,7 +22,6 @@ Public Class PieceLegalMoveGenerators
     Public Function WhitePieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef WhiteTFTable(,) As Char, ByVal WInCheck As InCheck, ByVal WCanCastle As CanCastle, ByVal EnPassant As String) As String()
         Dim LegalMoveArray(27) As String
         Dim n As Byte = 1
-
         If Board(CoorX, CoorY) = "K" Then 'Legal Moves for the King (along with Castling).
             'Sets coordinate bounds. Start & End Coords, in this case, represents the 8 squares around the king.
             For y = Math.Max(CoorY - 1, 0) To Math.Min(CoorY + 1, 7)
@@ -249,7 +248,6 @@ Public Class PieceLegalMoveGenerators
     Public Function BlackPieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef BlackTFTable(,) As Char, ByVal BInCheck As InCheck, ByVal BCanCastle As CanCastle, ByVal EnPassant As String) As String()
         Dim LegalMoveArray(27) As String
         Dim n As Byte = 1
-
         If Board(CoorX, CoorY) = "k" Then 'Legal Moves for the King (Along with Castling).
             For y = Math.Max(CoorY - 1, 0) To Math.Min(CoorY + 1, 7)
                 For x = Math.Max(CoorX - 1, 0) To Math.Min(CoorX + 1, 7)

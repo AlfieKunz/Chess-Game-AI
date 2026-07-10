@@ -1,14 +1,15 @@
-﻿Imports System.Threading
+﻿Imports System.IO
+Imports System.Threading
 
 'Class that allows the user to access the full extent of my program.
 'Will be the first section of code that the user sees, and provides the starting 
 'point for instantiating all theother classes & forms in my program.
 Public Class MainMenu
-    Private Const PlayAnimation As Boolean = True
-    Dim PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
-    Dim SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
-    Dim ColourScheme As String 'Colour code from the text file.
-    Dim OpeningBook(50000, 1) As String
+    Private PlayAnimation, PlaySounds As Boolean
+    Private PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
+    Private SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
+    Private ColourScheme As String 'Colour code from the text file.
+    Private OpeningBook(100000, 1) As String
     'Startup sound effect - sounds taken from Chess.com.
     ReadOnly Sound_Startup As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Sounds\Chess_Startup.wav"
@@ -17,12 +18,20 @@ Public Class MainMenu
     Private Sub MainMenu_Load() Handles Me.Load
         'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
         Try
-            FileOpen(1, Application.StartupPath & "\Assets\ColourPreferences.txt", OpenMode.Input)
+            FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
             ColourScheme = LineInput(1)
-            FileClose(1)
+            LineInput(1)
+            Dim GeneralSettings As String = LineInput(1)
+            Dim temp As String = GeneralSettings(5) 'Tests that the General Options are the correct length.
+            If GeneralSettings(0) = "T" Then PlaySounds = True
+            If GeneralSettings(1) = "T" Then PlayAnimation = True
         Catch ex As Exception
             ColourScheme = "def"
+            PlayAnimation = True
+            PlaySounds = True
+            Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
         End Try
+        FileClose(1)
         CreateColourProfile(ColourScheme)
         'Sets up the text, buttons, objects and opening book.
         SetupOptions()
@@ -43,12 +52,12 @@ Public Class MainMenu
         ElseIf LCase(Code) = "grn" Then
             PrimaryColour = Color.DarkSeaGreen
             SecondaryColour = Color.LavenderBlush
-        ElseIf LCase(Code) = "ppl" Then
-            PrimaryColour = Color.MediumPurple
-            SecondaryColour = Color.MistyRose
         ElseIf LCase(Code) = "red" Then
             PrimaryColour = Color.FromArgb(195, 55, 55)
             SecondaryColour = Color.LavenderBlush
+        ElseIf LCase(Code) = "ppl" Then
+            PrimaryColour = Color.MediumPurple
+            SecondaryColour = Color.MistyRose
         ElseIf LCase(Code) = "mon" Then
             PrimaryColour = Color.DimGray
             SecondaryColour = Color.Silver
@@ -217,7 +226,7 @@ Public Class MainMenu
         MyBase.Refresh()
         Dim TempColour As String
         Try
-            FileOpen(1, Application.StartupPath & "\Assets\ColourPreferences.txt", OpenMode.Input)
+            FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
             TempColour = LineInput(1)
             FileClose(1)
             If TempColour <> ColourScheme Then
@@ -307,7 +316,7 @@ Public Class MainMenu
         Analysis.Visible = True
         ExitBtn.Visible = True
         Credits.Visible = True
-        If Not AlreadyBooted Then Sound_Startup.Play()
+        If Not AlreadyBooted AndAlso PlaySounds Then Sound_Startup.Play()
     End Sub
     Private Sub Wait()
         If PlayAnimation Then
@@ -321,19 +330,19 @@ Public Class MainMenu
         Dim Timer As New Stopwatch
         Try
             Timer.Start()
-            'Opens opening book from file.
-            FileOpen(1, Application.StartupPath & "\Assets\OpeningBook.txt", OpenMode.Input)
-            Dim Line As String = LineInput(1)
-            Dim Counter As UInt16 = 1
-            OpeningBook(0, 0) = Line.Substring(0, Line.IndexOf("#")) 'Retrieves total position count.
-            While Not EOF(1)
-                Line = LineInput(1)
-                'Separates FEN position from possible moves, then stores in array.
-                OpeningBook(Counter, 0) = Line.Substring(0, Line.IndexOf("#"))
-                OpeningBook(Counter, 1) = Line.Substring(Line.IndexOf("#") + 1, Line.Length - Line.IndexOf("#") - 1)
-                Counter += 1
-            End While
-            FileClose(1)
+            'Opens opening book from file using StreamReader.
+            Dim Line As String
+            Dim Counter As UInt32 = 0
+            Using SR As New StreamReader(Application.StartupPath & "\Assets\SmallOpeningBook.txt")
+                While Not SR.EndOfStream
+                    Line = SR.ReadLine()
+                    'Splits line about the # symbol, then stored into OpeningBook.
+                    Dim TempStr As String() = Line.Split("#")
+                    OpeningBook(Counter, 0) = TempStr(0)
+                    OpeningBook(Counter, 1) = TempStr(1)
+                    Counter += 1
+                End While
+            End Using
             Timer.Stop()
             Console.WriteLine("Opening Book Successfully Retrieved in: " & Math.Round(Timer.Elapsed.TotalMilliseconds, 1) & "ms.")
         Catch ex As Exception 'Could not successfully retrieve book - make a note on OpeningBook.
@@ -446,18 +455,7 @@ Public Class MainMenu
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.1)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.2)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
-    Private Sub OnePlayer_Click(sender As Object, e As EventArgs) Handles OnePlayer.Click
-
-    End Sub
-
-    Private Sub OnePlayer_MouseEnter(sender As Object, e As EventArgs) Handles OnePlayer.MouseEnter
-
-    End Sub
-
-    Private Sub OnePlayer_MouseLeave(sender As Object, e As EventArgs) Handles OnePlayer.MouseLeave
-
-    End Sub
 End Class

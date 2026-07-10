@@ -24,7 +24,7 @@ Partial Class Chess
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Chess))
-        Me.FENTextBox = New System.Windows.Forms.TextBox()
+        Me.InputTextBox = New System.Windows.Forms.TextBox()
         Me.InputButton = New System.Windows.Forms.Button()
         Me.AIMoveBtn = New System.Windows.Forms.Button()
         Me.Reset_Btn = New System.Windows.Forms.Button()
@@ -44,7 +44,7 @@ Partial Class Chess
         Me.Ppl = New System.Windows.Forms.ToolStripMenuItem()
         Me.Red = New System.Windows.Forms.ToolStripMenuItem()
         Me.Mon = New System.Windows.Forms.ToolStripMenuItem()
-        Me.ColourChangerButton = New System.Windows.Forms.Button()
+        Me.SettingsBtn = New System.Windows.Forms.Button()
         Me.WP8 = New System.Windows.Forms.PictureBox()
         Me.WP7 = New System.Windows.Forms.PictureBox()
         Me.WP6 = New System.Windows.Forms.PictureBox()
@@ -176,13 +176,13 @@ Partial Class Chess
         CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
-        'FENTextBox
+        'InputTextBox
         '
-        Me.FENTextBox.Location = New System.Drawing.Point(9, 12)
-        Me.FENTextBox.Multiline = True
-        Me.FENTextBox.Name = "FENTextBox"
-        Me.FENTextBox.Size = New System.Drawing.Size(282, 35)
-        Me.FENTextBox.TabIndex = 2
+        Me.InputTextBox.Location = New System.Drawing.Point(9, 12)
+        Me.InputTextBox.Multiline = True
+        Me.InputTextBox.Name = "InputTextBox"
+        Me.InputTextBox.Size = New System.Drawing.Size(282, 35)
+        Me.InputTextBox.TabIndex = 2
         '
         'InputButton
         '
@@ -340,15 +340,16 @@ Partial Class Chess
         Me.Mon.Size = New System.Drawing.Size(135, 22)
         Me.Mon.Text = "Grey"
         '
-        'ColourChangerButton
+        'SettingsBtn
         '
-        Me.ColourChangerButton.ImageAlign = System.Drawing.ContentAlignment.MiddleRight
-        Me.ColourChangerButton.Location = New System.Drawing.Point(95, 300)
-        Me.ColourChangerButton.Name = "ColourChangerButton"
-        Me.ColourChangerButton.Size = New System.Drawing.Size(113, 40)
-        Me.ColourChangerButton.TabIndex = 15
-        Me.ColourChangerButton.Text = "Change Board Colour Scheme:"
-        Me.ColourChangerButton.UseVisualStyleBackColor = True
+        Me.SettingsBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.SettingsBtn.ImageAlign = System.Drawing.ContentAlignment.MiddleRight
+        Me.SettingsBtn.Location = New System.Drawing.Point(95, 300)
+        Me.SettingsBtn.Name = "SettingsBtn"
+        Me.SettingsBtn.Size = New System.Drawing.Size(113, 40)
+        Me.SettingsBtn.TabIndex = 15
+        Me.SettingsBtn.Text = "Settings:"
+        Me.SettingsBtn.UseVisualStyleBackColor = True
         '
         'WP8
         '
@@ -1196,7 +1197,7 @@ Partial Class Chess
         Me.Controls.Add(Me.ExitBtn)
         Me.Controls.Add(Me.AutoFlipper)
         Me.Controls.Add(Me.FlipperButton)
-        Me.Controls.Add(Me.ColourChangerButton)
+        Me.Controls.Add(Me.SettingsBtn)
         Me.Controls.Add(Me.ProgressBar)
         Me.Controls.Add(Me.UndoFENChange)
         Me.Controls.Add(Me.Credits)
@@ -1212,7 +1213,7 @@ Partial Class Chess
         Me.Controls.Add(Me.Reset_Btn)
         Me.Controls.Add(Me.AIMoveBtn)
         Me.Controls.Add(Me.InputButton)
-        Me.Controls.Add(Me.FENTextBox)
+        Me.Controls.Add(Me.InputTextBox)
         Me.Controls.Add(Me.WP8)
         Me.Controls.Add(Me.WP7)
         Me.Controls.Add(Me.WP6)
@@ -1358,7 +1359,7 @@ Partial Class Chess
     Friend WithEvents BP7 As System.Windows.Forms.PictureBox
     Friend WithEvents BP8 As System.Windows.Forms.PictureBox
     Friend WithEvents Checkerboard As System.Windows.Forms.PictureBox
-    Friend WithEvents FENTextBox As TextBox
+    Friend WithEvents InputTextBox As TextBox
     Friend WithEvents InputButton As Button
     Friend WithEvents WQ2 As System.Windows.Forms.PictureBox
     Friend WithEvents WQ3 As System.Windows.Forms.PictureBox
@@ -1385,7 +1386,7 @@ Partial Class Chess
     Friend WithEvents ProgressBar As ProgressBar
     Friend WithEvents WQ9 As System.Windows.Forms.PictureBox
     Friend WithEvents BQ9 As System.Windows.Forms.PictureBox
-    Friend WithEvents ColourChangerButton As System.Windows.Forms.Button
+    Friend WithEvents SettingsBtn As System.Windows.Forms.Button
     Friend WithEvents ColourChanger As System.Windows.Forms.ContextMenuStrip
     Friend WithEvents Def As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents LBlu As System.Windows.Forms.ToolStripMenuItem
