@@ -122,6 +122,22 @@ Partial Class Chess
         Me.InfoBtn = New System.Windows.Forms.Button()
         Me.UseBook = New System.Windows.Forms.CheckBox()
         Me.PieceHeatMapBox = New System.Windows.Forms.CheckBox()
+        Me.NextPuzzleBtn = New System.Windows.Forms.Button()
+        Me.HintBtn = New System.Windows.Forms.Button()
+        Me.GiveUpBtn = New System.Windows.Forms.Button()
+        Me.AIPuzzleInfoLabel = New System.Windows.Forms.Label()
+        Me.RatingLabel = New System.Windows.Forms.Label()
+        Me.LostRatingLabel = New System.Windows.Forms.Label()
+        Me.GainedRatingLabel = New System.Windows.Forms.Label()
+        Me.RatingHeader = New System.Windows.Forms.Label()
+        Me.PuzzleRatingLabel = New System.Windows.Forms.Label()
+        Me.AutoAdvanceBox = New System.Windows.Forms.TextBox()
+        Me.AutoAdvanceBar = New System.Windows.Forms.TrackBar()
+        Me.AutoAdvanceOnComplete = New System.Windows.Forms.CheckBox()
+        Me.AutoAdvanceLabel = New System.Windows.Forms.Label()
+        Me.HumanModeBtn = New System.Windows.Forms.RadioButton()
+        Me.AIModeBtn = New System.Windows.Forms.RadioButton()
+        Me.ResetRatingsBtn = New System.Windows.Forms.Button()
         Me.ColourChanger.SuspendLayout()
         CType(Me.WP8, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WP7, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -175,6 +191,7 @@ Partial Class Chess
         CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.AutoAdvanceBar, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'InputTextBox
@@ -922,6 +939,7 @@ Partial Class Chess
         'UserTimeBox
         '
         Me.UserTimeBox.BackColor = System.Drawing.Color.WhiteSmoke
+        Me.UserTimeBox.Cursor = System.Windows.Forms.Cursors.Hand
         Me.UserTimeBox.Location = New System.Drawing.Point(962, 335)
         Me.UserTimeBox.Name = "UserTimeBox"
         Me.UserTimeBox.ReadOnly = True
@@ -1192,6 +1210,194 @@ Partial Class Chess
         Me.PieceHeatMapBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         Me.PieceHeatMapBox.UseVisualStyleBackColor = True
         '
+        'NextPuzzleBtn
+        '
+        Me.NextPuzzleBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.NextPuzzleBtn.Location = New System.Drawing.Point(9, 124)
+        Me.NextPuzzleBtn.Name = "NextPuzzleBtn"
+        Me.NextPuzzleBtn.Size = New System.Drawing.Size(282, 43)
+        Me.NextPuzzleBtn.TabIndex = 7
+        Me.NextPuzzleBtn.Text = "Next Puzzle"
+        Me.NextPuzzleBtn.UseVisualStyleBackColor = True
+        Me.NextPuzzleBtn.Visible = False
+        '
+        'HintBtn
+        '
+        Me.HintBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.HintBtn.Location = New System.Drawing.Point(9, 75)
+        Me.HintBtn.Name = "HintBtn"
+        Me.HintBtn.Size = New System.Drawing.Size(133, 43)
+        Me.HintBtn.TabIndex = 5
+        Me.HintBtn.Text = "Hint"
+        Me.HintBtn.UseVisualStyleBackColor = True
+        Me.HintBtn.Visible = False
+        '
+        'GiveUpBtn
+        '
+        Me.GiveUpBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.GiveUpBtn.Location = New System.Drawing.Point(150, 75)
+        Me.GiveUpBtn.Name = "GiveUpBtn"
+        Me.GiveUpBtn.Size = New System.Drawing.Size(141, 43)
+        Me.GiveUpBtn.TabIndex = 7
+        Me.GiveUpBtn.Text = "Give Up"
+        Me.GiveUpBtn.UseVisualStyleBackColor = True
+        Me.GiveUpBtn.Visible = False
+        '
+        'AIPuzzleInfoLabel
+        '
+        Me.AIPuzzleInfoLabel.AutoSize = True
+        Me.AIPuzzleInfoLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AIPuzzleInfoLabel.Location = New System.Drawing.Point(35, 332)
+        Me.AIPuzzleInfoLabel.Name = "AIPuzzleInfoLabel"
+        Me.AIPuzzleInfoLabel.Size = New System.Drawing.Size(228, 20)
+        Me.AIPuzzleInfoLabel.TabIndex = 9
+        Me.AIPuzzleInfoLabel.Text = "AI is Searching on the Puzzle..."
+        Me.AIPuzzleInfoLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.AIPuzzleInfoLabel.Visible = False
+        '
+        'RatingLabel
+        '
+        Me.RatingLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 36.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.RatingLabel.Location = New System.Drawing.Point(79, 249)
+        Me.RatingLabel.Name = "RatingLabel"
+        Me.RatingLabel.Size = New System.Drawing.Size(136, 55)
+        Me.RatingLabel.TabIndex = 9
+        Me.RatingLabel.Text = "1000"
+        Me.RatingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.RatingLabel.Visible = False
+        '
+        'LostRatingLabel
+        '
+        Me.LostRatingLabel.AutoSize = True
+        Me.LostRatingLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.LostRatingLabel.Location = New System.Drawing.Point(71, 296)
+        Me.LostRatingLabel.Name = "LostRatingLabel"
+        Me.LostRatingLabel.Size = New System.Drawing.Size(32, 20)
+        Me.LostRatingLabel.TabIndex = 9
+        Me.LostRatingLabel.Text = "-10"
+        Me.LostRatingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.LostRatingLabel.Visible = False
+        '
+        'GainedRatingLabel
+        '
+        Me.GainedRatingLabel.AutoSize = True
+        Me.GainedRatingLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.GainedRatingLabel.Location = New System.Drawing.Point(188, 296)
+        Me.GainedRatingLabel.Name = "GainedRatingLabel"
+        Me.GainedRatingLabel.Size = New System.Drawing.Size(36, 20)
+        Me.GainedRatingLabel.TabIndex = 9
+        Me.GainedRatingLabel.Text = "+10"
+        Me.GainedRatingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.GainedRatingLabel.Visible = False
+        '
+        'RatingHeader
+        '
+        Me.RatingHeader.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.RatingHeader.Location = New System.Drawing.Point(100, 225)
+        Me.RatingHeader.Name = "RatingHeader"
+        Me.RatingHeader.Size = New System.Drawing.Size(98, 20)
+        Me.RatingHeader.TabIndex = 9
+        Me.RatingHeader.Text = "Your Rating:"
+        Me.RatingHeader.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.RatingHeader.Visible = False
+        '
+        'PuzzleRatingLabel
+        '
+        Me.PuzzleRatingLabel.AutoSize = True
+        Me.PuzzleRatingLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.PuzzleRatingLabel.Location = New System.Drawing.Point(86, 51)
+        Me.PuzzleRatingLabel.Name = "PuzzleRatingLabel"
+        Me.PuzzleRatingLabel.Size = New System.Drawing.Size(122, 16)
+        Me.PuzzleRatingLabel.TabIndex = 9
+        Me.PuzzleRatingLabel.Text = "Puzzle Rating: 1000"
+        Me.PuzzleRatingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.PuzzleRatingLabel.Visible = False
+        '
+        'AutoAdvanceBox
+        '
+        Me.AutoAdvanceBox.BackColor = System.Drawing.Color.WhiteSmoke
+        Me.AutoAdvanceBox.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.AutoAdvanceBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AutoAdvanceBox.Location = New System.Drawing.Point(167, 438)
+        Me.AutoAdvanceBox.Name = "AutoAdvanceBox"
+        Me.AutoAdvanceBox.ReadOnly = True
+        Me.AutoAdvanceBox.Size = New System.Drawing.Size(120, 22)
+        Me.AutoAdvanceBox.TabIndex = 23
+        Me.AutoAdvanceBox.Text = "Never"
+        Me.AutoAdvanceBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
+        Me.AutoAdvanceBox.Visible = False
+        '
+        'AutoAdvanceBar
+        '
+        Me.AutoAdvanceBar.LargeChange = 2
+        Me.AutoAdvanceBar.Location = New System.Drawing.Point(167, 464)
+        Me.AutoAdvanceBar.Maximum = 14
+        Me.AutoAdvanceBar.Name = "AutoAdvanceBar"
+        Me.AutoAdvanceBar.Size = New System.Drawing.Size(120, 45)
+        Me.AutoAdvanceBar.TabIndex = 25
+        Me.AutoAdvanceBar.Value = 14
+        Me.AutoAdvanceBar.Visible = False
+        '
+        'AutoAdvanceOnComplete
+        '
+        Me.AutoAdvanceOnComplete.AutoSize = True
+        Me.AutoAdvanceOnComplete.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AutoAdvanceOnComplete.Location = New System.Drawing.Point(8, 413)
+        Me.AutoAdvanceOnComplete.Name = "AutoAdvanceOnComplete"
+        Me.AutoAdvanceOnComplete.Size = New System.Drawing.Size(280, 19)
+        Me.AutoAdvanceOnComplete.TabIndex = 26
+        Me.AutoAdvanceOnComplete.Text = "Automatically Advance When Correct / Incorrect"
+        Me.AutoAdvanceOnComplete.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.AutoAdvanceOnComplete.UseVisualStyleBackColor = True
+        Me.AutoAdvanceOnComplete.Visible = False
+        '
+        'AutoAdvanceLabel
+        '
+        Me.AutoAdvanceLabel.AutoSize = True
+        Me.AutoAdvanceLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AutoAdvanceLabel.Location = New System.Drawing.Point(5, 438)
+        Me.AutoAdvanceLabel.Name = "AutoAdvanceLabel"
+        Me.AutoAdvanceLabel.Size = New System.Drawing.Size(158, 15)
+        Me.AutoAdvanceLabel.TabIndex = 9
+        Me.AutoAdvanceLabel.Text = "Automatically Advance After:"
+        Me.AutoAdvanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.AutoAdvanceLabel.Visible = False
+        '
+        'HumanModeBtn
+        '
+        Me.HumanModeBtn.AutoSize = True
+        Me.HumanModeBtn.Checked = True
+        Me.HumanModeBtn.Location = New System.Drawing.Point(18, 390)
+        Me.HumanModeBtn.Name = "HumanModeBtn"
+        Me.HumanModeBtn.Size = New System.Drawing.Size(123, 17)
+        Me.HumanModeBtn.TabIndex = 32
+        Me.HumanModeBtn.TabStop = True
+        Me.HumanModeBtn.Text = "Human Puzzle Mode"
+        Me.HumanModeBtn.UseVisualStyleBackColor = True
+        Me.HumanModeBtn.Visible = False
+        '
+        'AIModeBtn
+        '
+        Me.AIModeBtn.AutoSize = True
+        Me.AIModeBtn.Location = New System.Drawing.Point(162, 390)
+        Me.AIModeBtn.Name = "AIModeBtn"
+        Me.AIModeBtn.Size = New System.Drawing.Size(99, 17)
+        Me.AIModeBtn.TabIndex = 33
+        Me.AIModeBtn.Text = "AI Puzzle Mode"
+        Me.AIModeBtn.UseVisualStyleBackColor = True
+        Me.AIModeBtn.Visible = False
+        '
+        'ResetRatingsBtn
+        '
+        Me.ResetRatingsBtn.Location = New System.Drawing.Point(247, 565)
+        Me.ResetRatingsBtn.Name = "ResetRatingsBtn"
+        Me.ResetRatingsBtn.Size = New System.Drawing.Size(52, 34)
+        Me.ResetRatingsBtn.TabIndex = 34
+        Me.ResetRatingsBtn.Text = "Reset Ratings"
+        Me.ResetRatingsBtn.TextAlign = System.Drawing.ContentAlignment.TopCenter
+        Me.ResetRatingsBtn.UseVisualStyleBackColor = True
+        Me.ResetRatingsBtn.Visible = False
+        '
         'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -1199,16 +1405,20 @@ Partial Class Chess
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.ResetRatingsBtn)
+        Me.Controls.Add(Me.AIModeBtn)
+        Me.Controls.Add(Me.HumanModeBtn)
         Me.Controls.Add(Me.InfoBtn)
         Me.Controls.Add(Me.TrainingScore)
-        Me.Controls.Add(Me.BLeaderBoardGrid)
-        Me.Controls.Add(Me.WLeaderBoardGrid)
         Me.Controls.Add(Me.AITerminator)
         Me.Controls.Add(Me.UseBook)
         Me.Controls.Add(Me.AIEndlessMode)
         Me.Controls.Add(Me.PieceHeatMapBox)
+        Me.Controls.Add(Me.AutoAdvanceOnComplete)
         Me.Controls.Add(Me.QuiescenceBox)
+        Me.Controls.Add(Me.AutoAdvanceBar)
         Me.Controls.Add(Me.UserTimeBar)
+        Me.Controls.Add(Me.AutoAdvanceBox)
         Me.Controls.Add(Me.UserTimeBox)
         Me.Controls.Add(Me.ExitBtn)
         Me.Controls.Add(Me.AutoFlipper)
@@ -1217,15 +1427,24 @@ Partial Class Chess
         Me.Controls.Add(Me.ProgressBar)
         Me.Controls.Add(Me.UndoFENChange)
         Me.Controls.Add(Me.Credits)
-        Me.Controls.Add(Me.MoveDisplayer)
+        Me.Controls.Add(Me.GainedRatingLabel)
+        Me.Controls.Add(Me.LostRatingLabel)
+        Me.Controls.Add(Me.AutoAdvanceLabel)
+        Me.Controls.Add(Me.RatingHeader)
+        Me.Controls.Add(Me.PuzzleRatingLabel)
+        Me.Controls.Add(Me.AIPuzzleInfoLabel)
+        Me.Controls.Add(Me.RatingLabel)
         Me.Controls.Add(Me.TimerLabel)
         Me.Controls.Add(Me.CurrentAIDepth)
         Me.Controls.Add(Me.CurrentAIMove)
         Me.Controls.Add(Me.CurrentAIEval)
         Me.Controls.Add(Me.CheckLabel)
+        Me.Controls.Add(Me.NextPuzzleBtn)
         Me.Controls.Add(Me.TrainingStart)
         Me.Controls.Add(Me.UndoMove)
+        Me.Controls.Add(Me.GiveUpBtn)
         Me.Controls.Add(Me.FENExport)
+        Me.Controls.Add(Me.HintBtn)
         Me.Controls.Add(Me.Reset_Btn)
         Me.Controls.Add(Me.AIMoveBtn)
         Me.Controls.Add(Me.InputButton)
@@ -1279,6 +1498,9 @@ Partial Class Chess
         Me.Controls.Add(Me.WQ1)
         Me.Controls.Add(Me.WK1)
         Me.Controls.Add(Me.Checkerboard)
+        Me.Controls.Add(Me.BLeaderBoardGrid)
+        Me.Controls.Add(Me.WLeaderBoardGrid)
+        Me.Controls.Add(Me.MoveDisplayer)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximizeBox = False
         Me.MaximumSize = New System.Drawing.Size(1200, 639)
@@ -1338,6 +1560,7 @@ Partial Class Chess
         CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.WLeaderBoardGrid, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.AutoAdvanceBar, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -1440,4 +1663,20 @@ Partial Class Chess
     Friend WithEvents InfoBtn As Button
     Friend WithEvents UseBook As System.Windows.Forms.CheckBox
     Friend WithEvents PieceHeatMapBox As CheckBox
+    Friend WithEvents NextPuzzleBtn As Button
+    Friend WithEvents HintBtn As Button
+    Friend WithEvents GiveUpBtn As Button
+    Friend WithEvents AIPuzzleInfoLabel As Label
+    Friend WithEvents RatingLabel As Label
+    Friend WithEvents LostRatingLabel As Label
+    Friend WithEvents GainedRatingLabel As Label
+    Friend WithEvents RatingHeader As Label
+    Friend WithEvents PuzzleRatingLabel As Label
+    Friend WithEvents AutoAdvanceBox As TextBox
+    Friend WithEvents AutoAdvanceBar As TrackBar
+    Friend WithEvents AutoAdvanceOnComplete As CheckBox
+    Friend WithEvents AutoAdvanceLabel As Label
+    Friend WithEvents HumanModeBtn As RadioButton
+    Friend WithEvents AIModeBtn As RadioButton
+    Friend WithEvents ResetRatingsBtn As Button
 End Class

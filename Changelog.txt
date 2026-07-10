@@ -1,6 +1,12 @@
-Transposition Table
-Addition of PieceHeatMaps
-Three-fold repetition
-Colours & Console design overhaul.
-Incremental Deepening (overhaul of AI multithreading).
-PieceLegalMoves changes.
+Puzzle mode, with AI implementation.
+Transposition Table redesign & major bug fixes (but still has instability). D:
+Maintaining Transposition Table across multiple moves.
+AI perfomance increases.
+Many, many bug fixes.
+Move list in CreateMoves & PieceLegalMoves with shrunk array.
+Redesigned, larger opening book with weighed moves & faster load times.
+Integer Evaluations (rather than decimal ones).
+Tweeked PieceHeatMaps.
+Uses last (ABORTed) search iteration for Best Move.
+Extra information for AI moves, along with Lifetime Stats.
+Best Path Output (using Transposition Table).

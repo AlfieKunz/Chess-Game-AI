@@ -7,26 +7,28 @@ Public Class Settings
     Private SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
     Private ColourScheme As String 'Colour code from the text file.
     Private AnimationSpeed As SByte 'Represents the speed of the piece-moving animation: 0 = Off, 1 = Fast, 2 = Medium, 3 = Slow
-    Private GeneralOptions As String = "TTTTFFF" '7-character string that represents the configuration of the program.
-    'Index: 0 = Sound, 1 = Opening Animation, 2 = Board Highlights, 3 = Piece Highlights, 4 = Touch Move, 5 = Invisible Pieces, 6 = Hammad Mode (bad AI).
+    Private GeneralOptions As String = "TTTTTFFF" '8-character string that represents the configuration of the program.
+    'Index: 0 = Sound, 1 = Opening Animation, 2 = Large Opening Book, 3 = Board Highlights, 4 = Piece Highlights, 5 = Touch Move, 6 = Invisible Pieces, 7 = Hammad Mode (bad AI).
     Private FixedSearchDepth As Byte = 0 'Number representing the fixed depth the AI will search to (0 = off).
 
     Private SquareHistory(1, 1) As SByte
-    Private AnimationRunning, AnimationSettingsChanged As Boolean
+    Private AnimationRunning, AnimationSettingsChanged As Boolean 'Information regarding the piece animation testing.
 
     Private ReadOnly Sound_Move As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Sounds\Chess_Move.wav"
     }
 
     'Subroutines that sets up the form.
-    Public Sub New(ByVal CanToggleInvis As Boolean, ByVal CanToggleTouchMove As Boolean)
+    Public Sub New(ByVal CanToggleInvis As Boolean, ByVal CanToggleTouchMove As Boolean, ByVal CanChangeDepth As Boolean)
         ' This call is required by the designer.
         InitializeComponent()
+        'Disables certain general settings, depending on what gamemode the user is in.
         InvisBtn.Enabled = CanToggleInvis
         TouchMoveBtn.Enabled = CanToggleTouchMove
+        FixedSearchBtn.Enabled = CanChangeDepth
     End Sub
     Private Sub Settings_Load() Handles MyBase.Load
-        'Calibrates the colour selector
+        'Calibrates the colour selector.
         ColourSelectorR.BackgroundImage.RotateFlip(RotateFlipType.RotateNoneFlipX)
 
         'Sets up the required pieces on the board.
@@ -56,6 +58,8 @@ Public Class Settings
 
         ConfigureSettings()
     End Sub
+
+    'Subroutine which calibrates all the elements of the form. Used upon boot-up, and when resetting all settings.
     Private Sub ConfigureSettings()
         KnightClicked() 'Knight = default piece to move.
         'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
@@ -65,32 +69,31 @@ Public Class Settings
             AnimationSpeed = Val(LineInput(1))
             GeneralOptions = LineInput(1)
             FixedSearchDepth = Val(LineInput(1))
-            Dim temp As String = GeneralOptions(6) 'Tests that the General Options are the correct length.
+            Dim temp As String = GeneralOptions(7) 'Tests that the General Options are the correct length.
         Catch ex As Exception
+            'Sets all settings to their default values.
             ColourScheme = "def"
             AnimationSpeed = 3
-            GeneralOptions = "TTTTFFF"
+            GeneralOptions = "TTTTTFFF"
             FixedSearchDepth = 0
         End Try
         FileClose(1)
-        'Calibrates Check Boxes.
+
+        'Checks, or unckecks the general options based on the user's profile.
         AnimationRunning = True
         If GeneralOptions(0) = "T" Then SoundBtn.Checked = True : Else SoundBtn.Checked = False
         If GeneralOptions(1) = "T" Then AnimationBtn.Checked = True : Else AnimationBtn.Checked = False
-        If GeneralOptions(2) = "T" Then BoardBtn.Checked = True : Else BoardBtn.Checked = False
-        If GeneralOptions(3) = "T" Then PieceBtn.Checked = True : Else PieceBtn.Checked = False
-        If GeneralOptions(4) = "T" Then TouchMoveBtn.Checked = True : Else TouchMoveBtn.Checked = False
-        If GeneralOptions(5) = "T" Then InvisBtn.Checked = True : Else InvisBtn.Checked = False
-        If GeneralOptions(6) = "T" Then HammadBtn.Checked = True : Else HammadBtn.Checked = False
-        If FixedSearchDepth = 0 Then 'No Fixed Search Toggled
-            FixedSearchBtn.Checked = False
-            FixedSearchBox.Text = "0"
-            FixedSearchBox.Enabled = False
-        Else
-            FixedSearchBox.Enabled = True
+        If GeneralOptions(2) = "T" Then OpeningBookBtn.Checked = True : Else OpeningBookBtn.Checked = False
+        If GeneralOptions(3) = "T" Then BoardBtn.Checked = True : Else BoardBtn.Checked = False
+        If GeneralOptions(4) = "T" Then PieceBtn.Checked = True : Else PieceBtn.Checked = False
+        If GeneralOptions(5) = "T" Then TouchMoveBtn.Checked = True : Else TouchMoveBtn.Checked = False
+        If GeneralOptions(6) = "T" Then InvisBtn.Checked = True : Else InvisBtn.Checked = False
+        If GeneralOptions(7) = "T" Then HammadBtn.Checked = True : Else HammadBtn.Checked = False
+        If FixedSearchBtn.Enabled AndAlso FixedSearchDepth <> 0 Then 'Fixed Search Setting Toggled.
             FixedSearchBox.Text = FixedSearchDepth
             FixedSearchBtn.Checked = True
         End If
+
         AnimationRunning = False
 
         'Configures colour settings, and enables the colour's corresponding radio button.
@@ -102,6 +105,7 @@ Public Class Settings
         SpeedSetter.Value = AnimationSpeed
         AnimationSettingsChanged = False
     End Sub
+
 
     'Subroutine that sets the correct colours of the checkerboard, depending on the user's colour scheme.
     Private Sub CreateColourProfile(ByVal Code As String)
@@ -246,6 +250,7 @@ Public Class Settings
 
     'Subroutines Controlling each Colour Scheme Option change. When each button is clicked,
     'the Primary & Secondary colours are appended, and these preferences are written to a file.
+    'When the mouse hovers over the radio button, that colour is highlighted via ColourSelector.
     Private Sub Def_MouseEnter() Handles Def.MouseEnter
         MoveSelectedColour("def")
     End Sub
@@ -335,20 +340,24 @@ Public Class Settings
         SaveSettings()
     End Sub
 
+    'Subroutine for when the user's mouse leaves the left section of the form.
+    'Sets the SelectedColour PictureBox back to the user's chosen colour.
     Private Sub ColourPanel_MouseLeave() Handles ColourPanel.MouseLeave
-        'Sets the SelectedColour PictureBox back to the user's chosen colour.
         MoveSelectedColour(ColourScheme)
     End Sub
 
 
     'Subroutine that changes the positions of the SelectedColour PictureBoxes,
     'representing the colour that the user is hovering over, or their chosen colour.
+    'L and R objects are used to select the required object, with the L ColourSelector
+    'being used for the colours on the left, and likewise for R ColourSelector.
     Private Sub MoveSelectedColour(ByVal Code As String)
         Select Case LCase(Code)
             Case "blu", "gld", "red", "mon"
-                'Colour is on the right.
+                'Colour is on the right - toggle the correct ColourSelector.
                 ColourSelectorL.Visible = False
                 ColourSelectorR.Visible = True
+                'Moves ColourSelector to the correct location.
                 Select Case LCase(Code)
                     Case "blu"
                         ColourSelectorR.Location = New Point(190, 70)
@@ -360,9 +369,10 @@ Public Class Settings
                         ColourSelectorR.Location = New Point(190, 250)
                 End Select
             Case Else
-                'Colour is on the left.
+                'Colour is on the left - toggle the correct ColourSelector.
                 ColourSelectorR.Visible = False
                 ColourSelectorL.Visible = True
+                'Moves ColourSelector to the correct location.
                 Select Case LCase(Code)
                     Case "bl2"
                         ColourSelectorL.Location = New Point(0, 130)
@@ -444,11 +454,12 @@ Public Class Settings
         End If
     End Sub
 
+
     'Subroutine that performs the temporary piece animation move.
     Private Sub AnimationTester_Click() Handles AnimationTester.Click
         If Not AnimationRunning Then
             AnimationRunning = True
-            'Creates a temporary piece, corresponding to the user's chosen piece.
+            'Determines which PictureBox is the one to move, using the location of SquareHistory.
             Dim Piece As PictureBox
             Select Case SquareHistory(0, 0)
                 Case 0
@@ -459,6 +470,7 @@ Public Class Settings
                     Piece = WB1
             End Select
             Dim Constant As SByte 'How many 'steps' it takes a piece to move from A to B.
+            'Larger Constant = smoother but slower animation.
             Select Case AnimationSpeed
                 Case 0
                     Constant = 1
@@ -478,7 +490,7 @@ Public Class Settings
                 'Completes the move, then waits depending on what the animation speed is (faster speed = less time to wait).
                 Checkerboard.Refresh()
                 If SoundBtn.Checked Then Sound_Move.Play()
-                If n = 1 Then Thread.Sleep(400 + ((3 - AnimationSpeed) * 100))
+                If n = 1 Then Thread.Sleep(400 + ((3 - AnimationSpeed) * 100)) 'Stalls in between the move.
             Next
             AnimationRunning = False
         End If
@@ -495,7 +507,8 @@ Public Class Settings
 
 
 
-    'Subroutines that control the Check Boxes, by editing the required character in GeneralOptions.
+    'Subroutines that control the Check Boxes, by editing the required character in GeneralOptions, then
+    'saving the file.
     Private Sub SoundBtn_CheckedChanged() Handles SoundBtn.CheckedChanged
         If Not AnimationRunning Then
             If SoundBtn.Checked Then
@@ -517,38 +530,48 @@ Public Class Settings
             SaveSettings()
         End If
     End Sub
+    Private Sub OpeningBookBtn_CheckedChanged() Handles OpeningBookBtn.CheckedChanged
+        If Not AnimationRunning Then
+            If OpeningBookBtn.Checked Then
+                GeneralOptions = GeneralOptions.Remove(2, 1).Insert(2, "T")
+            Else
+                GeneralOptions = GeneralOptions.Remove(2, 1).Insert(2, "F")
+            End If
+            SaveSettings()
+        End If
+    End Sub
     Private Sub BoardBtn_CheckedChanged() Handles BoardBtn.CheckedChanged
         If BoardBtn.Checked Then
-            GeneralOptions = GeneralOptions.Remove(2, 1).Insert(2, "T")
+            GeneralOptions = GeneralOptions.Remove(3, 1).Insert(3, "T")
         Else
-            GeneralOptions = GeneralOptions.Remove(2, 1).Insert(2, "F")
+            GeneralOptions = GeneralOptions.Remove(3, 1).Insert(3, "F")
         End If
         If Not AnimationRunning Then
             SaveSettings()
-            Checkerboard.Refresh()
+            Checkerboard.Refresh() 'Reloads the animation tester section.
         End If
     End Sub
     Private Sub PieceBtn_CheckedChanged() Handles PieceBtn.CheckedChanged
         If Not AnimationRunning Then
             If PieceBtn.Checked Then
-                GeneralOptions = GeneralOptions.Remove(3, 1).Insert(3, "T")
+                GeneralOptions = GeneralOptions.Remove(4, 1).Insert(4, "T")
             Else
-                GeneralOptions = GeneralOptions.Remove(3, 1).Insert(3, "F")
+                GeneralOptions = GeneralOptions.Remove(4, 1).Insert(4, "F")
             End If
             SaveSettings()
         End If
     End Sub
     Private Sub TouchMoveBtn_CheckedChanged() Handles TouchMoveBtn.CheckedChanged
         If TouchMoveBtn.Checked Then
-            GeneralOptions = GeneralOptions.Remove(4, 1).Insert(4, "T")
+            GeneralOptions = GeneralOptions.Remove(5, 1).Insert(5, "T")
         Else
-            GeneralOptions = GeneralOptions.Remove(4, 1).Insert(4, "F")
+            GeneralOptions = GeneralOptions.Remove(5, 1).Insert(5, "F")
         End If
         If Not AnimationRunning Then SaveSettings()
     End Sub
     Private Sub InvisBtn_CheckedChanged() Handles InvisBtn.CheckedChanged
         If InvisBtn.Checked Then
-            GeneralOptions = GeneralOptions.Remove(5, 1).Insert(5, "T")
+            GeneralOptions = GeneralOptions.Remove(6, 1).Insert(6, "T")
             'Removes all the pictures from the PictureBoxes.
             WP1.Image = Nothing
             WP2.Image = Nothing
@@ -557,7 +580,7 @@ Public Class Settings
             WN1.Image = Nothing
             WB1.Image = Nothing
         Else
-            GeneralOptions = GeneralOptions.Remove(5, 1).Insert(5, "F")
+            GeneralOptions = GeneralOptions.Remove(6, 1).Insert(6, "F")
             'Restores the images back to the PictureBoxes.
             WP1.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WPawn.png")
             WP2.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WPawn.png")
@@ -570,9 +593,9 @@ Public Class Settings
     End Sub
     Private Sub HammadBtn_CheckedChanged() Handles HammadBtn.CheckedChanged
         If HammadBtn.Checked Then
-            GeneralOptions = GeneralOptions.Remove(6, 1).Insert(6, "T")
+            GeneralOptions = GeneralOptions.Remove(7, 1).Insert(7, "T")
         Else
-            GeneralOptions = GeneralOptions.Remove(6, 1).Insert(6, "F")
+            GeneralOptions = GeneralOptions.Remove(7, 1).Insert(7, "F")
         End If
         If Not AnimationRunning Then SaveSettings()
     End Sub
@@ -587,11 +610,12 @@ Public Class Settings
         Else
             FixedSearchBox.Enabled = False
             If FixedSearchDepth > 0 Then
-                FixedSearchDepth = 0
+                FixedSearchDepth = 0 '0 indicates variable search.
                 If Not AnimationRunning Then SaveSettings()
             End If
         End If
     End Sub
+
     'Subroutine that handles the FixedSearchBox - preventing the user from entering any invalid inputs, along with calibrating FixedSearchDepth.
     Private Sub FixedSearchBox_TextChanged() Handles FixedSearchBox.TextChanged
         If FixedSearchBox.Enabled Then
@@ -620,8 +644,11 @@ Public Class Settings
 
     'Subroutine that resets all the settings in the program, along with all user data.
     Private Sub ResetBtn_Click() Handles ResetBtn.Click
-        If MsgBox("WARNING: You are attempting to reset this program." & vbCrLf & "This will erase your configurations & settings, along with all leaderboards & scores in the training modes." & vbCrLf & vbCrLf & "Would you like to proceed?", vbExclamation + vbYesNo + vbApplicationModal, "Reset Program") = 6 Then
+        If MsgBox("WARNING: You are attempting to reset this program." & vbCrLf & "This will erase your configurations & settings, along with all leaderboards, scores & ratings in the training modes." & vbCrLf & vbCrLf & "THIS CANNOT BE REVERSED." & vbCrLf & vbCrLf & "Would you like to proceed?", vbExclamation + vbYesNo + vbApplicationModal, "Reset Program") = 6 Then
             'Deletes all files in the User folder.
+            Console.ForegroundColor = ConsoleColor.DarkRed
+            Console.WriteLine("Deleting Files...")
+            Console.ResetColor()
             Dim UserDirectory As String = Application.StartupPath & "\Assets\User"
             For Each FileToDelete In Directory.GetFiles(UserDirectory, "*.txt", SearchOption.TopDirectoryOnly)
                 File.Delete(FileToDelete)
