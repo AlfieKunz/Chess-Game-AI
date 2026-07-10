@@ -22,1301 +22,1244 @@ Partial Class Chess
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Me.components = New System.ComponentModel.Container()
+        components = New ComponentModel.Container()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Chess))
-        Me.InputTextBox = New System.Windows.Forms.TextBox()
-        Me.InputButton = New System.Windows.Forms.Button()
-        Me.AIMoveBtn = New System.Windows.Forms.Button()
-        Me.Reset_Btn = New System.Windows.Forms.Button()
-        Me.FENExport = New System.Windows.Forms.Button()
-        Me.CheckLabel = New System.Windows.Forms.Label()
-        Me.CurrentAIEval = New System.Windows.Forms.Label()
-        Me.UndoMove = New System.Windows.Forms.Button()
-        Me.Credits = New System.Windows.Forms.Label()
-        Me.UndoFENChange = New System.Windows.Forms.Button()
-        Me.ProgressBar = New System.Windows.Forms.ProgressBar()
-        Me.ColourChanger = New System.Windows.Forms.ContextMenuStrip(Me.components)
-        Me.Def = New System.Windows.Forms.ToolStripMenuItem()
-        Me.LBlu = New System.Windows.Forms.ToolStripMenuItem()
-        Me.DBlu = New System.Windows.Forms.ToolStripMenuItem()
-        Me.Gld = New System.Windows.Forms.ToolStripMenuItem()
-        Me.Grn = New System.Windows.Forms.ToolStripMenuItem()
-        Me.Ppl = New System.Windows.Forms.ToolStripMenuItem()
-        Me.Red = New System.Windows.Forms.ToolStripMenuItem()
-        Me.Mon = New System.Windows.Forms.ToolStripMenuItem()
-        Me.SettingsBtn = New System.Windows.Forms.Button()
-        Me.BP1 = New System.Windows.Forms.PictureBox()
-        Me.BR1 = New System.Windows.Forms.PictureBox()
-        Me.BN1 = New System.Windows.Forms.PictureBox()
-        Me.BB1 = New System.Windows.Forms.PictureBox()
-        Me.BQ1 = New System.Windows.Forms.PictureBox()
-        Me.BK1 = New System.Windows.Forms.PictureBox()
-        Me.WP1 = New System.Windows.Forms.PictureBox()
-        Me.WR1 = New System.Windows.Forms.PictureBox()
-        Me.WN1 = New System.Windows.Forms.PictureBox()
-        Me.WB1 = New System.Windows.Forms.PictureBox()
-        Me.WQ1 = New System.Windows.Forms.PictureBox()
-        Me.WK1 = New System.Windows.Forms.PictureBox()
-        Me.Checkerboard = New System.Windows.Forms.PictureBox()
-        Me.FlipperButton = New System.Windows.Forms.Button()
-        Me.AutoFlipper = New System.Windows.Forms.CheckBox()
-        Me.ExitBtn = New System.Windows.Forms.Button()
-        Me.UserTimeBox = New System.Windows.Forms.TextBox()
-        Me.UserTimeBar = New System.Windows.Forms.TrackBar()
-        Me.CurrentAIMove = New System.Windows.Forms.Label()
-        Me.CurrentAIDepth = New System.Windows.Forms.Label()
-        Me.QuiescenceBox = New System.Windows.Forms.CheckBox()
-        Me.AITerminator = New System.Windows.Forms.Button()
-        Me.AIEndlessMode = New System.Windows.Forms.CheckBox()
-        Me.TrainingStart = New System.Windows.Forms.Button()
-        Me.TimerLabel = New System.Windows.Forms.Label()
-        Me.MoveDisplayer = New System.Windows.Forms.Label()
-        Me.WLeaderBoardGrid = New System.Windows.Forms.DataGridView()
-        Me.UserIndex = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.Username = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.UserScore = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.UserDate = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.BLeaderBoardGrid = New System.Windows.Forms.DataGridView()
-        Me.DataGridViewTextBoxColumn1 = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.DataGridViewTextBoxColumn2 = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.DataGridViewTextBoxColumn3 = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.DataGridViewTextBoxColumn4 = New System.Windows.Forms.DataGridViewTextBoxColumn()
-        Me.TrainingScore = New System.Windows.Forms.Label()
-        Me.TrainingTimer = New System.Windows.Forms.Timer(Me.components)
-        Me.InfoBtn = New System.Windows.Forms.Button()
-        Me.UseBook = New System.Windows.Forms.CheckBox()
-        Me.PieceHeatMapBox = New System.Windows.Forms.CheckBox()
-        Me.NextPuzzleBtn = New System.Windows.Forms.Button()
-        Me.HintBtn = New System.Windows.Forms.Button()
-        Me.GiveUpBtn = New System.Windows.Forms.Button()
-        Me.AIPuzzleInfoLabel = New System.Windows.Forms.Label()
-        Me.RatingLabel = New System.Windows.Forms.Label()
-        Me.LostRatingLabel = New System.Windows.Forms.Label()
-        Me.GainedRatingLabel = New System.Windows.Forms.Label()
-        Me.RatingHeader = New System.Windows.Forms.Label()
-        Me.PuzzleRatingLabel = New System.Windows.Forms.Label()
-        Me.AutoAdvanceBox = New System.Windows.Forms.TextBox()
-        Me.AutoAdvanceBar = New System.Windows.Forms.TrackBar()
-        Me.AutoAdvanceOnComplete = New System.Windows.Forms.CheckBox()
-        Me.AutoAdvanceLabel = New System.Windows.Forms.Label()
-        Me.HumanModeBtn = New System.Windows.Forms.RadioButton()
-        Me.AIModeBtn = New System.Windows.Forms.RadioButton()
-        Me.ResetRatingsBtn = New System.Windows.Forms.Button()
-        Me.PGNExport = New System.Windows.Forms.Button()
-        Me.AutoOutputterPanel = New System.Windows.Forms.Panel()
-        Me.PGNAutoOutputter = New System.Windows.Forms.RadioButton()
-        Me.FENAutoOutputter = New System.Windows.Forms.RadioButton()
-        Me.NodeTestBtn = New System.Windows.Forms.Button()
-        Me.NodeTestStopBtn = New System.Windows.Forms.Button()
-        Me.AutoResetter = New System.Windows.Forms.CheckBox()
-        Me.BoardEditorBtn = New System.Windows.Forms.Button()
-        Me.BoardEditCancelBtn = New System.Windows.Forms.Button()
-        Me.BoardEditBlackMove = New System.Windows.Forms.RadioButton()
-        Me.BoardEditWhiteMove = New System.Windows.Forms.RadioButton()
-        Me.BoardEditPanel = New System.Windows.Forms.Panel()
-        Me.BoardEditTipLabel = New System.Windows.Forms.Label()
-        Me.BoardEditEnPassantLabel = New System.Windows.Forms.Label()
-        Me.BoardEditBLabel = New System.Windows.Forms.Label()
-        Me.BoardEditWLabel = New System.Windows.Forms.Label()
-        Me.BoardEditBQSBox = New System.Windows.Forms.CheckBox()
-        Me.BoardEditWQSBox = New System.Windows.Forms.CheckBox()
-        Me.BoardEditBKSBox = New System.Windows.Forms.CheckBox()
-        Me.BoardEditWKSBox = New System.Windows.Forms.CheckBox()
-        Me.RemoteModeBtn = New System.Windows.Forms.Button()
-        Me.RemoteModeTimer = New System.Windows.Forms.Timer(Me.components)
-        Me.BoardEditDiscardBtn = New System.Windows.Forms.Button()
-        Me.ColourChanger.SuspendLayout()
-        CType(Me.BP1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.BR1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.BN1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.BB1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.BQ1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.BK1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WP1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WR1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WN1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WB1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WQ1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.AutoAdvanceBar, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.AutoOutputterPanel.SuspendLayout()
-        Me.BoardEditPanel.SuspendLayout()
-        Me.SuspendLayout()
-        '
-        'InputTextBox
-        '
-        Me.InputTextBox.Location = New System.Drawing.Point(9, 12)
-        Me.InputTextBox.Multiline = True
-        Me.InputTextBox.Name = "InputTextBox"
-        Me.InputTextBox.Size = New System.Drawing.Size(282, 35)
-        Me.InputTextBox.TabIndex = 2
-        '
-        'InputButton
-        '
-        Me.InputButton.Location = New System.Drawing.Point(66, 53)
-        Me.InputButton.Name = "InputButton"
-        Me.InputButton.Size = New System.Drawing.Size(171, 23)
-        Me.InputButton.TabIndex = 3
-        Me.InputButton.Text = "Click to Submit FEN / Move(s):"
-        Me.InputButton.UseVisualStyleBackColor = True
-        '
-        'AIMoveBtn
-        '
-        Me.AIMoveBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 11.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AIMoveBtn.Location = New System.Drawing.Point(945, 85)
-        Me.AIMoveBtn.Name = "AIMoveBtn"
-        Me.AIMoveBtn.Size = New System.Drawing.Size(209, 57)
-        Me.AIMoveBtn.TabIndex = 4
-        Me.AIMoveBtn.Text = "Make Computer Move:"
-        Me.AIMoveBtn.UseVisualStyleBackColor = True
-        '
-        'Reset_Btn
-        '
-        Me.Reset_Btn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Reset_Btn.Location = New System.Drawing.Point(9, 85)
-        Me.Reset_Btn.Name = "Reset_Btn"
-        Me.Reset_Btn.Size = New System.Drawing.Size(133, 43)
-        Me.Reset_Btn.TabIndex = 5
-        Me.Reset_Btn.Text = "Reset Board"
-        Me.Reset_Btn.UseVisualStyleBackColor = True
-        '
-        'FENExport
-        '
-        Me.FENExport.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.FENExport.Location = New System.Drawing.Point(150, 85)
-        Me.FENExport.Name = "FENExport"
-        Me.FENExport.Size = New System.Drawing.Size(70, 43)
-        Me.FENExport.TabIndex = 7
-        Me.FENExport.Text = "Export FEN"
-        Me.FENExport.UseVisualStyleBackColor = True
-        '
-        'CheckLabel
-        '
-        Me.CheckLabel.AutoSize = True
-        Me.CheckLabel.BackColor = System.Drawing.Color.White
-        Me.CheckLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CheckLabel.Location = New System.Drawing.Point(987, 12)
-        Me.CheckLabel.Name = "CheckLabel"
-        Me.CheckLabel.Size = New System.Drawing.Size(126, 25)
-        Me.CheckLabel.TabIndex = 8
-        Me.CheckLabel.Text = "Checkmate!"
-        '
-        'CurrentAIEval
-        '
-        Me.CurrentAIEval.AutoSize = True
-        Me.CurrentAIEval.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CurrentAIEval.Location = New System.Drawing.Point(955, 270)
-        Me.CurrentAIEval.Name = "CurrentAIEval"
-        Me.CurrentAIEval.Size = New System.Drawing.Size(93, 16)
-        Me.CurrentAIEval.TabIndex = 9
-        Me.CurrentAIEval.Text = "Evaluation: -"
-        '
-        'UndoMove
-        '
-        Me.UndoMove.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.UndoMove.Location = New System.Drawing.Point(9, 146)
-        Me.UndoMove.Name = "UndoMove"
-        Me.UndoMove.Size = New System.Drawing.Size(282, 43)
-        Me.UndoMove.TabIndex = 7
-        Me.UndoMove.Text = "Undo Last Action"
-        Me.UndoMove.UseVisualStyleBackColor = True
-        '
-        'Credits
-        '
-        Me.Credits.AutoSize = True
-        Me.Credits.BackColor = System.Drawing.Color.Transparent
-        Me.Credits.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Credits.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
-        Me.Credits.Location = New System.Drawing.Point(1035, 575)
-        Me.Credits.Name = "Credits"
-        Me.Credits.Size = New System.Drawing.Size(154, 16)
-        Me.Credits.TabIndex = 10
-        Me.Credits.Text = "Created by Alfie Kunz"
-        '
-        'UndoFENChange
-        '
-        Me.UndoFENChange.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.UndoFENChange.Location = New System.Drawing.Point(245, 53)
-        Me.UndoFENChange.Name = "UndoFENChange"
-        Me.UndoFENChange.Size = New System.Drawing.Size(23, 23)
-        Me.UndoFENChange.TabIndex = 11
-        Me.UndoFENChange.Text = "↺"
-        Me.UndoFENChange.UseVisualStyleBackColor = True
-        '
-        'ProgressBar
-        '
-        Me.ProgressBar.ForeColor = System.Drawing.Color.FromArgb(CType(CType(0, Byte), Integer), CType(CType(192, Byte), Integer), CType(CType(0, Byte), Integer))
-        Me.ProgressBar.Location = New System.Drawing.Point(945, 150)
-        Me.ProgressBar.Name = "ProgressBar"
-        Me.ProgressBar.Size = New System.Drawing.Size(209, 25)
-        Me.ProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous
-        Me.ProgressBar.TabIndex = 13
-        '
-        'ColourChanger
-        '
-        Me.ColourChanger.ImageScalingSize = New System.Drawing.Size(24, 24)
-        Me.ColourChanger.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.Def, Me.LBlu, Me.DBlu, Me.Gld, Me.Grn, Me.Ppl, Me.Red, Me.Mon})
-        Me.ColourChanger.Name = "ContextMenuStrip1"
-        Me.ColourChanger.Size = New System.Drawing.Size(136, 180)
-        '
-        'Def
-        '
-        Me.Def.Name = "Def"
-        Me.Def.Size = New System.Drawing.Size(135, 22)
-        Me.Def.Text = "Default"
-        '
-        'LBlu
-        '
-        Me.LBlu.Name = "LBlu"
-        Me.LBlu.Size = New System.Drawing.Size(135, 22)
-        Me.LBlu.Text = "Blue (Light)"
-        '
-        'DBlu
-        '
-        Me.DBlu.Name = "DBlu"
-        Me.DBlu.Size = New System.Drawing.Size(135, 22)
-        Me.DBlu.Text = "Blue (Dark)"
-        '
-        'Gld
-        '
-        Me.Gld.Name = "Gld"
-        Me.Gld.Size = New System.Drawing.Size(135, 22)
-        Me.Gld.Text = "Gold"
-        '
-        'Grn
-        '
-        Me.Grn.Name = "Grn"
-        Me.Grn.Size = New System.Drawing.Size(135, 22)
-        Me.Grn.Text = "Green"
-        '
-        'Ppl
-        '
-        Me.Ppl.Name = "Ppl"
-        Me.Ppl.Size = New System.Drawing.Size(135, 22)
-        Me.Ppl.Text = "Purple"
-        '
-        'Red
-        '
-        Me.Red.Name = "Red"
-        Me.Red.Size = New System.Drawing.Size(135, 22)
-        Me.Red.Text = "Red"
-        '
-        'Mon
-        '
-        Me.Mon.Name = "Mon"
-        Me.Mon.Size = New System.Drawing.Size(135, 22)
-        Me.Mon.Text = "Grey"
-        '
-        'SettingsBtn
-        '
-        Me.SettingsBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.SettingsBtn.ImageAlign = System.Drawing.ContentAlignment.MiddleRight
-        Me.SettingsBtn.Location = New System.Drawing.Point(95, 410)
-        Me.SettingsBtn.Name = "SettingsBtn"
-        Me.SettingsBtn.Size = New System.Drawing.Size(113, 40)
-        Me.SettingsBtn.TabIndex = 15
-        Me.SettingsBtn.Text = "Settings:"
-        Me.SettingsBtn.UseVisualStyleBackColor = True
-        '
-        'BP1
-        '
-        Me.BP1.BackColor = System.Drawing.Color.Transparent
-        Me.BP1.Image = CType(resources.GetObject("BP1.Image"), System.Drawing.Image)
-        Me.BP1.InitialImage = Nothing
-        Me.BP1.Location = New System.Drawing.Point(518, 258)
-        Me.BP1.Name = "BP1"
-        Me.BP1.Size = New System.Drawing.Size(75, 75)
-        Me.BP1.TabIndex = 0
-        Me.BP1.TabStop = False
-        '
-        'BR1
-        '
-        Me.BR1.BackColor = System.Drawing.Color.Transparent
-        Me.BR1.Image = CType(resources.GetObject("BR1.Image"), System.Drawing.Image)
-        Me.BR1.InitialImage = Nothing
-        Me.BR1.Location = New System.Drawing.Point(437, 257)
-        Me.BR1.Name = "BR1"
-        Me.BR1.Size = New System.Drawing.Size(75, 75)
-        Me.BR1.TabIndex = 0
-        Me.BR1.TabStop = False
-        '
-        'BN1
-        '
-        Me.BN1.BackColor = System.Drawing.Color.Transparent
-        Me.BN1.Image = CType(resources.GetObject("BN1.Image"), System.Drawing.Image)
-        Me.BN1.InitialImage = Nothing
-        Me.BN1.Location = New System.Drawing.Point(356, 258)
-        Me.BN1.Name = "BN1"
-        Me.BN1.Size = New System.Drawing.Size(75, 75)
-        Me.BN1.TabIndex = 0
-        Me.BN1.TabStop = False
-        '
-        'BB1
-        '
-        Me.BB1.BackColor = System.Drawing.Color.Transparent
-        Me.BB1.Image = CType(resources.GetObject("BB1.Image"), System.Drawing.Image)
-        Me.BB1.InitialImage = Nothing
-        Me.BB1.Location = New System.Drawing.Point(518, 177)
-        Me.BB1.Name = "BB1"
-        Me.BB1.Size = New System.Drawing.Size(75, 75)
-        Me.BB1.TabIndex = 0
-        Me.BB1.TabStop = False
-        '
-        'BQ1
-        '
-        Me.BQ1.BackColor = System.Drawing.Color.Transparent
-        Me.BQ1.Image = CType(resources.GetObject("BQ1.Image"), System.Drawing.Image)
-        Me.BQ1.InitialImage = Nothing
-        Me.BQ1.Location = New System.Drawing.Point(437, 177)
-        Me.BQ1.Name = "BQ1"
-        Me.BQ1.Size = New System.Drawing.Size(75, 75)
-        Me.BQ1.TabIndex = 0
-        Me.BQ1.TabStop = False
-        '
-        'BK1
-        '
-        Me.BK1.BackColor = System.Drawing.Color.Transparent
-        Me.BK1.Image = CType(resources.GetObject("BK1.Image"), System.Drawing.Image)
-        Me.BK1.InitialImage = Nothing
-        Me.BK1.Location = New System.Drawing.Point(356, 177)
-        Me.BK1.Name = "BK1"
-        Me.BK1.Size = New System.Drawing.Size(75, 75)
-        Me.BK1.TabIndex = 0
-        Me.BK1.TabStop = False
-        '
-        'WP1
-        '
-        Me.WP1.BackColor = System.Drawing.Color.Transparent
-        Me.WP1.Image = CType(resources.GetObject("WP1.Image"), System.Drawing.Image)
-        Me.WP1.InitialImage = Nothing
-        Me.WP1.Location = New System.Drawing.Point(518, 96)
-        Me.WP1.Name = "WP1"
-        Me.WP1.Size = New System.Drawing.Size(75, 75)
-        Me.WP1.TabIndex = 0
-        Me.WP1.TabStop = False
-        '
-        'WR1
-        '
-        Me.WR1.BackColor = System.Drawing.Color.Transparent
-        Me.WR1.Image = CType(resources.GetObject("WR1.Image"), System.Drawing.Image)
-        Me.WR1.InitialImage = Nothing
-        Me.WR1.Location = New System.Drawing.Point(437, 96)
-        Me.WR1.Name = "WR1"
-        Me.WR1.Size = New System.Drawing.Size(75, 75)
-        Me.WR1.TabIndex = 0
-        Me.WR1.TabStop = False
-        '
-        'WN1
-        '
-        Me.WN1.BackColor = System.Drawing.Color.Transparent
-        Me.WN1.Image = CType(resources.GetObject("WN1.Image"), System.Drawing.Image)
-        Me.WN1.InitialImage = Nothing
-        Me.WN1.Location = New System.Drawing.Point(356, 96)
-        Me.WN1.Name = "WN1"
-        Me.WN1.Size = New System.Drawing.Size(75, 75)
-        Me.WN1.TabIndex = 0
-        Me.WN1.TabStop = False
-        '
-        'WB1
-        '
-        Me.WB1.BackColor = System.Drawing.Color.Transparent
-        Me.WB1.Image = CType(resources.GetObject("WB1.Image"), System.Drawing.Image)
-        Me.WB1.InitialImage = Nothing
-        Me.WB1.Location = New System.Drawing.Point(518, 15)
-        Me.WB1.Name = "WB1"
-        Me.WB1.Size = New System.Drawing.Size(75, 75)
-        Me.WB1.TabIndex = 0
-        Me.WB1.TabStop = False
-        '
-        'WQ1
-        '
-        Me.WQ1.BackColor = System.Drawing.Color.Transparent
-        Me.WQ1.Image = CType(resources.GetObject("WQ1.Image"), System.Drawing.Image)
-        Me.WQ1.InitialImage = Nothing
-        Me.WQ1.Location = New System.Drawing.Point(437, 15)
-        Me.WQ1.Name = "WQ1"
-        Me.WQ1.Size = New System.Drawing.Size(75, 75)
-        Me.WQ1.TabIndex = 0
-        Me.WQ1.TabStop = False
-        '
-        'WK1
-        '
-        Me.WK1.BackColor = System.Drawing.Color.Transparent
-        Me.WK1.Image = CType(resources.GetObject("WK1.Image"), System.Drawing.Image)
-        Me.WK1.InitialImage = Nothing
-        Me.WK1.Location = New System.Drawing.Point(356, 15)
-        Me.WK1.Name = "WK1"
-        Me.WK1.Size = New System.Drawing.Size(75, 75)
-        Me.WK1.TabIndex = 0
-        Me.WK1.TabStop = False
-        '
-        'Checkerboard
-        '
-        Me.Checkerboard.BackColor = System.Drawing.Color.Transparent
-        Me.Checkerboard.Location = New System.Drawing.Point(300, 0)
-        Me.Checkerboard.Name = "Checkerboard"
-        Me.Checkerboard.Size = New System.Drawing.Size(600, 600)
-        Me.Checkerboard.TabIndex = 1
-        Me.Checkerboard.TabStop = False
-        '
-        'FlipperButton
-        '
-        Me.FlipperButton.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.FlipperButton.Location = New System.Drawing.Point(34, 520)
-        Me.FlipperButton.Name = "FlipperButton"
-        Me.FlipperButton.Size = New System.Drawing.Size(232, 43)
-        Me.FlipperButton.TabIndex = 18
-        Me.FlipperButton.Text = "Flip Board"
-        Me.FlipperButton.UseVisualStyleBackColor = True
-        '
-        'AutoFlipper
-        '
-        Me.AutoFlipper.AutoSize = True
-        Me.AutoFlipper.Location = New System.Drawing.Point(39, 569)
-        Me.AutoFlipper.Name = "AutoFlipper"
-        Me.AutoFlipper.Size = New System.Drawing.Size(221, 17)
-        Me.AutoFlipper.TabIndex = 19
-        Me.AutoFlipper.Text = "Flip Board Automatically After Each Move"
-        Me.AutoFlipper.UseVisualStyleBackColor = True
-        '
-        'ExitBtn
-        '
-        Me.ExitBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.ExitBtn.Location = New System.Drawing.Point(1009, 515)
-        Me.ExitBtn.Name = "ExitBtn"
-        Me.ExitBtn.Size = New System.Drawing.Size(78, 40)
-        Me.ExitBtn.TabIndex = 22
-        Me.ExitBtn.Text = "Exit to Main Menu"
-        Me.ExitBtn.UseVisualStyleBackColor = True
-        '
-        'UserTimeBox
-        '
-        Me.UserTimeBox.BackColor = System.Drawing.Color.WhiteSmoke
-        Me.UserTimeBox.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.UserTimeBox.Location = New System.Drawing.Point(962, 320)
-        Me.UserTimeBox.Name = "UserTimeBox"
-        Me.UserTimeBox.ReadOnly = True
-        Me.UserTimeBox.Size = New System.Drawing.Size(164, 20)
-        Me.UserTimeBox.TabIndex = 23
-        Me.UserTimeBox.Text = "Time For Search: 10 Seconds"
-        Me.UserTimeBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
-        '
-        'UserTimeBar
-        '
-        Me.UserTimeBar.LargeChange = 10
-        Me.UserTimeBar.Location = New System.Drawing.Point(962, 344)
-        Me.UserTimeBar.Maximum = 60
-        Me.UserTimeBar.Name = "UserTimeBar"
-        Me.UserTimeBar.Size = New System.Drawing.Size(164, 45)
-        Me.UserTimeBar.TabIndex = 25
-        Me.UserTimeBar.Value = 30
-        '
-        'CurrentAIMove
-        '
-        Me.CurrentAIMove.AutoSize = True
-        Me.CurrentAIMove.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CurrentAIMove.Location = New System.Drawing.Point(955, 240)
-        Me.CurrentAIMove.Name = "CurrentAIMove"
-        Me.CurrentAIMove.Size = New System.Drawing.Size(111, 16)
-        Me.CurrentAIMove.TabIndex = 9
-        Me.CurrentAIMove.Text = "Current Move: -"
-        '
-        'CurrentAIDepth
-        '
-        Me.CurrentAIDepth.AutoSize = True
-        Me.CurrentAIDepth.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CurrentAIDepth.Location = New System.Drawing.Point(955, 210)
-        Me.CurrentAIDepth.Name = "CurrentAIDepth"
-        Me.CurrentAIDepth.Size = New System.Drawing.Size(114, 16)
-        Me.CurrentAIDepth.TabIndex = 9
-        Me.CurrentAIDepth.Text = "Current Depth: -"
-        '
-        'QuiescenceBox
-        '
-        Me.QuiescenceBox.AutoSize = True
-        Me.QuiescenceBox.Checked = True
-        Me.QuiescenceBox.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.QuiescenceBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.QuiescenceBox.Location = New System.Drawing.Point(983, 385)
-        Me.QuiescenceBox.Name = "QuiescenceBox"
-        Me.QuiescenceBox.Size = New System.Drawing.Size(123, 19)
-        Me.QuiescenceBox.TabIndex = 26
-        Me.QuiescenceBox.Text = "Use Quiescence?"
-        Me.QuiescenceBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.QuiescenceBox.UseVisualStyleBackColor = True
-        '
-        'AITerminator
-        '
-        Me.AITerminator.Font = New System.Drawing.Font("Microsoft Sans Serif", 11.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AITerminator.Location = New System.Drawing.Point(945, 85)
-        Me.AITerminator.Name = "AITerminator"
-        Me.AITerminator.Size = New System.Drawing.Size(209, 57)
-        Me.AITerminator.TabIndex = 27
-        Me.AITerminator.Text = "Terminate Search Early:"
-        Me.AITerminator.UseVisualStyleBackColor = True
-        Me.AITerminator.Visible = False
-        '
-        'AIEndlessMode
-        '
-        Me.AIEndlessMode.AutoSize = True
-        Me.AIEndlessMode.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AIEndlessMode.Location = New System.Drawing.Point(1009, 460)
-        Me.AIEndlessMode.Name = "AIEndlessMode"
-        Me.AIEndlessMode.Size = New System.Drawing.Size(70, 19)
-        Me.AIEndlessMode.TabIndex = 26
-        Me.AIEndlessMode.Text = "AI vs AI?"
-        Me.AIEndlessMode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.AIEndlessMode.UseVisualStyleBackColor = True
-        '
-        'TrainingStart
-        '
-        Me.TrainingStart.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.TrainingStart.Location = New System.Drawing.Point(9, 12)
-        Me.TrainingStart.Name = "TrainingStart"
-        Me.TrainingStart.Size = New System.Drawing.Size(282, 43)
-        Me.TrainingStart.TabIndex = 7
-        Me.TrainingStart.Text = "Start!"
-        Me.TrainingStart.UseVisualStyleBackColor = True
-        Me.TrainingStart.Visible = False
-        '
-        'TimerLabel
-        '
-        Me.TimerLabel.AutoSize = True
-        Me.TimerLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.TimerLabel.Location = New System.Drawing.Point(31, 70)
-        Me.TimerLabel.Name = "TimerLabel"
-        Me.TimerLabel.Size = New System.Drawing.Size(235, 24)
-        Me.TimerLabel.TabIndex = 9
-        Me.TimerLabel.Text = "Time Left: 20.0 Seconds"
-        Me.TimerLabel.Visible = False
-        '
-        'MoveDisplayer
-        '
-        Me.MoveDisplayer.Font = New System.Drawing.Font("Microsoft Sans Serif", 72.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.MoveDisplayer.Location = New System.Drawing.Point(9, 203)
-        Me.MoveDisplayer.Name = "MoveDisplayer"
-        Me.MoveDisplayer.Size = New System.Drawing.Size(284, 152)
-        Me.MoveDisplayer.TabIndex = 9
-        Me.MoveDisplayer.Text = "h8"
-        Me.MoveDisplayer.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.MoveDisplayer.Visible = False
-        '
-        'WLeaderBoardGrid
-        '
-        Me.WLeaderBoardGrid.AllowUserToAddRows = False
-        Me.WLeaderBoardGrid.AllowUserToDeleteRows = False
-        Me.WLeaderBoardGrid.AllowUserToResizeColumns = False
-        Me.WLeaderBoardGrid.AllowUserToResizeRows = False
-        Me.WLeaderBoardGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.WLeaderBoardGrid.Columns.AddRange(New System.Windows.Forms.DataGridViewColumn() {Me.UserIndex, Me.Username, Me.UserScore, Me.UserDate})
-        Me.WLeaderBoardGrid.Enabled = False
-        Me.WLeaderBoardGrid.Location = New System.Drawing.Point(9, 155)
-        Me.WLeaderBoardGrid.MultiSelect = False
-        Me.WLeaderBoardGrid.Name = "WLeaderBoardGrid"
-        Me.WLeaderBoardGrid.ReadOnly = True
-        Me.WLeaderBoardGrid.RowHeadersVisible = False
-        Me.WLeaderBoardGrid.RowHeadersWidth = 21
-        Me.WLeaderBoardGrid.ScrollBars = System.Windows.Forms.ScrollBars.None
-        Me.WLeaderBoardGrid.ShowEditingIcon = False
-        Me.WLeaderBoardGrid.Size = New System.Drawing.Size(282, 240)
-        Me.WLeaderBoardGrid.TabIndex = 28
-        Me.WLeaderBoardGrid.TabStop = False
-        Me.WLeaderBoardGrid.Visible = False
-        '
-        'UserIndex
-        '
-        Me.UserIndex.Frozen = True
-        Me.UserIndex.HeaderText = "W"
-        Me.UserIndex.MinimumWidth = 6
-        Me.UserIndex.Name = "UserIndex"
-        Me.UserIndex.ReadOnly = True
-        Me.UserIndex.Width = 21
-        '
-        'Username
-        '
-        Me.Username.Frozen = True
-        Me.Username.HeaderText = "Name"
-        Me.Username.MinimumWidth = 6
-        Me.Username.Name = "Username"
-        Me.Username.ReadOnly = True
-        Me.Username.Width = 130
-        '
-        'UserScore
-        '
-        Me.UserScore.Frozen = True
-        Me.UserScore.HeaderText = "Score"
-        Me.UserScore.MinimumWidth = 6
-        Me.UserScore.Name = "UserScore"
-        Me.UserScore.ReadOnly = True
-        Me.UserScore.Width = 50
-        '
-        'UserDate
-        '
-        Me.UserDate.Frozen = True
-        Me.UserDate.HeaderText = "Date"
-        Me.UserDate.MinimumWidth = 6
-        Me.UserDate.Name = "UserDate"
-        Me.UserDate.ReadOnly = True
-        Me.UserDate.Width = 80
-        '
-        'BLeaderBoardGrid
-        '
-        Me.BLeaderBoardGrid.AllowUserToAddRows = False
-        Me.BLeaderBoardGrid.AllowUserToDeleteRows = False
-        Me.BLeaderBoardGrid.AllowUserToResizeColumns = False
-        Me.BLeaderBoardGrid.AllowUserToResizeRows = False
-        Me.BLeaderBoardGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.BLeaderBoardGrid.Columns.AddRange(New System.Windows.Forms.DataGridViewColumn() {Me.DataGridViewTextBoxColumn1, Me.DataGridViewTextBoxColumn2, Me.DataGridViewTextBoxColumn3, Me.DataGridViewTextBoxColumn4})
-        Me.BLeaderBoardGrid.Enabled = False
-        Me.BLeaderBoardGrid.Location = New System.Drawing.Point(9, 155)
-        Me.BLeaderBoardGrid.MultiSelect = False
-        Me.BLeaderBoardGrid.Name = "BLeaderBoardGrid"
-        Me.BLeaderBoardGrid.ReadOnly = True
-        Me.BLeaderBoardGrid.RowHeadersVisible = False
-        Me.BLeaderBoardGrid.RowHeadersWidth = 21
-        Me.BLeaderBoardGrid.ScrollBars = System.Windows.Forms.ScrollBars.None
-        Me.BLeaderBoardGrid.ShowEditingIcon = False
-        Me.BLeaderBoardGrid.Size = New System.Drawing.Size(282, 240)
-        Me.BLeaderBoardGrid.TabIndex = 29
-        Me.BLeaderBoardGrid.TabStop = False
-        Me.BLeaderBoardGrid.Visible = False
-        '
-        'DataGridViewTextBoxColumn1
-        '
-        Me.DataGridViewTextBoxColumn1.Frozen = True
-        Me.DataGridViewTextBoxColumn1.HeaderText = "B"
-        Me.DataGridViewTextBoxColumn1.MinimumWidth = 6
-        Me.DataGridViewTextBoxColumn1.Name = "DataGridViewTextBoxColumn1"
-        Me.DataGridViewTextBoxColumn1.ReadOnly = True
-        Me.DataGridViewTextBoxColumn1.Width = 21
-        '
-        'DataGridViewTextBoxColumn2
-        '
-        Me.DataGridViewTextBoxColumn2.Frozen = True
-        Me.DataGridViewTextBoxColumn2.HeaderText = "Name"
-        Me.DataGridViewTextBoxColumn2.MinimumWidth = 6
-        Me.DataGridViewTextBoxColumn2.Name = "DataGridViewTextBoxColumn2"
-        Me.DataGridViewTextBoxColumn2.ReadOnly = True
-        Me.DataGridViewTextBoxColumn2.Width = 130
-        '
-        'DataGridViewTextBoxColumn3
-        '
-        Me.DataGridViewTextBoxColumn3.Frozen = True
-        Me.DataGridViewTextBoxColumn3.HeaderText = "Score"
-        Me.DataGridViewTextBoxColumn3.MinimumWidth = 6
-        Me.DataGridViewTextBoxColumn3.Name = "DataGridViewTextBoxColumn3"
-        Me.DataGridViewTextBoxColumn3.ReadOnly = True
-        Me.DataGridViewTextBoxColumn3.Width = 50
-        '
-        'DataGridViewTextBoxColumn4
-        '
-        Me.DataGridViewTextBoxColumn4.Frozen = True
-        Me.DataGridViewTextBoxColumn4.HeaderText = "Date"
-        Me.DataGridViewTextBoxColumn4.MinimumWidth = 6
-        Me.DataGridViewTextBoxColumn4.Name = "DataGridViewTextBoxColumn4"
-        Me.DataGridViewTextBoxColumn4.ReadOnly = True
-        Me.DataGridViewTextBoxColumn4.Width = 80
-        '
-        'TrainingScore
-        '
-        Me.TrainingScore.BackColor = System.Drawing.Color.Transparent
-        Me.TrainingScore.Font = New System.Drawing.Font("Microsoft Sans Serif", 27.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.TrainingScore.Location = New System.Drawing.Point(114, 330)
-        Me.TrainingScore.Name = "TrainingScore"
-        Me.TrainingScore.Size = New System.Drawing.Size(74, 52)
-        Me.TrainingScore.TabIndex = 30
-        Me.TrainingScore.Text = "0"
-        Me.TrainingScore.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.TrainingScore.Visible = False
-        '
-        'InfoBtn
-        '
-        Me.InfoBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.InfoBtn.Location = New System.Drawing.Point(7, 570)
-        Me.InfoBtn.Name = "InfoBtn"
-        Me.InfoBtn.Size = New System.Drawing.Size(18, 23)
-        Me.InfoBtn.TabIndex = 31
-        Me.InfoBtn.Text = "?"
-        Me.InfoBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        Me.InfoBtn.UseVisualStyleBackColor = True
-        Me.InfoBtn.Visible = False
-        '
-        'UseBook
-        '
-        Me.UseBook.AutoSize = True
-        Me.UseBook.Enabled = False
-        Me.UseBook.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.UseBook.Location = New System.Drawing.Point(977, 435)
-        Me.UseBook.Name = "UseBook"
-        Me.UseBook.Size = New System.Drawing.Size(136, 19)
-        Me.UseBook.TabIndex = 26
-        Me.UseBook.Text = "Use Opening Book?"
-        Me.UseBook.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.UseBook.UseVisualStyleBackColor = True
-        '
-        'PieceHeatMapBox
-        '
-        Me.PieceHeatMapBox.AutoSize = True
-        Me.PieceHeatMapBox.Checked = True
-        Me.PieceHeatMapBox.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.PieceHeatMapBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PieceHeatMapBox.Location = New System.Drawing.Point(970, 410)
-        Me.PieceHeatMapBox.Name = "PieceHeatMapBox"
-        Me.PieceHeatMapBox.Size = New System.Drawing.Size(152, 19)
-        Me.PieceHeatMapBox.TabIndex = 26
-        Me.PieceHeatMapBox.Text = "Use Piece Heat Maps?"
-        Me.PieceHeatMapBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.PieceHeatMapBox.UseVisualStyleBackColor = True
-        '
-        'NextPuzzleBtn
-        '
-        Me.NextPuzzleBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.NextPuzzleBtn.Location = New System.Drawing.Point(9, 124)
-        Me.NextPuzzleBtn.Name = "NextPuzzleBtn"
-        Me.NextPuzzleBtn.Size = New System.Drawing.Size(282, 43)
-        Me.NextPuzzleBtn.TabIndex = 7
-        Me.NextPuzzleBtn.Text = "Next Puzzle"
-        Me.NextPuzzleBtn.UseVisualStyleBackColor = True
-        Me.NextPuzzleBtn.Visible = False
-        '
-        'HintBtn
-        '
-        Me.HintBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.HintBtn.Location = New System.Drawing.Point(9, 75)
-        Me.HintBtn.Name = "HintBtn"
-        Me.HintBtn.Size = New System.Drawing.Size(133, 43)
-        Me.HintBtn.TabIndex = 5
-        Me.HintBtn.Text = "Hint"
-        Me.HintBtn.UseVisualStyleBackColor = True
-        Me.HintBtn.Visible = False
-        '
-        'GiveUpBtn
-        '
-        Me.GiveUpBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.GiveUpBtn.Location = New System.Drawing.Point(150, 75)
-        Me.GiveUpBtn.Name = "GiveUpBtn"
-        Me.GiveUpBtn.Size = New System.Drawing.Size(141, 43)
-        Me.GiveUpBtn.TabIndex = 7
-        Me.GiveUpBtn.Text = "Give Up"
-        Me.GiveUpBtn.UseVisualStyleBackColor = True
-        Me.GiveUpBtn.Visible = False
-        '
-        'AIPuzzleInfoLabel
-        '
-        Me.AIPuzzleInfoLabel.AutoSize = True
-        Me.AIPuzzleInfoLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AIPuzzleInfoLabel.Location = New System.Drawing.Point(35, 332)
-        Me.AIPuzzleInfoLabel.Name = "AIPuzzleInfoLabel"
-        Me.AIPuzzleInfoLabel.Size = New System.Drawing.Size(228, 20)
-        Me.AIPuzzleInfoLabel.TabIndex = 9
-        Me.AIPuzzleInfoLabel.Text = "AI is Searching on the Puzzle..."
-        Me.AIPuzzleInfoLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.AIPuzzleInfoLabel.Visible = False
-        '
-        'RatingLabel
-        '
-        Me.RatingLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 36.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.RatingLabel.Location = New System.Drawing.Point(79, 249)
-        Me.RatingLabel.Name = "RatingLabel"
-        Me.RatingLabel.Size = New System.Drawing.Size(136, 55)
-        Me.RatingLabel.TabIndex = 9
-        Me.RatingLabel.Text = "1000"
-        Me.RatingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.RatingLabel.Visible = False
-        '
-        'LostRatingLabel
-        '
-        Me.LostRatingLabel.AutoSize = True
-        Me.LostRatingLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.LostRatingLabel.Location = New System.Drawing.Point(71, 296)
-        Me.LostRatingLabel.Name = "LostRatingLabel"
-        Me.LostRatingLabel.Size = New System.Drawing.Size(32, 20)
-        Me.LostRatingLabel.TabIndex = 9
-        Me.LostRatingLabel.Text = "-10"
-        Me.LostRatingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.LostRatingLabel.Visible = False
-        '
-        'GainedRatingLabel
-        '
-        Me.GainedRatingLabel.AutoSize = True
-        Me.GainedRatingLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.GainedRatingLabel.Location = New System.Drawing.Point(188, 296)
-        Me.GainedRatingLabel.Name = "GainedRatingLabel"
-        Me.GainedRatingLabel.Size = New System.Drawing.Size(36, 20)
-        Me.GainedRatingLabel.TabIndex = 9
-        Me.GainedRatingLabel.Text = "+10"
-        Me.GainedRatingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.GainedRatingLabel.Visible = False
-        '
-        'RatingHeader
-        '
-        Me.RatingHeader.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.RatingHeader.Location = New System.Drawing.Point(100, 225)
-        Me.RatingHeader.Name = "RatingHeader"
-        Me.RatingHeader.Size = New System.Drawing.Size(98, 20)
-        Me.RatingHeader.TabIndex = 9
-        Me.RatingHeader.Text = "Your Rating:"
-        Me.RatingHeader.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.RatingHeader.Visible = False
-        '
-        'PuzzleRatingLabel
-        '
-        Me.PuzzleRatingLabel.AutoSize = True
-        Me.PuzzleRatingLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PuzzleRatingLabel.Location = New System.Drawing.Point(86, 51)
-        Me.PuzzleRatingLabel.Name = "PuzzleRatingLabel"
-        Me.PuzzleRatingLabel.Size = New System.Drawing.Size(122, 16)
-        Me.PuzzleRatingLabel.TabIndex = 9
-        Me.PuzzleRatingLabel.Text = "Puzzle Rating: 1000"
-        Me.PuzzleRatingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.PuzzleRatingLabel.Visible = False
-        '
-        'AutoAdvanceBox
-        '
-        Me.AutoAdvanceBox.BackColor = System.Drawing.Color.WhiteSmoke
-        Me.AutoAdvanceBox.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.AutoAdvanceBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AutoAdvanceBox.Location = New System.Drawing.Point(167, 438)
-        Me.AutoAdvanceBox.Name = "AutoAdvanceBox"
-        Me.AutoAdvanceBox.ReadOnly = True
-        Me.AutoAdvanceBox.Size = New System.Drawing.Size(120, 22)
-        Me.AutoAdvanceBox.TabIndex = 23
-        Me.AutoAdvanceBox.Text = "Never"
-        Me.AutoAdvanceBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
-        Me.AutoAdvanceBox.Visible = False
-        '
-        'AutoAdvanceBar
-        '
-        Me.AutoAdvanceBar.LargeChange = 2
-        Me.AutoAdvanceBar.Location = New System.Drawing.Point(167, 464)
-        Me.AutoAdvanceBar.Maximum = 14
-        Me.AutoAdvanceBar.Name = "AutoAdvanceBar"
-        Me.AutoAdvanceBar.Size = New System.Drawing.Size(120, 45)
-        Me.AutoAdvanceBar.TabIndex = 25
-        Me.AutoAdvanceBar.Value = 14
-        Me.AutoAdvanceBar.Visible = False
-        '
-        'AutoAdvanceOnComplete
-        '
-        Me.AutoAdvanceOnComplete.AutoSize = True
-        Me.AutoAdvanceOnComplete.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AutoAdvanceOnComplete.Location = New System.Drawing.Point(8, 413)
-        Me.AutoAdvanceOnComplete.Name = "AutoAdvanceOnComplete"
-        Me.AutoAdvanceOnComplete.Size = New System.Drawing.Size(280, 19)
-        Me.AutoAdvanceOnComplete.TabIndex = 26
-        Me.AutoAdvanceOnComplete.Text = "Automatically Advance When Correct / Incorrect"
-        Me.AutoAdvanceOnComplete.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.AutoAdvanceOnComplete.UseVisualStyleBackColor = True
-        Me.AutoAdvanceOnComplete.Visible = False
-        '
-        'AutoAdvanceLabel
-        '
-        Me.AutoAdvanceLabel.AutoSize = True
-        Me.AutoAdvanceLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AutoAdvanceLabel.Location = New System.Drawing.Point(5, 438)
-        Me.AutoAdvanceLabel.Name = "AutoAdvanceLabel"
-        Me.AutoAdvanceLabel.Size = New System.Drawing.Size(158, 15)
-        Me.AutoAdvanceLabel.TabIndex = 9
-        Me.AutoAdvanceLabel.Text = "Automatically Advance After:"
-        Me.AutoAdvanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.AutoAdvanceLabel.Visible = False
-        '
-        'HumanModeBtn
-        '
-        Me.HumanModeBtn.AutoSize = True
-        Me.HumanModeBtn.Checked = True
-        Me.HumanModeBtn.Location = New System.Drawing.Point(22, 390)
-        Me.HumanModeBtn.Name = "HumanModeBtn"
-        Me.HumanModeBtn.Size = New System.Drawing.Size(123, 17)
-        Me.HumanModeBtn.TabIndex = 32
-        Me.HumanModeBtn.TabStop = True
-        Me.HumanModeBtn.Text = "Human Puzzle Mode"
-        Me.HumanModeBtn.UseVisualStyleBackColor = True
-        Me.HumanModeBtn.Visible = False
-        '
-        'AIModeBtn
-        '
-        Me.AIModeBtn.AutoSize = True
-        Me.AIModeBtn.Location = New System.Drawing.Point(166, 390)
-        Me.AIModeBtn.Name = "AIModeBtn"
-        Me.AIModeBtn.Size = New System.Drawing.Size(99, 17)
-        Me.AIModeBtn.TabIndex = 33
-        Me.AIModeBtn.Text = "AI Puzzle Mode"
-        Me.AIModeBtn.UseVisualStyleBackColor = True
-        Me.AIModeBtn.Visible = False
-        '
-        'ResetRatingsBtn
-        '
-        Me.ResetRatingsBtn.Location = New System.Drawing.Point(247, 565)
-        Me.ResetRatingsBtn.Name = "ResetRatingsBtn"
-        Me.ResetRatingsBtn.Size = New System.Drawing.Size(52, 34)
-        Me.ResetRatingsBtn.TabIndex = 34
-        Me.ResetRatingsBtn.Text = "Reset Ratings"
-        Me.ResetRatingsBtn.TextAlign = System.Drawing.ContentAlignment.TopCenter
-        Me.ResetRatingsBtn.UseVisualStyleBackColor = True
-        Me.ResetRatingsBtn.Visible = False
-        '
-        'PGNExport
-        '
-        Me.PGNExport.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PGNExport.Location = New System.Drawing.Point(221, 85)
-        Me.PGNExport.Name = "PGNExport"
-        Me.PGNExport.Size = New System.Drawing.Size(70, 43)
-        Me.PGNExport.TabIndex = 7
-        Me.PGNExport.Text = "Export PGN"
-        Me.PGNExport.UseVisualStyleBackColor = True
-        '
-        'AutoOutputterPanel
-        '
-        Me.AutoOutputterPanel.Controls.Add(Me.PGNAutoOutputter)
-        Me.AutoOutputterPanel.Controls.Add(Me.FENAutoOutputter)
-        Me.AutoOutputterPanel.Location = New System.Drawing.Point(45, 51)
-        Me.AutoOutputterPanel.Name = "AutoOutputterPanel"
-        Me.AutoOutputterPanel.Size = New System.Drawing.Size(214, 24)
-        Me.AutoOutputterPanel.TabIndex = 35
-        Me.AutoOutputterPanel.Visible = False
-        '
-        'PGNAutoOutputter
-        '
-        Me.PGNAutoOutputter.AutoSize = True
-        Me.PGNAutoOutputter.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PGNAutoOutputter.Location = New System.Drawing.Point(124, 0)
-        Me.PGNAutoOutputter.Name = "PGNAutoOutputter"
-        Me.PGNAutoOutputter.Size = New System.Drawing.Size(90, 19)
-        Me.PGNAutoOutputter.TabIndex = 1
-        Me.PGNAutoOutputter.Text = "Output PGN"
-        Me.PGNAutoOutputter.UseVisualStyleBackColor = True
-        '
-        'FENAutoOutputter
-        '
-        Me.FENAutoOutputter.AutoSize = True
-        Me.FENAutoOutputter.Checked = True
-        Me.FENAutoOutputter.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.FENAutoOutputter.Location = New System.Drawing.Point(3, 0)
-        Me.FENAutoOutputter.Name = "FENAutoOutputter"
-        Me.FENAutoOutputter.Size = New System.Drawing.Size(88, 19)
-        Me.FENAutoOutputter.TabIndex = 0
-        Me.FENAutoOutputter.TabStop = True
-        Me.FENAutoOutputter.Text = "Output FEN"
-        Me.FENAutoOutputter.UseVisualStyleBackColor = True
-        '
-        'NodeTestBtn
-        '
-        Me.NodeTestBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.NodeTestBtn.Location = New System.Drawing.Point(62, 318)
-        Me.NodeTestBtn.Name = "NodeTestBtn"
-        Me.NodeTestBtn.Size = New System.Drawing.Size(175, 49)
-        Me.NodeTestBtn.TabIndex = 27
-        Me.NodeTestBtn.Text = "Perform Node Test:"
-        Me.NodeTestBtn.UseVisualStyleBackColor = True
-        '
-        'NodeTestStopBtn
-        '
-        Me.NodeTestStopBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.NodeTestStopBtn.Location = New System.Drawing.Point(62, 318)
-        Me.NodeTestStopBtn.Name = "NodeTestStopBtn"
-        Me.NodeTestStopBtn.Size = New System.Drawing.Size(175, 49)
-        Me.NodeTestStopBtn.TabIndex = 27
-        Me.NodeTestStopBtn.Text = "Terminate Node Test:"
-        Me.NodeTestStopBtn.UseVisualStyleBackColor = True
-        Me.NodeTestStopBtn.Visible = False
-        '
-        'AutoResetter
-        '
-        Me.AutoResetter.AutoSize = True
-        Me.AutoResetter.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AutoResetter.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
-        Me.AutoResetter.Location = New System.Drawing.Point(970, 479)
-        Me.AutoResetter.Name = "AutoResetter"
-        Me.AutoResetter.Size = New System.Drawing.Size(150, 17)
-        Me.AutoResetter.TabIndex = 36
-        Me.AutoResetter.Text = "Automatically Reset Game"
-        Me.AutoResetter.UseVisualStyleBackColor = True
-        Me.AutoResetter.Visible = False
-        '
-        'BoardEditorBtn
-        '
-        Me.BoardEditorBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BoardEditorBtn.Location = New System.Drawing.Point(53, 213)
-        Me.BoardEditorBtn.Name = "BoardEditorBtn"
-        Me.BoardEditorBtn.Size = New System.Drawing.Size(194, 43)
-        Me.BoardEditorBtn.TabIndex = 18
-        Me.BoardEditorBtn.Text = "Board Editor Mode:"
-        Me.BoardEditorBtn.UseVisualStyleBackColor = True
-        '
-        'BoardEditCancelBtn
-        '
-        Me.BoardEditCancelBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BoardEditCancelBtn.Location = New System.Drawing.Point(158, 213)
-        Me.BoardEditCancelBtn.Name = "BoardEditCancelBtn"
-        Me.BoardEditCancelBtn.Size = New System.Drawing.Size(90, 43)
-        Me.BoardEditCancelBtn.TabIndex = 18
-        Me.BoardEditCancelBtn.Text = "Cancel Changes:"
-        Me.BoardEditCancelBtn.UseVisualStyleBackColor = True
-        Me.BoardEditCancelBtn.Visible = False
-        '
-        'BoardEditBlackMove
-        '
-        Me.BoardEditBlackMove.AutoSize = True
-        Me.BoardEditBlackMove.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BoardEditBlackMove.Location = New System.Drawing.Point(150, 2)
-        Me.BoardEditBlackMove.Name = "BoardEditBlackMove"
-        Me.BoardEditBlackMove.Size = New System.Drawing.Size(114, 21)
-        Me.BoardEditBlackMove.TabIndex = 1
-        Me.BoardEditBlackMove.Text = "Black to Move"
-        Me.BoardEditBlackMove.UseVisualStyleBackColor = True
-        '
-        'BoardEditWhiteMove
-        '
-        Me.BoardEditWhiteMove.AutoSize = True
-        Me.BoardEditWhiteMove.Checked = True
-        Me.BoardEditWhiteMove.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BoardEditWhiteMove.Location = New System.Drawing.Point(4, 2)
-        Me.BoardEditWhiteMove.Name = "BoardEditWhiteMove"
-        Me.BoardEditWhiteMove.Size = New System.Drawing.Size(116, 21)
-        Me.BoardEditWhiteMove.TabIndex = 0
-        Me.BoardEditWhiteMove.TabStop = True
-        Me.BoardEditWhiteMove.Text = "White to Move"
-        Me.BoardEditWhiteMove.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.BoardEditWhiteMove.UseVisualStyleBackColor = True
-        '
-        'BoardEditPanel
-        '
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditTipLabel)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditEnPassantLabel)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditBLabel)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditWLabel)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditBQSBox)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditWQSBox)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditBKSBox)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditWKSBox)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditBlackMove)
-        Me.BoardEditPanel.Controls.Add(Me.BoardEditWhiteMove)
-        Me.BoardEditPanel.Location = New System.Drawing.Point(911, 5)
-        Me.BoardEditPanel.Name = "BoardEditPanel"
-        Me.BoardEditPanel.Size = New System.Drawing.Size(272, 135)
-        Me.BoardEditPanel.TabIndex = 36
-        Me.BoardEditPanel.Visible = False
-        '
-        'BoardEditTipLabel
-        '
-        Me.BoardEditTipLabel.Location = New System.Drawing.Point(-5, 112)
-        Me.BoardEditTipLabel.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
-        Me.BoardEditTipLabel.Name = "BoardEditTipLabel"
-        Me.BoardEditTipLabel.Size = New System.Drawing.Size(271, 19)
-        Me.BoardEditTipLabel.TabIndex = 4
-        Me.BoardEditTipLabel.Text = "Tip: Hold CTRL when Moving a Piece to Duplicate it."
-        Me.BoardEditTipLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        '
-        'BoardEditEnPassantLabel
-        '
-        Me.BoardEditEnPassantLabel.Location = New System.Drawing.Point(0, 92)
-        Me.BoardEditEnPassantLabel.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
-        Me.BoardEditEnPassantLabel.Name = "BoardEditEnPassantLabel"
-        Me.BoardEditEnPassantLabel.Size = New System.Drawing.Size(263, 19)
-        Me.BoardEditEnPassantLabel.TabIndex = 4
-        Me.BoardEditEnPassantLabel.Text = "Right-Click on a Square to Flag it as En-Passant."
-        Me.BoardEditEnPassantLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        '
-        'BoardEditBLabel
-        '
-        Me.BoardEditBLabel.AutoSize = True
-        Me.BoardEditBLabel.Location = New System.Drawing.Point(148, 29)
-        Me.BoardEditBLabel.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
-        Me.BoardEditBLabel.Name = "BoardEditBLabel"
-        Me.BoardEditBLabel.Size = New System.Drawing.Size(107, 13)
-        Me.BoardEditBLabel.TabIndex = 3
-        Me.BoardEditBLabel.Text = "Black Castling Rules:"
-        '
-        'BoardEditWLabel
-        '
-        Me.BoardEditWLabel.AutoSize = True
-        Me.BoardEditWLabel.Location = New System.Drawing.Point(2, 29)
-        Me.BoardEditWLabel.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
-        Me.BoardEditWLabel.Name = "BoardEditWLabel"
-        Me.BoardEditWLabel.Size = New System.Drawing.Size(108, 13)
-        Me.BoardEditWLabel.TabIndex = 3
-        Me.BoardEditWLabel.Text = "White Castling Rules:"
-        '
-        'BoardEditBQSBox
-        '
-        Me.BoardEditBQSBox.AutoSize = True
-        Me.BoardEditBQSBox.Location = New System.Drawing.Point(150, 68)
-        Me.BoardEditBQSBox.Margin = New System.Windows.Forms.Padding(2)
-        Me.BoardEditBQSBox.Name = "BoardEditBQSBox"
-        Me.BoardEditBQSBox.Size = New System.Drawing.Size(82, 17)
-        Me.BoardEditBQSBox.TabIndex = 2
-        Me.BoardEditBQSBox.Text = "Queen Side"
-        Me.BoardEditBQSBox.UseVisualStyleBackColor = True
-        '
-        'BoardEditWQSBox
-        '
-        Me.BoardEditWQSBox.AutoSize = True
-        Me.BoardEditWQSBox.Location = New System.Drawing.Point(4, 68)
-        Me.BoardEditWQSBox.Margin = New System.Windows.Forms.Padding(2)
-        Me.BoardEditWQSBox.Name = "BoardEditWQSBox"
-        Me.BoardEditWQSBox.Size = New System.Drawing.Size(82, 17)
-        Me.BoardEditWQSBox.TabIndex = 2
-        Me.BoardEditWQSBox.Text = "Queen Side"
-        Me.BoardEditWQSBox.UseVisualStyleBackColor = True
-        '
-        'BoardEditBKSBox
-        '
-        Me.BoardEditBKSBox.AutoSize = True
-        Me.BoardEditBKSBox.Location = New System.Drawing.Point(150, 47)
-        Me.BoardEditBKSBox.Margin = New System.Windows.Forms.Padding(2)
-        Me.BoardEditBKSBox.Name = "BoardEditBKSBox"
-        Me.BoardEditBKSBox.Size = New System.Drawing.Size(71, 17)
-        Me.BoardEditBKSBox.TabIndex = 2
-        Me.BoardEditBKSBox.Text = "King Side"
-        Me.BoardEditBKSBox.UseVisualStyleBackColor = True
-        '
-        'BoardEditWKSBox
-        '
-        Me.BoardEditWKSBox.AutoSize = True
-        Me.BoardEditWKSBox.Location = New System.Drawing.Point(4, 47)
-        Me.BoardEditWKSBox.Margin = New System.Windows.Forms.Padding(2)
-        Me.BoardEditWKSBox.Name = "BoardEditWKSBox"
-        Me.BoardEditWKSBox.Size = New System.Drawing.Size(71, 17)
-        Me.BoardEditWKSBox.TabIndex = 2
-        Me.BoardEditWKSBox.Text = "King Side"
-        Me.BoardEditWKSBox.UseVisualStyleBackColor = True
-        '
-        'RemoteModeBtn
-        '
-        Me.RemoteModeBtn.Enabled = False
-        Me.RemoteModeBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.RemoteModeBtn.Location = New System.Drawing.Point(62, 154)
-        Me.RemoteModeBtn.Name = "RemoteModeBtn"
-        Me.RemoteModeBtn.Size = New System.Drawing.Size(175, 49)
-        Me.RemoteModeBtn.TabIndex = 27
-        Me.RemoteModeBtn.Text = "Connect To Interface"
-        Me.RemoteModeBtn.UseVisualStyleBackColor = True
-        Me.RemoteModeBtn.Visible = False
-        '
-        'BoardEditDiscardBtn
-        '
-        Me.BoardEditDiscardBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.BoardEditDiscardBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BoardEditDiscardBtn.Location = New System.Drawing.Point(137, 264)
-        Me.BoardEditDiscardBtn.Name = "BoardEditDiscardBtn"
-        Me.BoardEditDiscardBtn.Size = New System.Drawing.Size(26, 26)
-        Me.BoardEditDiscardBtn.TabIndex = 37
-        Me.BoardEditDiscardBtn.Text = "X"
-        Me.BoardEditDiscardBtn.UseVisualStyleBackColor = True
-        Me.BoardEditDiscardBtn.Visible = False
-        '
-        'Chess
-        '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
-        Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(1184, 600)
-        Me.Controls.Add(Me.BoardEditDiscardBtn)
-        Me.Controls.Add(Me.BoardEditPanel)
-        Me.Controls.Add(Me.AutoResetter)
-        Me.Controls.Add(Me.AutoOutputterPanel)
-        Me.Controls.Add(Me.ResetRatingsBtn)
-        Me.Controls.Add(Me.AIModeBtn)
-        Me.Controls.Add(Me.HumanModeBtn)
-        Me.Controls.Add(Me.InfoBtn)
-        Me.Controls.Add(Me.TrainingScore)
-        Me.Controls.Add(Me.RemoteModeBtn)
-        Me.Controls.Add(Me.NodeTestStopBtn)
-        Me.Controls.Add(Me.NodeTestBtn)
-        Me.Controls.Add(Me.AITerminator)
-        Me.Controls.Add(Me.UseBook)
-        Me.Controls.Add(Me.AIEndlessMode)
-        Me.Controls.Add(Me.PieceHeatMapBox)
-        Me.Controls.Add(Me.AutoAdvanceOnComplete)
-        Me.Controls.Add(Me.QuiescenceBox)
-        Me.Controls.Add(Me.AutoAdvanceBar)
-        Me.Controls.Add(Me.UserTimeBar)
-        Me.Controls.Add(Me.AutoAdvanceBox)
-        Me.Controls.Add(Me.UserTimeBox)
-        Me.Controls.Add(Me.ExitBtn)
-        Me.Controls.Add(Me.AutoFlipper)
-        Me.Controls.Add(Me.BoardEditCancelBtn)
-        Me.Controls.Add(Me.BoardEditorBtn)
-        Me.Controls.Add(Me.FlipperButton)
-        Me.Controls.Add(Me.SettingsBtn)
-        Me.Controls.Add(Me.ProgressBar)
-        Me.Controls.Add(Me.UndoFENChange)
-        Me.Controls.Add(Me.Credits)
-        Me.Controls.Add(Me.GainedRatingLabel)
-        Me.Controls.Add(Me.LostRatingLabel)
-        Me.Controls.Add(Me.AutoAdvanceLabel)
-        Me.Controls.Add(Me.RatingHeader)
-        Me.Controls.Add(Me.PuzzleRatingLabel)
-        Me.Controls.Add(Me.AIPuzzleInfoLabel)
-        Me.Controls.Add(Me.RatingLabel)
-        Me.Controls.Add(Me.TimerLabel)
-        Me.Controls.Add(Me.CurrentAIDepth)
-        Me.Controls.Add(Me.CurrentAIMove)
-        Me.Controls.Add(Me.CurrentAIEval)
-        Me.Controls.Add(Me.CheckLabel)
-        Me.Controls.Add(Me.NextPuzzleBtn)
-        Me.Controls.Add(Me.TrainingStart)
-        Me.Controls.Add(Me.UndoMove)
-        Me.Controls.Add(Me.GiveUpBtn)
-        Me.Controls.Add(Me.PGNExport)
-        Me.Controls.Add(Me.FENExport)
-        Me.Controls.Add(Me.HintBtn)
-        Me.Controls.Add(Me.Reset_Btn)
-        Me.Controls.Add(Me.AIMoveBtn)
-        Me.Controls.Add(Me.InputButton)
-        Me.Controls.Add(Me.InputTextBox)
-        Me.Controls.Add(Me.BP1)
-        Me.Controls.Add(Me.BR1)
-        Me.Controls.Add(Me.BN1)
-        Me.Controls.Add(Me.BB1)
-        Me.Controls.Add(Me.BQ1)
-        Me.Controls.Add(Me.BK1)
-        Me.Controls.Add(Me.WP1)
-        Me.Controls.Add(Me.WR1)
-        Me.Controls.Add(Me.WN1)
-        Me.Controls.Add(Me.WB1)
-        Me.Controls.Add(Me.WQ1)
-        Me.Controls.Add(Me.WK1)
-        Me.Controls.Add(Me.Checkerboard)
-        Me.Controls.Add(Me.BLeaderBoardGrid)
-        Me.Controls.Add(Me.WLeaderBoardGrid)
-        Me.Controls.Add(Me.MoveDisplayer)
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximizeBox = False
-        Me.MaximumSize = New System.Drawing.Size(1200, 639)
-        Me.Name = "Chess"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Chess Game & Artificial Intelligence"
-        Me.ColourChanger.ResumeLayout(False)
-        CType(Me.BP1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.BR1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.BN1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.BB1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.BQ1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.BK1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WP1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WR1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WN1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WB1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WQ1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WK1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WLeaderBoardGrid, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.AutoAdvanceBar, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.AutoOutputterPanel.ResumeLayout(False)
-        Me.AutoOutputterPanel.PerformLayout()
-        Me.BoardEditPanel.ResumeLayout(False)
-        Me.BoardEditPanel.PerformLayout()
-        Me.ResumeLayout(False)
-        Me.PerformLayout()
+        InputTextBox = New TextBox()
+        InputButton = New Button()
+        AIMoveBtn = New Button()
+        Reset_Btn = New Button()
+        FENExport = New Button()
+        CheckLabel = New Label()
+        CurrentAIEval = New Label()
+        UndoMove = New Button()
+        Credits = New Label()
+        UndoFENChange = New Button()
+        ProgressBar = New ProgressBar()
+        SettingsBtn = New Button()
+        BP1 = New PictureBox()
+        BR1 = New PictureBox()
+        BN1 = New PictureBox()
+        BB1 = New PictureBox()
+        BQ1 = New PictureBox()
+        BK1 = New PictureBox()
+        WP1 = New PictureBox()
+        WR1 = New PictureBox()
+        WN1 = New PictureBox()
+        WB1 = New PictureBox()
+        WQ1 = New PictureBox()
+        WK1 = New PictureBox()
+        Checkerboard = New PictureBox()
+        FlipperButton = New Button()
+        AutoFlipper = New CheckBox()
+        ExitBtn = New Button()
+        UserTimeBox = New TextBox()
+        UserTimeBar = New TrackBar()
+        CurrentAIMove = New Label()
+        CurrentAIDepth = New Label()
+        AITerminator = New Button()
+        AIEndlessMode = New CheckBox()
+        TrainingStart = New Button()
+        TimerLabel = New Label()
+        MoveDisplayer = New Label()
+        WLeaderBoardGrid = New DataGridView()
+        UserIndex = New DataGridViewTextBoxColumn()
+        Username = New DataGridViewTextBoxColumn()
+        UserScore = New DataGridViewTextBoxColumn()
+        UserDate = New DataGridViewTextBoxColumn()
+        BLeaderBoardGrid = New DataGridView()
+        DataGridViewTextBoxColumn1 = New DataGridViewTextBoxColumn()
+        DataGridViewTextBoxColumn2 = New DataGridViewTextBoxColumn()
+        DataGridViewTextBoxColumn3 = New DataGridViewTextBoxColumn()
+        DataGridViewTextBoxColumn4 = New DataGridViewTextBoxColumn()
+        TrainingScore = New Label()
+        InfoBtn = New Button()
+        UseBook = New CheckBox()
+        NextPuzzleBtn = New Button()
+        HintBtn = New Button()
+        GiveUpBtn = New Button()
+        AIPuzzleInfoLabel = New Label()
+        RatingLabel = New Label()
+        LostRatingLabel = New Label()
+        GainedRatingLabel = New Label()
+        RatingHeader = New Label()
+        PuzzleRatingLabel = New Label()
+        AutoAdvanceBox = New TextBox()
+        AutoAdvanceBar = New TrackBar()
+        AutoAdvanceOnComplete = New CheckBox()
+        AutoAdvanceLabel = New Label()
+        HumanModeBtn = New RadioButton()
+        AIModeBtn = New RadioButton()
+        ResetRatingsBtn = New Button()
+        PGNExport = New Button()
+        AutoOutputterPanel = New Panel()
+        PGNAutoOutputter = New RadioButton()
+        FENAutoOutputter = New RadioButton()
+        NodeTestBtn = New Button()
+        NodeTestStopBtn = New Button()
+        AutoResetter = New CheckBox()
+        BoardEditorBtn = New Button()
+        BoardEditCancelBtn = New Button()
+        BoardEditBlackMove = New RadioButton()
+        BoardEditWhiteMove = New RadioButton()
+        BoardEditPanel = New Panel()
+        BoardEditTipLabel = New Label()
+        BoardEditEnPassantLabel = New Label()
+        BoardEditBLabel = New Label()
+        BoardEditWLabel = New Label()
+        BoardEditBQSBox = New CheckBox()
+        BoardEditWQSBox = New CheckBox()
+        BoardEditBKSBox = New CheckBox()
+        BoardEditWKSBox = New CheckBox()
+        RemoteModeBtn = New Button()
+        ChessTimer = New Timer(components)
+        BoardEditDiscardBtn = New Button()
+        AISettingsPanel = New Panel()
+        AISettingResetBtn = New Button()
+        AISettingsBox = New ComboBox()
+        CType(BP1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(BR1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(BN1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(BB1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(BQ1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(BK1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WP1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WR1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WN1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WB1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WQ1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WK1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(Checkerboard, ComponentModel.ISupportInitialize).BeginInit()
+        CType(UserTimeBar, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WLeaderBoardGrid, ComponentModel.ISupportInitialize).BeginInit()
+        CType(BLeaderBoardGrid, ComponentModel.ISupportInitialize).BeginInit()
+        CType(AutoAdvanceBar, ComponentModel.ISupportInitialize).BeginInit()
+        AutoOutputterPanel.SuspendLayout()
+        BoardEditPanel.SuspendLayout()
+        AISettingsPanel.SuspendLayout()
+        SuspendLayout()
+        ' 
+        ' InputTextBox
+        ' 
+        InputTextBox.Location = New Point(9, 12)
+        InputTextBox.Multiline = True
+        InputTextBox.Name = "InputTextBox"
+        InputTextBox.Size = New Size(282, 60)
+        InputTextBox.TabIndex = 2
+        ' 
+        ' InputButton
+        ' 
+        InputButton.Location = New Point(66, 78)
+        InputButton.Name = "InputButton"
+        InputButton.Size = New Size(171, 23)
+        InputButton.TabIndex = 3
+        InputButton.Text = "Click to Submit FEN / Move(s):"
+        InputButton.UseVisualStyleBackColor = True
+        ' 
+        ' AIMoveBtn
+        ' 
+        AIMoveBtn.Font = New Font("Microsoft Sans Serif", 11.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AIMoveBtn.Location = New Point(945, 278)
+        AIMoveBtn.Name = "AIMoveBtn"
+        AIMoveBtn.Size = New Size(209, 57)
+        AIMoveBtn.TabIndex = 4
+        AIMoveBtn.Text = "Make Computer Move:"
+        AIMoveBtn.UseVisualStyleBackColor = True
+        ' 
+        ' Reset_Btn
+        ' 
+        Reset_Btn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Reset_Btn.Location = New Point(9, 110)
+        Reset_Btn.Name = "Reset_Btn"
+        Reset_Btn.Size = New Size(133, 43)
+        Reset_Btn.TabIndex = 5
+        Reset_Btn.Text = "Reset Board"
+        Reset_Btn.UseVisualStyleBackColor = True
+        ' 
+        ' FENExport
+        ' 
+        FENExport.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        FENExport.Location = New Point(150, 110)
+        FENExport.Name = "FENExport"
+        FENExport.Size = New Size(70, 43)
+        FENExport.TabIndex = 7
+        FENExport.Text = "Export FEN"
+        FENExport.UseVisualStyleBackColor = True
+        ' 
+        ' CheckLabel
+        ' 
+        CheckLabel.AutoSize = True
+        CheckLabel.BackColor = Color.White
+        CheckLabel.Font = New Font("Microsoft Sans Serif", 15.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        CheckLabel.Location = New Point(985, 12)
+        CheckLabel.Name = "CheckLabel"
+        CheckLabel.Size = New Size(126, 25)
+        CheckLabel.TabIndex = 8
+        CheckLabel.Text = "Checkmate!"
+        ' 
+        ' CurrentAIEval
+        ' 
+        CurrentAIEval.AutoSize = True
+        CurrentAIEval.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        CurrentAIEval.Location = New Point(955, 463)
+        CurrentAIEval.Name = "CurrentAIEval"
+        CurrentAIEval.Size = New Size(93, 16)
+        CurrentAIEval.TabIndex = 9
+        CurrentAIEval.Text = "Evaluation: -"
+        ' 
+        ' UndoMove
+        ' 
+        UndoMove.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        UndoMove.Location = New Point(9, 171)
+        UndoMove.Name = "UndoMove"
+        UndoMove.Size = New Size(282, 43)
+        UndoMove.TabIndex = 7
+        UndoMove.Text = "Undo Last Action"
+        UndoMove.UseVisualStyleBackColor = True
+        ' 
+        ' Credits
+        ' 
+        Credits.AutoSize = True
+        Credits.BackColor = Color.Transparent
+        Credits.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        Credits.ForeColor = Color.FromArgb(CByte(64), CByte(64), CByte(64))
+        Credits.Location = New Point(1035, 575)
+        Credits.Name = "Credits"
+        Credits.Size = New Size(154, 16)
+        Credits.TabIndex = 10
+        Credits.Text = "Created by Alfie Kunz"
+        ' 
+        ' UndoFENChange
+        ' 
+        UndoFENChange.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        UndoFENChange.Location = New Point(245, 78)
+        UndoFENChange.Name = "UndoFENChange"
+        UndoFENChange.Size = New Size(23, 23)
+        UndoFENChange.TabIndex = 11
+        UndoFENChange.Text = "↺"
+        UndoFENChange.UseVisualStyleBackColor = True
+        ' 
+        ' ProgressBar
+        ' 
+        ProgressBar.ForeColor = Color.FromArgb(CByte(0), CByte(192), CByte(0))
+        ProgressBar.Location = New Point(945, 343)
+        ProgressBar.Name = "ProgressBar"
+        ProgressBar.Size = New Size(209, 25)
+        ProgressBar.Style = ProgressBarStyle.Continuous
+        ProgressBar.TabIndex = 13
+        ' 
+        ' SettingsBtn
+        ' 
+        SettingsBtn.Font = New Font("Microsoft Sans Serif", 14.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        SettingsBtn.ImageAlign = ContentAlignment.MiddleRight
+        SettingsBtn.Location = New Point(95, 425)
+        SettingsBtn.Name = "SettingsBtn"
+        SettingsBtn.Size = New Size(113, 40)
+        SettingsBtn.TabIndex = 15
+        SettingsBtn.Text = "Settings:"
+        SettingsBtn.UseVisualStyleBackColor = True
+        ' 
+        ' BP1
+        ' 
+        BP1.BackColor = Color.Transparent
+        BP1.Image = CType(resources.GetObject("BP1.Image"), Image)
+        BP1.InitialImage = Nothing
+        BP1.Location = New Point(518, 258)
+        BP1.Name = "BP1"
+        BP1.Size = New Size(75, 75)
+        BP1.TabIndex = 0
+        BP1.TabStop = False
+        ' 
+        ' BR1
+        ' 
+        BR1.BackColor = Color.Transparent
+        BR1.Image = CType(resources.GetObject("BR1.Image"), Image)
+        BR1.InitialImage = Nothing
+        BR1.Location = New Point(437, 257)
+        BR1.Name = "BR1"
+        BR1.Size = New Size(75, 75)
+        BR1.TabIndex = 0
+        BR1.TabStop = False
+        ' 
+        ' BN1
+        ' 
+        BN1.BackColor = Color.Transparent
+        BN1.Image = CType(resources.GetObject("BN1.Image"), Image)
+        BN1.InitialImage = Nothing
+        BN1.Location = New Point(356, 258)
+        BN1.Name = "BN1"
+        BN1.Size = New Size(75, 75)
+        BN1.TabIndex = 0
+        BN1.TabStop = False
+        ' 
+        ' BB1
+        ' 
+        BB1.BackColor = Color.Transparent
+        BB1.Image = CType(resources.GetObject("BB1.Image"), Image)
+        BB1.InitialImage = Nothing
+        BB1.Location = New Point(518, 177)
+        BB1.Name = "BB1"
+        BB1.Size = New Size(75, 75)
+        BB1.TabIndex = 0
+        BB1.TabStop = False
+        ' 
+        ' BQ1
+        ' 
+        BQ1.BackColor = Color.Transparent
+        BQ1.Image = CType(resources.GetObject("BQ1.Image"), Image)
+        BQ1.InitialImage = Nothing
+        BQ1.Location = New Point(437, 177)
+        BQ1.Name = "BQ1"
+        BQ1.Size = New Size(75, 75)
+        BQ1.TabIndex = 0
+        BQ1.TabStop = False
+        ' 
+        ' BK1
+        ' 
+        BK1.BackColor = Color.Transparent
+        BK1.Image = CType(resources.GetObject("BK1.Image"), Image)
+        BK1.InitialImage = Nothing
+        BK1.Location = New Point(356, 177)
+        BK1.Name = "BK1"
+        BK1.Size = New Size(75, 75)
+        BK1.TabIndex = 0
+        BK1.TabStop = False
+        ' 
+        ' WP1
+        ' 
+        WP1.BackColor = Color.Transparent
+        WP1.Image = CType(resources.GetObject("WP1.Image"), Image)
+        WP1.InitialImage = Nothing
+        WP1.Location = New Point(518, 96)
+        WP1.Name = "WP1"
+        WP1.Size = New Size(75, 75)
+        WP1.TabIndex = 0
+        WP1.TabStop = False
+        ' 
+        ' WR1
+        ' 
+        WR1.BackColor = Color.Transparent
+        WR1.Image = CType(resources.GetObject("WR1.Image"), Image)
+        WR1.InitialImage = Nothing
+        WR1.Location = New Point(437, 96)
+        WR1.Name = "WR1"
+        WR1.Size = New Size(75, 75)
+        WR1.TabIndex = 0
+        WR1.TabStop = False
+        ' 
+        ' WN1
+        ' 
+        WN1.BackColor = Color.Transparent
+        WN1.Image = CType(resources.GetObject("WN1.Image"), Image)
+        WN1.InitialImage = Nothing
+        WN1.Location = New Point(356, 96)
+        WN1.Name = "WN1"
+        WN1.Size = New Size(75, 75)
+        WN1.TabIndex = 0
+        WN1.TabStop = False
+        ' 
+        ' WB1
+        ' 
+        WB1.BackColor = Color.Transparent
+        WB1.Image = CType(resources.GetObject("WB1.Image"), Image)
+        WB1.InitialImage = Nothing
+        WB1.Location = New Point(518, 15)
+        WB1.Name = "WB1"
+        WB1.Size = New Size(75, 75)
+        WB1.TabIndex = 0
+        WB1.TabStop = False
+        ' 
+        ' WQ1
+        ' 
+        WQ1.BackColor = Color.Transparent
+        WQ1.Image = CType(resources.GetObject("WQ1.Image"), Image)
+        WQ1.InitialImage = Nothing
+        WQ1.Location = New Point(437, 15)
+        WQ1.Name = "WQ1"
+        WQ1.Size = New Size(75, 75)
+        WQ1.TabIndex = 0
+        WQ1.TabStop = False
+        ' 
+        ' WK1
+        ' 
+        WK1.BackColor = Color.Transparent
+        WK1.Image = CType(resources.GetObject("WK1.Image"), Image)
+        WK1.InitialImage = Nothing
+        WK1.Location = New Point(356, 15)
+        WK1.Name = "WK1"
+        WK1.Size = New Size(75, 75)
+        WK1.TabIndex = 0
+        WK1.TabStop = False
+        ' 
+        ' Checkerboard
+        ' 
+        Checkerboard.BackColor = Color.Transparent
+        Checkerboard.Location = New Point(300, 0)
+        Checkerboard.Name = "Checkerboard"
+        Checkerboard.Size = New Size(600, 600)
+        Checkerboard.TabIndex = 1
+        Checkerboard.TabStop = False
+        ' 
+        ' FlipperButton
+        ' 
+        FlipperButton.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        FlipperButton.Location = New Point(34, 520)
+        FlipperButton.Name = "FlipperButton"
+        FlipperButton.Size = New Size(232, 43)
+        FlipperButton.TabIndex = 18
+        FlipperButton.Text = "Flip Board"
+        FlipperButton.UseVisualStyleBackColor = True
+        ' 
+        ' AutoFlipper
+        ' 
+        AutoFlipper.AutoSize = True
+        AutoFlipper.Location = New Point(39, 569)
+        AutoFlipper.Name = "AutoFlipper"
+        AutoFlipper.Size = New Size(221, 17)
+        AutoFlipper.TabIndex = 19
+        AutoFlipper.Text = "Flip Board Automatically After Each Move"
+        AutoFlipper.UseVisualStyleBackColor = True
+        ' 
+        ' ExitBtn
+        ' 
+        ExitBtn.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        ExitBtn.Location = New Point(1009, 515)
+        ExitBtn.Name = "ExitBtn"
+        ExitBtn.Size = New Size(78, 40)
+        ExitBtn.TabIndex = 22
+        ExitBtn.Text = "Exit to Main Menu"
+        ExitBtn.UseVisualStyleBackColor = True
+        ' 
+        ' UserTimeBox
+        ' 
+        UserTimeBox.BackColor = Color.WhiteSmoke
+        UserTimeBox.Cursor = Cursors.Hand
+        UserTimeBox.Location = New Point(962, 122)
+        UserTimeBox.Name = "UserTimeBox"
+        UserTimeBox.ReadOnly = True
+        UserTimeBox.Size = New Size(164, 20)
+        UserTimeBox.TabIndex = 23
+        UserTimeBox.Text = "Time For Search: 10 Seconds"
+        UserTimeBox.TextAlign = HorizontalAlignment.Center
+        ' 
+        ' UserTimeBar
+        ' 
+        UserTimeBar.LargeChange = 10
+        UserTimeBar.Location = New Point(962, 146)
+        UserTimeBar.Maximum = 60
+        UserTimeBar.Name = "UserTimeBar"
+        UserTimeBar.Size = New Size(164, 45)
+        UserTimeBar.TabIndex = 25
+        UserTimeBar.Value = 30
+        ' 
+        ' CurrentAIMove
+        ' 
+        CurrentAIMove.AutoSize = True
+        CurrentAIMove.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        CurrentAIMove.Location = New Point(955, 433)
+        CurrentAIMove.Name = "CurrentAIMove"
+        CurrentAIMove.Size = New Size(111, 16)
+        CurrentAIMove.TabIndex = 9
+        CurrentAIMove.Text = "Current Move: -"
+        ' 
+        ' CurrentAIDepth
+        ' 
+        CurrentAIDepth.AutoSize = True
+        CurrentAIDepth.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        CurrentAIDepth.Location = New Point(955, 403)
+        CurrentAIDepth.Name = "CurrentAIDepth"
+        CurrentAIDepth.Size = New Size(114, 16)
+        CurrentAIDepth.TabIndex = 9
+        CurrentAIDepth.Text = "Current Depth: -"
+        ' 
+        ' AITerminator
+        ' 
+        AITerminator.Font = New Font("Microsoft Sans Serif", 11.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AITerminator.Location = New Point(945, 278)
+        AITerminator.Name = "AITerminator"
+        AITerminator.Size = New Size(209, 57)
+        AITerminator.TabIndex = 27
+        AITerminator.Text = "Terminate Search Early:"
+        AITerminator.UseVisualStyleBackColor = True
+        AITerminator.Visible = False
+        ' 
+        ' AIEndlessMode
+        ' 
+        AIEndlessMode.AutoSize = True
+        AIEndlessMode.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AIEndlessMode.Location = New Point(1011, 213)
+        AIEndlessMode.Name = "AIEndlessMode"
+        AIEndlessMode.Size = New Size(63, 19)
+        AIEndlessMode.TabIndex = 26
+        AIEndlessMode.Text = "AI vs AI"
+        AIEndlessMode.TextAlign = ContentAlignment.MiddleCenter
+        AIEndlessMode.UseVisualStyleBackColor = True
+        ' 
+        ' TrainingStart
+        ' 
+        TrainingStart.Font = New Font("Microsoft Sans Serif", 14.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        TrainingStart.Location = New Point(9, 12)
+        TrainingStart.Name = "TrainingStart"
+        TrainingStart.Size = New Size(282, 43)
+        TrainingStart.TabIndex = 7
+        TrainingStart.Text = "Start!"
+        TrainingStart.UseVisualStyleBackColor = True
+        TrainingStart.Visible = False
+        ' 
+        ' TimerLabel
+        ' 
+        TimerLabel.AutoSize = True
+        TimerLabel.Font = New Font("Microsoft Sans Serif", 14.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        TimerLabel.Location = New Point(31, 70)
+        TimerLabel.Name = "TimerLabel"
+        TimerLabel.Size = New Size(235, 24)
+        TimerLabel.TabIndex = 9
+        TimerLabel.Text = "Time Left: 20.0 Seconds"
+        TimerLabel.Visible = False
+        ' 
+        ' MoveDisplayer
+        ' 
+        MoveDisplayer.Font = New Font("Microsoft Sans Serif", 72F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        MoveDisplayer.Location = New Point(9, 203)
+        MoveDisplayer.Name = "MoveDisplayer"
+        MoveDisplayer.Size = New Size(284, 152)
+        MoveDisplayer.TabIndex = 9
+        MoveDisplayer.Text = "h8"
+        MoveDisplayer.TextAlign = ContentAlignment.MiddleCenter
+        MoveDisplayer.Visible = False
+        ' 
+        ' WLeaderBoardGrid
+        ' 
+        WLeaderBoardGrid.AllowUserToAddRows = False
+        WLeaderBoardGrid.AllowUserToDeleteRows = False
+        WLeaderBoardGrid.AllowUserToResizeColumns = False
+        WLeaderBoardGrid.AllowUserToResizeRows = False
+        WLeaderBoardGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        WLeaderBoardGrid.Columns.AddRange(New DataGridViewColumn() {UserIndex, Username, UserScore, UserDate})
+        WLeaderBoardGrid.Enabled = False
+        WLeaderBoardGrid.Location = New Point(9, 155)
+        WLeaderBoardGrid.MultiSelect = False
+        WLeaderBoardGrid.Name = "WLeaderBoardGrid"
+        WLeaderBoardGrid.ReadOnly = True
+        WLeaderBoardGrid.RowHeadersVisible = False
+        WLeaderBoardGrid.RowHeadersWidth = 21
+        WLeaderBoardGrid.ScrollBars = ScrollBars.None
+        WLeaderBoardGrid.ShowEditingIcon = False
+        WLeaderBoardGrid.Size = New Size(282, 240)
+        WLeaderBoardGrid.TabIndex = 28
+        WLeaderBoardGrid.TabStop = False
+        WLeaderBoardGrid.Visible = False
+        ' 
+        ' UserIndex
+        ' 
+        UserIndex.Frozen = True
+        UserIndex.HeaderText = "W"
+        UserIndex.MinimumWidth = 6
+        UserIndex.Name = "UserIndex"
+        UserIndex.ReadOnly = True
+        UserIndex.Width = 21
+        ' 
+        ' Username
+        ' 
+        Username.Frozen = True
+        Username.HeaderText = "Name"
+        Username.MinimumWidth = 6
+        Username.Name = "Username"
+        Username.ReadOnly = True
+        Username.Width = 130
+        ' 
+        ' UserScore
+        ' 
+        UserScore.Frozen = True
+        UserScore.HeaderText = "Score"
+        UserScore.MinimumWidth = 6
+        UserScore.Name = "UserScore"
+        UserScore.ReadOnly = True
+        UserScore.Width = 50
+        ' 
+        ' UserDate
+        ' 
+        UserDate.Frozen = True
+        UserDate.HeaderText = "Date"
+        UserDate.MinimumWidth = 6
+        UserDate.Name = "UserDate"
+        UserDate.ReadOnly = True
+        UserDate.Width = 80
+        ' 
+        ' BLeaderBoardGrid
+        ' 
+        BLeaderBoardGrid.AllowUserToAddRows = False
+        BLeaderBoardGrid.AllowUserToDeleteRows = False
+        BLeaderBoardGrid.AllowUserToResizeColumns = False
+        BLeaderBoardGrid.AllowUserToResizeRows = False
+        BLeaderBoardGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        BLeaderBoardGrid.Columns.AddRange(New DataGridViewColumn() {DataGridViewTextBoxColumn1, DataGridViewTextBoxColumn2, DataGridViewTextBoxColumn3, DataGridViewTextBoxColumn4})
+        BLeaderBoardGrid.Enabled = False
+        BLeaderBoardGrid.Location = New Point(9, 155)
+        BLeaderBoardGrid.MultiSelect = False
+        BLeaderBoardGrid.Name = "BLeaderBoardGrid"
+        BLeaderBoardGrid.ReadOnly = True
+        BLeaderBoardGrid.RowHeadersVisible = False
+        BLeaderBoardGrid.RowHeadersWidth = 21
+        BLeaderBoardGrid.ScrollBars = ScrollBars.None
+        BLeaderBoardGrid.ShowEditingIcon = False
+        BLeaderBoardGrid.Size = New Size(282, 240)
+        BLeaderBoardGrid.TabIndex = 29
+        BLeaderBoardGrid.TabStop = False
+        BLeaderBoardGrid.Visible = False
+        ' 
+        ' DataGridViewTextBoxColumn1
+        ' 
+        DataGridViewTextBoxColumn1.Frozen = True
+        DataGridViewTextBoxColumn1.HeaderText = "B"
+        DataGridViewTextBoxColumn1.MinimumWidth = 6
+        DataGridViewTextBoxColumn1.Name = "DataGridViewTextBoxColumn1"
+        DataGridViewTextBoxColumn1.ReadOnly = True
+        DataGridViewTextBoxColumn1.Width = 21
+        ' 
+        ' DataGridViewTextBoxColumn2
+        ' 
+        DataGridViewTextBoxColumn2.Frozen = True
+        DataGridViewTextBoxColumn2.HeaderText = "Name"
+        DataGridViewTextBoxColumn2.MinimumWidth = 6
+        DataGridViewTextBoxColumn2.Name = "DataGridViewTextBoxColumn2"
+        DataGridViewTextBoxColumn2.ReadOnly = True
+        DataGridViewTextBoxColumn2.Width = 130
+        ' 
+        ' DataGridViewTextBoxColumn3
+        ' 
+        DataGridViewTextBoxColumn3.Frozen = True
+        DataGridViewTextBoxColumn3.HeaderText = "Score"
+        DataGridViewTextBoxColumn3.MinimumWidth = 6
+        DataGridViewTextBoxColumn3.Name = "DataGridViewTextBoxColumn3"
+        DataGridViewTextBoxColumn3.ReadOnly = True
+        DataGridViewTextBoxColumn3.Width = 50
+        ' 
+        ' DataGridViewTextBoxColumn4
+        ' 
+        DataGridViewTextBoxColumn4.Frozen = True
+        DataGridViewTextBoxColumn4.HeaderText = "Date"
+        DataGridViewTextBoxColumn4.MinimumWidth = 6
+        DataGridViewTextBoxColumn4.Name = "DataGridViewTextBoxColumn4"
+        DataGridViewTextBoxColumn4.ReadOnly = True
+        DataGridViewTextBoxColumn4.Width = 80
+        ' 
+        ' TrainingScore
+        ' 
+        TrainingScore.BackColor = Color.Transparent
+        TrainingScore.Font = New Font("Microsoft Sans Serif", 27.75F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        TrainingScore.Location = New Point(114, 330)
+        TrainingScore.Name = "TrainingScore"
+        TrainingScore.Size = New Size(74, 52)
+        TrainingScore.TabIndex = 30
+        TrainingScore.Text = "0"
+        TrainingScore.TextAlign = ContentAlignment.MiddleCenter
+        TrainingScore.Visible = False
+        ' 
+        ' InfoBtn
+        ' 
+        InfoBtn.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        InfoBtn.Location = New Point(7, 570)
+        InfoBtn.Name = "InfoBtn"
+        InfoBtn.Size = New Size(18, 23)
+        InfoBtn.TabIndex = 31
+        InfoBtn.Text = "?"
+        InfoBtn.TextAlign = ContentAlignment.MiddleLeft
+        InfoBtn.UseVisualStyleBackColor = True
+        InfoBtn.Visible = False
+        ' 
+        ' UseBook
+        ' 
+        UseBook.AutoSize = True
+        UseBook.Enabled = False
+        UseBook.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        UseBook.Location = New Point(977, 188)
+        UseBook.Name = "UseBook"
+        UseBook.Size = New Size(136, 19)
+        UseBook.TabIndex = 26
+        UseBook.Text = "Use Opening Book?"
+        UseBook.TextAlign = ContentAlignment.MiddleCenter
+        UseBook.UseVisualStyleBackColor = True
+        ' 
+        ' NextPuzzleBtn
+        ' 
+        NextPuzzleBtn.Font = New Font("Microsoft Sans Serif", 14.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        NextPuzzleBtn.Location = New Point(9, 124)
+        NextPuzzleBtn.Name = "NextPuzzleBtn"
+        NextPuzzleBtn.Size = New Size(282, 43)
+        NextPuzzleBtn.TabIndex = 7
+        NextPuzzleBtn.Text = "Next Puzzle"
+        NextPuzzleBtn.UseVisualStyleBackColor = True
+        NextPuzzleBtn.Visible = False
+        ' 
+        ' HintBtn
+        ' 
+        HintBtn.Font = New Font("Microsoft Sans Serif", 14.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        HintBtn.Location = New Point(9, 75)
+        HintBtn.Name = "HintBtn"
+        HintBtn.Size = New Size(133, 43)
+        HintBtn.TabIndex = 5
+        HintBtn.Text = "Hint"
+        HintBtn.UseVisualStyleBackColor = True
+        HintBtn.Visible = False
+        ' 
+        ' GiveUpBtn
+        ' 
+        GiveUpBtn.Font = New Font("Microsoft Sans Serif", 14.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        GiveUpBtn.Location = New Point(150, 75)
+        GiveUpBtn.Name = "GiveUpBtn"
+        GiveUpBtn.Size = New Size(141, 43)
+        GiveUpBtn.TabIndex = 7
+        GiveUpBtn.Text = "Give Up"
+        GiveUpBtn.UseVisualStyleBackColor = True
+        GiveUpBtn.Visible = False
+        ' 
+        ' AIPuzzleInfoLabel
+        ' 
+        AIPuzzleInfoLabel.AutoSize = True
+        AIPuzzleInfoLabel.Font = New Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AIPuzzleInfoLabel.Location = New Point(35, 332)
+        AIPuzzleInfoLabel.Name = "AIPuzzleInfoLabel"
+        AIPuzzleInfoLabel.Size = New Size(228, 20)
+        AIPuzzleInfoLabel.TabIndex = 9
+        AIPuzzleInfoLabel.Text = "AI is Searching on the Puzzle..."
+        AIPuzzleInfoLabel.TextAlign = ContentAlignment.MiddleCenter
+        AIPuzzleInfoLabel.Visible = False
+        ' 
+        ' RatingLabel
+        ' 
+        RatingLabel.Font = New Font("Microsoft Sans Serif", 36F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        RatingLabel.Location = New Point(79, 249)
+        RatingLabel.Name = "RatingLabel"
+        RatingLabel.Size = New Size(136, 55)
+        RatingLabel.TabIndex = 9
+        RatingLabel.Text = "1000"
+        RatingLabel.TextAlign = ContentAlignment.MiddleCenter
+        RatingLabel.Visible = False
+        ' 
+        ' LostRatingLabel
+        ' 
+        LostRatingLabel.AutoSize = True
+        LostRatingLabel.Font = New Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        LostRatingLabel.Location = New Point(71, 296)
+        LostRatingLabel.Name = "LostRatingLabel"
+        LostRatingLabel.Size = New Size(32, 20)
+        LostRatingLabel.TabIndex = 9
+        LostRatingLabel.Text = "-10"
+        LostRatingLabel.TextAlign = ContentAlignment.MiddleCenter
+        LostRatingLabel.Visible = False
+        ' 
+        ' GainedRatingLabel
+        ' 
+        GainedRatingLabel.AutoSize = True
+        GainedRatingLabel.Font = New Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        GainedRatingLabel.Location = New Point(188, 296)
+        GainedRatingLabel.Name = "GainedRatingLabel"
+        GainedRatingLabel.Size = New Size(36, 20)
+        GainedRatingLabel.TabIndex = 9
+        GainedRatingLabel.Text = "+10"
+        GainedRatingLabel.TextAlign = ContentAlignment.MiddleCenter
+        GainedRatingLabel.Visible = False
+        ' 
+        ' RatingHeader
+        ' 
+        RatingHeader.Font = New Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        RatingHeader.Location = New Point(100, 225)
+        RatingHeader.Name = "RatingHeader"
+        RatingHeader.Size = New Size(98, 20)
+        RatingHeader.TabIndex = 9
+        RatingHeader.Text = "Your Rating:"
+        RatingHeader.TextAlign = ContentAlignment.MiddleCenter
+        RatingHeader.Visible = False
+        ' 
+        ' PuzzleRatingLabel
+        ' 
+        PuzzleRatingLabel.AutoSize = True
+        PuzzleRatingLabel.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        PuzzleRatingLabel.Location = New Point(86, 51)
+        PuzzleRatingLabel.Name = "PuzzleRatingLabel"
+        PuzzleRatingLabel.Size = New Size(122, 16)
+        PuzzleRatingLabel.TabIndex = 9
+        PuzzleRatingLabel.Text = "Puzzle Rating: 1000"
+        PuzzleRatingLabel.TextAlign = ContentAlignment.MiddleCenter
+        PuzzleRatingLabel.Visible = False
+        ' 
+        ' AutoAdvanceBox
+        ' 
+        AutoAdvanceBox.BackColor = Color.WhiteSmoke
+        AutoAdvanceBox.Cursor = Cursors.Hand
+        AutoAdvanceBox.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AutoAdvanceBox.Location = New Point(167, 438)
+        AutoAdvanceBox.Name = "AutoAdvanceBox"
+        AutoAdvanceBox.ReadOnly = True
+        AutoAdvanceBox.Size = New Size(120, 22)
+        AutoAdvanceBox.TabIndex = 23
+        AutoAdvanceBox.Text = "Never"
+        AutoAdvanceBox.TextAlign = HorizontalAlignment.Center
+        AutoAdvanceBox.Visible = False
+        ' 
+        ' AutoAdvanceBar
+        ' 
+        AutoAdvanceBar.LargeChange = 2
+        AutoAdvanceBar.Location = New Point(167, 464)
+        AutoAdvanceBar.Maximum = 14
+        AutoAdvanceBar.Name = "AutoAdvanceBar"
+        AutoAdvanceBar.Size = New Size(120, 45)
+        AutoAdvanceBar.TabIndex = 25
+        AutoAdvanceBar.Value = 14
+        AutoAdvanceBar.Visible = False
+        ' 
+        ' AutoAdvanceOnComplete
+        ' 
+        AutoAdvanceOnComplete.AutoSize = True
+        AutoAdvanceOnComplete.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AutoAdvanceOnComplete.Location = New Point(8, 413)
+        AutoAdvanceOnComplete.Name = "AutoAdvanceOnComplete"
+        AutoAdvanceOnComplete.Size = New Size(280, 19)
+        AutoAdvanceOnComplete.TabIndex = 26
+        AutoAdvanceOnComplete.Text = "Automatically Advance When Correct / Incorrect"
+        AutoAdvanceOnComplete.TextAlign = ContentAlignment.MiddleCenter
+        AutoAdvanceOnComplete.UseVisualStyleBackColor = True
+        AutoAdvanceOnComplete.Visible = False
+        ' 
+        ' AutoAdvanceLabel
+        ' 
+        AutoAdvanceLabel.AutoSize = True
+        AutoAdvanceLabel.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AutoAdvanceLabel.Location = New Point(5, 438)
+        AutoAdvanceLabel.Name = "AutoAdvanceLabel"
+        AutoAdvanceLabel.Size = New Size(158, 15)
+        AutoAdvanceLabel.TabIndex = 9
+        AutoAdvanceLabel.Text = "Automatically Advance After:"
+        AutoAdvanceLabel.TextAlign = ContentAlignment.MiddleCenter
+        AutoAdvanceLabel.Visible = False
+        ' 
+        ' HumanModeBtn
+        ' 
+        HumanModeBtn.AutoSize = True
+        HumanModeBtn.Checked = True
+        HumanModeBtn.Location = New Point(22, 390)
+        HumanModeBtn.Name = "HumanModeBtn"
+        HumanModeBtn.Size = New Size(123, 17)
+        HumanModeBtn.TabIndex = 32
+        HumanModeBtn.TabStop = True
+        HumanModeBtn.Text = "Human Puzzle Mode"
+        HumanModeBtn.UseVisualStyleBackColor = True
+        HumanModeBtn.Visible = False
+        ' 
+        ' AIModeBtn
+        ' 
+        AIModeBtn.AutoSize = True
+        AIModeBtn.Location = New Point(166, 390)
+        AIModeBtn.Name = "AIModeBtn"
+        AIModeBtn.Size = New Size(99, 17)
+        AIModeBtn.TabIndex = 33
+        AIModeBtn.Text = "AI Puzzle Mode"
+        AIModeBtn.UseVisualStyleBackColor = True
+        AIModeBtn.Visible = False
+        ' 
+        ' ResetRatingsBtn
+        ' 
+        ResetRatingsBtn.Location = New Point(247, 565)
+        ResetRatingsBtn.Name = "ResetRatingsBtn"
+        ResetRatingsBtn.Size = New Size(52, 34)
+        ResetRatingsBtn.TabIndex = 34
+        ResetRatingsBtn.Text = "Reset Ratings"
+        ResetRatingsBtn.TextAlign = ContentAlignment.TopCenter
+        ResetRatingsBtn.UseVisualStyleBackColor = True
+        ResetRatingsBtn.Visible = False
+        ' 
+        ' PGNExport
+        ' 
+        PGNExport.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        PGNExport.Location = New Point(221, 110)
+        PGNExport.Name = "PGNExport"
+        PGNExport.Size = New Size(70, 43)
+        PGNExport.TabIndex = 7
+        PGNExport.Text = "Export PGN"
+        PGNExport.UseVisualStyleBackColor = True
+        ' 
+        ' AutoOutputterPanel
+        ' 
+        AutoOutputterPanel.Controls.Add(PGNAutoOutputter)
+        AutoOutputterPanel.Controls.Add(FENAutoOutputter)
+        AutoOutputterPanel.Location = New Point(45, 76)
+        AutoOutputterPanel.Name = "AutoOutputterPanel"
+        AutoOutputterPanel.Size = New Size(214, 24)
+        AutoOutputterPanel.TabIndex = 35
+        AutoOutputterPanel.Visible = False
+        ' 
+        ' PGNAutoOutputter
+        ' 
+        PGNAutoOutputter.AutoSize = True
+        PGNAutoOutputter.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        PGNAutoOutputter.Location = New Point(124, 0)
+        PGNAutoOutputter.Name = "PGNAutoOutputter"
+        PGNAutoOutputter.Size = New Size(90, 19)
+        PGNAutoOutputter.TabIndex = 1
+        PGNAutoOutputter.Text = "Output PGN"
+        PGNAutoOutputter.UseVisualStyleBackColor = True
+        ' 
+        ' FENAutoOutputter
+        ' 
+        FENAutoOutputter.AutoSize = True
+        FENAutoOutputter.Checked = True
+        FENAutoOutputter.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        FENAutoOutputter.Location = New Point(3, 0)
+        FENAutoOutputter.Name = "FENAutoOutputter"
+        FENAutoOutputter.Size = New Size(88, 19)
+        FENAutoOutputter.TabIndex = 0
+        FENAutoOutputter.TabStop = True
+        FENAutoOutputter.Text = "Output FEN"
+        FENAutoOutputter.UseVisualStyleBackColor = True
+        ' 
+        ' NodeTestBtn
+        ' 
+        NodeTestBtn.Font = New Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        NodeTestBtn.Location = New Point(62, 338)
+        NodeTestBtn.Name = "NodeTestBtn"
+        NodeTestBtn.Size = New Size(175, 49)
+        NodeTestBtn.TabIndex = 27
+        NodeTestBtn.Text = "Perform Node Test:"
+        NodeTestBtn.UseVisualStyleBackColor = True
+        ' 
+        ' NodeTestStopBtn
+        ' 
+        NodeTestStopBtn.Font = New Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        NodeTestStopBtn.Location = New Point(62, 338)
+        NodeTestStopBtn.Name = "NodeTestStopBtn"
+        NodeTestStopBtn.Size = New Size(175, 49)
+        NodeTestStopBtn.TabIndex = 27
+        NodeTestStopBtn.Text = "Terminate Node Test:"
+        NodeTestStopBtn.UseVisualStyleBackColor = True
+        NodeTestStopBtn.Visible = False
+        ' 
+        ' AutoResetter
+        ' 
+        AutoResetter.AutoSize = True
+        AutoResetter.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AutoResetter.ForeColor = Color.FromArgb(CByte(64), CByte(64), CByte(64))
+        AutoResetter.Location = New Point(970, 232)
+        AutoResetter.Name = "AutoResetter"
+        AutoResetter.Size = New Size(150, 17)
+        AutoResetter.TabIndex = 36
+        AutoResetter.Text = "Automatically Reset Game"
+        AutoResetter.UseVisualStyleBackColor = True
+        AutoResetter.Visible = False
+        ' 
+        ' BoardEditorBtn
+        ' 
+        BoardEditorBtn.Font = New Font("Microsoft Sans Serif", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        BoardEditorBtn.Location = New Point(53, 238)
+        BoardEditorBtn.Name = "BoardEditorBtn"
+        BoardEditorBtn.Size = New Size(194, 43)
+        BoardEditorBtn.TabIndex = 18
+        BoardEditorBtn.Text = "Board Editor Mode:"
+        BoardEditorBtn.UseVisualStyleBackColor = True
+        ' 
+        ' BoardEditCancelBtn
+        ' 
+        BoardEditCancelBtn.Font = New Font("Microsoft Sans Serif", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        BoardEditCancelBtn.Location = New Point(158, 238)
+        BoardEditCancelBtn.Name = "BoardEditCancelBtn"
+        BoardEditCancelBtn.Size = New Size(90, 43)
+        BoardEditCancelBtn.TabIndex = 18
+        BoardEditCancelBtn.Text = "Cancel Changes:"
+        BoardEditCancelBtn.UseVisualStyleBackColor = True
+        BoardEditCancelBtn.Visible = False
+        ' 
+        ' BoardEditBlackMove
+        ' 
+        BoardEditBlackMove.AutoSize = True
+        BoardEditBlackMove.Font = New Font("Microsoft Sans Serif", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        BoardEditBlackMove.Location = New Point(150, 2)
+        BoardEditBlackMove.Name = "BoardEditBlackMove"
+        BoardEditBlackMove.Size = New Size(114, 21)
+        BoardEditBlackMove.TabIndex = 1
+        BoardEditBlackMove.Text = "Black to Move"
+        BoardEditBlackMove.UseVisualStyleBackColor = True
+        ' 
+        ' BoardEditWhiteMove
+        ' 
+        BoardEditWhiteMove.AutoSize = True
+        BoardEditWhiteMove.Checked = True
+        BoardEditWhiteMove.Font = New Font("Microsoft Sans Serif", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        BoardEditWhiteMove.Location = New Point(4, 2)
+        BoardEditWhiteMove.Name = "BoardEditWhiteMove"
+        BoardEditWhiteMove.Size = New Size(116, 21)
+        BoardEditWhiteMove.TabIndex = 0
+        BoardEditWhiteMove.TabStop = True
+        BoardEditWhiteMove.Text = "White to Move"
+        BoardEditWhiteMove.TextAlign = ContentAlignment.MiddleCenter
+        BoardEditWhiteMove.UseVisualStyleBackColor = True
+        ' 
+        ' BoardEditPanel
+        ' 
+        BoardEditPanel.Controls.Add(BoardEditTipLabel)
+        BoardEditPanel.Controls.Add(BoardEditEnPassantLabel)
+        BoardEditPanel.Controls.Add(BoardEditBLabel)
+        BoardEditPanel.Controls.Add(BoardEditWLabel)
+        BoardEditPanel.Controls.Add(BoardEditBQSBox)
+        BoardEditPanel.Controls.Add(BoardEditWQSBox)
+        BoardEditPanel.Controls.Add(BoardEditBKSBox)
+        BoardEditPanel.Controls.Add(BoardEditWKSBox)
+        BoardEditPanel.Controls.Add(BoardEditBlackMove)
+        BoardEditPanel.Controls.Add(BoardEditWhiteMove)
+        BoardEditPanel.Location = New Point(906, 7)
+        BoardEditPanel.Name = "BoardEditPanel"
+        BoardEditPanel.Size = New Size(272, 135)
+        BoardEditPanel.TabIndex = 36
+        BoardEditPanel.Visible = False
+        ' 
+        ' BoardEditTipLabel
+        ' 
+        BoardEditTipLabel.Location = New Point(-5, 112)
+        BoardEditTipLabel.Margin = New Padding(2, 0, 2, 0)
+        BoardEditTipLabel.Name = "BoardEditTipLabel"
+        BoardEditTipLabel.Size = New Size(271, 19)
+        BoardEditTipLabel.TabIndex = 4
+        BoardEditTipLabel.Text = "Tip: Hold CTRL when Moving a Piece to Duplicate it."
+        BoardEditTipLabel.TextAlign = ContentAlignment.MiddleCenter
+        ' 
+        ' BoardEditEnPassantLabel
+        ' 
+        BoardEditEnPassantLabel.Location = New Point(0, 92)
+        BoardEditEnPassantLabel.Margin = New Padding(2, 0, 2, 0)
+        BoardEditEnPassantLabel.Name = "BoardEditEnPassantLabel"
+        BoardEditEnPassantLabel.Size = New Size(263, 19)
+        BoardEditEnPassantLabel.TabIndex = 4
+        BoardEditEnPassantLabel.Text = "Right-Click on a Square to Flag it as En-Passant."
+        BoardEditEnPassantLabel.TextAlign = ContentAlignment.MiddleCenter
+        ' 
+        ' BoardEditBLabel
+        ' 
+        BoardEditBLabel.AutoSize = True
+        BoardEditBLabel.Location = New Point(148, 29)
+        BoardEditBLabel.Margin = New Padding(2, 0, 2, 0)
+        BoardEditBLabel.Name = "BoardEditBLabel"
+        BoardEditBLabel.Size = New Size(107, 13)
+        BoardEditBLabel.TabIndex = 3
+        BoardEditBLabel.Text = "Black Castling Rules:"
+        ' 
+        ' BoardEditWLabel
+        ' 
+        BoardEditWLabel.AutoSize = True
+        BoardEditWLabel.Location = New Point(2, 29)
+        BoardEditWLabel.Margin = New Padding(2, 0, 2, 0)
+        BoardEditWLabel.Name = "BoardEditWLabel"
+        BoardEditWLabel.Size = New Size(108, 13)
+        BoardEditWLabel.TabIndex = 3
+        BoardEditWLabel.Text = "White Castling Rules:"
+        ' 
+        ' BoardEditBQSBox
+        ' 
+        BoardEditBQSBox.AutoSize = True
+        BoardEditBQSBox.Location = New Point(150, 68)
+        BoardEditBQSBox.Margin = New Padding(2)
+        BoardEditBQSBox.Name = "BoardEditBQSBox"
+        BoardEditBQSBox.Size = New Size(82, 17)
+        BoardEditBQSBox.TabIndex = 2
+        BoardEditBQSBox.Text = "Queen Side"
+        BoardEditBQSBox.UseVisualStyleBackColor = True
+        ' 
+        ' BoardEditWQSBox
+        ' 
+        BoardEditWQSBox.AutoSize = True
+        BoardEditWQSBox.Location = New Point(4, 68)
+        BoardEditWQSBox.Margin = New Padding(2)
+        BoardEditWQSBox.Name = "BoardEditWQSBox"
+        BoardEditWQSBox.Size = New Size(82, 17)
+        BoardEditWQSBox.TabIndex = 2
+        BoardEditWQSBox.Text = "Queen Side"
+        BoardEditWQSBox.UseVisualStyleBackColor = True
+        ' 
+        ' BoardEditBKSBox
+        ' 
+        BoardEditBKSBox.AutoSize = True
+        BoardEditBKSBox.Location = New Point(150, 47)
+        BoardEditBKSBox.Margin = New Padding(2)
+        BoardEditBKSBox.Name = "BoardEditBKSBox"
+        BoardEditBKSBox.Size = New Size(71, 17)
+        BoardEditBKSBox.TabIndex = 2
+        BoardEditBKSBox.Text = "King Side"
+        BoardEditBKSBox.UseVisualStyleBackColor = True
+        ' 
+        ' BoardEditWKSBox
+        ' 
+        BoardEditWKSBox.AutoSize = True
+        BoardEditWKSBox.Location = New Point(4, 47)
+        BoardEditWKSBox.Margin = New Padding(2)
+        BoardEditWKSBox.Name = "BoardEditWKSBox"
+        BoardEditWKSBox.Size = New Size(71, 17)
+        BoardEditWKSBox.TabIndex = 2
+        BoardEditWKSBox.Text = "King Side"
+        BoardEditWKSBox.UseVisualStyleBackColor = True
+        ' 
+        ' RemoteModeBtn
+        ' 
+        RemoteModeBtn.Enabled = False
+        RemoteModeBtn.Font = New Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        RemoteModeBtn.Location = New Point(62, 174)
+        RemoteModeBtn.Name = "RemoteModeBtn"
+        RemoteModeBtn.Size = New Size(175, 49)
+        RemoteModeBtn.TabIndex = 27
+        RemoteModeBtn.Text = "Connect To Interface"
+        RemoteModeBtn.UseVisualStyleBackColor = True
+        RemoteModeBtn.Visible = False
+        ' 
+        ' BoardEditDiscardBtn
+        ' 
+        BoardEditDiscardBtn.FlatStyle = FlatStyle.Flat
+        BoardEditDiscardBtn.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        BoardEditDiscardBtn.Location = New Point(137, 289)
+        BoardEditDiscardBtn.Name = "BoardEditDiscardBtn"
+        BoardEditDiscardBtn.Size = New Size(26, 26)
+        BoardEditDiscardBtn.TabIndex = 37
+        BoardEditDiscardBtn.Text = "X"
+        BoardEditDiscardBtn.UseVisualStyleBackColor = True
+        BoardEditDiscardBtn.Visible = False
+        ' 
+        ' AISettingsPanel
+        ' 
+        AISettingsPanel.BackColor = Color.White
+        AISettingsPanel.Controls.Add(AISettingResetBtn)
+        AISettingsPanel.Location = New Point(954, 93)
+        AISettingsPanel.Name = "AISettingsPanel"
+        AISettingsPanel.Size = New Size(180, 38)
+        AISettingsPanel.TabIndex = 38
+        AISettingsPanel.Visible = False
+        ' 
+        ' AISettingResetBtn
+        ' 
+        AISettingResetBtn.Location = New Point(9, 4)
+        AISettingResetBtn.Name = "AISettingResetBtn"
+        AISettingResetBtn.Size = New Size(164, 23)
+        AISettingResetBtn.TabIndex = 0
+        AISettingResetBtn.Text = "Reset AI Settings"
+        AISettingResetBtn.UseVisualStyleBackColor = True
+        ' 
+        ' AISettingsBox
+        ' 
+        AISettingsBox.DropDownHeight = 1
+        AISettingsBox.DropDownStyle = ComboBoxStyle.DropDownList
+        AISettingsBox.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AISettingsBox.FormattingEnabled = True
+        AISettingsBox.IntegralHeight = False
+        AISettingsBox.Items.AddRange(New Object() {"Modify AI Settings:"})
+        AISettingsBox.Location = New Point(954, 71)
+        AISettingsBox.MaxDropDownItems = 1
+        AISettingsBox.Name = "AISettingsBox"
+        AISettingsBox.Size = New Size(180, 23)
+        AISettingsBox.TabIndex = 39
+        AISettingsBox.TabStop = False
+        ' 
+        ' Chess
+        ' 
+        AutoScaleDimensions = New SizeF(6F, 13F)
+        AutoScaleMode = AutoScaleMode.Font
+        AutoSizeMode = AutoSizeMode.GrowAndShrink
+        BackColor = Color.FromArgb(CByte(155), CByte(155), CByte(155))
+        ClientSize = New Size(1184, 600)
+        Controls.Add(AISettingsBox)
+        Controls.Add(AISettingsPanel)
+        Controls.Add(BoardEditDiscardBtn)
+        Controls.Add(BoardEditPanel)
+        Controls.Add(AutoResetter)
+        Controls.Add(AutoOutputterPanel)
+        Controls.Add(ResetRatingsBtn)
+        Controls.Add(AIModeBtn)
+        Controls.Add(HumanModeBtn)
+        Controls.Add(InfoBtn)
+        Controls.Add(TrainingScore)
+        Controls.Add(RemoteModeBtn)
+        Controls.Add(NodeTestStopBtn)
+        Controls.Add(NodeTestBtn)
+        Controls.Add(AITerminator)
+        Controls.Add(UseBook)
+        Controls.Add(AIEndlessMode)
+        Controls.Add(AutoAdvanceOnComplete)
+        Controls.Add(AutoAdvanceBar)
+        Controls.Add(UserTimeBar)
+        Controls.Add(AutoAdvanceBox)
+        Controls.Add(UserTimeBox)
+        Controls.Add(ExitBtn)
+        Controls.Add(AutoFlipper)
+        Controls.Add(BoardEditCancelBtn)
+        Controls.Add(BoardEditorBtn)
+        Controls.Add(FlipperButton)
+        Controls.Add(SettingsBtn)
+        Controls.Add(ProgressBar)
+        Controls.Add(UndoFENChange)
+        Controls.Add(Credits)
+        Controls.Add(GainedRatingLabel)
+        Controls.Add(LostRatingLabel)
+        Controls.Add(AutoAdvanceLabel)
+        Controls.Add(RatingHeader)
+        Controls.Add(PuzzleRatingLabel)
+        Controls.Add(AIPuzzleInfoLabel)
+        Controls.Add(RatingLabel)
+        Controls.Add(TimerLabel)
+        Controls.Add(CurrentAIDepth)
+        Controls.Add(CurrentAIMove)
+        Controls.Add(CurrentAIEval)
+        Controls.Add(CheckLabel)
+        Controls.Add(NextPuzzleBtn)
+        Controls.Add(TrainingStart)
+        Controls.Add(UndoMove)
+        Controls.Add(GiveUpBtn)
+        Controls.Add(PGNExport)
+        Controls.Add(FENExport)
+        Controls.Add(HintBtn)
+        Controls.Add(Reset_Btn)
+        Controls.Add(AIMoveBtn)
+        Controls.Add(InputButton)
+        Controls.Add(InputTextBox)
+        Controls.Add(BP1)
+        Controls.Add(BR1)
+        Controls.Add(BN1)
+        Controls.Add(BB1)
+        Controls.Add(BQ1)
+        Controls.Add(BK1)
+        Controls.Add(WP1)
+        Controls.Add(WR1)
+        Controls.Add(WN1)
+        Controls.Add(WB1)
+        Controls.Add(WQ1)
+        Controls.Add(WK1)
+        Controls.Add(Checkerboard)
+        Controls.Add(BLeaderBoardGrid)
+        Controls.Add(WLeaderBoardGrid)
+        Controls.Add(MoveDisplayer)
+        Font = New Font("Microsoft Sans Serif", 8.25F)
+        Icon = CType(resources.GetObject("$this.Icon"), Icon)
+        MaximizeBox = False
+        MaximumSize = New Size(1200, 639)
+        Name = "Chess"
+        StartPosition = FormStartPosition.CenterScreen
+        Text = "Chess Game & Artificial Intelligence"
+        CType(BP1, ComponentModel.ISupportInitialize).EndInit()
+        CType(BR1, ComponentModel.ISupportInitialize).EndInit()
+        CType(BN1, ComponentModel.ISupportInitialize).EndInit()
+        CType(BB1, ComponentModel.ISupportInitialize).EndInit()
+        CType(BQ1, ComponentModel.ISupportInitialize).EndInit()
+        CType(BK1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WP1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WR1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WN1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WB1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WQ1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WK1, ComponentModel.ISupportInitialize).EndInit()
+        CType(Checkerboard, ComponentModel.ISupportInitialize).EndInit()
+        CType(UserTimeBar, ComponentModel.ISupportInitialize).EndInit()
+        CType(WLeaderBoardGrid, ComponentModel.ISupportInitialize).EndInit()
+        CType(BLeaderBoardGrid, ComponentModel.ISupportInitialize).EndInit()
+        CType(AutoAdvanceBar, ComponentModel.ISupportInitialize).EndInit()
+        AutoOutputterPanel.ResumeLayout(False)
+        AutoOutputterPanel.PerformLayout()
+        BoardEditPanel.ResumeLayout(False)
+        BoardEditPanel.PerformLayout()
+        AISettingsPanel.ResumeLayout(False)
+        ResumeLayout(False)
+        PerformLayout()
 
     End Sub
     Friend WithEvents WK1 As System.Windows.Forms.PictureBox
@@ -1359,7 +1302,6 @@ Partial Class Chess
     Friend WithEvents UserTimeBar As TrackBar
     Friend WithEvents CurrentAIMove As Label
     Friend WithEvents CurrentAIDepth As Label
-    Friend WithEvents QuiescenceBox As CheckBox
     Friend WithEvents AITerminator As Button
     Friend WithEvents AIEndlessMode As System.Windows.Forms.CheckBox
     Friend WithEvents Red As System.Windows.Forms.ToolStripMenuItem
@@ -1377,10 +1319,8 @@ Partial Class Chess
     Friend WithEvents DataGridViewTextBoxColumn3 As DataGridViewTextBoxColumn
     Friend WithEvents DataGridViewTextBoxColumn4 As DataGridViewTextBoxColumn
     Friend WithEvents TrainingScore As Label
-    Friend WithEvents TrainingTimer As Timer
     Friend WithEvents InfoBtn As Button
     Friend WithEvents UseBook As System.Windows.Forms.CheckBox
-    Friend WithEvents PieceHeatMapBox As CheckBox
     Friend WithEvents NextPuzzleBtn As Button
     Friend WithEvents HintBtn As Button
     Friend WithEvents GiveUpBtn As Button
@@ -1418,6 +1358,9 @@ Partial Class Chess
     Friend WithEvents BoardEditWKSBox As CheckBox
     Friend WithEvents BoardEditTipLabel As Label
     Friend WithEvents RemoteModeBtn As Button
-    Friend WithEvents RemoteModeTimer As Timer
+    Friend WithEvents ChessTimer As Timer
     Friend WithEvents BoardEditDiscardBtn As Button
+    Friend WithEvents AISettingsPanel As Panel
+    Friend WithEvents AISettingsBox As ComboBox
+    Friend WithEvents AISettingResetBtn As Button
 End Class

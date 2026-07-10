@@ -165,24 +165,15 @@ Partial Public Class CoreMethods
             If WInCheck < 128 Then
                 If WCanCastle.KS Then
                     If Board(5, 7) = " "c AndAlso Board(6, 7) = " "c AndAlso WhiteTFTable(5, 7) = "T"c AndAlso WhiteTFTable(6, 7) = "T"c Then
-                        If Board(7, 7) = "R"c Then
-                            LegalMoveArray(n) = 23031  'King-side castle flag.
-                            n += 1US
-                        Else
-                            'The rook is no longer at the required square (eg: it has been captured) - stop the player
-                            'from castling in this direction.
-                            WCanCastle.KS = False
-                        End If
+                        'As all rook handling with castling rights is made by MakeMove, we assume that KS = True implies Board(7, 7) = "R".
+                        LegalMoveArray(n) = 23031  'King-side castle flag.
+                        n += 1US
                     End If
                 End If
                 If WCanCastle.QS Then
                     If Board(3, 7) = " "c AndAlso Board(2, 7) = " "c AndAlso Board(1, 7) = " "c AndAlso WhiteTFTable(3, 7) = "T"c AndAlso WhiteTFTable(2, 7) = "T"c Then
-                        If Board(0, 7) = "R"c Then
-                            LegalMoveArray(n) = 27095 'Square king would go to to castle queen-side.
-                            n += 1US
-                        Else
-                            WCanCastle.QS = False
-                        End If
+                        LegalMoveArray(n) = 27095 'Square king would go to to castle queen-side.
+                        n += 1US
                     End If
                 End If
             End If
@@ -390,22 +381,14 @@ Partial Public Class CoreMethods
             If BInCheck < 128 Then
                 If BCanCastle.KS Then
                     If Board(5, 0) = " "c AndAlso Board(6, 0) = " "c AndAlso BlackTFTable(5, 0) = "T"c AndAlso BlackTFTable(6, 0) = "T"c Then
-                        If Board(7, 0) = "r"c Then
-                            LegalMoveArray(n) = StartValue Or 22576US
-                            n += 1US
-                        Else
-                            BCanCastle.KS = False
-                        End If
+                        LegalMoveArray(n) = StartValue Or 22576US
+                        n += 1US
                     End If
                 End If
                 If BCanCastle.QS Then
                     If Board(3, 0) = " "c AndAlso Board(2, 0) = " "c AndAlso Board(1, 0) = " "c AndAlso BlackTFTable(3, 0) = "T"c AndAlso BlackTFTable(2, 0) = "T"c Then
-                        If Board(0, 0) = "r"c Then
-                            LegalMoveArray(n) = StartValue Or 26640US
-                            n += 1US
-                        Else
-                            BCanCastle.QS = False
-                        End If
+                        LegalMoveArray(n) = StartValue Or 26640US
+                        n += 1US
                     End If
                 End If
             End If
@@ -534,7 +517,8 @@ Partial Public Class CoreMethods
 
 
     Public Sub WhitePieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As UInt16, ByVal CoorY As UInt16, ByRef BlackTFTable(,) As Char, ByVal BKPos As UInt16, ByRef BInCheck As UInt16, ByVal EnPassant As UInt16)
-        Dim CheckingPiece As UInt16
+        Dim CheckingPiece As UInt16 = 65535US
+        Dim AlreadyInCheck As Boolean = (BInCheck >= 128US)
 
         If Board(CoorX, CoorY) = "P"c Then 'Legal Moves for the Pawn (along with First Moves).
             If CoorX > 0 Then
@@ -869,8 +853,8 @@ Partial Public Class CoreMethods
 
         'At the end of the function, the program checks to see if any piece is attacking the enemy king.
         'If it is, then the other player is signalled to be in check, and the attacking piece is recorded.
-        If CheckingPiece > 0US Then
-            If (BInCheck And 63US) = 0US Then
+        If CheckingPiece < 65535US Then
+            If Not AlreadyInCheck Then
                 BInCheck = BInCheck Or CheckingPiece
             ElseIf (BInCheck And 63US) <> CheckingPiece Then
                 BInCheck = BInCheck Or 64US
@@ -880,7 +864,8 @@ Partial Public Class CoreMethods
 
     'As the below subroutine is very similar to its equivilant 'WhitePieceLegalMoves' function, commenting will be limited.
     Public Sub BlackPieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As UInt16, ByVal CoorY As UInt16, ByRef WhiteTFTable(,) As Char, ByVal WKPos As UInt16, ByRef WInCheck As UInt16, ByVal EnPassant As UInt16)
-        Dim CheckingPiece As UInt16
+        Dim CheckingPiece As UInt16 = 65535US
+        Dim AlreadyInCheck As Boolean = (WInCheck >= 128US)
 
         If Board(CoorX, CoorY) = "p"c Then 'Legal Moves for the Pawn (along with First Moves.)
             If CoorX > 0 Then
@@ -925,7 +910,7 @@ Partial Public Class CoreMethods
                 For x = (CoorX + 1US) To 7US
                     If WhiteTFTable(x, CoorY) = "T"c Then WhiteTFTable(x, CoorY) = "F"c
                     If Char.IsLower(Board(x, CoorY)) Then
-                        If EnPassant <> 0 AndAlso Board(x, CoorY) = "p"c AndAlso (x << 3 Or (CoorY - 1)) = EnPassant AndAlso ((WKPos And 56) >> 3) < x AndAlso (WKPos And 7) = CoorY Then
+                        If EnPassant <> 0 AndAlso Board(x, CoorY) = "p"c AndAlso (x << 3 Or (CoorY - 1)) = EnPassant AndAlso ((WKPos And 56) >> 3) > x AndAlso (WKPos And 7) = CoorY Then
                             For m = x + 2US To 7US
                                 If Board(m, CoorY) = "K"c Then
                                     WhiteTFTable(x + 1, CoorY) = "4"c
@@ -1200,10 +1185,8 @@ Partial Public Class CoreMethods
             End If
         End If
 
-        'At the end of the function, the program checks to see if any piece is attacking the enemy king.
-        'If it is, then the other player is signalled to be in check, and the attacking piece is recorded.
-        If CheckingPiece > 0US Then
-            If (WInCheck And 63US) = 0US Then
+        If CheckingPiece < 65535US Then
+            If Not AlreadyInCheck Then
                 WInCheck = WInCheck Or CheckingPiece
             ElseIf (WInCheck And 63US) <> CheckingPiece Then
                 WInCheck = WInCheck Or 64US

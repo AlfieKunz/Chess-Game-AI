@@ -23,81 +23,82 @@ Partial Class TrainingCustomisation
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(TrainingCustomisation))
-        Me.BackBtn = New System.Windows.Forms.Button()
-        Me.PuzzlesBtn = New System.Windows.Forms.Button()
-        Me.CoorBtn = New System.Windows.Forms.Button()
-        Me.MoveBtn = New System.Windows.Forms.Button()
-        Me.SuspendLayout()
-        '
-        'BackBtn
-        '
-        Me.BackBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BackBtn.Location = New System.Drawing.Point(10, 246)
-        Me.BackBtn.Name = "BackBtn"
-        Me.BackBtn.Size = New System.Drawing.Size(23, 23)
-        Me.BackBtn.TabIndex = 13
-        Me.BackBtn.Text = "↺"
-        Me.BackBtn.UseVisualStyleBackColor = True
-        '
-        'PuzzlesBtn
-        '
-        Me.PuzzlesBtn.BackColor = System.Drawing.Color.Silver
-        Me.PuzzlesBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None
-        Me.PuzzlesBtn.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.PuzzlesBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.PuzzlesBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PuzzlesBtn.Location = New System.Drawing.Point(10, 10)
-        Me.PuzzlesBtn.Name = "PuzzlesBtn"
-        Me.PuzzlesBtn.Size = New System.Drawing.Size(262, 60)
-        Me.PuzzlesBtn.TabIndex = 39
-        Me.PuzzlesBtn.Text = "Puzzles"
-        Me.PuzzlesBtn.UseVisualStyleBackColor = False
-        '
-        'CoorBtn
-        '
-        Me.CoorBtn.BackColor = System.Drawing.Color.Silver
-        Me.CoorBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None
-        Me.CoorBtn.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.CoorBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.CoorBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CoorBtn.Location = New System.Drawing.Point(10, 90)
-        Me.CoorBtn.Name = "CoorBtn"
-        Me.CoorBtn.Size = New System.Drawing.Size(262, 60)
-        Me.CoorBtn.TabIndex = 39
-        Me.CoorBtn.Text = "Coordinate Practice"
-        Me.CoorBtn.UseVisualStyleBackColor = False
-        '
-        'MoveBtn
-        '
-        Me.MoveBtn.BackColor = System.Drawing.Color.Silver
-        Me.MoveBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None
-        Me.MoveBtn.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.MoveBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.MoveBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.MoveBtn.Location = New System.Drawing.Point(10, 170)
-        Me.MoveBtn.Name = "MoveBtn"
-        Me.MoveBtn.Size = New System.Drawing.Size(262, 60)
-        Me.MoveBtn.TabIndex = 39
-        Me.MoveBtn.Text = "Move Practice"
-        Me.MoveBtn.UseVisualStyleBackColor = False
-        '
-        'TrainingCustomisation
-        '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
-        Me.BackColor = System.Drawing.Color.LightGray
-        Me.ClientSize = New System.Drawing.Size(284, 281)
-        Me.Controls.Add(Me.MoveBtn)
-        Me.Controls.Add(Me.CoorBtn)
-        Me.Controls.Add(Me.PuzzlesBtn)
-        Me.Controls.Add(Me.BackBtn)
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximizeBox = False
-        Me.Name = "TrainingCustomisation"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Training Options"
-        Me.ResumeLayout(False)
+        BackBtn = New Button()
+        PuzzlesBtn = New Button()
+        CoorBtn = New Button()
+        MoveBtn = New Button()
+        SuspendLayout()
+        ' 
+        ' BackBtn
+        ' 
+        BackBtn.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        BackBtn.Location = New Point(10, 246)
+        BackBtn.Name = "BackBtn"
+        BackBtn.Size = New Size(23, 23)
+        BackBtn.TabIndex = 13
+        BackBtn.Text = "↺"
+        BackBtn.UseVisualStyleBackColor = True
+        ' 
+        ' PuzzlesBtn
+        ' 
+        PuzzlesBtn.BackColor = Color.Silver
+        PuzzlesBtn.BackgroundImageLayout = ImageLayout.None
+        PuzzlesBtn.Cursor = Cursors.Hand
+        PuzzlesBtn.FlatStyle = FlatStyle.Flat
+        PuzzlesBtn.Font = New Font("Microsoft Sans Serif", 18F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        PuzzlesBtn.Location = New Point(10, 10)
+        PuzzlesBtn.Name = "PuzzlesBtn"
+        PuzzlesBtn.Size = New Size(262, 60)
+        PuzzlesBtn.TabIndex = 39
+        PuzzlesBtn.Text = "Puzzles"
+        PuzzlesBtn.UseVisualStyleBackColor = False
+        ' 
+        ' CoorBtn
+        ' 
+        CoorBtn.BackColor = Color.Silver
+        CoorBtn.BackgroundImageLayout = ImageLayout.None
+        CoorBtn.Cursor = Cursors.Hand
+        CoorBtn.FlatStyle = FlatStyle.Flat
+        CoorBtn.Font = New Font("Microsoft Sans Serif", 18F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        CoorBtn.Location = New Point(10, 90)
+        CoorBtn.Name = "CoorBtn"
+        CoorBtn.Size = New Size(262, 60)
+        CoorBtn.TabIndex = 39
+        CoorBtn.Text = "Coordinate Practice"
+        CoorBtn.UseVisualStyleBackColor = False
+        ' 
+        ' MoveBtn
+        ' 
+        MoveBtn.BackColor = Color.Silver
+        MoveBtn.BackgroundImageLayout = ImageLayout.None
+        MoveBtn.Cursor = Cursors.Hand
+        MoveBtn.FlatStyle = FlatStyle.Flat
+        MoveBtn.Font = New Font("Microsoft Sans Serif", 18F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        MoveBtn.Location = New Point(10, 170)
+        MoveBtn.Name = "MoveBtn"
+        MoveBtn.Size = New Size(262, 60)
+        MoveBtn.TabIndex = 39
+        MoveBtn.Text = "Move Practice"
+        MoveBtn.UseVisualStyleBackColor = False
+        ' 
+        ' TrainingCustomisation
+        ' 
+        AutoScaleDimensions = New SizeF(6F, 13F)
+        AutoScaleMode = AutoScaleMode.Font
+        AutoSizeMode = AutoSizeMode.GrowAndShrink
+        BackColor = Color.LightGray
+        ClientSize = New Size(284, 281)
+        Controls.Add(MoveBtn)
+        Controls.Add(CoorBtn)
+        Controls.Add(PuzzlesBtn)
+        Controls.Add(BackBtn)
+        Font = New Font("Microsoft Sans Serif", 8.25F)
+        Icon = CType(resources.GetObject("$this.Icon"), Icon)
+        MaximizeBox = False
+        Name = "TrainingCustomisation"
+        StartPosition = FormStartPosition.CenterScreen
+        Text = "Training Options"
+        ResumeLayout(False)
 
     End Sub
 

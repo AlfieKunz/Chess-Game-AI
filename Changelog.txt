@@ -1,63 +1,54 @@
 ~~~~~~~~  New Features  ~~~~~~~~
-- New Game Mode called Remote Mode, which locates any Chess Interface found on the user's screen (except this program! ;D), then connects to it by locating & storing all the pieces.
-  The user is then able to play on this interface, either using their mouse or automatically via my AI, and the program will move the user's mouse instantly to play their (or the AI's) moves on this Interface.
-  This algorithm is able to detect a move of changes between the interface and its own position, and make the move on the GUI automatically to calibrate the two positions.
-- Allowed Remote Mode to connect to any Interface, no matter the size, location, board colours / themes (to a limit), piece designs, Windows Scaling Sizes, etc.
-- Added Pawn Promotion Functionality to Remote Mode, along with predicting the Pawn Promotion Pieces, when none / few are available.
-- Added Robustness to playing the program's move on the Interface (ie: failures to make the move by taking control of the mouse are detected & repaired automatically).
-- To use Remote Play on Lichess:
-1) Set your 'Board Theme' to one of 'static' Square Colours (ie: no 'texture' to the squares).
-2) Turn off Piece Animations.
-3) Turn off Board Highlights.
-4) Toggle 'Promote to Queen' to 'Never', or to 'When Pre-moving'.
-5) Toggle 'Claim Draw on Three-Fold Repetition' to 'Always'.
-
-- Rewritten AI using the NegaMax algorithm.
-- Option Strict Performance Increases.
-- Improved Speed via Global PieceMoves in the PieceLegalMoveGenerators Class.
-- Improved Move Ordering System for the Base Position. Takes into account the Difference in Value between pieces involved in a capture (as well as prioritising high-value captures - ie: MVV-LVA), Captures being Trades vs open, Pawns Promoting (and almost promoting, along with what piece it promoted to), Pieces closing in on the enemy King, the move resulting in a Check, the new square being controlled by any piece (especially an enemy pawn), how the static evaluation changes from that move, and whether the new move is in the Transposition Table (denoting potentially 'interesting' moves).
-
-New AI Additions:
-- Null Move Pruning.
-- Check Extensions.
-- Late Move Reductions & Internal Iterative Reductions.
-- Delta Pruning Improvements to Quiescence.
-- Aspiration Windows to Search.
-- Modularity of AI Features, including being able to change the settings / functionality of the aforementioned features.
-
-- Advanced, more human, search time added to AI, for 1 Player & Remote Modes. Takes into account the # of legal moves, allows for pre-moves & long thinks, more realistic book & forced move times, and search extensions / reductions if the AI's latest move failed low / high.
-- Edited AI strengths for each of the 1 Player Modes (by making certain AI features modular, and turning them off for the Beginner Difficulties, and furthermore changing TimeForSearch for each difficulty).
-- Decreased Time Between AI Moves (TimeToLive -> Generation, and Refactored Checkerboard Refreshing & Painting)
-- Functionality for the Board to Morph (via Piece Animations) from one FEN to Another, using the Greedy Algorithm. Used in the Main Program, along with moving between Puzzles, Training Positions, etc.
-- Updated Piece Animations.
-- Improved BoardEditMode: Added button that Discards the Current Position into one containing just the kings, Copies the user's piece when they press CTRL (even if that piece is still), Initial Position defaults to that of the Current Position, for easy FEN editing.
-- Made PGN Importing more Robust, and able to handle more Formats (including being able to copy in an entire game from Lichess, and have the PGN be isolated & played out).
-- Smoother & Faster Main Menu Opening Animation.
-- Added more Functionality to the Move Structure (more modular & Object Oriented).
-- Added Program Name Changes, depending on the current status of the game.
-- Changed UserTimeBar Time Scaling & Colouring (better reflects the program's ability).
-- Reworked Displaying of a Position's Evaluation on the Console & GUI (no longer symmetric).
-- Small tweaks to ReturnPieceValue (fewer calls, more robust).
-- Moved many objects to their own, localised Structures, for clarity purposes.
+- Upgraded project from .NET 4.8 to 8.0, giving a ~35% raw performance increase.
+- Added PVS Search to the NegaMax Algorithm.
+- Enhanced Aspiration Windows, with variable width depending on depth & score, one-side widening, and gradual widening for deep searches.
+- Improved Mechanisms and tweaked values of Base Move Orderer.
+- Added MVV-LVA move ordering to capture moves in the NegaMax search.
+- Reversed static conditions for Null Move Pruning, with a slight window for StandPat.
+- Piece Heat Map values are now calculated 'on the fly' after each move (presuming the material count is great enough), instead of for every Evaluate() call.
+- Added more sophisticated AI settings modifier in Analysis Mode, allowing greater control of the AI.
+- Added endgame heat map tables to each of the pieces, interpolating between them as the material count drops.
+- Added bitboards for the pawns, allowing for detection of past pawns, isolated pawns, and doubled pawns in the evaluation function.
+- Adjusted Piece Heat Map values.
+- Gives the AI longer to search if we are currently in a recently-broken Aspiration Window, if there are lots of captures and checks available, or if the user made the move that the AI predicted is the best move (sign of a strong opponent).
+- Gives the AI more time to think on the moves after pre-moves (ie: book / forced moves), to get the TranspositionTable better calibrated.
+- Small AdvancedSearchTime improvements & tweaks (to make moves more human).
+- Added 50 move rule draw condition, to both the UI and also the AI's thought process.
+- Added compatability with more move & FEN inputs, allowing the user to enter a hybrid of a FEN, + some moves that stem from that position.
+- Made "Automatically Reset Game" more advanced, such that if a new FEN is accepted, and the AI plays on that position, the board will be reset to that new FEN.
+- Added more generality to AI controls, for better use in interacting with other programs (eg: VersionComparer).
+- Added Transposition Table caching to thorough move ordering system, and resets this ordering if settings are changed.
+- Added more flexibility and support for entering FENs into the system, meaning one can neglect information, or place it in the wrong order, and have the position still be updated.
+- Replaced KingCheck images with a cleaner circular design on the check square.
+- Subtle Tweaks to the StartingDepth algorithm.
+- Subtle Tweaks to AnimateBoard algorithm.
+- Updates to AI difficulty levels, including more modifications to core AI settings.
+- Added AI Eval to Puzzle Mode.
+- Added the ability to drag the MainMenu form around.
+- Now brings forward the settings window if the form is already open when the user clicks the 'Settings' button.
+- Sorted general project file organisation.
+- Subtle Design Tweaks.
 - General Code Condensing, Refactoring, and Efficiency Improvements :D.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Note that Knight Promotions have been Changed to be performed when the user is holding CTRL, rather than SHIFT!!
 
 
 
 ~~~~~~~~~  Bug Fixes  ~~~~~~~~~
-- Fixed Transposition Table instability with calculating the fastest Checkmating Sequence.
-- Fixed Trade Captures not being sorted under Winning Captures (this has made an insane difference in performance - I can't believe I've caught this so late!!).
-- Fixed Invisible Piece Toggling not working.
-- Improved robustness of invalid FENs (empty spaces are now replaced with " ")
-- Fixed Disappearing kings in BoardEditMode.
-- Fixed Dodgy EnPassant rules in BoardEditMode.
-- Removed KillerMoves during Quiescence (slight performance increases).
-- Fixed En Passant Capture removing checks.
-- Made EnPassant a proper Capture Move (now works in Quiescience).
-- Make it easier to remove piece in Board Edit Mode, when they are dragged to negative coordinates.
-- Fixed logic with detecting TerribleMoves Moves.
-- Re-prioritised King Captures in move ordering system (the King now has the value of the smallest piece, so that King Captures are slightly de-prioritised, whilst still prioritising high-value Captures.
-- Fixed Hammad AI Mode Compatibility with New AI Features.
+- Fixed Aspiration Window break move causing blunders if it is the only move searched (ie: stops it from being pushed to the top).
+- Fixed TT Entries not being reset correctly if ABORT is caused in a Null Move branch (which would flag the position as still being a repetition, causing blunders, or storing the wrong move inside the search upon ABORTing).
+- Fixed Null Move Pruning interactions with Zobrist Hashing (forgetting to 'take back' null move), causing Transposition Errors.
+- Fixed SortMovesThourough approach to how move affects PieceHeatMaps.
+- Fixed Thorough Move Orderer incorrectly labelling check moves.
+- Fixed AI console outputting in AdvancedSearchTime mode not reflecting the current position's timings.
+- Fixed Three-fold repetition working in AI when Transposition Table is turned off.
+- Fixed EnPassant extreme values with FEN entering.
+- Fixed PGN not updating for forced moves.
+- Fixed EnPassant Pin checks.
+- Fixed Transposition Table entries not being re-replaced fully in case of ABORT-ing.
+- Fixed Double Check errors stemming from corner of board.
+- Fixed rook & pawn moves not intercepting castling.
+- Made Board Edit Discard button only remove kings, not reset kings to starting position.
+- Allowed Remote Mode to be played across a greater range of displays, including those that are skewed in Windows Settings.
+- Fixed Opening Book moves not being found on positions that have an altered full-move or half-move count.
+- Fixed PGN output not displaying correctly (esp with Undoing a move).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

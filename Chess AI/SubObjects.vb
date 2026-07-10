@@ -6,8 +6,8 @@ Imports Microsoft.VisualBasic.ApplicationServices
 'Class holding all the constants that my program needs - can be accessed by all classes.
 Public Class GlobalConstants
     Public Shared StartingFENPosition As String = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    Public Shared ProgramName As String = "Chess Game & Artificial Intelligence"
-    Public Shared ProgramVersion As String = "v9.0"
+    Public Shared ProgramName As String = "Chess Game & Artificial Intelligence" 'also known as 'chessbot 9000' - thanks stroganoff <3
+    Public Shared ProgramVersion As String = "v10.0"
     Public Shared StartupPath As String = (AppDomain.CurrentDomain.BaseDirectory).TrimEnd("\"c)
 
     Public Shared TranspositionTableSize As Byte = 64 - ((23)) 'Constant referring to how large the TranspositionTable object is.
@@ -20,7 +20,7 @@ Public Class GlobalConstants
         Public Shared Bishop As Integer = 300
         Public Shared Rook As Integer = 500
         Public Shared Queen As Integer = 900
-        Public Shared King As Integer = 300 'No meaning to this value, other than to de-prioritise king captures somewhat.
+        Public Shared King As Integer = 1000 'No meaning to this value, other than to de-prioritise king captures.
     End Structure
 
     Public Shared MaxPieceLegalMoves As Byte = ((27)) - 1 'The maximum number of legal moves that can be theoretically made by a piece.
@@ -74,6 +74,7 @@ Public Structure Move
     Public NewMoveY As String
     Public Code As Char 'Contains information about an AI's search:
     'f = no end-state detected, a = search manually aborted, c = checkmate found, s = stalemate, o = one move found (forced)
+    Public BitMove As UInt16
 
     Public Sub SetEmptyMove()
         Score = 0.0
@@ -123,6 +124,14 @@ Public Structure Move
         Console.WriteLine("Code: " + OutputCode + ".")
         Console.ForegroundColor = ConsoleColor.White
     End Sub
+
+    'Function that checks the move against a user input move, to see if the structures are identical.
+    Public Function CompareAgainstOtherMove(ByVal ComparisonMove As Move, Optional ByVal CheckFlag As Boolean = False) As Boolean
+        If OldMoveX = ComparisonMove.OldMoveX AndAlso OldMoveY = ComparisonMove.OldMoveY AndAlso NewMoveX = ComparisonMove.NewMoveX AndAlso NewMoveY = ComparisonMove.NewMoveY Then
+            Return Not CheckFlag OrElse Code = ComparisonMove.Code
+        End If
+        Return False
+    End Function
 End Structure
 
 
@@ -130,6 +139,9 @@ End Structure
 
 'Structure that holds all the settings the AI will use in its search.
 Public Class AISearchSettings
+    'Denotes all the variables that should not be displayed in the 'Modify AI Settings' panel.
+    Public NonDisplayable() As String = {"NonDisplayable", "ReturnBestMove"}
+
     Public UseQuiescence As Boolean 'Will the AI use the Quiescence algorithm?
     Public UsePieceHeatMaps As Boolean 'Will the AI use PieceHeatMaps in its search?
     Public UseTranspositionTable As Boolean 'Will the AI use the Transposition Table in its search?
@@ -140,7 +152,7 @@ Public Class AISearchSettings
     Public ReturnBestMove As Boolean 'If set to False, the AI will return the worst move in the position, rather than the best move.
     '(also called Hammad Mode) :D.
     Public UpdateLifetimeStats As Boolean 'Will the AI add its current search stats to its lifetime stats?
-    Public NodeSearchCalculateRepetitions As Boolean 'Controls whether or not the AI will include the TranspositionTable
+    Public NodeSearchUseHashing As Boolean 'Controls whether or not the AI will include the TranspositionTable
     'during a Node Search. Whilst this does make the search ~10% slower, this allows the AI to detect duplicate positions,
     'so it can record how many unique nodes are encountered in a search? (estimation)
     Public TimeToLive As SByte 'Represents how many moves need to be made before a Transposition Table entry is deemed 'dead', after which
@@ -152,7 +164,9 @@ Public Class AISearchSettings
     'in a given path.
     Public MoveReductionThreshold As Integer 'Denotes how many legal moves will be searched at the full depth (with the remaining, 'late' moves being
     'searched at a reduced depth to save time).
-    Public AspirationWindowWidth As Int16 'Denotes the (half) width of the Aspiration Window, for use in iterative deepening.
+    Public AspirationWindowWidth As Int16 'Denotes the (half) width of the Aspiration Window, for use in iterative deepening. Measured in centipawns (100 = pawn weight).
+    Public UseBitMasks As Boolean 'Denotes whether the AI is able to use bit-masks, for use in past pawn & isolated pawn detection.
+    Public UsePVS As Boolean 'Can the AI use Principle Variation Search, for the root node?
 
 
     'Public StableSearch As Boolean 'If set to True, NegaMax disables 'exact' moves (TTEntry.Flag = 0, where the evaluation of the
@@ -175,13 +189,15 @@ Public Class AISearchSettings
         OutputPath = True
         ReturnBestMove = True
         UpdateLifetimeStats = True
-        NodeSearchCalculateRepetitions = False
-        TimeToLive = 3
+        NodeSearchUseHashing = False
+        TimeToLive = 4
         NullMoveRValue = 3
         StableSearch = False
         MaxDepthExt = 8
-        MoveReductionThreshold = If(UsePieceHeatMaps, 4, 7)
-        AspirationWindowWidth = 50 'Where 100 is the Weight of a Pawn, for reference.
+        MoveReductionThreshold = 4
+        AspirationWindowWidth = 40
+        UseBitMasks = True
+        UsePVS = True
     End Sub
 
     'Function that copies a user's Search Settings to this class. If the core AI settings have changed (ie: Quiescence, PieceHeatMaps, StableSearch),
@@ -196,13 +212,15 @@ Public Class AISearchSettings
         OutputMoveDebugInfo = Copier.OutputMoveDebugInfo
         If ReturnBestMove <> Copier.ReturnBestMove Then CoreAISettingsChanged = True : ReturnBestMove = Copier.ReturnBestMove
         UpdateLifetimeStats = Copier.UpdateLifetimeStats
-        NodeSearchCalculateRepetitions = Copier.NodeSearchCalculateRepetitions
+        NodeSearchUseHashing = Copier.NodeSearchUseHashing
         TimeToLive = Copier.TimeToLive
         NullMoveRValue = Copier.NullMoveRValue
         If StableSearch <> Copier.StableSearch Then CoreAISettingsChanged = True : StableSearch = Copier.StableSearch
         MaxDepthExt = Copier.MaxDepthExt
         MoveReductionThreshold = Copier.MoveReductionThreshold
-        AspirationWindowWidth = Copier.AspirationWindowWidth
+        If AspirationWindowWidth <> Copier.AspirationWindowWidth Then CoreAISettingsChanged = True : AspirationWindowWidth = Copier.AspirationWindowWidth
+        If UseBitMasks <> Copier.UseBitMasks Then CoreAISettingsChanged = True : UseBitMasks = Copier.UseBitMasks
+        If UsePVS <> Copier.UsePVS Then CoreAISettingsChanged = True : UsePVS = Copier.UsePVS
         Return CoreAISettingsChanged
     End Function
 

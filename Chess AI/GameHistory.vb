@@ -11,26 +11,33 @@ Public Class GameHistory
     Private ReadOnly PGNBuffer(GlobalConstants.MaxPositionsPerGame - 1) As String
 
     Private MainSize, BufferSize As UInt16 '= Index of last item + 1
+    Private MainHalfSize, BufferHalfSize As UInt16 'Referring to the number of moves made since the last pawn push or capture.
 
-    Public Sub Clear()
+    Public Sub Clear(Optional ByVal ZobristToResetTo As uint64 = 0)
         Move()
         MainSize = 0
+        MainHalfSize = 0
+        If ZobristToResetTo <> 0 Then PushZobrist(ZobristToResetTo, False)
     End Sub
+
 
     'Subroutine that swaps the GameHistory and Buffer arrays, along with their sizes.
     Public Sub Swap()
         Dim TempZobrist(1023) As UInt64
         Dim TempPGN(1023) As String
-        Dim TempSize As UInt16
+        Dim TempSize, TempHalfSize As UInt16
         Array.Copy(ZobristMain, TempZobrist, MainSize)
         Array.Copy(PGNMain, TempPGN, MainSize)
         TempSize = MainSize
+        TempHalfSize = MainHalfSize
         Array.Copy(ZobristBuffer, ZobristMain, BufferSize)
         Array.Copy(PGNBuffer, PGNMain, BufferSize)
         MainSize = BufferSize
+        MainHalfSize = BufferHalfSize
         Array.Copy(TempZobrist, ZobristBuffer, TempSize)
         Array.Copy(TempPGN, PGNBuffer, TempSize)
         BufferSize = TempSize
+        BufferHalfSize = TempHalfSize
         'Removes the last FEN position of the (new) GameHistory array, as it will be later added by the EnforceEndStates() subroutine.
         PopZobrist()
     End Sub
@@ -40,10 +47,11 @@ Public Class GameHistory
         Array.Copy(ZobristMain, ZobristBuffer, MainSize)
         Array.Copy(PGNMain, PGNBuffer, MainSize)
         BufferSize = MainSize
+        BufferHalfSize = MainHalfSize
     End Sub
 
     'Subroutine that adds a new Zobrist Hash to the GameHistory array.
-    Public Sub PushZobrist(ByVal Value As UInt64, ByVal MoveArray As Boolean)
+    Public Sub PushZobrist(ByVal Value As UInt64, Optional ByVal MoveArray As Boolean = False)
         'MoveArray is used to signify if a new move has been played on the board (if it hasn't [ie: the user has undone the position]
         'then we don't overwrite Buffer, as the board hsan't actually changed).
         If MainSize < GlobalConstants.MaxPositionsPerGame - 1 Then
@@ -58,10 +66,15 @@ Public Class GameHistory
     End Sub
 
     'Subroutine that adds a new PGN Value to the GameHistory array.
-    Public Sub PushPGN(ByVal Value As String)
-        'As the Zobrist value will always be pushed before the PGN value (and hence MainSize will be incremented),
-        'add the PGN value to the index = MainSize - 1.
-        PGNMain(MainSize - 1) = Value
+    Public Sub PushPGN(ByVal Value As String, Optional ByVal MoveArray As Boolean = False)
+        If MoveArray Then Move()
+        PGNMain(MainSize) = Value
+        'If the move was not a pawn move or a capture, we increment the half-move counter. Otherwise, we reset it.
+        If (Value(0) >= "a" AndAlso Value(0) <= "h") OrElse Value.IndexOf("x"c) >= 0 Then
+            MainHalfSize = 0
+        Else
+            MainHalfSize += 1
+        End If
     End Sub
 
     'Function that removes the lastly-added position (FIFO structure) from the GameHistory array.
@@ -85,9 +98,17 @@ Public Class GameHistory
         Next
     End Function
 
+    'Functions that return the main size of the array (representing the number of full moves) and the number of half moves (for 50-move rule).
     Public Function GetSize() As UInt16
         Return MainSize
     End Function
+
+    Public Function GetHalfSize() As UInt16
+        Return MainHalfSize
+    End Function
+    Public Sub SetHalfSize(ByVal HalfSize As UInt16)
+        MainHalfSize = HalfSize
+    End Sub
 
     'Function that returns the GameHistory array, but without any empty space (so that processing can be done quicker).
     Public Function GetZobristArray() As UInt64()
@@ -101,7 +122,7 @@ Public Class GameHistory
         GetFormattedPGNString = ""
         If MainSize > 0 Then
             'Adds each PGN to the string.
-            For n = 1 To MainSize - 1
+            For n = 0 To MainSize - 1
                 'PGNs are formatted as such: "1. WMove BMove 2. WMove BMove 3. ..."
                 '... so add the move number for every other move.
                 If n Mod 2 = 1 Then GetFormattedPGNString &= (n \ 2 + 1) & ". "

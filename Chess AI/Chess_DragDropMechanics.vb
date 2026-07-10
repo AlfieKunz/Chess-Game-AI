@@ -28,7 +28,7 @@ Partial Public Class Chess 'DragDrop Mechanics
     'The below three subroutines control the drag & drop mechanics for the pieces, and translates a user's move onto the board.
     Private Sub Piece_MouseDown(ByVal sender As Object, ByVal e As System.Windows.Forms.MouseEventArgs)
         'Subroutine that activates the drag + drog mechanic if the user clicks on a piece.
-        If e.Button = Windows.Forms.MouseButtons.Left Then
+        If e.Button = MouseButtons.Left Then
             Dim CoorX As SByte = sender.location.X / 75
             Dim CoorY As SByte = sender.location.Y / 75
             If BoardEdit.isEnabled Then
@@ -119,7 +119,7 @@ Partial Public Class Chess 'DragDrop Mechanics
         Dim IsLegalMove As Boolean
         Dim ReplacedPiece As PictureBox
         Dim TempMove As New Move
-        If e.Button = Windows.Forms.MouseButtons.Left AndAlso PieceMoving.IsMovingPiece Then
+        If e.Button = MouseButtons.Left AndAlso PieceMoving.IsMovingPiece Then
 
             For Each Piece In PieceArray
                 'If the PictureBox is within the confines of the Checkerboard, and it isn't the piece being moved by the user...
@@ -324,6 +324,7 @@ Partial Public Class Chess 'DragDrop Mechanics
         'If the AI is searching on the position in the background, then terminate this AI immediately.
         If AIIsSearchingOnUsersTurn Then MainAI.ABORTSearch()
         PieceMoving.LockedPiece = ""
+        AIHandles.FENToResetTo = StartingFEN
 
         'Calculates the PGN equivilent of the user's move.
         Dim PGNMove As String
@@ -341,11 +342,12 @@ Partial Public Class Chess 'DragDrop Mechanics
             'If the AI is searching on the position in the background, then give the AI enough time to exit the search.
             If AIIsSearchingOnUsersTurn Then Thread.Sleep(2) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
             'Perform GC Collect if AIIsSearchingOnUsersTurn??????
+            AIHandles.MoveWasAIPredicted = MainAI.CheckIfMoveIsTTPrediction(TempMove)
             MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI before checking for end states.
-            EnforceEndStates(True)
             'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
             If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GameRunning Then PGNMove &= "+"
-            BoardHistory.PushPGN(PGNMove)
+            BoardHistory.PushPGN(PGNMove, True)
+            EnforceEndStates()
             If CurrentFEN = PreviousFEN AndAlso UserPlayer = PlayerTurn Then Exit Sub 'Stops AI from running if it is the start position (and it is the user's turn).
         End If
 
@@ -360,7 +362,7 @@ Partial Public Class Chess 'DragDrop Mechanics
             'Move matches the correct puzzle move, so either play the next move of the puzzle, or flag the puzzle as complete.
             CancelAIPuzzleSearch()
             MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI before checking for end states.
-            EnforceEndStates(True)
+            EnforceEndStates()
             PuzzleMoveCompleted()
         End If
     End Sub
@@ -372,11 +374,11 @@ Partial Public Class Chess 'DragDrop Mechanics
         If PlayerTurn Then
             MasterWInCheck = 0 'Player is no longer in check.
             MakeMove(MasterBoard, TempMove, MasterWCanCastle, MasterWKPos, MasterEnPassant, GeneralOptions(0) = "T")
-            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
         Else
             MasterBInCheck = 0 'Player is no longer in check.
             MakeMove(MasterBoard, TempMove, MasterBCanCastle, MasterBKPos, MasterEnPassant, GeneralOptions(0) = "T")
-            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
         End If
 
 
@@ -406,7 +408,7 @@ Partial Public Class Chess 'DragDrop Mechanics
         Else
             If FastUpdate Then Checkerboard.Invalidate() Else Checkerboard.Refresh()
         End If
-        CheckChecker(False)
+        EditCheckText()
 
         'Ends the turn, then calculates the new position's FEN.
         PlayerTurn = Not PlayerTurn

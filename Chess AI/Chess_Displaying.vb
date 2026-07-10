@@ -1,9 +1,9 @@
 ﻿'Class containing all the core GUI elements, such as displaying the checkerboard & its intricacies, displaying the pieces on the board, animating moves, etc.
 Imports System.Data.SqlClient
 Imports System.Diagnostics.Eventing.Reader
+Imports System.Drawing.Drawing2D
 Imports System.Drawing.Imaging
 Imports System.Runtime.InteropServices
-Imports System.Runtime.Remoting.Messaging
 Imports System.Security.Cryptography
 Imports System.Threading
 Imports System.Timers
@@ -64,8 +64,25 @@ Partial Public Class Chess 'Displaying
             isLight = Not isLight
         Next
 
-        'Gives the starting square for a piece a distinctive colour, when the user clicks on one, or when the piece is locked (touch move).
-        If PieceMoving.LockedPiece <> "" Then
+        'If a player is in check, we add a red circular highlight (falling off to 0 opacity at the edges) at the king's position.
+        If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GeneralOptions(4) = "T"c AndAlso Not BoardEdit.isEnabled Then
+            Dim CheckX As Integer = If(MasterWInCheck >= 128, Val(MasterWKPos(0)), Val(MasterBKPos(0)))
+            Dim CheckY As Integer = If(MasterWInCheck >= 128, Val(MasterWKPos(1)), Val(MasterBKPos(1)))
+            If Not OrientForWhite Then CheckX = 7 - CheckX : CheckY = 7 - CheckY
+            Using Path As New GraphicsPath
+                    'For some reason, the circle bounded by Square isn't perfectly centred about the king's position... We add some buffer instead :).
+                    Path.AddEllipse(New Rectangle(75 * (CheckX - 0.008), 75 * (CheckY + 0.012), 75, 75))
+                    Using Brush As New PathGradientBrush(Path)
+                        Brush.CenterColor = Color.Red 'Centre colour.
+                        Brush.SurroundColors = {Color.FromArgb(0, Color.Red)} 'Falloff colour - blends to red of 0 opacity.
+                        Brush.FocusScales = New PointF(0.5F, 0.5F) 'Determines the size of the central 'blob', before falloff.
+                        g.FillPath(Brush, Path)
+                    End Using
+                End Using
+            End If
+
+            'Gives the starting square for a piece a distinctive colour, when the user clicks on one, or when the piece is locked (touch move).
+            If PieceMoving.LockedPiece <> "" Then
             Dim Square As New Rectangle(Val(PieceMoving.LockedPiece(0)) * 75, Val(PieceMoving.LockedPiece(1)) * 75, 75, 75)
             Using Brush As New SolidBrush(Color.LightCoral)
                 g.FillRectangle(Brush, Square)
@@ -331,27 +348,12 @@ Partial Public Class Chess 'Displaying
 
 
     'Subroutine which updates the Sprites / Gamestate Textbox depending on whether a player is in check (or not).
-    Private Sub CheckChecker(ByVal OnlyEditKing As Boolean)
-        If Not OnlyEditKing Then
-            If MasterWInCheck >= 128 OrElse MasterBInCheck >= 128 Then
-                If GeneralOptions(0) = "T" Then Sound_Check.Play()
-                CheckLabel.Text = "    Check!    "
-            Else
-                CheckLabel.Text = "                    "
-            End If
-        End If
-        'Modifies king picture accordingly.
-        If GeneralOptions(6) = "F" Then
-            If MasterWInCheck >= 128 AndAlso GeneralOptions(4) = "T" Then
-                WK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WKingCheck.png")
-            Else
-                WK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WKing.png")
-            End If
-            If MasterBInCheck >= 128 AndAlso GeneralOptions(4) = "T" Then
-                BK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\BKingCheck.png")
-            Else
-                BK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\BKing.png")
-            End If
+    Private Sub EditCheckText()
+        If MasterWInCheck >= 128 OrElse MasterBInCheck >= 128 Then
+            If GeneralOptions(0) = "T" Then Sound_Check.Play()
+            CheckLabel.Text = "    Check!    "
+        Else
+            CheckLabel.Text = "                    "
         End If
     End Sub
 
@@ -505,7 +507,7 @@ Partial Public Class Chess 'Displaying
                         DistanceArray(i) = 255
                         For j = 0 To ListA.Count - 1
                             'Calculates Euclidean Squared Distance from all pieces (in A) to the square in B. Store this in a big array for B.
-                            Distance = (ListB(i)(0) - ListA(j)(0)) ^ 2 + (ListB(i)(1) - ListA(j)(1)) ^ 2
+                            Distance = Math.Abs((ListB(i)(0) - ListA(j)(0))) + Math.Abs((ListB(i)(1) - ListA(j)(1)))
                             If Distance < DistanceArray(i) Then
                                 DistanceArray(i) = Distance
                                 ShortestIndexArray(i) = j
