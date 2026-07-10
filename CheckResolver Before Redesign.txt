@@ -1,0 +1,34 @@
+    Function DoesMoveResolveCheck(ByRef Board(,) As Char, ByRef OldPosX As String, ByRef OldPosY As String, ByRef NewPosX As String, ByRef NewPosY As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck, ByRef EnPassant As String) As Boolean
+        DoesMoveResolveCheck = False
+        If WInCheck.IsInCheck AndAlso Not (NewPosX & NewPosY = WInCheck.Piece OrElse NewPosX & NewPosY = EnPassant AndAlso Board(OldPosX, OldPosY) = "P") Then
+            If (Board(OldPosX, OldPosY) = "K" OrElse (Not WInCheck.DoubleCheck)) AndAlso Board(NewPosX, NewPosY) = " " Then
+                WInCheck.IsInCheck = False
+                Board(NewPosX, NewPosY) = "O"
+                'If NewPosX & NewPosY = EnPassant AndAlso Board(OldPosX, OldPosY) = "P" Then Board(NewPosX, NewPosY + 1) = " " 'Check this.
+                ResetTFTable(TrueTable)
+                BlackPieceLegalMoves(Board, CStr(WInCheck.Piece(0)), CStr(WInCheck.Piece(1)), TrueTable, TrueTable, "00", WInCheck, BInCheck, CannotCastle, "-")
+                If WInCheck.IsInCheck = False Then
+                    DoesMoveResolveCheck = True
+                End If
+                Board(NewPosX, NewPosY) = " "
+            End If
+        ElseIf BInCheck.IsInCheck AndAlso Not (NewPosX & NewPosY = BInCheck.Piece OrElse NewPosX & NewPosY = EnPassant AndAlso Board(OldPosX, OldPosY) = "p") Then
+            Console.WriteLine((Board(OldPosX, OldPosY) & (Not BInCheck.DoubleCheck)) & Board(NewPosX, NewPosY) & "hh")
+
+            If (Board(OldPosX, OldPosY) = "k" OrElse (Not BInCheck.DoubleCheck)) AndAlso Board(NewPosX, NewPosY) = " " Then
+                BInCheck.IsInCheck = False
+                Board(NewPosX, NewPosY) = "o"
+                'If NewPosX & NewPosY = EnPassant AndAlso Board(OldPosX, OldPosY) = "p" Then Board(NewPosX, NewPosY - 1) = " " 'Check this.
+                ResetTFTable(TrueTable)
+                WhitePieceLegalMoves(Board, CStr(BInCheck.Piece(0)), CStr(BInCheck.Piece(1)), TrueTable, TrueTable, "00", BInCheck, WInCheck, CannotCastle, "-")
+                If BInCheck.IsInCheck = False Then
+                    DoesMoveResolveCheck = True
+                End If
+                Board(NewPosX, NewPosY) = " "
+            Else
+                Return True
+            End If
+        Else
+            Return True
+        End If
+    End Function
