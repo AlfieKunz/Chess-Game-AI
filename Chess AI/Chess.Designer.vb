@@ -81,6 +81,7 @@ Partial Class Chess
         Me.WhiteAIMove = New System.Windows.Forms.Button()
         Me.Credits = New System.Windows.Forms.Label()
         Me.UndoFENChange = New System.Windows.Forms.Button()
+        Me.Label1 = New System.Windows.Forms.Label()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WB1, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -752,12 +753,22 @@ Partial Class Chess
         Me.UndoFENChange.Text = "↺"
         Me.UndoFENChange.UseVisualStyleBackColor = True
         '
+        'Label1
+        '
+        Me.Label1.AutoSize = True
+        Me.Label1.Location = New System.Drawing.Point(1028, 243)
+        Me.Label1.Name = "Label1"
+        Me.Label1.Size = New System.Drawing.Size(39, 13)
+        Me.Label1.TabIndex = 12
+        Me.Label1.Text = "Label1"
+        '
         'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.DarkGray
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.UndoFENChange)
         Me.Controls.Add(Me.Credits)
         Me.Controls.Add(Me.CurrentEval)
@@ -927,4 +938,5 @@ Partial Class Chess
     Friend WithEvents WhiteAIMove As Button
     Friend WithEvents Credits As Label
     Friend WithEvents UndoFENChange As System.Windows.Forms.Button
+    Friend WithEvents Label1 As Label
 End Class
