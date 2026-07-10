@@ -9,11 +9,9 @@
     Public BKPos As String
     Public WhiteMoves(27, 15) As String
     Public BlackMoves(27, 15) As String
-    Public WhiteTFTable(7, 7) As Char
-    Public BlackTFTable(7, 7) As Char
-
+    Public MasterWhiteTFTable(7, 7) As Char
+    Public MasterBlackTFTable(7, 7) As Char
     Public TrueTable(7, 7) As Char
-
 
     Structure CanCastle
         Dim KS As Boolean
@@ -21,6 +19,14 @@
     End Structure
     Public WCanCastle As CanCastle
     Public BCanCastle As CanCastle
+
+    Structure InCheck
+        Dim IsInCheck As Boolean
+        Dim Piece1 As String
+        Dim Piece2 As String
+    End Structure
+    Public WInCheck As InCheck
+    Public BInCheck As InCheck
 
     'Sets up sound effects.
     Dim Sound_Move As New System.Media.SoundPlayer With {
@@ -38,7 +44,7 @@
 
 
     'Assigns each piece to PieceArray and sets the 'board' picturebox as their parent.
-    Private Sub Form1_Load(sender As Object, e As System.EventArgs) Handles Me.Load
+    Public Sub Form1_Load(sender As Object, e As System.EventArgs) Handles Me.Load
         'Checkerboard.Location = New Point(0, 0)
         PieceArray(0) = WK1
         PieceArray(1) = WQ1
@@ -96,7 +102,10 @@
         WCanCastle.KS = True
         WCanCastle.KS = True
         WCanCastle.KS = True
-
+        WInCheck.Piece1 = " "
+        WInCheck.Piece2 = " "
+        BInCheck.Piece1 = " "
+        BInCheck.Piece2 = " "
         For x = 0 To 7
             For y = 0 To 7
                 TrueTable(x, y) = "T"
@@ -104,7 +113,7 @@
         Next
         DisplayPieces()
         FixTFTables(MasterArray, True)
-        Array.Copy(TrueTable, BlackTFTable, TrueTable.Length)
+        Array.Copy(TrueTable, MasterBlackTFTable, TrueTable.Length)
     End Sub
 
     Private Sub CreateBoard(ByVal sender As System.Object, ByVal e As System.Windows.Forms.PaintEventArgs) Handles Checkerboard.Paint
@@ -215,12 +224,12 @@
                     x = 0
                 Case "A" To "Z", "a" To "z"
                     tempArray(x, y) = FEN(n)
-                    If tempArray(x, y) = "K" Then
-                        WKPos = x & y
-                    ElseIf tempArray(x, y) = "k" Then
-                        BKPos = x & y
-                    End If
                     x += 1
+                    If FEN(n) = "K" Then
+                        WKPos = (x - 1) & y
+                    ElseIf FEN(n) = "k" Then
+                        BKPos = (x - 1) & y
+                    End If
                 Case "0" To "8"
                     For m = 1 To CInt(CStr((FEN(n))))
                         tempArray(x, y) = " "
@@ -259,14 +268,55 @@
     End Function
 
 
-    Function WhitePieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As Integer, ByVal CoorY As Integer, ByVal WhiteTFTable(,) As Char, ByRef BlackTFTable(,) As Char, ByRef BKPos As string) As (LegalMoveArray As String(), BlackTFTable As Char(,))
-        Dim LegalMoveArray(26) As String
+    'Function which converts the current board position into its FEN counterpart.
+    Private Sub FENExport_Click(sender As Object, e As EventArgs) Handles FENExport.Click
+        Dim FEN As String = ""
+        Dim Counter As Integer = 0
+        For y = 0 To 7
+            For x = 0 To 7
+                If MasterArray(x, y) = " " Then
+                    Counter += 1
+                Else
+                    If Counter > 0 Then
+                        FEN &= Counter
+                        Counter = 0
+                    End If
+                    FEN &= MasterArray(x, y)
+                End If
+            Next
+            If Counter > 0 Then FEN &= Counter
+            FEN &= "/"
+            Counter = 0
+        Next
+        FEN = FEN.TrimEnd("/")
+        If PlayerTurn Then
+            FEN &= " w "
+        Else
+            FEN &= " b "
+        End If
+        If WCanCastle.KS Then FEN &= "K"
+        If WCanCastle.QS Then FEN &= "Q"
+        If BCanCastle.KS Then FEN &= "k"
+        If BCanCastle.QS Then FEN &= "q"
+        FEN &= " - 0 1"
+        FENTextBox.Text = FEN
+    End Sub
+
+
+
+    Function WhitePieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As Integer, ByVal CoorY As Integer, ByRef WhiteTFTable(,) As Char, ByVal BlackTFTable(,) As Char, ByRef BKPos As String, ByRef BInCheck As InCheck, ByRef WInCheck As InCheck) As (LegalMoveArray As String(), BlackTFTable As Char(,))
+        Dim LegalMoveArray(27) As String
         Dim n As Integer = 1
         Dim StartY As Integer
         Dim EndY As Integer
         Dim StartX As Integer
         Dim EndX As Integer
+        Dim CheckingPiece As String = " "
 
+        If WInCheck.Piece2 <> " " And Board(CoorX, CoorY) <> "K" Then
+            Return (LegalMoveArray, BlackTFTable)
+            Exit Function
+        End If
         If Board(CoorX, CoorY) = "K" Then
             StartX = Math.Max(CoorX - 1, 0)
             EndX = Math.Min(CoorX + 1, 7)
@@ -283,52 +333,69 @@
                     End If
                 Next
             Next
-            If WCanCastle.KS Then
+            If WCanCastle.KS And WInCheck.IsInCheck = False Then
                 If Board(CoorX + 1, CoorY) = " " And Board(CoorX + 2, CoorY) = " " And Board(CoorX + 3, CoorY) = "R" And WhiteTFTable(CoorX + 1, CoorY) = "T" And WhiteTFTable(CoorX + 2, CoorY) = "T" Then
                     LegalMoveArray(n) = (CoorX + 2) & (CoorY)
                     n += 1
                 End If
             End If
-            If WCanCastle.QS Then
+            If WCanCastle.QS And WInCheck.IsInCheck = False Then
                 If Board(CoorX - 1, CoorY) = " " And Board(CoorX - 2, CoorY) = " " And Board(CoorX - 3, CoorY) = " " And Board(CoorX - 4, CoorY) = "R" And WhiteTFTable(CoorX - 1, CoorY) = "T" And WhiteTFTable(CoorX - 2, CoorY) = "T" Then
                     LegalMoveArray(n) = (CoorX - 2) & (CoorY)
                     n += 1
                 End If
             End If
 
+
         ElseIf Board(CoorX, CoorY) = "P" Then
-            If WhiteTFTable(CoorX, CoorY) >= "4" Or WhiteTFTable(CoorX, CoorY) = "0" Then
-                StartX = Math.Max(CoorX - 1, 0)
-                EndX = Math.Min(CoorX + 1, 7)
-                If Board(CoorX, CoorY - 1) = " " Then
-                    LegalMoveArray(n) = CoorX & CoorY - 1
-                    n += 1
-                    If CoorY = 6 And Board(CoorX, 4) = " " Then
-                        LegalMoveArray(n) = CoorX & 4
+            If WhiteTFTable(CoorX, CoorY) <> "2" Then
+                If WhiteTFTable(CoorX, CoorY) <> "1" And WhiteTFTable(CoorX, CoorY) <> "3" Then
+                    If Board(CoorX, CoorY - 1) = " " Then
+                        LegalMoveArray(n) = CoorX & CoorY - 1
+                        n += 1
+                        If CoorY = 6 And Board(CoorX, 4) = " " Then
+                            LegalMoveArray(n) = CoorX & 4
+                            n += 1
+                        End If
+                    End If
+                End If
+                If WhiteTFTable(CoorX, CoorY) <> "0" And WhiteTFTable(CoorX, CoorY) <> "1" And CoorX > 0 Then
+                    If BlackTFTable(CoorX - 1, CoorY - 1) = "T" Then BlackTFTable(CoorX - 1, CoorY - 1) = "F"
+                    If (Board(CoorX - 1, CoorY - 1) >= "b" And Board(CoorX - 1, CoorY - 1) <= "r") Then
+                        LegalMoveArray(n) = CoorX - 1 & CoorY - 1
+                        If Board(CoorX - 1, CoorY - 1) = "k" Then
+                            BInCheck.IsInCheck = True
+                            CheckingPiece = CoorX & CoorY
+                        End If
                         n += 1
                     End If
                 End If
-                If WhiteTFTable(CoorX, CoorY) <> "0" Then
-                    For x = StartX To EndX
-                        If x <> CoorX Then
-                            BlackTFTable(x, CoorY - 1) = "F"
-                            If (Board(x, CoorY - 1) >= "b" And Board(x, CoorY - 1) <= "r") Then
-                                LegalMoveArray(n) = x & CoorY - 1
-                                n += 1
-                            End If
+                If WhiteTFTable(CoorX, CoorY) <> "0" And WhiteTFTable(CoorX, CoorY) <> "3" And CoorX < 7 Then
+                    If BlackTFTable(CoorX + 1, CoorY - 1) = "T" Then BlackTFTable(CoorX + 1, CoorY - 1) = "F"
+                    If (Board(CoorX + 1, CoorY - 1) >= "b" And Board(CoorX + 1, CoorY - 1) <= "r") Then
+                        LegalMoveArray(n) = CoorX + 1 & CoorY - 1
+                        If Board(CoorX + 1, CoorY - 1) = "k" Then
+                            BInCheck.IsInCheck = True
+                            CheckingPiece = CoorX & CoorY
                         End If
-                    Next
+                        n += 1
+                    End If
                 End If
             End If
+
 
         ElseIf Board(CoorX, CoorY) = "N" Then
             If WhiteTFTable(CoorX, CoorY) >= "4" Then
                 If CoorX >= 2 Then
                     For x = -1 To 1 Step 2
                         If (CoorY + x) >= 0 And (CoorY + x) <= 7 Then
-                            BlackTFTable(CoorX - 2, CoorY + x) = "F"
+                            If BlackTFTable(CoorX - 2, CoorY + x) = "T" Then BlackTFTable(CoorX - 2, CoorY + x) = "F"
                             If Board(CoorX - 2, CoorY + x) = " " Or (Board(CoorX - 2, CoorY + x) >= "b" And Board(CoorX - 2, CoorY + x) <= "r") Then
                                 LegalMoveArray(n) = (CoorX - 2) & (CoorY + x)
+                                If Board(CoorX - 2, CoorY + x) = "k" Then
+                                    BInCheck.IsInCheck = True
+                                    CheckingPiece = CoorX & CoorY
+                                End If
                                 n += 1
                             End If
                         End If
@@ -337,9 +404,13 @@
                 If CoorX <= 5 Then
                     For x = -1 To 1 Step 2
                         If (CoorY + x) >= 0 And (CoorY + x) <= 7 Then
-                            BlackTFTable(CoorX + 2, CoorY + x) = "F"
+                            If BlackTFTable(CoorX + 2, CoorY + x) = "T" Then BlackTFTable(CoorX + 2, CoorY + x) = "F"
                             If Board(CoorX + 2, CoorY + x) = " " Or (Board(CoorX + 2, CoorY + x) >= "b" And Board(CoorX + 2, CoorY + x) <= "r") Then
                                 LegalMoveArray(n) = (CoorX + 2) & (CoorY + x)
+                                If Board(CoorX + 2, CoorY + x) = "k" Then
+                                    BInCheck.IsInCheck = True
+                                    CheckingPiece = CoorX & CoorY
+                                End If
                                 n += 1
                             End If
                         End If
@@ -348,9 +419,13 @@
                 If CoorY >= 2 Then
                     For x = -1 To 1 Step 2
                         If (CoorX + x) >= 0 And (CoorX + x) <= 7 Then
-                            BlackTFTable(CoorX + x, CoorY - 2) = "F"
+                            If BlackTFTable(CoorX + x, CoorY - 2) = "T" Then BlackTFTable(CoorX + x, CoorY - 2) = "F"
                             If Board(CoorX + x, CoorY - 2) = " " Or (Board(CoorX + x, CoorY - 2) >= "b" And Board(CoorX + x, CoorY - 2) <= "r") Then
                                 LegalMoveArray(n) = (CoorX + x) & (CoorY - 2)
+                                If Board(CoorX + x, CoorY - 2) = "k" Then
+                                    BInCheck.IsInCheck = True
+                                    CheckingPiece = CoorX & CoorY
+                                End If
                                 n += 1
                             End If
                         End If
@@ -359,9 +434,13 @@
                 If CoorY <= 5 Then
                     For x = -1 To 1 Step 2
                         If (CoorX + x) >= 0 And (CoorX + x) <= 7 Then
-                            BlackTFTable(CoorX + x, CoorY + 2) = "F"
+                            If BlackTFTable(CoorX + x, CoorY + 2) = "T" Then BlackTFTable(CoorX + x, CoorY + 2) = "F"
                             If Board(CoorX + x, CoorY + 2) = " " Or (Board(CoorX + x, CoorY + 2) >= "b" And Board(CoorX + x, CoorY + 2) <= "r") Then
                                 LegalMoveArray(n) = (CoorX + x) & (CoorY + 2)
+                                If Board(CoorX + x, CoorY + 2) = "k" Then
+                                    BInCheck.IsInCheck = True
+                                    CheckingPiece = CoorX & CoorY
+                                End If
                                 n += 1
                             End If
                         End If
@@ -371,88 +450,98 @@
 
 
         ElseIf Board(CoorX, CoorY) = "R" Or Board(CoorX, CoorY) = "Q" Then
-            If WhiteTFTable(CoorX, CoorY) <> "1" Or WhiteTFTable(CoorX, CoorY) <> "3" Then
+            If WhiteTFTable(CoorX, CoorY) <> "1" And WhiteTFTable(CoorX, CoorY) <> "3" Then
                 If WhiteTFTable(CoorX, CoorY) <> "0" Then
                     For x = (CoorX + 1) To 7
-                        BlackTFTable(x, CoorY) = "F"
+                        If BlackTFTable(x, CoorY) = "T" Then BlackTFTable(x, CoorY) = "F"
                         If Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R" Then Exit For
-
-
                         If Board(x, CoorY) = " " Or (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") Then
                             LegalMoveArray(n) = (x) & (CoorY)
+                            If Board(x, CoorY) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
-
-                            If (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") And AscW(BKPos(0)) > x And AscW(BKPos(1)) = CoorY Then
-                                For n = x + 1 To 7
-                                    If Board(n, CoorY) >= "B" And Board(n, CoorY) <= "R" Then Exit For
-                                    If Board(n, CoorY) = "k" Then
-                                        BlackTFTable(n, CoorY) = "2"
+                            If (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") And CInt(CStr(BKPos(0))) > x And CInt(CStr(BKPos(1))) = CoorY Then
+                                For m = x + 1 To 7
+                                    If Board(m, CoorY) = "k" Then
+                                        BlackTFTable(x, CoorY) = "2"
                                         Exit For
                                     End If
+                                    If Board(m, CoorY) <> " " Then Exit For
                                 Next
                             End If
 
                             If Board(x, CoorY) <> " " Then Exit For
                         End If
-
-
                     Next
+
                     For x = (CoorX - 1) To 0 Step -1
-                        BlackTFTable(x, CoorY) = "F"
+                        If BlackTFTable(x, CoorY) = "T" Then BlackTFTable(x, CoorY) = "F"
                         If Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R" Then Exit For
                         If Board(x, CoorY) = " " Or (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") Then
                             LegalMoveArray(n) = (x) & (CoorY)
+                            If Board(x, CoorY) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
-
-                            If (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") And AscW(BKPos(0)) < x And AscW(BKPos(1)) = CoorY Then
-                                For n = x - 1 To 0 Step -1
-                                    If Board(n, CoorY) >= "B" And Board(n, CoorY) <= "R" Then Exit For
-                                    If Board(n, CoorY) = "k" Then
-                                        BlackTFTable(n, CoorY) = "2"
+                            If (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") And CInt(CStr(BKPos(0))) < x And CInt(CStr(BKPos(1))) = CoorY Then
+                                For m = x - 1 To 0 Step -1
+                                    If Board(m, CoorY) = "k" Then
+                                        BlackTFTable(x, CoorY) = "2"
                                         Exit For
                                     End If
+                                    If Board(m, CoorY) <> " " Then Exit For
                                 Next
                             End If
 
                             If Board(x, CoorY) <> " " Then Exit For
                         End If
                     Next
+
                 End If
                 If WhiteTFTable(CoorX, CoorY) <> "2" Then
                     For y = (CoorY + 1) To 7
-                        BlackTFTable(CoorX, y) = "F"
+                        If BlackTFTable(CoorX, y) = "T" Then BlackTFTable(CoorX, y) = "F"
                         If Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R" Then Exit For
                         If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") Then
                             LegalMoveArray(n) = (CoorX) & (y)
+                            If Board(CoorX, y) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
-
-                            If (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") And AscW(BKPos(0)) = CoorX And AscW(BKPos(1)) > y Then
-                                For n = y + 1 To 7
-                                    If Board(CoorX, n) >= "B" And Board(CoorX, n) <= "R" Then Exit For
-                                    If Board(CoorX, n) = "k" Then
-                                        BlackTFTable(CoorX, n) = "0"
+                            If (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") And CInt(CStr(BKPos(0))) = CoorX And CInt(CStr(BKPos(1))) > y Then
+                                For m = y + 1 To 7
+                                    If Board(CoorX, m) = "k" Then
+                                        BlackTFTable(CoorX, y) = "0"
                                         Exit For
                                     End If
+                                    If Board(CoorX, m) <> " " Then Exit For
                                 Next
                             End If
-
                             If Board(CoorX, y) <> " " Then Exit For
                         End If
                     Next
+
                     For y = (CoorY - 1) To 0 Step -1
-                        BlackTFTable(CoorX, y) = "F"
+                        If BlackTFTable(CoorX, y) = "T" Then BlackTFTable(CoorX, y) = "F"
                         If Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R" Then Exit For
                         If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") Then
                             LegalMoveArray(n) = (CoorX) & (y)
+                            If Board(CoorX, y) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
-
-                            If (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") And AscW(BKPos(0)) = CoorX And AscW(BKPos(1)) < y Then
-                                For n = y - 1 To 0 Step -1
-                                    If Board(CoorX, n) >= "B" And Board(CoorX, n) <= "R" Then Exit For
-                                    If Board(CoorX, n) = "k" Then
-                                        BlackTFTable(CoorX, n) = "0"
+                            If (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") And CInt(CStr(BKPos(0))) = CoorX And CInt(CStr(BKPos(1))) < y Then
+                                For m = y - 1 To 0 Step -1
+                                    If Board(CoorX, m) = "k" Then
+                                        BlackTFTable(CoorX, y) = "0"
                                         Exit For
                                     End If
+                                    If Board(CoorX, m) <> " " Then Exit For
                                 Next
                             End If
 
@@ -463,58 +552,134 @@
             End If
         End If
 
+
         If Board(CoorX, CoorY) = "B" Or Board(CoorX, CoorY) = "Q" Then
-            If WhiteTFTable(CoorX, CoorY) <> "0" Or WhiteTFTable(CoorX, CoorY) <> "2" Then
-                If WhiteTFTable(CoorX, CoorY) <> "3" Then
+            Dim o As Integer
+            Dim p As Integer
+            If WhiteTFTable(CoorX, CoorY) <> "0" And WhiteTFTable(CoorX, CoorY) <> "2" Then
+                If WhiteTFTable(CoorX, CoorY) <> "1" Then
                     StartX = CoorX + 1
                     StartY = CoorY + 1
                     Do Until StartX > 7 Or StartY > 7
-                        BlackTFTable(StartX, StartY) = "F"
+                        If BlackTFTable(StartX, StartY) = "T" Then BlackTFTable(StartX, StartY) = "F"
                         If Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R" Then Exit Do
                         If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") Then
                             LegalMoveArray(n) = StartX & StartY
+                            If Board(StartX, StartY) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") And (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) And CInt(CStr(BKPos(0))) > CoorX Then
+                                o = StartX + 1
+                                p = StartY + 1
+                                Do Until o > 7 Or p > 7
+                                    If Board(o, p) = "k" Then
+                                        BlackTFTable(StartX, StartY) = "3"
+                                        Exit Do
+                                    End If
+                                    If Board(o, p) <> " " Then Exit Do
+                                    o += 1
+                                    p += 1
+                                Loop
+                            End If
                             If Board(StartX, StartY) <> " " Then Exit Do
                         End If
                         StartX += 1
                         StartY += 1
                     Loop
+
                     StartX = CoorX - 1
                     StartY = CoorY - 1
                     Do Until StartX < 0 Or StartY < 0
-                        BlackTFTable(StartX, StartY) = "F"
+                        If BlackTFTable(StartX, StartY) = "T" Then BlackTFTable(StartX, StartY) = "F"
                         If Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R" Then Exit Do
                         If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") Then
                             LegalMoveArray(n) = StartX & StartY
+                            If Board(StartX, StartY) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") And (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) And CInt(CStr(BKPos(0))) < CoorX Then
+                                o = StartX - 1
+                                p = StartY - 1
+                                Do Until o < 0 Or p < 0
+                                    If Board(o, p) = "k" Then
+                                        BlackTFTable(StartX, StartY) = "3"
+                                        Exit Do
+                                    End If
+                                    If Board(o, p) <> " " Then Exit Do
+                                    o -= 1
+                                    p -= 1
+                                Loop
+                            End If
                             If Board(StartX, StartY) <> " " Then Exit Do
                         End If
                         StartX -= 1
                         StartY -= 1
                     Loop
+
                 End If
-                If WhiteTFTable(CoorX, CoorY) <> "1" Then
+                If WhiteTFTable(CoorX, CoorY) <> "3" Then
                     StartX = CoorX + 1
                     StartY = CoorY - 1
                     Do Until StartX > 7 Or StartY < 0
-                        BlackTFTable(StartX, StartY) = "F"
+                        If BlackTFTable(StartX, StartY) = "T" Then BlackTFTable(StartX, StartY) = "F"
                         If Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R" Then Exit Do
                         If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") Then
                             LegalMoveArray(n) = StartX & StartY
+                            If Board(StartX, StartY) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            'Console.WriteLine("step 1 " & CoorX & CoorY & StartX & StartY & "  " & BKPos & " aiwhjd  " & (CInt(CStr(BKPos(0))) - CoorX) & (CoorY - CInt(CStr(BKPos(1)))))
+                            If (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") And (CInt(CStr(BKPos(0))) - CoorX = CoorY - CInt(CStr(BKPos(1)))) And CInt(CStr(BKPos(0))) > CoorX Then
+                                o = StartX + 1
+                                p = StartY - 1
+                                Do Until o > 7 Or p < 0
+                                    If Board(o, p) = "k" Then
+                                        BlackTFTable(StartX, StartY) = "1"
+                                        Exit Do
+                                    End If
+                                    If Board(o, p) <> " " Then Exit Do
+                                    o += 1
+                                    p -= 1
+                                Loop
+                            End If
+
                             If Board(StartX, StartY) <> " " Then Exit Do
                         End If
                         StartX += 1
                         StartY -= 1
                     Loop
+
                     StartX = CoorX - 1
                     StartY = CoorY + 1
                     Do Until StartX < 0 Or StartY > 7
-                        BlackTFTable(StartX, StartY) = "F"
+                        If BlackTFTable(StartX, StartY) = "T" Then BlackTFTable(StartX, StartY) = "F"
                         If Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R" Then Exit Do
                         If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") Then
                             LegalMoveArray(n) = StartX & StartY
+                            If Board(StartX, StartY) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") And (CInt(CStr(BKPos(0))) - CoorX = CoorY - CInt(CStr(BKPos(1)))) And CInt(CStr(BKPos(0))) < CoorX Then
+                                o = StartX - 1
+                                p = StartY + 1
+                                Do Until o < 0 Or p > 7
+                                    If Board(o, p) = "k" Then
+                                        BlackTFTable(StartX, StartY) = "1"
+                                        Exit Do
+                                    End If
+                                    If Board(o, p) <> " " Then Exit Do
+                                    o -= 1
+                                    p += 1
+                                Loop
+                            End If
                             If Board(StartX, StartY) <> " " Then Exit Do
                         End If
                         StartX -= 1
@@ -523,20 +688,29 @@
                 End If
             End If
         End If
-
+        If BInCheck.Piece1 = " " Or BInCheck.Piece1 = CheckingPiece Then
+            BInCheck.Piece1 = CheckingPiece
+        ElseIf CheckingPiece <> " " Then
+            BInCheck.Piece2 = CheckingPiece
+        End If
         If n <> 1 Then LegalMoveArray(0) = n
         Return (LegalMoveArray, BlackTFTable)
     End Function
 
 
-    Function BlackPieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As Integer, ByVal CoorY As Integer, ByVal BlackTFTable(,) As Char, ByRef WhiteTFTable(,) As Char,ByRef WKPos As string) As (LegalMoveArray As String(), WhiteTFTable As Char(,))
-        Dim LegalMoveArray(26) As String
+    Function BlackPieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As Integer, ByVal CoorY As Integer, ByRef BlackTFTable(,) As Char, ByVal WhiteTFTable(,) As Char, ByRef WKPos As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck) As (LegalMoveArray As String(), WhiteTFTable As Char(,))
+        Dim LegalMoveArray(27) As String
         Dim n As Integer = 1
         Dim StartY As Integer
         Dim EndY As Integer
         Dim StartX As Integer
         Dim EndX As Integer
+        Dim CheckingPiece As String = " "
 
+        If BInCheck.Piece2 <> " " And Board(CoorX, CoorY) <> "k" Then
+            Return (LegalMoveArray, BlackTFTable)
+            Exit Function
+        End If
         If Board(CoorX, CoorY) = "k" Then
             StartX = Math.Max(CoorX - 1, 0)
             EndX = Math.Min(CoorX + 1, 7)
@@ -545,7 +719,7 @@
             'Console.WriteLine(StartX & " " & EndX & " " & StartY & " " & EndY)
             For y = StartY To EndY
                 For x = StartX To EndX
-                    WhiteTFTable(x, y) = "F"
+                    If WhiteTFTable(x, y) = "T" Then WhiteTFTable(x, y) = "F"
                     If (Board(x, y) = " " Or (Board(x, y) >= "B" And Board(x, y) <= "R")) And BlackTFTable(x, y) = "T" Then
                         LegalMoveArray(n) = (x) & (y)
                         n += 1
@@ -553,13 +727,13 @@
                 Next
             Next
 
-            If BCanCastle.KS Then
+            If BCanCastle.KS And BInCheck.IsInCheck = False Then
                 If Board(CoorX + 1, CoorY) = " " And Board(CoorX + 2, CoorY) = " " And Board(CoorX + 3, CoorY) = "r" And BlackTFTable(CoorX + 1, CoorY) = "T" And BlackTFTable(CoorX + 2, CoorY) = "T" Then
                     LegalMoveArray(n) = (CoorX + 2) & (CoorY)
                     n += 1
                 End If
             End If
-            If BCanCastle.QS Then
+            If BCanCastle.QS And BInCheck.IsInCheck = False Then
                 If Board(CoorX - 1, CoorY) = " " And Board(CoorX - 2, CoorY) = " " And Board(CoorX - 3, CoorY) = " " And Board(CoorX - 4, CoorY) = "r" And BlackTFTable(CoorX - 1, CoorY) = "T" And BlackTFTable(CoorX - 2, CoorY) = "T" Then
                     LegalMoveArray(n) = (CoorX - 2) & (CoorY)
                     n += 1
@@ -568,38 +742,54 @@
 
 
         ElseIf Board(CoorX, CoorY) = "p" Then
-            If BlackTFTable(CoorX, CoorY) >= "4" Or BlackTFTable(CoorX, CoorY) = "0" Then
-                StartX = Math.Max(CoorX - 1, 0)
-                EndX = Math.Min(CoorX + 1, 7)
-                If Board(CoorX, CoorY + 1) = " " Then
-                    LegalMoveArray(n) = CoorX & CoorY + 1
-                    n += 1
-                    If CoorY = 1 And Board(CoorX, 3) = " " Then
-                        LegalMoveArray(n) = CoorX & 3
+            If BlackTFTable(CoorX, CoorY) <> "2" Then
+                If BlackTFTable(CoorX, CoorY) <> "1" And BlackTFTable(CoorX, CoorY) <> "3" Then
+                    If Board(CoorX, CoorY + 1) = " " Then
+                        LegalMoveArray(n) = CoorX & CoorY + 1
+                        n += 1
+                        If CoorY = 1 And Board(CoorX, 3) = " " Then
+                            LegalMoveArray(n) = CoorX & 3
+                            n += 1
+                        End If
+                    End If
+                End If
+                If BlackTFTable(CoorX, CoorY) <> "0" And BlackTFTable(CoorX, CoorY) <> "1" And CoorX > 0 Then
+                    If WhiteTFTable(CoorX - 1, CoorY + 1) = "T" Then WhiteTFTable(CoorX - 1, CoorY + 1) = "F"
+                    If (Board(CoorX - 1, CoorY + 1) >= "B" And Board(CoorX - 1, CoorY + 1) <= "R") Then
+                        LegalMoveArray(n) = CoorX - 1 & CoorY + 1
+                        If Board(CoorX - 1, CoorY + 1) = "K" Then
+                            WInCheck.IsInCheck = True
+                            CheckingPiece = CoorX & CoorY
+                        End If
                         n += 1
                     End If
                 End If
-                If BlackTFTable(CoorX, CoorY) <> "0" Then
-                    For x = StartX To EndX
-                        If x <> CoorX Then
-                            WhiteTFTable(x, CoorY + 1) = "F"
-                            If (Board(x, CoorY + 1) >= "B" And Board(x, CoorY + 1) <= "R") Then
-                                LegalMoveArray(n) = x & CoorY + 1
-                                n += 1
-                            End If
+                If BlackTFTable(CoorX, CoorY) <> "0" And BlackTFTable(CoorX, CoorY) <> "3" And CoorX < 7 Then
+                    If WhiteTFTable(CoorX + 1, CoorY + 1) = "T" Then WhiteTFTable(CoorX + 1, CoorY + 1) = "F"
+                    If (Board(CoorX + 1, CoorY + 1) >= "B" And Board(CoorX + 1, CoorY + 1) <= "R") Then
+                        LegalMoveArray(n) = CoorX + 1 & CoorY + 1
+                        If Board(CoorX + 1, CoorY + 1) = "K" Then
+                            WInCheck.IsInCheck = True
+                            CheckingPiece = CoorX & CoorY
                         End If
-                    Next
+                        n += 1
+                    End If
                 End If
             End If
+
 
         ElseIf Board(CoorX, CoorY) = "n" Then
             If BlackTFTable(CoorX, CoorY) >= "4" Then
                 If CoorX >= 2 Then
                     For x = -1 To 1 Step 2
                         If (CoorY + x) >= 0 And (CoorY + x) <= 7 Then
-                            WhiteTFTable(CoorX - 2, CoorY + x) = "F"
+                            If WhiteTFTable(CoorX - 2, CoorY + x) = "T" Then WhiteTFTable(CoorX - 2, CoorY + x) = "F"
                             If Board(CoorX - 2, CoorY + x) = " " Or (Board(CoorX - 2, CoorY + x) >= "B" And Board(CoorX - 2, CoorY + x) <= "R") Then
                                 LegalMoveArray(n) = (CoorX - 2) & (CoorY + x)
+                                If Board(CoorX - 2, CoorY + x) = "K" Then
+                                    WInCheck.IsInCheck = True
+                                    CheckingPiece = CoorX & CoorY
+                                End If
                                 n += 1
                             End If
                         End If
@@ -608,9 +798,13 @@
                 If CoorX <= 5 Then
                     For x = -1 To 1 Step 2
                         If (CoorY + x) >= 0 And (CoorY + x) <= 7 Then
-                            WhiteTFTable(CoorX + 2, CoorY + x) = "F"
+                            If WhiteTFTable(CoorX + 2, CoorY + x) = "T" Then WhiteTFTable(CoorX + 2, CoorY + x) = "F"
                             If Board(CoorX + 2, CoorY + x) = " " Or (Board(CoorX + 2, CoorY + x) >= "B" And Board(CoorX + 2, CoorY + x) <= "R") Then
                                 LegalMoveArray(n) = (CoorX + 2) & (CoorY + x)
+                                If Board(CoorX + 2, CoorY + x) = "K" Then
+                                    WInCheck.IsInCheck = True
+                                    CheckingPiece = CoorX & CoorY
+                                End If
                                 n += 1
                             End If
                         End If
@@ -619,9 +813,13 @@
                 If CoorY >= 2 Then
                     For x = -1 To 1 Step 2
                         If (CoorX + x) >= 0 And (CoorX + x) <= 7 Then
-                            WhiteTFTable(CoorX + x, CoorY - 2) = "F"
+                            If WhiteTFTable(CoorX + x, CoorY - 2) = "T" Then WhiteTFTable(CoorX + x, CoorY - 2) = "F"
                             If Board(CoorX + x, CoorY - 2) = " " Or (Board(CoorX + x, CoorY - 2) >= "B" And Board(CoorX + x, CoorY - 2) <= "R") Then
                                 LegalMoveArray(n) = (CoorX + x) & (CoorY - 2)
+                                If Board(CoorX + x, CoorY - 2) = "K" Then
+                                    WInCheck.IsInCheck = True
+                                    CheckingPiece = CoorX & CoorY
+                                End If
                                 n += 1
                             End If
                         End If
@@ -630,9 +828,13 @@
                 If CoorY <= 5 Then
                     For x = -1 To 1 Step 2
                         If (CoorX + x) >= 0 And (CoorX + x) <= 7 Then
-                            WhiteTFTable(CoorX + x, CoorY + 2) = "F"
+                            If WhiteTFTable(CoorX + x, CoorY + 2) = "T" Then WhiteTFTable(CoorX + x, CoorY + 2) = "F"
                             If Board(CoorX + x, CoorY + 2) = " " Or (Board(CoorX + x, CoorY + 2) >= "B" And Board(CoorX + x, CoorY + 2) <= "R") Then
                                 LegalMoveArray(n) = (CoorX + x) & (CoorY + 2)
+                                If Board(CoorX + x, CoorY + 2) = "K" Then
+                                    WInCheck.IsInCheck = True
+                                    CheckingPiece = CoorX & CoorY
+                                End If
                                 n += 1
                             End If
                         End If
@@ -640,104 +842,233 @@
                 End If
             End If
 
+
         ElseIf Board(CoorX, CoorY) = "r" Or Board(CoorX, CoorY) = "q" Then
-            If BlackTFTable(CoorX, CoorY) <> "1" Or BlackTFTable(CoorX, CoorY) <> "3" Then
+            If BlackTFTable(CoorX, CoorY) <> "1" And BlackTFTable(CoorX, CoorY) <> "3" Then
                 If BlackTFTable(CoorX, CoorY) <> "0" Then
                     For x = (CoorX + 1) To 7
-                        WhiteTFTable(x, CoorY) = "F"
+                        If WhiteTFTable(x, CoorY) = "T" Then WhiteTFTable(x, CoorY) = "F"
                         If Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r" Then Exit For
                         If Board(x, CoorY) = " " Or (Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R") Then
                             LegalMoveArray(n) = (x) & (CoorY)
+                            If Board(x, CoorY) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R") And CInt(CStr(WKPos(0))) > x And CInt(CStr(WKPos(1))) = CoorY Then
+                                For m = x + 1 To 7
+                                    If Board(m, CoorY) = "K" Then
+                                        WhiteTFTable(x, CoorY) = "2"
+                                        Exit For
+                                    End If
+                                    If Board(m, CoorY) <> " " Then Exit For
+                                Next
+                            End If
                             If Board(x, CoorY) <> " " Then Exit For
                         End If
                     Next
+
                     For x = (CoorX - 1) To 0 Step -1
-                        WhiteTFTable(x, CoorY) = "F"
+                        If WhiteTFTable(x, CoorY) = "T" Then WhiteTFTable(x, CoorY) = "F"
                         If Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r" Then Exit For
                         If Board(x, CoorY) = " " Or (Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R") Then
                             LegalMoveArray(n) = (x) & (CoorY)
+                            If Board(x, CoorY) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R") And CInt(CStr(WKPos(0))) < x And CInt(CStr(WKPos(1))) = CoorY Then
+                                For m = x - 1 To 0 Step -1
+                                    If Board(m, CoorY) = "K" Then
+                                        WhiteTFTable(x, CoorY) = "2"
+                                        Exit For
+                                    End If
+                                    If Board(m, CoorY) <> " " Then Exit For
+                                Next
+                            End If
                             If Board(x, CoorY) <> " " Then Exit For
                         End If
                     Next
                 End If
-            End If
 
-            If BlackTFTable(CoorX, CoorY) <> "2" Then
-                For y = (CoorY + 1) To 7
-                    WhiteTFTable(CoorX, y) = "F"
-                    If Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r" Then Exit For
-                    If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") Then
-                        LegalMoveArray(n) = (CoorX) & (y)
-                        n += 1
-                        If Board(CoorX, y) <> " " Then Exit For
-                    End If
-                Next
-                For y = (CoorY - 1) To 0 Step -1
-                    WhiteTFTable(CoorX, y) = "F"
-                    If Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r" Then Exit For
-                    If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") Then
-                        LegalMoveArray(n) = (CoorX) & (y)
-                        n += 1
-                        If Board(CoorX, y) <> " " Then Exit For
-                    End If
-                Next
+                If BlackTFTable(CoorX, CoorY) <> "2" Then
+                    For y = (CoorY + 1) To 7
+                        If WhiteTFTable(CoorX, y) = "T" Then WhiteTFTable(CoorX, y) = "F"
+                        If Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r" Then Exit For
+                        If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") Then
+                            LegalMoveArray(n) = (CoorX) & (y)
+                            If Board(CoorX, y) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
+                            n += 1
+                            If (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") And CInt(CStr(WKPos(0))) = CoorX And CInt(CStr(WKPos(1))) > y Then
+                                For m = y + 1 To 7
+                                    If Board(CoorX, m) = "K" Then
+                                        WhiteTFTable(CoorX, y) = "0"
+                                        Exit For
+                                    End If
+                                    If Board(CoorX, m) <> " " Then Exit For
+                                Next
+                            End If
+                            If Board(CoorX, y) <> " " Then Exit For
+                        End If
+                    Next
+
+                    For y = (CoorY - 1) To 0 Step -1
+                        If WhiteTFTable(CoorX, y) = "T" Then WhiteTFTable(CoorX, y) = "F"
+                        If Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r" Then Exit For
+                        If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") Then
+                            LegalMoveArray(n) = (CoorX) & (y)
+                            If Board(CoorX, y) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
+                            n += 1
+                            If (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") And CInt(CStr(WKPos(0))) = CoorX And CInt(CStr(WKPos(1))) < y Then
+                                For m = y - 1 To 0 Step -1
+                                    If Board(CoorX, m) = "K" Then
+                                        WhiteTFTable(CoorX, y) = "0"
+                                        Exit For
+                                    End If
+                                    If Board(CoorX, m) <> " " Then Exit For
+                                Next
+                            End If
+                            If Board(CoorX, y) <> " " Then Exit For
+                        End If
+                    Next
+                End If
             End If
         End If
 
+
         If Board(CoorX, CoorY) = "b" Or Board(CoorX, CoorY) = "q" Then
-            If BlackTFTable(CoorX, CoorY) <> "0" Or BlackTFTable(CoorX, CoorY) <> "2" Then
-                If BlackTFTable(CoorX, CoorY) <> "3" Then
+            Dim o As Integer
+            Dim p As Integer
+            If BlackTFTable(CoorX, CoorY) <> "0" And BlackTFTable(CoorX, CoorY) <> "2" Then
+                If BlackTFTable(CoorX, CoorY) <> "1" Then
                     StartX = CoorX + 1
                     StartY = CoorY + 1
                     Do Until StartX > 7 Or StartY > 7
-                        WhiteTFTable(StartX, StartY) = "F"
+                        If WhiteTFTable(StartX, StartY) = "T" Then WhiteTFTable(StartX, StartY) = "F"
                         If Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r" Then Exit Do
                         If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") Then
                             LegalMoveArray(n) = StartX & StartY
+                            If Board(StartX, StartY) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") And (CInt(CStr(WKPos(0))) - CoorX = CInt(CStr(WKPos(1))) - CoorY) And CInt(CStr(WKPos(0))) > CoorX Then
+                                o = StartX + 1
+                                p = StartY + 1
+                                Do Until o > 7 Or p > 7
+                                    If Board(o, p) = "K" Then
+                                        WhiteTFTable(StartX, StartY) = "3"
+                                        Exit Do
+                                    End If
+                                    If Board(o, p) <> " " Then Exit Do
+                                    o += 1
+                                    p += 1
+                                Loop
+                            End If
                             If Board(StartX, StartY) <> " " Then Exit Do
                         End If
                         StartX += 1
                         StartY += 1
                     Loop
+
                     StartX = CoorX - 1
                     StartY = CoorY - 1
                     Do Until StartX < 0 Or StartY < 0
-                        WhiteTFTable(StartX, StartY) = "F"
+                        If WhiteTFTable(StartX, StartY) = "T" Then WhiteTFTable(StartX, StartY) = "F"
                         If Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r" Then Exit Do
                         If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") Then
                             LegalMoveArray(n) = StartX & StartY
+                            If Board(StartX, StartY) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") And (CInt(CStr(WKPos(0))) - CoorX = CInt(CStr(WKPos(1))) - CoorY) And CInt(CStr(WKPos(0))) < CoorX Then
+                                o = StartX - 1
+                                p = StartY - 1
+                                Do Until o < 0 Or p < 0
+                                    If Board(o, p) = "K" Then
+                                        WhiteTFTable(StartX, StartY) = "3"
+                                        Exit Do
+                                    End If
+                                    If Board(o, p) <> " " Then Exit Do
+                                    o -= 1
+                                    p -= 1
+                                Loop
+                            End If
                             If Board(StartX, StartY) <> " " Then Exit Do
                         End If
                         StartX -= 1
                         StartY -= 1
                     Loop
                 End If
+
                 If BlackTFTable(CoorX, CoorY) <> "3" Then
                     StartX = CoorX + 1
                     StartY = CoorY - 1
                     Do Until StartX > 7 Or StartY < 0
-                        WhiteTFTable(StartX, StartY) = "F"
+                        If WhiteTFTable(StartX, StartY) = "T" Then WhiteTFTable(StartX, StartY) = "F"
                         If Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r" Then Exit Do
                         If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") Then
                             LegalMoveArray(n) = StartX & StartY
+                            If Board(StartX, StartY) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") And (CInt(CStr(WKPos(0))) - CoorX = CoorY - CInt(CStr(WKPos(1)))) And CInt(CStr(WKPos(0))) > CoorX Then
+                                o = StartX + 1
+                                p = StartY - 1
+                                Do Until o > 7 Or p < 0
+                                    If Board(o, p) = "K" Then
+                                        WhiteTFTable(StartX, StartY) = "1"
+                                        Exit Do
+                                    End If
+                                    If Board(o, p) <> " " Then Exit Do
+                                    o += 1
+                                    p -= 1
+                                Loop
+                            End If
                             If Board(StartX, StartY) <> " " Then Exit Do
                         End If
                         StartX += 1
                         StartY -= 1
                     Loop
+
                     StartX = CoorX - 1
                     StartY = CoorY + 1
                     Do Until StartX < 0 Or StartY > 7
-                        WhiteTFTable(StartX, StartY) = "F"
+                        If WhiteTFTable(StartX, StartY) = "T" Then WhiteTFTable(StartX, StartY) = "F"
                         If Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r" Then Exit Do
                         If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") Then
                             LegalMoveArray(n) = StartX & StartY
+                            If Board(StartX, StartY) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
                             n += 1
+                            If (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") And (CInt(CStr(WKPos(0))) - CoorX = CoorY - CInt(CStr(WKPos(1)))) And CInt(CStr(WKPos(0))) < CoorX Then
+                                o = StartX - 1
+                                p = StartY + 1
+                                Do Until o < 0 Or p > 7
+                                    If Board(o, p) = "K" Then
+                                        WhiteTFTable(StartX, StartY) = "1"
+                                        Exit Do
+                                    End If
+                                    If Board(o, p) <> " " Then Exit Do
+                                    o -= 1
+                                    p += 1
+                                Loop
+                            End If
                             If Board(StartX, StartY) <> " " Then Exit Do
                         End If
                         StartX -= 1
@@ -745,6 +1076,11 @@
                     Loop
                 End If
             End If
+        End If
+        If WInCheck.Piece1 = " " Or WInCheck.Piece1 = CheckingPiece Then
+            WInCheck.Piece1 = CheckingPiece
+        ElseIf CheckingPiece <> " " Then
+            WInCheck.Piece2 = CheckingPiece
         End If
         If n <> 1 Then LegalMoveArray(0) = n
         Return (LegalMoveArray, WhiteTFTable)
@@ -760,26 +1096,25 @@
         'Subroutine that activates the drag + drog mechanic if the user clicks on a piece.
         If e.Button = Windows.Forms.MouseButtons.Left Then
             If CStr(sender.name)(0) = "W" And PlayerTurn Then
-                Dim LegalMovesResult = WhitePieceLegalMoves(MasterArray, sender.location.x / 75, sender.location.y / 75, WhiteTFTable, BlackTFTable, BKPos)
+                Dim LegalMovesResult = WhitePieceLegalMoves(MasterArray, sender.location.x / 75, sender.location.y / 75, MasterWhiteTFTable, MasterBlackTFTable, BKPos, BInCheck, WInCheck)
                 LegalMoves = LegalMovesResult.LegalMoveArray
                 MovingPiece = True
             ElseIf CStr(sender.name)(0) = "B" And (Not PlayerTurn) Then
-                Dim LegalMovesResult = BlackPieceLegalMoves(MasterArray, sender.location.x / 75, sender.location.y / 75, BlackTFTable, WhiteTFTable, WKPos)
+                Dim LegalMovesResult = BlackPieceLegalMoves(MasterArray, sender.location.x / 75, sender.location.y / 75, MasterBlackTFTable, MasterWhiteTFTable, WKPos, WInCheck, BInCheck)
                 LegalMoves = LegalMovesResult.LegalMoveArray
                 MovingPiece = True
             End If
-            Console.WriteLine()
-            Console.WriteLine("here are moves")
-            If LegalMoves(0) IsNot Nothing Then
-                For x = 0 To LegalMoves.Length - 1
-                    If LegalMoves(x) IsNot Nothing Then Console.WriteLine(LegalMoves(x))
-                Next
-            End If
-            Console.WriteLine("end of moves")
+            'Console.WriteLine()
+            'Console.WriteLine("here are moves")
+            'If LegalMoves(0) IsNot Nothing Then
+            '    For x = 0 To LegalMoves.Length - 1
+            '        If LegalMoves(x) IsNot Nothing Then Console.WriteLine(LegalMoves(x))
+            '    Next
+            'End If
+            'Console.WriteLine("end of moves")
             sender.bringtofront()
             StartPoint = sender.location
             MidPoint = sender.PointToScreen(New Point(e.X, e.Y))
-
         End If
     End Sub
 
@@ -794,6 +1129,7 @@
     End Sub
 
     Private Sub Piece_MouseUp(ByVal sender As Object, ByVal e As System.Windows.Forms.MouseEventArgs) Handles WK1.MouseUp, WQ1.MouseUp, WB1.MouseUp, WB2.MouseUp, WN1.MouseUp, WN2.MouseUp, WR1.MouseUp, WR2.MouseUp, WP1.MouseUp, WP2.MouseUp, WP3.MouseUp, WP4.MouseUp, WP5.MouseUp, WP6.MouseUp, WP7.MouseUp, WP8.MouseUp, BK1.MouseUp, BQ1.MouseUp, BB1.MouseUp, BB2.MouseUp, BN1.MouseUp, BN2.MouseUp, BR1.MouseUp, BR2.MouseUp, BP1.MouseUp, BP2.MouseUp, BP3.MouseUp, BP4.MouseUp, BP5.MouseUp, BP6.MouseUp, BP7.MouseUp, BP8.MouseUp, WQ2.MouseUp, WQ3.MouseUp, WQ4.MouseUp, WQ5.MouseUp, WQ6.MouseUp, WQ7.MouseUp, WQ8.MouseUp, BQ2.MouseUp, BQ3.MouseUp, BQ4.MouseUp, BQ5.MouseUp, BQ6.MouseUp, BQ7.MouseUp, BQ8.MouseUp
+        Dim CheckArray(7, 7) As Char
         Dim JustCastled As Boolean = False
         Dim IsLegalMove As Boolean
         Dim ReplacedPiece As PictureBox
@@ -804,12 +1140,52 @@
             'If the user has actually moved the piece, and the move is legal, the program continues.
             If sender.location <> StartPoint Then
                 IsLegalMove = False
+
                 For n = 1 To LegalMoves.Length - 1
                     If CStr(sender.location.x / 75 & sender.location.y / 75) = LegalMoves(n) Then
-                        IsLegalMove = True
-                        Exit For
+
+                        If WInCheck.IsInCheck Or BInCheck.IsInCheck Then
+                            If DoesMoveResolveCheck(MasterArray, (StartPoint.X / 75) & (StartPoint.Y / 75), (sender.location.X / 75) & (sender.location.Y / 75), WInCheck, BInCheck) Then
+                                IsLegalMove = True
+                            End If
+                        Else
+                            IsLegalMove = True
+                        End If
+
+
+                        'Console.WriteLine("hello")
+
+                        '    If WInCheck.IsInCheck And PlayerTurn Then
+                        '        WInCheck.IsInCheck = False
+                        '        Array.Copy(MasterArray, CheckArray, 63)
+                        '        CheckArray(sender.location.X / 75, sender.location.Y / 75) = CheckArray(StartPoint.X / 75, StartPoint.Y / 75)
+                        '        CheckArray(StartPoint.X / 75, StartPoint.Y / 75) = " "
+                        '        BlackPieceLegalMoves(CheckArray, CInt(CStr(WInCheck.Piece1(0))), CInt(CStr(WInCheck.Piece1(1))), BlackTFTable, WhiteTFTable, WKPos, WInCheck, BInCheck)
+                        '        If WInCheck.Piece2 <> " " Then BlackPieceLegalMoves(CheckArray, CInt(CStr(WInCheck.Piece2(0))), CInt(CStr(WInCheck.Piece2(1))), BlackTFTable, WhiteTFTable, WKPos, WInCheck, BInCheck)
+                        '        If WInCheck.IsInCheck = False Then
+                        '            WInCheck.Piece1 = " "
+                        '            WInCheck.Piece2 = " "
+                        '            IsLegalMove = True
+                        '        End If
+                        '    ElseIf BInCheck.IsInCheck And Not PlayerTurn Then
+                        '        BInCheck.IsInCheck = False
+                        '        Array.Copy(MasterArray, CheckArray, 63)
+                        '        CheckArray(sender.location.X / 75, sender.location.Y / 75) = CheckArray(StartPoint.X / 75, StartPoint.Y / 75)
+                        '        CheckArray(StartPoint.X / 75, StartPoint.Y / 75) = " "
+                        '        WhitePieceLegalMoves(CheckArray, CInt(CStr(BInCheck.Piece1(0))), CInt(CStr(BInCheck.Piece1(1))), TrueTable, TrueTable, BKPos, BInCheck, WInCheck)
+                        '        If BInCheck.Piece2 <> " " Then WhitePieceLegalMoves(CheckArray, CInt(CStr(BInCheck.Piece2(0))), CInt(CStr(BInCheck.Piece2(1))), TrueTable, TrueTable, BKPos, BInCheck, WInCheck)
+                        '        If BInCheck.IsInCheck = False Then
+                        '            BInCheck.Piece1 = " "
+                        '            BInCheck.Piece2 = " "
+                        '            IsLegalMove = True
+                        '        End If
+                        '    Else
+                        '        IsLegalMove = True
+                        '    End If
+                        '    Exit For
                     End If
                 Next
+
                 If IsLegalMove Then
                     If UCase(sender.name(1)) = "K" Then
                         If sender.name(0) = "W" Then
@@ -890,9 +1266,7 @@
                         Else
                             MasterArray(sender.location.X / 75, sender.location.Y / 75) = UCase((CStr(sender.name))(1))
                         End If
-
                         FixTFTables(MasterArray, False)
-                        Console.WriteLine("King Pos: " & WKPos & " " & BKPos)
 
                     Else
                         If sender.name(1) = "P" And sender.location.y / 75 = 7 Then
@@ -908,20 +1282,23 @@
                         Else
                             MasterArray(sender.location.X / 75, sender.location.Y / 75) = LCase((CStr(sender.name))(1))
                         End If
-
                         FixTFTables(MasterArray, True)
-                        Console.WriteLine("King Pos: " & WKPos & " " & BKPos)
 
                     End If
+                    If WInCheck.IsInCheck Or BInCheck.IsInCheck Then
+                        Sound_Check.Play()
+                    End If
+                    Console.WriteLine("WKPos: " & WKPos & ". BKPos: " & BKPos)
                     For y = 0 To 7
                         For x = 0 To 7
                             Console.Write(MasterArray(x, y))
                         Next
                         Console.WriteLine()
                     Next
+
                     PlayerTurn = Not PlayerTurn
 
-                Else
+                Else 'Resets piece to previous position
                     sender.location = StartPoint
                 End If
             End If
@@ -931,41 +1308,53 @@
 
     Private Sub FixTFTables(ByRef Board(,) As Char, FixWhite As Boolean)
         If FixWhite Then
-            Array.Copy(TrueTable, WhiteTFTable, TrueTable.Length)
+            Array.Copy(TrueTable, MasterWhiteTFTable, TrueTable.Length)
             For y = 0 To 7
                 For x = 0 To 7
                     If Board(x, y) <> " " Then
                         If Board(x, y) >= "b" And Board(x, y) <= "r" Then
-                            Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, BlackTFTable, WhiteTFTable, WKPos)
-                            'WhiteTFTable = LegalMovesResult.WhiteTFTable
+                            Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, MasterWhiteTFTable, WKPos, WInCheck, BInCheck)
+                            MasterWhiteTFTable = LegalMovesResult.WhiteTFTable
                         End If
                     End If
                 Next
             Next
         Else
-            Array.Copy(TrueTable, BlackTFTable, TrueTable.Length)
+            Array.Copy(TrueTable, MasterBlackTFTable, TrueTable.Length)
             For y = 0 To 7
                 For x = 0 To 7
                     If Board(x, y) <> " " Then
                         If Board(x, y) >= "B" And Board(x, y) <= "R" Then
-                            Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, WhiteTFTable, BlackTFTable, BKPos)
-                            'BlackTFTable = LegalMovesResult.BlackTFTable
+                            Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, MasterBlackTFTable, BKPos, BInCheck, WInCheck)
+                            MasterBlackTFTable = LegalMovesResult.BlackTFTable
                         End If
                     End If
                 Next
             Next
         End If
-
+        If WInCheck.IsInCheck Then
+            WK1.Image = Image.FromFile(Application.StartupPath & "\WKingCheck.png")
+            CheckBox.Text = "Check!"
+        ElseIf BInCheck.IsInCheck Then
+            BK1.Image = Image.FromFile(Application.StartupPath & "\BKingCheck.png")
+            CheckBox.Text = "Check!"
+        Else
+            WK1.Image = Image.FromFile(Application.StartupPath & "\WKing.png")
+            BK1.Image = Image.FromFile(Application.StartupPath & "\BKing.png")
+            CheckBox.Text = ""
+        End If
+        Console.WriteLine()
+        Console.WriteLine("WhiteTFTable:")
         For y = 0 To 7
             For x = 0 To 7
-                Console.Write(WhiteTFTable(x, y))
+                Console.Write(MasterWhiteTFTable(x, y))
             Next
             Console.WriteLine()
         Next
-        Console.WriteLine("HELLO")
+        Console.WriteLine("BlackTFTable:")
         For y = 0 To 7
             For x = 0 To 7
-                Console.Write(BlackTFTable(x, y))
+                Console.Write(MasterBlackTFTable(x, y))
             Next
             Console.WriteLine()
         Next
@@ -985,13 +1374,68 @@
         Board(CStr(NewCoor(0)), CStr(NewCoor(1))) = TempMove
     End Sub
 
+
+    Function DoesMoveResolveCheck(ByRef Board(,) As Char, ByRef OldPos As String, ByRef NewPos As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck) As Boolean
+        Dim CheckArray(7, 7) As Char
+        DoesMoveResolveCheck = False
+        If WInCheck.IsInCheck And PlayerTurn Then
+            WInCheck.IsInCheck = False
+            Array.Copy(Board, CheckArray, 63)
+            CheckArray(CStr(NewPos(0)), CStr(NewPos(1))) = CheckArray(CStr(OldPos(0)), CStr(OldPos(1)))
+            CheckArray(CStr(OldPos(0)), CStr(OldPos(1))) = " "
+            BlackPieceLegalMoves(CheckArray, CStr(WInCheck.Piece1(0)), CStr(WInCheck.Piece1(1)), TrueTable, TrueTable, "00", WInCheck, BInCheck)
+            For y = 0 To 7
+                For x = 0 To 7
+                    TrueTable(y, x) = "T"
+                Next
+            Next
+            If WInCheck.Piece2 <> " " Then BlackPieceLegalMoves(CheckArray, CStr(WInCheck.Piece2(0)), CStr(WInCheck.Piece2(1)), TrueTable, TrueTable, "00", WInCheck, BInCheck)
+            If WInCheck.IsInCheck = False Then
+                WInCheck.Piece1 = " "
+                WInCheck.Piece2 = " "
+                DoesMoveResolveCheck = True
+            End If
+            For y = 0 To 7
+                For x = 0 To 7
+                    TrueTable(y, x) = "T"
+                Next
+            Next
+        ElseIf BInCheck.IsInCheck And Not PlayerTurn Then
+            BInCheck.IsInCheck = False
+            Array.Copy(Board, CheckArray, 63)
+            CheckArray(CStr(NewPos(0)), CStr(NewPos(1))) = CheckArray(CStr(OldPos(0)), CStr(OldPos(1)))
+            CheckArray(CStr(OldPos(0)), CStr(OldPos(1))) = " "
+            WhitePieceLegalMoves(CheckArray, CStr(BInCheck.Piece1(0)), CStr(BInCheck.Piece1(1)), TrueTable, TrueTable, "00", BInCheck, WInCheck)
+            For y = 0 To 7
+                For x = 0 To 7
+                    TrueTable(y, x) = "T"
+                Next
+            Next
+            If BInCheck.Piece2 <> " " Then WhitePieceLegalMoves(CheckArray, CStr(BInCheck.Piece2(0)), CStr(BInCheck.Piece2(1)), TrueTable, TrueTable, "00", BInCheck, WInCheck)
+            For y = 0 To 7
+                For x = 0 To 7
+                    TrueTable(y, x) = "T"
+                Next
+            Next
+            If BInCheck.IsInCheck = False Then
+                BInCheck.Piece1 = " "
+                BInCheck.Piece2 = " "
+                DoesMoveResolveCheck = True
+            End If
+        Else
+            DoesMoveResolveCheck = True
+        End If
+    End Function
+
+
+
     Dim p As Integer
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         Dim Stopwatch As New Stopwatch
         Dim Moves(27, 15) As String
 
         Stopwatch.Start()
-        Moves = CreateMoves(MasterArray, True)
+        Moves = CreateMoves(MasterArray, True, MasterWhiteTFTable, MasterBlackTFTable)
         Stopwatch.Stop()
         Console.WriteLine(vbCrLf)
         Console.WriteLine(Stopwatch.Elapsed.TotalMilliseconds)
@@ -1007,14 +1451,14 @@
         Console.WriteLine("WhiteTFTable:")
         For y = 0 To 7
             For x = 0 To 7
-                Console.Write(WhiteTFTable(x, y))
+                Console.Write(MasterWhiteTFTable(x, y))
             Next
             Console.WriteLine()
         Next
         Console.WriteLine("BlackTFTable:")
         For y = 0 To 7
             For x = 0 To 7
-                Console.Write(BlackTFTable(x, y))
+                Console.Write(MasterBlackTFTable(x, y))
             Next
             Console.WriteLine()
         Next
@@ -1031,67 +1475,18 @@
         'Console.WriteLine(stopwatch.Elapsed.TotalMilliseconds)
     End Sub
 
-    'Private Sub MoveCalculator(ByVal depth As Integer, W As Boolean)
-    '    Dim Board(7, 7) As Char
-    '    Array.Copy(MasterArray, Board, 64)
 
-
-
-    '    If depth <= 4 Then
-    '        If W Then
-    '            For y = 0 To 7
-    '                For x = 0 To 7
-    '                    If Board(x, y) >= "B" And Board(x, y) <= "R" Then
-    '                        Dim LegalMoves = WhitePieceLegalMoves(Board, x, y, WhiteTFTable)
-    '                        If LegalMoves.LegalMoveArray(0) IsNot Nothing Then
-    '                            For n = 0 To LegalMoves.LegalMoveArray.Length - 1
-    '                                If LegalMoves.LegalMoveArray(n) Is Nothing Then Exit For
-    '                                MakeMove(Board, x, y, LegalMoves.LegalMoveArray(n))
-    '                                p += 1
-    '                                MoveCalculator(depth + 1, Not W)
-    '                                UnMakeMove(Board, x, y, LegalMoves.LegalMoveArray(n))
-    '                                'MasterArray = FENConverter(StartingFEN)
-    '                            Next
-    '                        End If
-    '                    End If
-    '                Next
-    '            Next
-    '        Else
-    '            For y = 0 To 7
-    '                For x = 0 To 7
-    '                    If Board(x, y) >= "b" And Board(x, y) <= "r" Then
-    '                        LegalMoves = BlackPieceLegalMoves(Board, x, y, BlackTFTable)
-    '                        If LegalMoves(0) IsNot Nothing Then
-    '                            For n = 0 To LegalMoves.Length - 1
-    '                                If LegalMoves(n) Is Nothing Then Exit For
-    '                                MakeMove(Board, x, y, LegalMoves(n))
-    '                                p += 1
-    '                                MoveCalculator(depth + 1, Not W)
-    '                                UnMakeMove(Board, x, y, LegalMoves(n))
-    '                                'MasterArray = FENConverter(StartingFEN)
-    '                            Next
-    '                        End If
-    '                    End If
-    '                Next
-    '            Next
-    '        End If
-    '    End If
-    'End Sub
-
-
-
-    Private Function CreateMoves(ByRef Board(,) As Char, isWhite As Boolean) As String(,)
+    Private Function CreateMoves(ByRef Board(,) As Char, ByRef isWhite As Boolean, ByVal WhiteTFTable(,) As Char, ByVal BlackTFTable(,) As Char) As String(,)
         Dim Moves(27, 15) As String
         Dim counter As Integer = 0
 
         If isWhite Then
-            Array.Copy(TrueTable, WhiteTFTable, TrueTable.Length)
+            'Array.Copy(TrueTable, WhiteTFTable, TrueTable.Length)
             For y = 0 To 7
                 For x = 0 To 7
                     If Board(x, y) >= "B" And Board(x, y) <= "R" Then
-                        Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, WhiteTFTable, BlackTFTable, BKPos)
+                        Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, WhiteTFTable, TrueTable, BKPos, BInCheck, WInCheck)
                         LegalMoves = LegalMovesResult.LegalMoveArray
-                        'BlackTFTable = LegalMovesResult.BlackTFTable
                         If LegalMoves(0) IsNot Nothing Then
                             Moves(counter, 0) = x & y
                             For n = 1 To CInt(LegalMoves(0)) - 1
@@ -1103,13 +1498,12 @@
                 Next
             Next
         Else
-            Array.Copy(TrueTable, BlackTFTable, TrueTable.Length)
+            'Array.Copy(TrueTable, BlackTFTable, TrueTable.Length)
             For y = 0 To 7
                 For x = 0 To 7
                     If Board(x, y) >= "b" And Board(x, y) <= "r" Then
-                        Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, BlackTFTable, WhiteTFTable, WKPos)
+                        Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, BlackTFTable, TrueTable, WKPos, WInCheck, BInCheck)
                         LegalMoves = LegalMovesResult.LegalMoveArray
-                        'BlackTFTable = LegalMovesResult.WhiteTFTable
                         If LegalMoves(0) IsNot Nothing Then
                             Moves(counter, 0) = x & y
                             For n = 1 To CInt(LegalMoves(0)) - 1
@@ -1145,13 +1539,36 @@
 
     'Sends the FEN a user types in to be converted & displayed.
     Private Sub FENButton_Click(sender As Object, e As EventArgs) Handles FENButton.Click
-        MasterArray = FENConverter(FENTextBox.Text)
-        DisplayPieces()
-        If PlayerTurn Then
-            FixTFTables(MasterArray, True)
-        Else
-            FixTFTables(MasterArray, False)
+        If FENTextBox.Text <> "" Then
+            WInCheck.IsInCheck = False
+            WInCheck.Piece1 = " "
+            WInCheck.Piece2 = " "
+            BInCheck.IsInCheck = False
+            BInCheck.Piece1 = " "
+            BInCheck.Piece2 = " "
+            MasterArray = FENConverter(FENTextBox.Text)
+            DisplayPieces()
+            If PlayerTurn Then
+                FixTFTables(MasterArray, True)
+            Else
+                FixTFTables(MasterArray, False)
+            End If
         End If
     End Sub
+
+    'Resets the board to the starting position and sets white to move.
+    Private Sub Reset_Btn_Click(sender As Object, e As EventArgs) Handles Reset_Btn.Click
+        CheckBox.Text = ""
+        WInCheck.IsInCheck = False
+        WInCheck.Piece1 = " "
+        WInCheck.Piece2 = " "
+        BInCheck.IsInCheck = False
+        BInCheck.Piece1 = " "
+        BInCheck.Piece2 = " "
+        MasterArray = FENConverter("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        DisplayPieces()
+        FixTFTables(MasterArray, True)
+    End Sub
+
 
 End Class
