@@ -8,7 +8,11 @@ Public Class CoreMethods
     Public MasterTrueTable(7, 7), TrueTable(7, 7) As Char
     Public CannotCastle As New CanCastle
     Public NotInCheck As New InCheck
-    Private ReadOnly PieceValue(9) As Decimal 'Array Containing the Value or Weight of each Piece.
+    Private Shared ReadOnly PieceValue(9) As Decimal 'Array Containing the Value or Weight of each Piece.
+
+    Protected Shared ReadOnly ZobristHashTable(9, 1, 7, 7) As UInt64 '(a, b, c, d), where a = piece type, b = piece colour, c = x-coor, d = y-coor.
+    'a is Similar to PieceValue: use (Asc(UCase(PieceName)) Mod 11) to calculate - [2] used for EnPassant square.
+    Protected Shared ReadOnly HashConstants(4) As UInt64 '0 = Player Turn, 1 = WhiteKSCastle, 2 = WhiteQSCastle, 3 = BlackKSCastle, 4 = BlackQSCastle.
     Public Sub New()
         'Sets PieceValues variables using a Hash Function (Upper Case letter --> ASCII, then MOD 11). This
         'creates() a unique index / row in the PieceValue array for each piece and its corresponding weight,
@@ -27,8 +31,46 @@ Public Class CoreMethods
                 TrueTable(x, y) = "T"
             Next
         Next
+
+        'Fills ZobristHasTable with random 64-bit numbers
+        Static RND As New Random()
+        Dim RNDOne, RNDTwo As UInt64
+        For w = 0 To 9
+            Select Case w
+                Case 0, 1, 3, 4, 5, 9
+                    For x = 0 To 1
+                        For y = 0 To 7
+                            For z = 0 To 7
+                                'Produce two random 32-bit numbers
+                                RNDOne = RND.Next
+                                RNDTwo = RND.Next
+                                'Combine these numbers together into a 64-bit number by applying a 32-bit left shift to RNDOne,
+                                'then combining this with RNDTwo via a bitwise OR operation.
+                                ZobristHashTable(w, x, y, z) = (RNDOne << 32) Or RNDTwo
+                            Next
+                        Next
+                    Next
+            End Select   
+        Next
+        'Fills HasConstants with random 64-bit numbers.
+        For n = 0 To 4
+            RNDOne = RND.Next
+            RNDTwo = RND.Next
+            HashConstants(n) = (RNDOne << 32) Or RNDTwo
+        Next
     End Sub
 
+
+
+
+    'Functions that convert between positions (eg: 53) and the standard chess coordinate notation (eg: f5)
+    Public Function PosToCoorConverter(ByVal Position As String) As String
+        If Position.Length <> 2 Then Return Position
+        Return Chr(Val(Position(0)) + 97) & 8 - Val(Position(1))
+    End Function
+    Public Function CoorToPosConverter(ByVal Position As String) As String
+        Return Asc(Position(0)) - 97 & 8 - Val(Position(1))
+    End Function
 
 
     'Function which puts the required pieces in a FEN board position into an 8x8 board array.
@@ -86,7 +128,7 @@ Public Class CoreMethods
                             BCanCastle.QS = True
                         ElseIf FEN(m) >= "a" AndAlso FEN(m) <= "h" Then
                             'converts the a-h coordinate To the more computer-friendly index from 0-7 (eg: h3 --> 75)
-                            EnPassant = Asc(FEN(m)) - 97 & 8 - Val(FEN(m + 1))
+                            EnPassant = CoorToPosConverter(FEN.Substring(m, 2))
                         End If
                     Next
                     Exit For
@@ -248,6 +290,31 @@ Public Class CoreMethods
         Return MaterialCount
     End Function
 
+    'Function that hashes a chess position (including its details) into a 64-bit number using the 'Zobrist Hash' algorithm.
+    Public Function ZobristHashPosition(ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal EnPassant As String) As UInt64
+        ZobristHashPosition = 0
+        For y = 0 To 7
+            For x = 0 To 7
+                'If the square contains a piece, xor the required entry in ZobristHashTable into the key.
+                If Board(x, y) <> " " Then
+                    If Char.IsUpper(Board(x, y)) Then
+                        ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable(Asc(Board(x, y)) Mod 11, 0, x, y)
+                    Else
+                        ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable((Asc(Board(x, y)) + 1) Mod 11, 1, x, y)
+                    End If
+                End If
+            Next
+        Next
+        'Adds board meta-data to key.
+        If Not isWhite Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(0)
+        If WCanCastle.KS Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(1)
+        If WCanCastle.QS Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(2)
+        If BCanCastle.KS Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(3)
+        If BCanCastle.QS Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(4)
+        If EnPassant <> "-" Then ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable(2, 0, Val(EnPassant(0)), Val(EnPassant(1)))
+    End Function
+
+
     'Subroutine that converts a Move into standard chess notation (eg: e4, Nf4, Ka2).
     Public Function MoveConverter(ByVal Board(,) As Char, ByVal TempMove As Move, ByVal EnPassant As String) As String
         Dim MovedPiece As Char = UCase(Board(TempMove.OldMoveX, TempMove.OldMoveY))
@@ -271,7 +338,7 @@ Public Class CoreMethods
             End If
             If Board(TempMove.NewMoveX, TempMove.NewMoveY) <> " " OrElse (UCase(MovedPiece) = "P" AndAlso EnPassant = TempMove.NewMoveX & TempMove.NewMoveY) Then
                 'Is a capture move - add an "x" followed by the coordinates of the captured piece.
-                MoveConverter &= "x" & Chr(Val(TempMove.NewMoveX) + 97) & 8 - TempMove.NewMoveY
+                MoveConverter &= "x" & PosToCoorConverter(TempMove.NewMoveX & TempMove.NewMoveY)
             Else
                 If MovedPiece <> "P" Then MoveConverter &= Chr(Val(TempMove.NewMoveX) + 97)
                 MoveConverter &= 8 - TempMove.NewMoveY
@@ -290,15 +357,17 @@ Public Class CoreMethods
         If InputMove(InputMove.Length - 2) = "=" Then InputMove = InputMove.Substring(0, InputMove.Length - 2)
         Dim ResultMove As New Move
         'Sets end position to the last 2 characters of the move.
-        ResultMove.NewMoveX = Asc(InputMove(InputMove.Length - 2)) - 97
-        ResultMove.NewMoveY = 8 - Val(InputMove(InputMove.Length - 1))
+        Dim TempEndPosition As String = CoorToPosConverter(InputMove.Substring(InputMove.Length - 2, 2))
+        ResultMove.NewMoveX = TempEndPosition(0)
+        ResultMove.NewMoveY = TempEndPosition(1)
         Select Case InputMove(0)
             Case "B", "N", "R", "Q"
                 Dim Constraint As String = InputMove.Substring(1, InputMove.Length - 3) 'Constraint is used to specify which piece should move to the square (if there are multiple to choose from).
                 Constraint = Constraint.TrimEnd(CChar("x"))
                 If Constraint.Length = 2 Then 'Constraint represents starting coordinates.
-                    ResultMove.OldMoveX = Asc(Constraint(0)) - 97
-                    ResultMove.OldMoveY = 8 - Val(Constraint(1))
+                    TempEndPosition = CoorToPosConverter(Constraint)
+                    ResultMove.OldMoveX = TempEndPosition(0)
+                    ResultMove.OldMoveY = TempEndPosition(1)
                 Else
                     Dim TempPiece As Char 'Represents the piece we are looking for.
                     If isWhite Then TempPiece = InputMove(0) Else TempPiece = LCase(InputMove(0))

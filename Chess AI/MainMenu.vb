@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.Text
 Imports System.Threading
 
 'Class that allows the user to access the full extent of my program.
@@ -9,7 +10,7 @@ Public Class MainMenu
     Private PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
     Private SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
     Private ColourScheme As String 'Colour code from the text file.
-    Private OpeningBook(100000, 1) As String
+    Private OpeningBook As New List(Of OpeningBookEntry)
     'Startup sound effect - sounds taken from Chess.com.
     ReadOnly Sound_Startup As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Sounds\Chess_Startup.wav"
@@ -29,7 +30,9 @@ Public Class MainMenu
             ColourScheme = "def"
             PlayAnimation = True
             PlaySounds = True
+            Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
+            Console.ResetColor()
         End Try
         FileClose(1)
         CreateColourProfile(ColourScheme)
@@ -328,28 +331,25 @@ Public Class MainMenu
     'Subroutine that stores the chess opening book into the 2D array 'Opening Book'
     Private Sub RetrieveOpeningBook()
         Dim Timer As New Stopwatch
-        Try
-            Timer.Start()
-            'Opens opening book from file using StreamReader.
-            Dim Line As String
-            Dim Counter As UInt32 = 0
-            Using SR As New StreamReader(Application.StartupPath & "\Assets\SmallOpeningBook.txt")
-                While Not SR.EndOfStream
-                    Line = SR.ReadLine()
-                    'Splits line about the # symbol, then stored into OpeningBook.
-                    Dim TempStr As String() = Line.Split("#")
-                    OpeningBook(Counter, 0) = TempStr(0)
-                    OpeningBook(Counter, 1) = TempStr(1)
-                    Counter += 1
-                End While
-            End Using
-            Timer.Stop()
+        Dim TempEntry As OpeningBookEntry
+        'Try
+        Timer.Start()
+        'Opens opening book from file using StreamReader.
+        Using SR As New StreamReader(Application.StartupPath & "\Assets\SmallOpeningBook.txt", Encoding.UTF8, True, 16384)
+            While Not SR.EndOfStream
+                TempEntry = New OpeningBookEntry(SR.ReadLine())
+                OpeningBook.Add(TempEntry)
+            End While
+        End Using
+        Timer.Stop()
+            Console.ForegroundColor = ConsoleColor.Green
             Console.WriteLine("Opening Book Successfully Retrieved in: " & Math.Round(Timer.Elapsed.TotalMilliseconds, 1) & "ms.")
-        Catch ex As Exception 'Could not successfully retrieve book - make a note on OpeningBook.
-            Timer.Stop()
-            Console.WriteLine("Error when retrieving opening book.")
-            OpeningBook(0, 0) = "ERROR"
-        End Try
+        'Catch ex As Exception 'Could not successfully retrieve book - make a note on OpeningBook.
+        '    Timer.Stop()
+        '    Console.ForegroundColor = ConsoleColor.DarkRed
+        '    Console.WriteLine("Error when retrieving opening book.")
+        'End Try
+        Console.ResetColor()
     End Sub
 
 
@@ -426,11 +426,7 @@ Public Class MainMenu
     Private Sub Analysis_Click() Handles Analysis.Click
         'Creates the chess game (if Opening Book could not be retrieved then do not pass book.
         Dim ChessGame As Chess
-        If OpeningBook(0, 0) = "ERROR" Then
-            ChessGame = New Chess()
-        Else
-            ChessGame = New Chess(OpeningBook)
-        End If
+        If OpeningBook.Count > 0 Then ChessGame = New Chess(OpeningBook) : Else ChessGame = New Chess()
         ChessGame.Show()
         Me.Hide()
     End Sub
@@ -455,7 +451,7 @@ Public Class MainMenu
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.2)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v7.0)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
 End Class

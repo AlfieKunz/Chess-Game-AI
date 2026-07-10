@@ -121,6 +121,7 @@ Partial Class Chess
         Me.TrainingTimer = New System.Windows.Forms.Timer(Me.components)
         Me.InfoBtn = New System.Windows.Forms.Button()
         Me.UseBook = New System.Windows.Forms.CheckBox()
+        Me.PieceHeatMapBox = New System.Windows.Forms.CheckBox()
         Me.ColourChanger.SuspendLayout()
         CType(Me.WP8, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WP7, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -911,7 +912,7 @@ Partial Class Chess
         'ExitBtn
         '
         Me.ExitBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.ExitBtn.Location = New System.Drawing.Point(1009, 505)
+        Me.ExitBtn.Location = New System.Drawing.Point(1009, 515)
         Me.ExitBtn.Name = "ExitBtn"
         Me.ExitBtn.Size = New System.Drawing.Size(78, 40)
         Me.ExitBtn.TabIndex = 22
@@ -921,7 +922,7 @@ Partial Class Chess
         'UserTimeBox
         '
         Me.UserTimeBox.BackColor = System.Drawing.Color.WhiteSmoke
-        Me.UserTimeBox.Location = New System.Drawing.Point(962, 340)
+        Me.UserTimeBox.Location = New System.Drawing.Point(962, 335)
         Me.UserTimeBox.Name = "UserTimeBox"
         Me.UserTimeBox.ReadOnly = True
         Me.UserTimeBox.Size = New System.Drawing.Size(164, 20)
@@ -932,7 +933,7 @@ Partial Class Chess
         'UserTimeBar
         '
         Me.UserTimeBar.LargeChange = 10
-        Me.UserTimeBar.Location = New System.Drawing.Point(962, 364)
+        Me.UserTimeBar.Location = New System.Drawing.Point(962, 359)
         Me.UserTimeBar.Maximum = 60
         Me.UserTimeBar.Name = "UserTimeBar"
         Me.UserTimeBar.Size = New System.Drawing.Size(164, 45)
@@ -965,7 +966,7 @@ Partial Class Chess
         Me.QuiescenceBox.Checked = True
         Me.QuiescenceBox.CheckState = System.Windows.Forms.CheckState.Checked
         Me.QuiescenceBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.QuiescenceBox.Location = New System.Drawing.Point(983, 405)
+        Me.QuiescenceBox.Location = New System.Drawing.Point(983, 400)
         Me.QuiescenceBox.Name = "QuiescenceBox"
         Me.QuiescenceBox.Size = New System.Drawing.Size(123, 19)
         Me.QuiescenceBox.TabIndex = 26
@@ -988,7 +989,7 @@ Partial Class Chess
         '
         Me.AIEndlessMode.AutoSize = True
         Me.AIEndlessMode.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AIEndlessMode.Location = New System.Drawing.Point(1009, 430)
+        Me.AIEndlessMode.Location = New System.Drawing.Point(1009, 475)
         Me.AIEndlessMode.Name = "AIEndlessMode"
         Me.AIEndlessMode.Size = New System.Drawing.Size(70, 19)
         Me.AIEndlessMode.TabIndex = 26
@@ -1169,13 +1170,27 @@ Partial Class Chess
         Me.UseBook.AutoSize = True
         Me.UseBook.Enabled = False
         Me.UseBook.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.UseBook.Location = New System.Drawing.Point(977, 455)
+        Me.UseBook.Location = New System.Drawing.Point(977, 450)
         Me.UseBook.Name = "UseBook"
         Me.UseBook.Size = New System.Drawing.Size(136, 19)
         Me.UseBook.TabIndex = 26
         Me.UseBook.Text = "Use Opening Book?"
         Me.UseBook.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         Me.UseBook.UseVisualStyleBackColor = True
+        '
+        'PieceHeatMapBox
+        '
+        Me.PieceHeatMapBox.AutoSize = True
+        Me.PieceHeatMapBox.Checked = True
+        Me.PieceHeatMapBox.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.PieceHeatMapBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.PieceHeatMapBox.Location = New System.Drawing.Point(970, 425)
+        Me.PieceHeatMapBox.Name = "PieceHeatMapBox"
+        Me.PieceHeatMapBox.Size = New System.Drawing.Size(152, 19)
+        Me.PieceHeatMapBox.TabIndex = 26
+        Me.PieceHeatMapBox.Text = "Use Piece Heat Maps?"
+        Me.PieceHeatMapBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.PieceHeatMapBox.UseVisualStyleBackColor = True
         '
         'Chess
         '
@@ -1191,6 +1206,7 @@ Partial Class Chess
         Me.Controls.Add(Me.AITerminator)
         Me.Controls.Add(Me.UseBook)
         Me.Controls.Add(Me.AIEndlessMode)
+        Me.Controls.Add(Me.PieceHeatMapBox)
         Me.Controls.Add(Me.QuiescenceBox)
         Me.Controls.Add(Me.UserTimeBar)
         Me.Controls.Add(Me.UserTimeBox)
@@ -1423,4 +1439,5 @@ Partial Class Chess
     Friend WithEvents TrainingTimer As Timer
     Friend WithEvents InfoBtn As Button
     Friend WithEvents UseBook As System.Windows.Forms.CheckBox
+    Friend WithEvents PieceHeatMapBox As CheckBox
 End Class

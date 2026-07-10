@@ -33,14 +33,12 @@ Public Class PieceLegalMoveGenerators
                     End If
                 Next
             Next
-            If WCanCastle.KS AndAlso WInCheck.IsInCheck = False Then
-                If Board(5, 7) = " " AndAlso Board(6, 7) = " " AndAlso Board(7, 7) = "R" AndAlso WhiteTFTable(5, 7) = "T" AndAlso WhiteTFTable(6, 7) = "T" Then
+            If Not WInCheck.IsInCheck Then
+                If WCanCastle.KS AndAlso Board(5, 7) = " " AndAlso Board(6, 7) = " " AndAlso WhiteTFTable(5, 7) = "T" AndAlso WhiteTFTable(6, 7) = "T" Then
                     LegalMoveArray(n) = 67 'Square king would go to to castle king-side.
                     n += 1
                 End If
-            End If
-            If WCanCastle.QS AndAlso WInCheck.IsInCheck = False Then
-                If Board(3, 7) = " " AndAlso Board(2, 7) = " " AndAlso Board(1, 7) = " " AndAlso Board(0, 7) = "R" AndAlso WhiteTFTable(3, 7) = "T" AndAlso WhiteTFTable(2, 7) = "T" Then
+                If WCanCastle.QS AndAlso Board(3, 7) = " " AndAlso Board(2, 7) = " " AndAlso Board(1, 7) = " " AndAlso WhiteTFTable(3, 7) = "T" AndAlso WhiteTFTable(2, 7) = "T" Then
                     LegalMoveArray(n) = 27 'Square king would go to to castle queen-side.
                     n += 1
                 End If
@@ -62,14 +60,14 @@ Public Class PieceLegalMoveGenerators
                 End If
                 If WhiteTFTable(CoorX, CoorY) <> "0" Then
                     'Code for pawn left captures.
-                    If WhiteTFTable(CoorX, CoorY) <> "1" AndAlso CoorX > 0 Then
+                    If CoorX > 0 AndAlso WhiteTFTable(CoorX, CoorY) <> "1" Then
                         If Char.IsLower(Board(CoorX - 1, CoorY - 1)) OrElse (CoorX - 1 & CoorY - 1 = EnPassant AndAlso WhiteTFTable(CoorX, CoorY) <> "4") Then
                             LegalMoveArray(n) = CoorX - 1 & CoorY - 1
                             n += 1
                         End If
                     End If
                     'Code for pawn right captures.
-                    If WhiteTFTable(CoorX, CoorY) <> "3" AndAlso CoorX < 7 Then
+                    If CoorX < 7 AndAlso WhiteTFTable(CoorX, CoorY) <> "3" Then
                         If Char.IsLower(Board(CoorX + 1, CoorY - 1)) OrElse (CoorX + 1 & CoorY - 1 = EnPassant AndAlso WhiteTFTable(CoorX, CoorY) <> "4") Then
                             LegalMoveArray(n) = CoorX + 1 & CoorY - 1
                             n += 1
@@ -83,41 +81,33 @@ Public Class PieceLegalMoveGenerators
             If WhiteTFTable(CoorX, CoorY) >= "5" Then
                 If CoorX >= 2 Then
                     For x = -1 To 1 Step 2
-                        If (CoorY + x) >= 0 AndAlso (CoorY + x) <= 7 Then
-                            If Not Char.IsUpper(Board(CoorX - 2, CoorY + x)) Then
-                                LegalMoveArray(n) = (CoorX - 2) & (CoorY + x)
-                                n += 1
-                            End If
+                        If (CoorY + x) >= 0 AndAlso (CoorY + x) <= 7 AndAlso Not Char.IsUpper(Board(CoorX - 2, CoorY + x)) Then
+                            LegalMoveArray(n) = (CoorX - 2) & (CoorY + x)
+                            n += 1
                         End If
                     Next
                 End If
                 If CoorX <= 5 Then
                     For x = -1 To 1 Step 2
-                        If (CoorY + x) >= 0 AndAlso (CoorY + x) <= 7 Then
-                            If Not Char.IsUpper(Board(CoorX + 2, CoorY + x)) Then
-                                LegalMoveArray(n) = (CoorX + 2) & (CoorY + x)
-                                n += 1
-                            End If
+                        If (CoorY + x) >= 0 AndAlso (CoorY + x) <= 7 AndAlso Not Char.IsUpper(Board(CoorX + 2, CoorY + x)) Then
+                            LegalMoveArray(n) = (CoorX + 2) & (CoorY + x)
+                            n += 1
                         End If
                     Next
                 End If
                 If CoorY >= 2 Then
                     For x = -1 To 1 Step 2
-                        If (CoorX + x) >= 0 AndAlso (CoorX + x) <= 7 Then
-                            If Not Char.IsUpper(Board(CoorX + x, CoorY - 2)) Then
-                                LegalMoveArray(n) = (CoorX + x) & (CoorY - 2)
-                                n += 1
-                            End If
+                        If (CoorX + x) >= 0 AndAlso (CoorX + x) <= 7 AndAlso Not Char.IsUpper(Board(CoorX + x, CoorY - 2)) Then
+                            LegalMoveArray(n) = (CoorX + x) & (CoorY - 2)
+                            n += 1
                         End If
                     Next
                 End If
                 If CoorY <= 5 Then
                     For x = -1 To 1 Step 2
-                        If (CoorX + x) >= 0 AndAlso (CoorX + x) <= 7 Then
-                            If Not Char.IsUpper(Board(CoorX + x, CoorY + 2)) Then
-                                LegalMoveArray(n) = (CoorX + x) & (CoorY + 2)
-                                n += 1
-                            End If
+                        If (CoorX + x) >= 0 AndAlso (CoorX + x) <= 7 AndAlso Not Char.IsUpper(Board(CoorX + x, CoorY + 2)) Then
+                            LegalMoveArray(n) = (CoorX + x) & (CoorY + 2)
+                            n += 1
                         End If
                     Next
                 End If
@@ -131,7 +121,7 @@ Public Class PieceLegalMoveGenerators
                         If Char.IsUpper(Board(x, CoorY)) Then
                             Exit For
                         Else
-                            LegalMoveArray(n) = (x) & (CoorY)
+                            LegalMoveArray(n) = x & CoorY
                             n += 1
                             If Board(x, CoorY) <> " " Then Exit For
                         End If
@@ -140,7 +130,7 @@ Public Class PieceLegalMoveGenerators
                         If Char.IsUpper(Board(x, CoorY)) Then
                             Exit For
                         Else
-                            LegalMoveArray(n) = (x) & (CoorY)
+                            LegalMoveArray(n) = x & CoorY
                             n += 1
                             If Board(x, CoorY) <> " " Then Exit For
                         End If
@@ -152,7 +142,7 @@ Public Class PieceLegalMoveGenerators
                         If Char.IsUpper(Board(CoorX, y)) Then
                             Exit For
                         Else
-                            LegalMoveArray(n) = (CoorX) & (y)
+                            LegalMoveArray(n) = CoorX & y
                             n += 1
                             If Board(CoorX, y) <> " " Then Exit For
                         End If
@@ -162,7 +152,7 @@ Public Class PieceLegalMoveGenerators
                         If Char.IsUpper(Board(CoorX, y)) Then
                             Exit For
                         Else
-                            LegalMoveArray(n) = (CoorX) & (y)
+                            LegalMoveArray(n) = CoorX & y
                             n += 1
                             If Board(CoorX, y) <> " " Then Exit For
                         End If
@@ -257,18 +247,17 @@ Public Class PieceLegalMoveGenerators
                     End If
                 Next
             Next
-            If BCanCastle.KS AndAlso BInCheck.IsInCheck = False Then
-                If Board(5, 0) = " " AndAlso Board(6, 0) = " " AndAlso Board(7, 0) = "r" AndAlso BlackTFTable(5, 0) = "T" AndAlso BlackTFTable(6, 0) = "T" Then
+            If Not BInCheck.IsInCheck Then
+                If BCanCastle.KS AndAlso Board(5, 0) = " " AndAlso Board(6, 0) = " " AndAlso BlackTFTable(5, 0) = "T" AndAlso BlackTFTable(6, 0) = "T" Then
                     LegalMoveArray(n) = 60
                     n += 1
                 End If
-            End If
-            If BCanCastle.QS AndAlso BInCheck.IsInCheck = False Then
-                If Board(3, 0) = " " AndAlso Board(2, 0) = " " AndAlso Board(1, 0) = " " AndAlso Board(0, 0) = "r" AndAlso BlackTFTable(3, 0) = "T" AndAlso BlackTFTable(2, 0) = "T" Then
+                If BCanCastle.QS AndAlso Board(3, 0) = " " AndAlso Board(2, 0) = " " AndAlso Board(1, 0) = " " AndAlso BlackTFTable(3, 0) = "T" AndAlso BlackTFTable(2, 0) = "T" Then
                     LegalMoveArray(n) = 20
                     n += 1
                 End If
             End If
+
 
 
         ElseIf Board(CoorX, CoorY) = "p" Then 'Legal Moves for the Pawn (along with First Moves.)
@@ -284,13 +273,13 @@ Public Class PieceLegalMoveGenerators
                     End If
                 End If
                 If BlackTFTable(CoorX, CoorY) <> "0" Then
-                    If BlackTFTable(CoorX, CoorY) <> "3" AndAlso CoorX > 0 Then
+                    If CoorX > 0 AndAlso BlackTFTable(CoorX, CoorY) <> "3" Then
                         If Char.IsUpper(Board(CoorX - 1, CoorY + 1)) OrElse (CoorX - 1 & CoorY + 1 = EnPassant AndAlso BlackTFTable(CoorX, CoorY) <> "4") Then
                             LegalMoveArray(n) = CoorX - 1 & CoorY + 1
                             n += 1
                         End If
                     End If
-                    If BlackTFTable(CoorX, CoorY) <> "1" AndAlso CoorX < 7 Then
+                    If CoorX < 7 AndAlso BlackTFTable(CoorX, CoorY) <> "1" Then
                         If Char.IsUpper(Board(CoorX + 1, CoorY + 1)) OrElse (CoorX + 1 & CoorY + 1 = EnPassant AndAlso BlackTFTable(CoorX, CoorY) <> "4") Then
                             LegalMoveArray(n) = CoorX + 1 & CoorY + 1
                             n += 1
@@ -304,41 +293,33 @@ Public Class PieceLegalMoveGenerators
             If BlackTFTable(CoorX, CoorY) >= "5" Then
                 If CoorX >= 2 Then
                     For x = -1 To 1 Step 2
-                        If (CoorY + x) >= 0 AndAlso (CoorY + x) <= 7 Then
-                            If Not Char.IsLower(Board(CoorX - 2, CoorY + x)) Then
-                                LegalMoveArray(n) = (CoorX - 2) & (CoorY + x)
-                                n += 1
+                        If (CoorY + x) >= 0 AndAlso (CoorY + x) <= 7 AndAlso Not Char.IsLower(Board(CoorX - 2, CoorY + x)) Then
+                            LegalMoveArray(n) = (CoorX - 2) & (CoorY + x)
+                            n += 1
                             End If
-                        End If
                     Next
                 End If
                 If CoorX <= 5 Then
                     For x = -1 To 1 Step 2
-                        If (CoorY + x) >= 0 AndAlso (CoorY + x) <= 7 Then
-                            If Not Char.IsLower(Board(CoorX + 2, CoorY + x)) Then
-                                LegalMoveArray(n) = (CoorX + 2) & (CoorY + x)
-                                n += 1
-                            End If
+                        If (CoorY + x) >= 0 AndAlso (CoorY + x) <= 7 AndAlso Not Char.IsLower(Board(CoorX + 2, CoorY + x)) Then
+                            LegalMoveArray(n) = (CoorX + 2) & (CoorY + x)
+                            n += 1
                         End If
                     Next
                 End If
                 If CoorY >= 2 Then
                     For x = -1 To 1 Step 2
-                        If (CoorX + x) >= 0 AndAlso (CoorX + x) <= 7 Then
-                            If Not Char.IsLower(Board(CoorX + x, CoorY - 2)) Then
-                                LegalMoveArray(n) = (CoorX + x) & (CoorY - 2)
-                                n += 1
-                            End If
+                        If (CoorX + x) >= 0 AndAlso (CoorX + x) <= 7 AndAlso Not Char.IsLower(Board(CoorX + x, CoorY - 2)) Then
+                            LegalMoveArray(n) = (CoorX + x) & (CoorY - 2)
+                            n += 1
                         End If
                     Next
                 End If
                 If CoorY <= 5 Then
                     For x = -1 To 1 Step 2
-                        If (CoorX + x) >= 0 AndAlso (CoorX + x) <= 7 Then
-                            If Not Char.IsLower(Board(CoorX + x, CoorY + 2)) Then
-                                LegalMoveArray(n) = (CoorX + x) & (CoorY + 2)
-                                n += 1
-                            End If
+                        If (CoorX + x) >= 0 AndAlso (CoorX + x) <= 7 AndAlso Not Char.IsLower(Board(CoorX + x, CoorY + 2)) Then
+                            LegalMoveArray(n) = (CoorX + x) & (CoorY + 2)
+                            n += 1
                         End If
                     Next
                 End If
@@ -352,7 +333,7 @@ Public Class PieceLegalMoveGenerators
                         If Char.IsLower(Board(x, CoorY)) Then
                             Exit For
                         Else
-                            LegalMoveArray(n) = (x) & (CoorY)
+                            LegalMoveArray(n) = x & CoorY
                             n += 1
                             If Board(x, CoorY) <> " " Then Exit For
                         End If
@@ -361,7 +342,7 @@ Public Class PieceLegalMoveGenerators
                         If Char.IsLower(Board(x, CoorY)) Then
                             Exit For
                         Else
-                            LegalMoveArray(n) = (x) & (CoorY)
+                            LegalMoveArray(n) = x & CoorY
                             n += 1
                             If Board(x, CoorY) <> " " Then Exit For
                         End If
@@ -373,7 +354,7 @@ Public Class PieceLegalMoveGenerators
                         If Char.IsLower(Board(CoorX, y)) Then
                             Exit For
                         Else
-                            LegalMoveArray(n) = (CoorX) & (y)
+                            LegalMoveArray(n) = CoorX & y
                             n += 1
                             If Board(CoorX, y) <> " " Then Exit For
                         End If
@@ -383,7 +364,7 @@ Public Class PieceLegalMoveGenerators
                         If Char.IsLower(Board(CoorX, y)) Then
                             Exit For
                         Else
-                            LegalMoveArray(n) = (CoorX) & (y)
+                            LegalMoveArray(n) = CoorX & y
                             n += 1
                             If Board(CoorX, y) <> " " Then Exit For
                         End If
