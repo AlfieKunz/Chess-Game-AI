@@ -54,7 +54,7 @@ Public Class CoreMethods
                     End If
                     x += 1
                 Case "0" To "8" 'Set of empty squares.
-                    For m = 1 To CInt(CStr((FEN(n))))
+                    For m = 1 To Val(FEN(n))
                         tempArray(x, y) = " "
                         x += 1
                     Next
@@ -85,7 +85,7 @@ Public Class CoreMethods
                             BCanCastle.QS = True
                         ElseIf FEN(m) >= "a" AndAlso FEN(m) <= "h" Then
                             'converts the a-h coordinate To the more computer-friendly index from 0-7 (eg: h3 --> 75)
-                            EnPassant = Asc(FEN(m)) - 97 & 8 - CStr(FEN(m + 1))
+                            EnPassant = Asc(FEN(m)) - 97 & 8 - Val(FEN(m + 1))
                         End If
                     Next
                     Exit For
@@ -127,7 +127,7 @@ Public Class CoreMethods
         If ConvertToFEN.EndsWith(" ") Then ConvertToFEN &= "-" '= therefore no castling privileges
         If EnPassant <> "-" Then
             'converts the computer-friendly index from 0-7 into the more human-friendly a-h coordinate (eg: 75 -> h3)
-            ConvertToFEN &= " " & Chr(CStr(EnPassant(0)) + 97) & 8 - CStr(EnPassant(1)) & " 0 1"
+            ConvertToFEN &= " " & Chr(Val(EnPassant(0)) + 97) & 8 - Val(EnPassant(1)) & " 0 1"
         Else
             ConvertToFEN &= " - 0 1" 'represents the move numbers for a standard position.
         End If
@@ -307,7 +307,7 @@ Public Class CoreMethods
                     For x = (CoorX + 1) To 7
                         If BlackTFTable(x, CoorY) = "T" Then BlackTFTable(x, CoorY) = "F"
                         If Char.IsUpper(Board(x, CoorY)) Then
-                            If Board(x, CoorY) = "P" AndAlso x & CoorY + 1 = EnPassant AndAlso CInt(CStr(BKPos(0))) > x AndAlso CInt(CStr(BKPos(1))) = CoorY Then
+                            If Board(x, CoorY) = "P" AndAlso x & CoorY + 1 = EnPassant AndAlso Val(BKPos(0)) > x AndAlso Val(BKPos(1)) = CoorY Then
                                 'Initiate pin checks (inc friendly-first EnPassant pins).
                                 For m = x + 2 To 7
                                     If Board(m, CoorY) = "k" Then
@@ -329,7 +329,7 @@ Public Class CoreMethods
                                 Exit For
                             End If
                             n += 1
-                            If Char.IsLower(Board(x, CoorY)) AndAlso CInt(CStr(BKPos(0))) > x AndAlso CInt(CStr(BKPos(1))) = CoorY Then
+                            If Char.IsLower(Board(x, CoorY)) AndAlso Val(BKPos(0)) > x AndAlso Val(BKPos(1)) = CoorY Then
                                 'Initiate pin checks.
                                 For m = x + 1 To 7
                                     If Board(m, CoorY) = "k" Then
@@ -361,7 +361,7 @@ Public Class CoreMethods
                     For x = (CoorX - 1) To 0 Step -1
                         If BlackTFTable(x, CoorY) = "T" Then BlackTFTable(x, CoorY) = "F"
                         If Char.IsUpper(Board(x, CoorY)) Then
-                            If Board(x, CoorY) = "P" AndAlso x & CoorY + 1 = EnPassant AndAlso CInt(CStr(BKPos(0))) < x AndAlso CInt(CStr(BKPos(1))) = CoorY Then
+                            If Board(x, CoorY) = "P" AndAlso x & CoorY + 1 = EnPassant AndAlso Val(BKPos(0)) < x AndAlso Val(BKPos(1)) = CoorY Then
                                 For m = x - 2 To 0 Step -1
                                     If Board(m, CoorY) = "k" Then
                                         BlackTFTable(x - 1, CoorY) = "4"
@@ -380,7 +380,7 @@ Public Class CoreMethods
                                 Exit For
                             End If
                             n += 1
-                            If Char.IsLower(Board(x, CoorY)) AndAlso CInt(CStr(BKPos(0))) < x AndAlso CInt(CStr(BKPos(1))) = CoorY Then
+                            If Char.IsLower(Board(x, CoorY)) AndAlso Val(BKPos(0)) < x AndAlso Val(BKPos(1)) = CoorY Then
                                 For m = x - 1 To 0 Step -1
                                     If Board(m, CoorY) = "k" Then
                                         BlackTFTable(x, CoorY) = "2"
@@ -420,7 +420,7 @@ Public Class CoreMethods
                                 Exit For
                             End If
                             n += 1
-                            If Char.IsLower(Board(CoorX, y)) AndAlso CInt(CStr(BKPos(0))) = CoorX AndAlso CInt(CStr(BKPos(1))) > y Then
+                            If Char.IsLower(Board(CoorX, y)) AndAlso Val(BKPos(0)) = CoorX AndAlso Val(BKPos(1)) > y Then
                                 For m = y + 1 To 7
                                     If Board(CoorX, m) = "k" Then
                                         BlackTFTable(CoorX, y) = "0"
@@ -446,7 +446,7 @@ Public Class CoreMethods
                                 Exit For
                             End If
                             n += 1
-                            If Char.IsLower(Board(CoorX, y)) AndAlso CInt(CStr(BKPos(0))) = CoorX AndAlso CInt(CStr(BKPos(1))) < y Then
+                            If Char.IsLower(Board(CoorX, y)) AndAlso Val(BKPos(0)) = CoorX AndAlso Val(BKPos(1)) < y Then
                                 For m = y - 1 To 0 Step -1
                                     If Board(CoorX, m) = "k" Then
                                         BlackTFTable(CoorX, y) = "0"
@@ -485,7 +485,7 @@ Public Class CoreMethods
                                 Exit Do
                             End If
                             n += 1
-                            If Char.IsLower(Board(StartX, StartY)) AndAlso (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) AndAlso CInt(CStr(BKPos(0))) > CoorX Then
+                            If Char.IsLower(Board(StartX, StartY)) AndAlso (Val(BKPos(0)) - CoorX = Val(BKPos(1)) - CoorY) AndAlso Val(BKPos(0)) > CoorX Then
                                 o = StartX + 1
                                 p = StartY + 1
                                 Do Until o > 7 OrElse p > 7 'until the end of the board is reached.
@@ -521,10 +521,10 @@ Public Class CoreMethods
                                 Exit Do
                             End If
                             n += 1
-                            If Char.IsLower(Board(StartX, StartY)) AndAlso (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) AndAlso CInt(CStr(BKPos(0))) < CoorX Then
+                            If Char.IsLower(Board(StartX, StartY)) AndAlso (Val(BKPos(0)) - CoorX = Val(BKPos(1)) - CoorY) AndAlso Val(BKPos(0)) < CoorX Then
                                 o = StartX - 1
                                 p = StartY - 1
-                                Do Until o < 0 OrElse p < 0 
+                                Do Until o < 0 OrElse p < 0
                                     If Board(o, p) = "k" Then
                                         BlackTFTable(StartX, StartY) = "3"
                                         Exit Do
@@ -559,7 +559,7 @@ Public Class CoreMethods
                                 Exit Do
                             End If
                             n += 1
-                            If Char.IsLower(Board(StartX, StartY)) AndAlso (CInt(CStr(BKPos(0))) - CoorX = CoorY - CInt(CStr(BKPos(1)))) AndAlso CInt(CStr(BKPos(0))) > CoorX Then
+                            If Char.IsLower(Board(StartX, StartY)) AndAlso (Val(BKPos(0)) - CoorX = CoorY - Val(BKPos(1))) AndAlso Val(BKPos(0)) > CoorX Then
                                 o = StartX + 1
                                 p = StartY - 1
                                 Do Until o > 7 OrElse p < 0
@@ -596,7 +596,7 @@ Public Class CoreMethods
                                 Exit Do
                             End If
                             n += 1
-                            If Char.IsLower(Board(StartX, StartY)) AndAlso (CInt(CStr(BKPos(0))) - CoorX = CoorY - CInt(CStr(BKPos(1)))) AndAlso CInt(CStr(BKPos(0))) < CoorX Then
+                            If Char.IsLower(Board(StartX, StartY)) AndAlso (Val(BKPos(0)) - CoorX = CoorY - Val(BKPos(1))) AndAlso Val(BKPos(0)) < CoorX Then
                                 o = StartX - 1
                                 p = StartY + 1
                                 Do Until o < 0 OrElse p > 7
@@ -785,7 +785,7 @@ Public Class CoreMethods
                             If Board(x, CoorY) = "p" AndAlso x & CoorY - 1 = EnPassant Then
                                 For m = x + 2 To 7
                                     If Board(m, CoorY) = "K" Then
-                                        BlackTFTable(x + 1, CoorY) = "4"
+                                        WhiteTFTable(x + 1, CoorY) = "4"
                                         Exit For
                                     End If
                                     If Board(m, CoorY) <> " " Then Exit For
@@ -802,7 +802,7 @@ Public Class CoreMethods
                                 Exit For
                             End If
                             n += 1
-                            If Char.IsUpper(Board(x, CoorY)) AndAlso CInt(CStr(WKPos(0))) > x AndAlso CInt(CStr(WKPos(1))) = CoorY Then
+                            If Char.IsUpper(Board(x, CoorY)) AndAlso Val(WKPos(0)) > x AndAlso Val(WKPos(1)) = CoorY Then
                                 For m = x + 1 To 7
                                     If Board(m, CoorY) = "K" Then
                                         WhiteTFTable(x, CoorY) = "2"
@@ -812,7 +812,7 @@ Public Class CoreMethods
                                         If Board(m, CoorY) = "p" AndAlso m & CoorY - 1 = EnPassant Then
                                             For a = m + 1 To 7
                                                 If Board(a, CoorY) = "K" Then
-                                                    BlackTFTable(x, CoorY) = "4"
+                                                    WhiteTFTable(x, CoorY) = "4"
                                                     Exit For
                                                 End If
                                                 If Board(a, CoorY) <> " " Then Exit For
@@ -832,7 +832,7 @@ Public Class CoreMethods
                             If Board(x, CoorY) = "p" AndAlso x & CoorY - 1 = EnPassant Then
                                 For m = x - 2 To 0 Step -1
                                     If Board(m, CoorY) = "K" Then
-                                        BlackTFTable(x - 1, CoorY) = "4"
+                                        WhiteTFTable(x - 1, CoorY) = "4"
                                         Exit For
                                     End If
                                     If Board(m, CoorY) <> " " Then Exit For
@@ -848,7 +848,7 @@ Public Class CoreMethods
                                 Exit For
                             End If
                             n += 1
-                            If Char.IsUpper(Board(x, CoorY)) AndAlso CInt(CStr(WKPos(0))) < x AndAlso CInt(CStr(WKPos(1))) = CoorY Then
+                            If Char.IsUpper(Board(x, CoorY)) AndAlso Val(WKPos(0)) < x AndAlso Val(WKPos(1)) = CoorY Then
                                 For m = x - 1 To 0 Step -1
                                     If Board(m, CoorY) = "K" Then
                                         WhiteTFTable(x, CoorY) = "2"
@@ -858,7 +858,7 @@ Public Class CoreMethods
                                         If Board(m, CoorY) = "p" AndAlso m & CoorY - 1 = EnPassant Then
                                             For a = m - 1 To 0 Step -1
                                                 If Board(a, CoorY) = "K" Then
-                                                    BlackTFTable(x, CoorY) = "4"
+                                                    WhiteTFTable(x, CoorY) = "4"
                                                     Exit For
                                                 End If
                                                 If Board(a, CoorY) <> " " Then Exit For
@@ -887,7 +887,7 @@ Public Class CoreMethods
                                 Exit For
                             End If
                             n += 1
-                            If Char.IsUpper(Board(CoorX, y)) AndAlso CInt(CStr(WKPos(0))) = CoorX AndAlso CInt(CStr(WKPos(1))) > y Then
+                            If Char.IsUpper(Board(CoorX, y)) AndAlso Val(WKPos(0)) = CoorX AndAlso Val(WKPos(1)) > y Then
                                 For m = y + 1 To 7
                                     If Board(CoorX, m) = "K" Then
                                         WhiteTFTable(CoorX, y) = "0"
@@ -913,7 +913,7 @@ Public Class CoreMethods
                                 Exit For
                             End If
                             n += 1
-                            If Char.IsUpper(Board(CoorX, y)) AndAlso CInt(CStr(WKPos(0))) = CoorX AndAlso CInt(CStr(WKPos(1))) < y Then
+                            If Char.IsUpper(Board(CoorX, y)) AndAlso Val(WKPos(0)) = CoorX AndAlso Val(WKPos(1)) < y Then
                                 For m = y - 1 To 0 Step -1
                                     If Board(CoorX, m) = "K" Then
                                         WhiteTFTable(CoorX, y) = "0"
@@ -951,7 +951,7 @@ Public Class CoreMethods
                                 Exit Do
                             End If
                             n += 1
-                            If Char.IsUpper(Board(StartX, StartY)) AndAlso (CInt(CStr(WKPos(0))) - CoorX = CInt(CStr(WKPos(1))) - CoorY) AndAlso CInt(CStr(WKPos(0))) > CoorX Then
+                            If Char.IsUpper(Board(StartX, StartY)) AndAlso (Val(WKPos(0)) - CoorX = Val(WKPos(1)) - CoorY) AndAlso Val(WKPos(0)) > CoorX Then
                                 o = StartX + 1
                                 p = StartY + 1
                                 Do Until o > 7 OrElse p > 7
@@ -987,7 +987,7 @@ Public Class CoreMethods
                                 Exit Do
                             End If
                             n += 1
-                            If Char.IsUpper(Board(StartX, StartY)) AndAlso (CInt(CStr(WKPos(0))) - CoorX = CInt(CStr(WKPos(1))) - CoorY) AndAlso CInt(CStr(WKPos(0))) < CoorX Then
+                            If Char.IsUpper(Board(StartX, StartY)) AndAlso (Val(WKPos(0)) - CoorX = Val(WKPos(1)) - CoorY) AndAlso Val(WKPos(0)) < CoorX Then
                                 o = StartX - 1
                                 p = StartY - 1
                                 Do Until o < 0 OrElse p < 0
@@ -1025,7 +1025,7 @@ Public Class CoreMethods
                                 Exit Do
                             End If
                             n += 1
-                            If Char.IsUpper(Board(StartX, StartY)) AndAlso (CInt(CStr(WKPos(0))) - CoorX = CoorY - CInt(CStr(WKPos(1)))) AndAlso CInt(CStr(WKPos(0))) > CoorX Then
+                            If Char.IsUpper(Board(StartX, StartY)) AndAlso (Val(WKPos(0)) - CoorX = CoorY - Val(WKPos(1))) AndAlso Val(WKPos(0)) > CoorX Then
                                 o = StartX + 1
                                 p = StartY - 1
                                 Do Until o > 7 OrElse p < 0
@@ -1061,7 +1061,7 @@ Public Class CoreMethods
                                 Exit Do
                             End If
                             n += 1
-                            If Char.IsUpper(Board(StartX, StartY)) AndAlso (CInt(CStr(WKPos(0))) - CoorX = CoorY - CInt(CStr(WKPos(1)))) AndAlso CInt(CStr(WKPos(0))) < CoorX Then
+                            If Char.IsUpper(Board(StartX, StartY)) AndAlso (Val(WKPos(0)) - CoorX = CoorY - Val(WKPos(1))) AndAlso Val(WKPos(0)) < CoorX Then
                                 o = StartX - 1
                                 p = StartY + 1
                                 Do Until o < 0 OrElse p > 7
@@ -1114,10 +1114,10 @@ Public Class CoreMethods
                 For x = 0 To 7
                     If Char.IsLower(Board(x, y)) Then
                         'Calculates distances between piece and the enemy king.
-                        dx = Math.Abs(CStr(KPos(0)) - x)
-                        dy = Math.Abs(CStr(KPos(1)) - y)
+                        dx = Math.Abs(Val(KPos(0)) - x)
+                        dy = Math.Abs(Val(KPos(1)) - y)
                         If Board(x, y) = "p" Then
-                            If Math.Max(dx, dy) <= 2 AndAlso CStr(KPos(1)) >= y Then
+                            If Math.Max(dx, dy) <= 2 AndAlso Val(KPos(1)) >= y Then
                                 'Pawn could influence king motion - calculate legal moves.
                                 BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
@@ -1152,10 +1152,10 @@ Public Class CoreMethods
             For y = 0 To 7
                 For x = 0 To 7
                     If Char.IsUpper(Board(x, y)) Then
-                        dx = Math.Abs(CStr(KPos(0)) - x)
-                        dy = Math.Abs(CStr(KPos(1)) - y)
+                        dx = Math.Abs(Val(KPos(0)) - x)
+                        dy = Math.Abs(Val(KPos(1)) - y)
                         If Board(x, y) = "P" Then
-                            If Math.Max(dx, dy) <= 2 AndAlso CStr(KPos(1)) <= y Then
+                            If Math.Max(dx, dy) <= 2 AndAlso Val(KPos(1)) <= y Then
                                 WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "B" Then
@@ -1218,7 +1218,7 @@ Public Class CoreMethods
         'end coordinates.
         If MovedPiece <> " " Then
             If MovedPiece = "P" Then
-                MoveConverter = Chr(CStr(TempMove.OldMoveX) + 97)
+                MoveConverter = Chr(Val(TempMove.OldMoveX) + 97)
                 'Code for detecting castling.
             ElseIf MovedPiece = "K" AndAlso TempMove.OldMoveX = 4 AndAlso (TempMove.NewMoveY = 0 OrElse TempMove.NewMoveY = 7) Then
                 If TempMove.NewMoveX = 6 Then 'Is king-side castling.
@@ -1233,9 +1233,9 @@ Public Class CoreMethods
             End If
             If Board(TempMove.NewMoveX, TempMove.NewMoveY) <> " " OrElse (UCase(MovedPiece) = "P" AndAlso EnPassant = TempMove.NewMoveX & TempMove.NewMoveY) Then
                 'Is a capture move - add an "x" followed by the coordinates of the captured piece.
-                MoveConverter &= "x" & Chr(CStr(TempMove.NewMoveX) + 97) & 8 - TempMove.NewMoveY
+                MoveConverter &= "x" & Chr(Val(TempMove.NewMoveX) + 97) & 8 - TempMove.NewMoveY
             Else
-                If MovedPiece <> "P" Then MoveConverter &= Chr(CStr(TempMove.NewMoveX) + 97)
+                If MovedPiece <> "P" Then MoveConverter &= Chr(Val(TempMove.NewMoveX) + 97)
                 MoveConverter &= 8 - TempMove.NewMoveY
             End If
             'Code for pawn promotions.
@@ -1243,6 +1243,144 @@ Public Class CoreMethods
         Else
             Return "ERROR"
         End If
+    End Function
+
+    'Function that converts a standard chess move (eg: e4, Nf4, Ka2) into a Move.
+    Public Function ConvertToMove(ByVal InputMove As String, ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal KPos As String, ByVal TFTable(,) As Char)
+        'Removes extra data from move (that is not useful to my system).
+        InputMove = InputMove.TrimEnd(CChar("+"))
+        If InputMove(InputMove.Length - 2) = "=" Then InputMove = InputMove.Substring(0, InputMove.Length - 2)
+        Dim ResultMove As New Move
+        'Sets end position to the last 2 characters of the move.
+        ResultMove.NewMoveX = Asc(InputMove(InputMove.Length - 2)) - 97
+        ResultMove.NewMoveY = 8 - Val(InputMove(InputMove.Length - 1))
+        Select Case InputMove(0)
+            Case "B", "N", "R", "Q"
+                Dim Constraint As String = InputMove.Substring(1, InputMove.Length - 3) 'Constraint is used to specify which piece should move to the square (if there are multiple to choose from).
+                Constraint = Constraint.TrimEnd(CChar("x"))
+                If Constraint.Length = 2 Then 'Constraint represents starting coordinates.
+                    ResultMove.OldMoveX = Asc(Constraint(0)) - 97
+                    ResultMove.OldMoveY = 8 - Val(Constraint(1))
+                Else
+                    Dim TempPiece As Char 'Represents the piece we are looking for.
+                    If isWhite Then TempPiece = InputMove(0) Else TempPiece = LCase(InputMove(0))
+                    'Creates temporary, empty board that holds TempPiece at the ending coordinates.
+                    Dim EmptyBoard(7, 7) As Char
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            EmptyBoard(x, y) = " "
+                        Next
+                    Next
+                    EmptyBoard(ResultMove.NewMoveX, ResultMove.NewMoveY) = TempPiece
+                    Dim LegalMoves(27) As String
+                    Dim TestMoves(27) As String
+                    Array.Copy(MasterTrueTable, TrueTable, 64)
+                    'Calculate the legal moves of TempPiece on EmptyBoard. This produces a set of coordinates that that piece can move to (one of which will be the starting coordinates).
+                    If isWhite Then
+                        LegalMoves = WhitePieceLegalMoves(EmptyBoard, ResultMove.NewMoveX, ResultMove.NewMoveY, TrueTable, TrueTable, "", NotInCheck, NotInCheck, CannotCastle, "-")
+                    Else
+                        LegalMoves = BlackPieceLegalMoves(EmptyBoard, ResultMove.NewMoveX, ResultMove.NewMoveY, TrueTable, TrueTable, "", NotInCheck, NotInCheck, CannotCastle, "-")
+                    End If
+
+                    'Checks if any of these moves contains TempPiece on Board. If so then that piece is the one that is moving, and hence we set that to be the starting coordinates.
+                    Dim MatchedMove As Byte
+                    For n = 1 To Val(LegalMoves(0)) - 1
+                        If Board(Val(LegalMoves(n)(0)), Val(LegalMoves(n)(1))) = TempPiece Then
+                            'Matching piece found - check if it agrees with any Constraints.
+                            If Constraint = "" Then
+                                'Tests if move is valid by playing it on the original Board.
+                                If isWhite Then
+                                    TestMoves = WhitePieceLegalMoves(Board, Val(LegalMoves(n)(0)), Val(LegalMoves(n)(1)), TFTable, TrueTable, KPos, NotInCheck, NotInCheck, CannotCastle, "-")
+                                Else
+                                    TestMoves = BlackPieceLegalMoves(Board, Val(LegalMoves(n)(0)), Val(LegalMoves(n)(1)), TFTable, TrueTable, KPos, NotInCheck, NotInCheck, CannotCastle, "-")
+                                End If
+                                For m = 1 To Val(TestMoves(0)) - 1
+                                    If Val(TestMoves(m)(0)) = ResultMove.NewMoveX AndAlso Val(TestMoves(m)(1)) = ResultMove.NewMoveY Then
+                                        MatchedMove = n
+                                        Exit For
+                                    End If
+                                Next
+                                If MatchedMove <> 0 Then Exit For
+                            Else
+                                Select Case Constraint
+                                    Case "a" To "h" 'Row constraint - only accept move if its file agrees with the constraint's.
+                                        If Asc(Constraint) - 97 = Val(LegalMoves(n)(0)) Then
+                                            'Tests if move is valid by playing it on the original Board.
+                                            If isWhite Then
+                                                TestMoves = WhitePieceLegalMoves(Board, Val(LegalMoves(n)(0)), Val(LegalMoves(n)(1)), TFTable, TrueTable, KPos, NotInCheck, NotInCheck, CannotCastle, "-")
+                                            Else
+                                                TestMoves = BlackPieceLegalMoves(Board, Val(LegalMoves(n)(0)), Val(LegalMoves(n)(1)), TFTable, TrueTable, KPos, NotInCheck, NotInCheck, CannotCastle, "-")
+                                            End If
+                                            For m = 1 To Val(TestMoves(0)) - 1
+                                                If Val(TestMoves(m)(0)) = ResultMove.NewMoveX AndAlso Val(TestMoves(m)(1)) = ResultMove.NewMoveY Then
+                                                    MatchedMove = n
+                                                    Exit For
+                                                End If
+                                            Next
+                                            If MatchedMove <> 0 Then Exit For
+                                        End If
+                                    Case Else 'Rank constraint - only accept move if its rank agrees with the constraint's.
+                                        If 8 - Constraint = Val(LegalMoves(n)(1)) Then
+                                            'Tests if move is valid by playing it on the original Board.
+                                            If isWhite Then
+                                                TestMoves = WhitePieceLegalMoves(Board, Val(LegalMoves(n)(0)), Val(LegalMoves(n)(1)), TFTable, TrueTable, KPos, NotInCheck, NotInCheck, CannotCastle, "-")
+                                            Else
+                                                TestMoves = BlackPieceLegalMoves(Board, Val(LegalMoves(n)(0)), Val(LegalMoves(n)(1)), TFTable, TrueTable, KPos, NotInCheck, NotInCheck, CannotCastle, "-")
+                                            End If
+                                            For m = 1 To Val(TestMoves(0)) - 1
+                                                If Val(TestMoves(m)(0)) = ResultMove.NewMoveX AndAlso Val(TestMoves(m)(1)) = ResultMove.NewMoveY Then
+                                                    MatchedMove = n
+                                                    Exit For
+                                                End If
+                                            Next
+                                            If MatchedMove <> 0 Then Exit For
+                                        End If
+                                End Select
+                            End If
+                        End If
+                    Next
+                    If MatchedMove = 0 Then 'No Move Found.
+                        Console.WriteLine("Unable to interpret move given constraints.")
+                        Return Nothing
+                    Else 'Sets starting coordinates.
+                        ResultMove.OldMoveX = LegalMoves(MatchedMove)(0)
+                        ResultMove.OldMoveY = LegalMoves(MatchedMove)(1)
+                    End If
+                End If
+
+            Case "K", "O" 'As there is only one king for each player, we can easily retrieve the starting coordinates.
+                ResultMove.OldMoveX = Val(KPos(0))
+                ResultMove.OldMoveY = Val(KPos(1))
+                'Code for castling.
+                If InputMove = "O-O" Then
+                    ResultMove.NewMoveX = 6
+                    ResultMove.NewMoveY = 7 - (7 * (Val(isWhite) + 1))
+                ElseIf InputMove = "O-O-O" Then
+                    ResultMove.NewMoveX = 2
+                    ResultMove.NewMoveY = 7 - (7 * (Val(isWhite) + 1))
+                End If
+
+            Case Else 'Is a pawn.
+                ResultMove.OldMoveX = Asc(InputMove(0)) - 97
+                If InputMove.Length = 2 Then 'No Capture - pawn is moving 1 or 2 squares.
+                    Dim TempPiece As Char 'Represents the piece we are looking for.
+                    If isWhite Then TempPiece = "P" Else TempPiece = "p"
+                    For n = 1 To 2
+                        'Searches 1 and 2 squares behind the end square, looking for TempPiece.
+                        If Board(ResultMove.OldMoveX, (ResultMove.NewMoveY - n * (2 * Val(isWhite) + 1))) = TempPiece Then
+                            'Pawn found - set starting coordinates.
+                            ResultMove.OldMoveY = (ResultMove.NewMoveY - n * (2 * Val(isWhite) + 1))
+                            Exit Select
+                        End If
+                    Next
+                    'No pawn found.
+                    Console.WriteLine("Unable to interpret move given constraints.")
+                    Return Nothing
+                Else 'is a pawn capture move - set starting coordinates accordingly.
+                    ResultMove.OldMoveY = ResultMove.NewMoveY - (2 * Val(isWhite) + 1)
+                End If
+        End Select
+        Return ResultMove
     End Function
 
 End Class

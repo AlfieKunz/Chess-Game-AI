@@ -69,6 +69,9 @@ Partial Class MainMenu
         Me.TwoPlayer = New System.Windows.Forms.Button()
         Me.Title = New System.Windows.Forms.Label()
         Me.Credits = New System.Windows.Forms.Label()
+        Me.PlayBtn = New System.Windows.Forms.Button()
+        Me.Training = New System.Windows.Forms.Button()
+        Me.PlayOptions = New System.Windows.Forms.Panel()
         CType(Me.RowHider8, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.RowHider7, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.RowHider6, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -109,6 +112,7 @@ Partial Class MainMenu
         CType(Me.WB1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.PlayOptions.SuspendLayout()
         Me.SuspendLayout()
         '
         'RowHider8
@@ -562,11 +566,11 @@ Partial Class MainMenu
         Me.OnePlayer.Cursor = System.Windows.Forms.Cursors.Hand
         Me.OnePlayer.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.OnePlayer.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.OnePlayer.Location = New System.Drawing.Point(222, 9)
+        Me.OnePlayer.Location = New System.Drawing.Point(0, 0)
         Me.OnePlayer.Name = "OnePlayer"
-        Me.OnePlayer.Size = New System.Drawing.Size(120, 60)
+        Me.OnePlayer.Size = New System.Drawing.Size(75, 75)
         Me.OnePlayer.TabIndex = 3
-        Me.OnePlayer.Text = "1-Player"
+        Me.OnePlayer.Text = "1P"
         Me.OnePlayer.UseVisualStyleBackColor = False
         '
         'TwoPlayer
@@ -576,11 +580,11 @@ Partial Class MainMenu
         Me.TwoPlayer.Cursor = System.Windows.Forms.Cursors.Hand
         Me.TwoPlayer.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.TwoPlayer.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.TwoPlayer.Location = New System.Drawing.Point(465, 9)
+        Me.TwoPlayer.Location = New System.Drawing.Point(77, 0)
         Me.TwoPlayer.Name = "TwoPlayer"
-        Me.TwoPlayer.Size = New System.Drawing.Size(120, 60)
+        Me.TwoPlayer.Size = New System.Drawing.Size(75, 75)
         Me.TwoPlayer.TabIndex = 3
-        Me.TwoPlayer.Text = "2-Player"
+        Me.TwoPlayer.Text = "2P"
         Me.TwoPlayer.UseVisualStyleBackColor = False
         '
         'Title
@@ -606,6 +610,44 @@ Partial Class MainMenu
         Me.Credits.TabIndex = 37
         Me.Credits.Text = "Created by: Alfie Kunz - 2021-2023"
         '
+        'PlayBtn
+        '
+        Me.PlayBtn.BackColor = System.Drawing.Color.Silver
+        Me.PlayBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None
+        Me.PlayBtn.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.PlayBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.PlayBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.PlayBtn.Location = New System.Drawing.Point(222, 9)
+        Me.PlayBtn.Name = "PlayBtn"
+        Me.PlayBtn.Size = New System.Drawing.Size(120, 60)
+        Me.PlayBtn.TabIndex = 38
+        Me.PlayBtn.Text = "Play!"
+        Me.PlayBtn.UseVisualStyleBackColor = False
+        '
+        'Training
+        '
+        Me.Training.BackColor = System.Drawing.Color.Silver
+        Me.Training.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None
+        Me.Training.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.Training.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Training.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Training.Location = New System.Drawing.Point(465, 9)
+        Me.Training.Name = "Training"
+        Me.Training.Size = New System.Drawing.Size(120, 60)
+        Me.Training.TabIndex = 38
+        Me.Training.Text = "Training"
+        Me.Training.UseVisualStyleBackColor = False
+        '
+        'PlayOptions
+        '
+        Me.PlayOptions.BackColor = System.Drawing.Color.Transparent
+        Me.PlayOptions.Controls.Add(Me.OnePlayer)
+        Me.PlayOptions.Controls.Add(Me.TwoPlayer)
+        Me.PlayOptions.Location = New System.Drawing.Point(24, 9)
+        Me.PlayOptions.Name = "PlayOptions"
+        Me.PlayOptions.Size = New System.Drawing.Size(152, 75)
+        Me.PlayOptions.TabIndex = 39
+        '
         'MainMenu
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -613,6 +655,9 @@ Partial Class MainMenu
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(600, 600)
+        Me.Controls.Add(Me.PlayOptions)
+        Me.Controls.Add(Me.Training)
+        Me.Controls.Add(Me.PlayBtn)
         Me.Controls.Add(Me.Credits)
         Me.Controls.Add(Me.Title)
         Me.Controls.Add(Me.WP8)
@@ -647,9 +692,7 @@ Partial Class MainMenu
         Me.Controls.Add(Me.WB1)
         Me.Controls.Add(Me.WQ1)
         Me.Controls.Add(Me.WK1)
-        Me.Controls.Add(Me.TwoPlayer)
         Me.Controls.Add(Me.ExitBtn)
-        Me.Controls.Add(Me.OnePlayer)
         Me.Controls.Add(Me.Analysis)
         Me.Controls.Add(Me.RowHider8)
         Me.Controls.Add(Me.RowHider7)
@@ -705,6 +748,7 @@ Partial Class MainMenu
         CType(Me.WB1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.PlayOptions.ResumeLayout(False)
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -755,4 +799,7 @@ Partial Class MainMenu
     Friend WithEvents TwoPlayer As Button
     Friend WithEvents Title As Label
     Friend WithEvents Credits As Label
+    Friend WithEvents PlayBtn As Button
+    Friend WithEvents Training As Button
+    Friend WithEvents PlayOptions As Panel
 End Class
