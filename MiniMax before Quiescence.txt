@@ -1,0 +1,129 @@
+ Public Function MiniMax(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As String, ByVal BKPos As String, ByVal EnPassant As String, ByVal MaterialCount As Int16, ByVal Alpha As Decimal, ByVal Beta As Decimal, ByVal Quiescence As Boolean) As Integer
+        PositionsSearched += 1
+        Dim CurrentMove As NewMove
+        If depth > 0 Then
+            Dim BestMove As NewMove
+            Dim WInCheck As InCheck
+            WInCheck.IsInCheck = False 'WHERE DO I PUT THESE????
+            WInCheck.Piece1 = " "
+            WInCheck.DoubleCheck = False
+            Dim BInCheck As InCheck
+            BInCheck.IsInCheck = False
+            BInCheck.Piece1 = " "
+            BInCheck.DoubleCheck = False
+            If isWhite Then
+                BestMove.Score = Integer.MinValue
+                Dim WhiteTFTable(7, 7) As Char
+                'TempWInCheck.IsInCheck = False
+                FixTFTables(Board, True, WhiteTFTable, WKPos, WInCheck, NotInCheck, EnPassant)
+                Dim PieceMoves = CreateMoves(Board, True, WhiteTFTable, BKPos, WInCheck, BInCheck, WCanCastle, EnPassant, False, -1)
+                If PieceMoves(0, 0) > 0 Then
+                    Dim TempBoard(7, 7) As Char
+                    Dim TempMaterialCount As Int16
+                    Dim TempWKPos As String
+                    Dim TempWCanCastle As CanCastle
+                    Dim TempWInCheck As InCheck
+                    Dim TempEnPassant As String
+                    For n = 1 To CInt(PieceMoves(0, 0))
+                        If WInCheck.IsInCheck AndAlso Board(PieceMoves(n, 0), PieceMoves(n, 1)) <> "K" Then
+                            TempWInCheck.IsInCheck = True
+                            TempWInCheck.Piece1 = WInCheck.Piece1
+                            TempWInCheck.DoubleCheck = WInCheck.DoubleCheck
+                            If DoesMoveResolveCheck(Board, PieceMoves(n, 0), PieceMoves(n, 1), PieceMoves(n, 2)(0), PieceMoves(n, 2)(1), TempWInCheck, BInCheck, EnPassant) Then
+                                TempWInCheck.Piece1 = " "
+                                TempWInCheck.DoubleCheck = False
+                            End If
+                        Else
+                            TempWInCheck.IsInCheck = False
+                        End If
+                        If Not TempWInCheck.IsInCheck Then
+                            Array.Copy(Board, TempBoard, 64)
+                            TempMaterialCount = MaterialCount 'do i need these either?
+                            TempWKPos = WKPos
+                            TempWCanCastle.KS = WCanCastle.KS
+                            TempWCanCastle.QS = WCanCastle.QS
+                            TempEnPassant = EnPassant 'do i need this?
+                            MakeMove(TempBoard, PieceMoves(n, 0), PieceMoves(n, 1), PieceMoves(n, 2)(0), PieceMoves(n, 2)(1), TempWCanCastle, TempWKPos, TempMaterialCount, TempEnPassant, False)
+                            CurrentMove.Score = MiniMax(TempBoard, depth - 1, False, TempWCanCastle, BCanCastle, TempWKPos, BKPos, TempEnPassant, TempMaterialCount, Alpha, Beta, False)
+                            If CurrentMove.Score > BestMove.Score Then
+                                BestMove.Score = CurrentMove.Score
+                            End If
+                            Alpha = Math.Max(Alpha, CurrentMove.Score)
+                            If Beta <= Alpha Then
+                                '#Disable Warning BC42109 ' Variable is used before it has been assigned a value
+                                Return BestMove.Score
+                                '#Enable Warning BC42109 ' Variable is used before it has been assigned a value
+                                Exit Function
+                            End If
+                        End If
+                    Next
+                End If
+            Else
+                BestMove.Score = Integer.MaxValue
+                Dim BlackTFTable(7, 7) As Char
+                'TempBInCheck.IsInCheck = False
+                FixTFTables(Board, False, BlackTFTable, BKPos, NotInCheck, BInCheck, EnPassant)
+                Dim PieceMoves = CreateMoves(Board, False, BlackTFTable, WKPos, WInCheck, BInCheck, BCanCastle, EnPassant, False, -1)
+                If PieceMoves(0, 0) > 0 Then
+                    Dim TempBoard(7, 7) As Char
+                    Dim TempMaterialCount As Int16
+                    Dim TempBKPos As String
+                    Dim TempBCanCastle As CanCastle
+                    Dim TempBInCheck As InCheck
+                    Dim TempEnPassant As String
+                    For n = 1 To CInt(PieceMoves(0, 0))
+                        If BInCheck.IsInCheck AndAlso Board(PieceMoves(n, 0), PieceMoves(n, 1)) <> "k" Then
+                            TempBInCheck.IsInCheck = True
+                            TempBInCheck.Piece1 = BInCheck.Piece1
+                            TempBInCheck.DoubleCheck = BInCheck.DoubleCheck
+                            If DoesMoveResolveCheck(Board, PieceMoves(n, 0), PieceMoves(n, 1), PieceMoves(n, 2)(0), PieceMoves(n, 2)(1), WInCheck, TempBInCheck, EnPassant) Then
+                                TempBInCheck.Piece1 = " "
+                                TempBInCheck.DoubleCheck = False
+                            End If
+                        Else
+                            TempBInCheck.IsInCheck = False
+                        End If
+                        If Not TempBInCheck.IsInCheck Then
+                            Array.Copy(Board, TempBoard, 64)
+                            TempMaterialCount = MaterialCount
+                            TempBKPos = BKPos
+                            TempBCanCastle.KS = BCanCastle.KS
+                            TempBCanCastle.QS = BCanCastle.QS
+                            TempEnPassant = EnPassant
+                            MakeMove(TempBoard, PieceMoves(n, 0), PieceMoves(n, 1), PieceMoves(n, 2)(0), PieceMoves(n, 2)(1), TempBCanCastle, TempBKPos, TempMaterialCount, TempEnPassant, False)
+                            CurrentMove.Score = MiniMax(TempBoard, depth - 1, True, WCanCastle, TempBCanCastle, WKPos, TempBKPos, TempEnPassant, TempMaterialCount, Alpha, Beta, False)
+                            If CurrentMove.Score < BestMove.Score Then
+                                BestMove.Score = CurrentMove.Score
+                            End If
+                            Beta = Math.Min(Beta, CurrentMove.Score)
+                            If Beta <= Alpha Then
+                                Return BestMove.Score
+                                Exit Function
+                            End If
+                        End If
+                    Next
+                End If
+            End If
+
+            If BestMove.Score = Integer.MinValue Then
+                If WInCheck.IsInCheck Then
+                    BestMove.Score = -(1000 + depth)
+                Else
+                    BestMove.Score = 0
+                End If
+            ElseIf BestMove.Score = Integer.MaxValue Then
+                If BInCheck.IsInCheck Then
+                    BestMove.Score = (1000 + depth)
+                Else
+                    BestMove.Score = 0
+                End If
+            End If
+            Return BestMove.Score
+        Else
+            CurrentMove.Score = Evaluate(Board, MaterialCount)
+            '#Disable Warning BC42109 ' Variable is used before it has been assigned a value
+            Return CurrentMove.Score
+            '#Enable Warning BC42109 ' Variable is used before it has been assigned a value
+        End If
+        '#Enable Warning BC42108 ' Variable is passed by reference before it has been assigned a value
+    End Function

@@ -1,2 +1,3 @@
-Subtle AI & UI Improvements.
-Last Version with Row Multitasking.
+UI Updates
+Move Ordering
+Quiescence Prototype
