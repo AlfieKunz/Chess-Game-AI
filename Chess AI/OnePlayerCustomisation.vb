@@ -43,6 +43,10 @@ Public Class OnePlayerCustomisation
         FENTextBox.Enabled = True
     End Sub
 
+    'Button that displays information regarding the various AI difficulties.
+    Private Sub Button1_Click() Handles InfoBtn.Click
+        MsgBox("Beginner: 1s per search, Quiescence off." & vbCrLf & "Easy: 3s per search, Quiescence off." & vbCrLf & "Medium: 5s per search, Quiescence off." & vbCrLf & "Hard: 5s per search, Quiescence on." & vbCrLf & "Expert: 10s per search, Quiescence on." & vbCrLf & "Pain: 20s per search, Quiescence on.", vbInformation + vbApplicationModal, "AI Difficulty Information")
+    End Sub
     'Button that takes the user back to the main menu.
     Private Sub BackBtn_Click() Handles BackBtn.Click
         'Locates MainMenu Form.

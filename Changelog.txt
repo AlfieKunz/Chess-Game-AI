@@ -1,1 +1,3 @@
-First Prototype of PieceSquareTable Algorithm (scrapped, then eventually brought back in v7.0).
+Endgame heuristics
+Minor AI improvements
+Preparation for NEA

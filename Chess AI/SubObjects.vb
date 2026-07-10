@@ -27,7 +27,7 @@ Public Class CanCastle
     End Sub
     Public Sub CopyFrom(ByVal Copier As CanCastle) 'Copies all the data from the parameter class.
         KS = Copier.KS
-        QS = Copier.KS
+        QS = Copier.QS
     End Sub
     Public Function CanICastle() As Boolean 'Returns True if any castling privileges exist.
         Return (KS OrElse QS)

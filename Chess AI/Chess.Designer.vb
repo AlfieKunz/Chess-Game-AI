@@ -37,8 +37,8 @@ Partial Class Chess
         Me.ProgressBar = New System.Windows.Forms.ProgressBar()
         Me.ColourChanger = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.Def = New System.Windows.Forms.ToolStripMenuItem()
-        Me.Blu = New System.Windows.Forms.ToolStripMenuItem()
-        Me.Bl2 = New System.Windows.Forms.ToolStripMenuItem()
+        Me.LBlu = New System.Windows.Forms.ToolStripMenuItem()
+        Me.DBlu = New System.Windows.Forms.ToolStripMenuItem()
         Me.Gld = New System.Windows.Forms.ToolStripMenuItem()
         Me.Grn = New System.Windows.Forms.ToolStripMenuItem()
         Me.Ppl = New System.Windows.Forms.ToolStripMenuItem()
@@ -101,6 +101,8 @@ Partial Class Chess
         Me.CurrentAIMove = New System.Windows.Forms.Label()
         Me.CurrentAIDepth = New System.Windows.Forms.Label()
         Me.QuiescenceBox = New System.Windows.Forms.CheckBox()
+        Me.AITerminator = New System.Windows.Forms.Button()
+        Me.AIEndlessMode = New System.Windows.Forms.CheckBox()
         Me.ColourChanger.SuspendLayout()
         CType(Me.WP8, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WP7, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -218,7 +220,7 @@ Partial Class Chess
         Me.CurrentAIEval.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CurrentAIEval.Location = New System.Drawing.Point(955, 280)
         Me.CurrentAIEval.Name = "CurrentAIEval"
-        Me.CurrentAIEval.Size = New System.Drawing.Size(93, 16)
+        Me.CurrentAIEval.Size = New System.Drawing.Size(94, 16)
         Me.CurrentAIEval.TabIndex = 9
         Me.CurrentAIEval.Text = "Evaluation: -"
         '
@@ -238,11 +240,11 @@ Partial Class Chess
         Me.Credits.BackColor = System.Drawing.Color.Transparent
         Me.Credits.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Credits.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
-        Me.Credits.Location = New System.Drawing.Point(988, 575)
+        Me.Credits.Location = New System.Drawing.Point(1035, 575)
         Me.Credits.Name = "Credits"
-        Me.Credits.Size = New System.Drawing.Size(203, 16)
+        Me.Credits.Size = New System.Drawing.Size(155, 16)
         Me.Credits.TabIndex = 10
-        Me.Credits.Text = "Created by: Alfie Kunz - 2022"
+        Me.Credits.Text = "Created by Alfie Kunz"
         '
         'UndoFENChange
         '
@@ -265,50 +267,51 @@ Partial Class Chess
         '
         'ColourChanger
         '
-        Me.ColourChanger.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.Def, Me.Blu, Me.Bl2, Me.Gld, Me.Grn, Me.Ppl, Me.Mon})
+        Me.ColourChanger.ImageScalingSize = New System.Drawing.Size(24, 24)
+        Me.ColourChanger.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.Def, Me.LBlu, Me.DBlu, Me.Gld, Me.Grn, Me.Ppl, Me.Mon})
         Me.ColourChanger.Name = "ContextMenuStrip1"
-        Me.ColourChanger.Size = New System.Drawing.Size(113, 158)
+        Me.ColourChanger.Size = New System.Drawing.Size(136, 158)
         '
         'Def
         '
         Me.Def.Name = "Def"
-        Me.Def.Size = New System.Drawing.Size(112, 22)
+        Me.Def.Size = New System.Drawing.Size(135, 22)
         Me.Def.Text = "Default"
         '
-        'Blu
+        'LBlu
         '
-        Me.Blu.Name = "Blu"
-        Me.Blu.Size = New System.Drawing.Size(112, 22)
-        Me.Blu.Text = "Blue 1"
+        Me.LBlu.Name = "LBlu"
+        Me.LBlu.Size = New System.Drawing.Size(135, 22)
+        Me.LBlu.Text = "Blue (Light)"
         '
-        'Bl2
+        'DBlu
         '
-        Me.Bl2.Name = "Bl2"
-        Me.Bl2.Size = New System.Drawing.Size(112, 22)
-        Me.Bl2.Text = "Blue 2"
+        Me.DBlu.Name = "DBlu"
+        Me.DBlu.Size = New System.Drawing.Size(135, 22)
+        Me.DBlu.Text = "Blue (Dark)"
         '
         'Gld
         '
         Me.Gld.Name = "Gld"
-        Me.Gld.Size = New System.Drawing.Size(112, 22)
+        Me.Gld.Size = New System.Drawing.Size(135, 22)
         Me.Gld.Text = "Gold"
         '
         'Grn
         '
         Me.Grn.Name = "Grn"
-        Me.Grn.Size = New System.Drawing.Size(112, 22)
+        Me.Grn.Size = New System.Drawing.Size(135, 22)
         Me.Grn.Text = "Green"
         '
         'Ppl
         '
         Me.Ppl.Name = "Ppl"
-        Me.Ppl.Size = New System.Drawing.Size(112, 22)
+        Me.Ppl.Size = New System.Drawing.Size(135, 22)
         Me.Ppl.Text = "Purple"
         '
         'Mon
         '
         Me.Mon.Name = "Mon"
-        Me.Mon.Size = New System.Drawing.Size(112, 22)
+        Me.Mon.Size = New System.Drawing.Size(135, 22)
         Me.Mon.Text = "Grey"
         '
         'ColourChangerButton
@@ -915,7 +918,7 @@ Partial Class Chess
         Me.CurrentAIMove.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CurrentAIMove.Location = New System.Drawing.Point(955, 250)
         Me.CurrentAIMove.Name = "CurrentAIMove"
-        Me.CurrentAIMove.Size = New System.Drawing.Size(111, 16)
+        Me.CurrentAIMove.Size = New System.Drawing.Size(112, 16)
         Me.CurrentAIMove.TabIndex = 9
         Me.CurrentAIMove.Text = "Current Move: -"
         '
@@ -925,7 +928,7 @@ Partial Class Chess
         Me.CurrentAIDepth.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CurrentAIDepth.Location = New System.Drawing.Point(955, 220)
         Me.CurrentAIDepth.Name = "CurrentAIDepth"
-        Me.CurrentAIDepth.Size = New System.Drawing.Size(114, 16)
+        Me.CurrentAIDepth.Size = New System.Drawing.Size(115, 16)
         Me.CurrentAIDepth.TabIndex = 9
         Me.CurrentAIDepth.Text = "Current Depth: -"
         '
@@ -943,6 +946,29 @@ Partial Class Chess
         Me.QuiescenceBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         Me.QuiescenceBox.UseVisualStyleBackColor = True
         '
+        'AITerminator
+        '
+        Me.AITerminator.Font = New System.Drawing.Font("Microsoft Sans Serif", 11.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AITerminator.Location = New System.Drawing.Point(945, 85)
+        Me.AITerminator.Name = "AITerminator"
+        Me.AITerminator.Size = New System.Drawing.Size(209, 57)
+        Me.AITerminator.TabIndex = 27
+        Me.AITerminator.Text = "Terminate Search Early:"
+        Me.AITerminator.UseVisualStyleBackColor = True
+        Me.AITerminator.Visible = False
+        '
+        'AIEndlessMode
+        '
+        Me.AIEndlessMode.AutoSize = True
+        Me.AIEndlessMode.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AIEndlessMode.Location = New System.Drawing.Point(1009, 430)
+        Me.AIEndlessMode.Name = "AIEndlessMode"
+        Me.AIEndlessMode.Size = New System.Drawing.Size(70, 19)
+        Me.AIEndlessMode.TabIndex = 26
+        Me.AIEndlessMode.Text = "AI vs AI?"
+        Me.AIEndlessMode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.AIEndlessMode.UseVisualStyleBackColor = True
+        '
         'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -950,6 +976,8 @@ Partial Class Chess
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.AITerminator)
+        Me.Controls.Add(Me.AIEndlessMode)
         Me.Controls.Add(Me.QuiescenceBox)
         Me.Controls.Add(Me.UserTimeBar)
         Me.Controls.Add(Me.UserTimeBox)
@@ -1024,7 +1052,7 @@ Partial Class Chess
         Me.MaximumSize = New System.Drawing.Size(1200, 639)
         Me.Name = "Chess"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Chess"
+        Me.Text = "Chess Game & Artificial Intelligence"
         Me.ColourChanger.ResumeLayout(False)
         CType(Me.WP8, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.WP7, System.ComponentModel.ISupportInitialize).EndInit()
@@ -1143,8 +1171,8 @@ Partial Class Chess
     Friend WithEvents ColourChangerButton As System.Windows.Forms.Button
     Friend WithEvents ColourChanger As System.Windows.Forms.ContextMenuStrip
     Friend WithEvents Def As System.Windows.Forms.ToolStripMenuItem
-    Friend WithEvents Blu As System.Windows.Forms.ToolStripMenuItem
-    Friend WithEvents Bl2 As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents LBlu As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents DBlu As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents Gld As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents Grn As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents Ppl As System.Windows.Forms.ToolStripMenuItem
@@ -1157,4 +1185,6 @@ Partial Class Chess
     Friend WithEvents CurrentAIMove As Label
     Friend WithEvents CurrentAIDepth As Label
     Friend WithEvents QuiescenceBox As CheckBox
+    Friend WithEvents AITerminator As Button
+    Friend WithEvents AIEndlessMode As System.Windows.Forms.CheckBox
 End Class

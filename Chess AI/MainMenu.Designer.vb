@@ -588,11 +588,11 @@ Partial Class MainMenu
         Me.Title.AutoSize = True
         Me.Title.BackColor = System.Drawing.Color.Transparent
         Me.Title.Font = New System.Drawing.Font("Britannic Bold", 36.0!, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Title.Location = New System.Drawing.Point(34, 13)
+        Me.Title.Location = New System.Drawing.Point(97, 538)
         Me.Title.Name = "Title"
-        Me.Title.Size = New System.Drawing.Size(166, 53)
+        Me.Title.Size = New System.Drawing.Size(397, 53)
         Me.Title.TabIndex = 36
-        Me.Title.Text = "Chess!"
+        Me.Title.Text = "Chess Game && AI!"
         '
         'Credits
         '
@@ -600,11 +600,11 @@ Partial Class MainMenu
         Me.Credits.BackColor = System.Drawing.Color.Transparent
         Me.Credits.Font = New System.Drawing.Font("Microsoft Sans Serif", 11.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Credits.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
-        Me.Credits.Location = New System.Drawing.Point(-3, 105)
+        Me.Credits.Location = New System.Drawing.Point(272, 153)
         Me.Credits.Name = "Credits"
-        Me.Credits.Size = New System.Drawing.Size(226, 18)
+        Me.Credits.Size = New System.Drawing.Size(268, 18)
         Me.Credits.TabIndex = 37
-        Me.Credits.Text = "Created by: Alfie Kunz - 2022"
+        Me.Credits.Text = "Created by: Alfie Kunz - 2021-2023"
         '
         'MainMenu
         '
