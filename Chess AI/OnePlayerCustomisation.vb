@@ -1,5 +1,6 @@
-﻿Public Class OnePlayerCustomisation
-
+﻿'Class that allows the user to customise their one-player game of chess.
+'Called from the main menu, and is involved in instantiating the Chess form.
+Public Class OnePlayerCustomisation
     Private Sub StartBtn_MouseEnter() Handles StartBtn.MouseEnter
         'Grows the Button.
         StartBtn.Size = New Size(112.5, 50)
@@ -15,6 +16,7 @@
         StartBtn.Font = New Font("Microsoft Sans Serif", 16, FontStyle.Bold)
     End Sub
     Private Sub StartBtn_Click() Handles StartBtn.Click
+        'Takes the user to their Chess game, which varies based on their preferences.
         Dim UserStartingFEN As String
         Dim PlayAsWhite As Boolean
         If PosBtn2.Checked AndAlso FENTextBox.Text <> "" Then
@@ -22,16 +24,18 @@
         Else
             UserStartingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         End If
-        If White.Checked Then
+        If White.Checked Then 'Will they play as white?
             PlayAsWhite = True
         Else
             PlayAsWhite = False
         End If
+        'Instantiates a new game of Chess.
         Dim ChessGame As New Chess(1, UserStartingFEN, DifficultySlider.Value, PlayAsWhite)
         ChessGame.Show()
     End Sub
 
 
+    'Code for Radio buttons.
     Private Sub PosBtn1_Checked() Handles PosBtn1.CheckedChanged
         FENTextBox.Enabled = False
     End Sub
@@ -39,12 +43,15 @@
         FENTextBox.Enabled = True
     End Sub
 
+    'Button that takes the user back to the main menu.
     Private Sub BackBtn_Click() Handles BackBtn.Click
+        'Locates MainMenu Form.
         Dim Menu As Form = CType(Application.OpenForms("MainMenu"), MainMenu)
         Me.Close()
         Menu.Show()
     End Sub
 
+    'Contols difficulty slider (as well as changing the cursor).
     Private Sub DifficultySlider_MouseDown() Handles DifficultySlider.MouseDown
         Me.Cursor = New Cursor(New System.IO.MemoryStream(My.Resources.Cursor16))
     End Sub
@@ -64,9 +71,12 @@
         ElseIf DifficultySlider.Value = 4 Then
             AIDiffLabel2.Text = "Hard"
             AIDiffLabel2.ForeColor = Color.Red
+        ElseIf DifficultySlider.Value = 5 Then
+            AIDiffLabel2.Text = "Expert"
+            AIDiffLabel2.ForeColor = Color.DarkRed
         Else
             AIDiffLabel2.Text = "Pain"
-            AIDiffLabel2.ForeColor = Color.DarkRed
+            AIDiffLabel2.ForeColor = Color.Black
         End If
     End Sub
 

@@ -95,8 +95,9 @@ Partial Class OnePlayerCustomisation
         '
         'DifficultySlider
         '
+        Me.DifficultySlider.LargeChange = 1
         Me.DifficultySlider.Location = New System.Drawing.Point(15, 151)
-        Me.DifficultySlider.Maximum = 5
+        Me.DifficultySlider.Maximum = 6
         Me.DifficultySlider.Minimum = 1
         Me.DifficultySlider.Name = "DifficultySlider"
         Me.DifficultySlider.Size = New System.Drawing.Size(250, 45)
