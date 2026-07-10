@@ -1,19 +1,19 @@
 ﻿
 Partial Public Class AI
 
-    Private PieceHeatMap(,,) As SByte 'Calls & Constructs PieceHeatMaps - producing a hashed array containing the
+    Private PieceHeatMap(,,) As Integer 'Calls & Constructs PieceHeatMaps - producing a hashed array containing the
     '"ideal" locations for each piece on the board (used to evaluate a board position).
 
 
     'Function which generates the data for the Piece Heat Maps - 2D arrays that represent the 'ideal' positions for each piece.
     'Used by the evaluation function to determine how favourable a position is for white.
-    Private Function GeneratePieceHeatSquares() As SByte(,,)
+    Private Function GeneratePieceHeatSquares() As Integer(,,)
         'Array containing all the PieceHeatMap data - hashed so that a specific piece's index can be easily retrieved using its symbol.
-        Dim HeatSqaures(9, 7, 7) As SByte
+        Dim HeatSqaures(9, 7, 7) As Integer
 
         'Below are the Heat Maps for each individual piece: the greater the number, the more favourable a position is that has that
         'specific piece on that index of the board (favoured around white; 7-YIndex is used for black's POV).
-        Dim PawnHeatSquares As SByte(,) = {
+        Dim PawnHeatSquares As Double(,) = {
             {0, 0, 0, 0, 0, 0, 0, 0},
             {50, 50, 50, 50, 50, 50, 50, 50},
             {10, 10, 20, 30, 30, 20, 10, 10},
@@ -23,7 +23,7 @@ Partial Public Class AI
             {5, 10, 10, -20, -20, 10, 10, 5},
             {0, 0, 0, 0, 0, 0, 0, 0}}
 
-        Dim KnightHeatSquares As SByte(,) = {
+        Dim KnightHeatSquares As Double(,) = {
             {-50, -40, -30, -30, -30, -30, -40, -50},
             {-40, -20, 0, 0, 0, 0, -20, -40},
             {-30, 0, 10, 15, 15, 10, 0, -30},
@@ -33,7 +33,7 @@ Partial Public Class AI
             {-40, -20, 0, 5, 5, 0, -20, -40},
             {-50, -40, -30, -30, -30, -30, -40, -50}}
 
-        Dim BishopHeatSquares As SByte(,) = {
+        Dim BishopHeatSquares As Double(,) = {
             {-20, -10, -10, -10, -10, -10, -10, -20},
             {-10, 0, 0, 0, 0, 0, 0, -10},
             {-10, 0, 5, 10, 10, 5, 0, -10},
@@ -43,7 +43,7 @@ Partial Public Class AI
             {-10, 5, 0, 0, 0, 0, 5, -10},
             {-20, -10, -10, -10, -10, -10, -10, -20}}
 
-        Dim RookHeatSquares As SByte(,) = {
+        Dim RookHeatSquares As Double(,) = {
             {0, 0, 0, 0, 0, 0, 0, 0},
             {5, 10, 10, 10, 10, 10, 10, 5},
             {-5, 0, 0, 0, 0, 0, 0, -5},
@@ -53,7 +53,7 @@ Partial Public Class AI
             {-5, 0, 0, 0, 0, 0, 0, -5},
             {0, 0, 0, 5, 5, 0, 0, 0}}
 
-        Dim QueenHeatSquares As SByte(,) = {
+        Dim QueenHeatSquares As Double(,) = {
             {-20, -10, -10, -5, -5, -10, -10, -20},
             {-10, 0, 0, 0, 0, 0, 0, -10},
             {-10, 0, 5, 5, 5, 5, 0, -10},
@@ -63,7 +63,7 @@ Partial Public Class AI
             {-10, 0, 5, 0, 0, 0, 0, -10},
             {-20, -10, -10, -5, -5, -10, -10, -20}}
 
-        Dim KingHeatSquares As SByte(,) = {
+        Dim KingHeatSquares As Double(,) = {
             {-30, -40, -40, -50, -50, -40, -40, -30},
             {-30, -40, -40, -50, -50, -40, -40, -30},
             {-30, -40, -40, -50, -50, -40, -40, -30},
@@ -84,12 +84,12 @@ Partial Public Class AI
                 KingHeatSquares(x, y) *= 1.6
 
                 'Combines each Piece Heat Map into one big Heat Map, so that the correct Heat Map can be called by hashing the name of the required piece.
-                HeatSqaures(0, x, y) = BishopHeatSquares(x, y)
-                HeatSqaures(1, x, y) = KnightHeatSquares(x, y)
-                HeatSqaures(3, x, y) = PawnHeatSquares(x, y)
-                HeatSqaures(4, x, y) = QueenHeatSquares(x, y)
-                HeatSqaures(5, x, y) = RookHeatSquares(x, y)
-                HeatSqaures(9, x, y) = KingHeatSquares(x, y)
+                HeatSqaures(0, x, y) = CInt(BishopHeatSquares(x, y))
+                HeatSqaures(1, x, y) = CInt(KnightHeatSquares(x, y))
+                HeatSqaures(3, x, y) = CInt(PawnHeatSquares(x, y))
+                HeatSqaures(4, x, y) = CInt(QueenHeatSquares(x, y))
+                HeatSqaures(5, x, y) = CInt(RookHeatSquares(x, y))
+                HeatSqaures(9, x, y) = CInt(KingHeatSquares(x, y))
             Next
         Next
 
@@ -104,16 +104,16 @@ Partial Public Class AI
     Private EndgameEvalLookupTable(63, 63, 12) As Int16 'Lookup Table that calculates the evaluation of simple endgame positions,
     'taking into account the king positions, and the player's material count (value scales as material count decreases).
     '(a,b,c), where a = position of the player's king, b = position of the opposition's king, c = player's material count
-    '(which is divided by 100 in the main MiniMax code).
+    '(which is divided by 100 in the main NegaMax code).
 
     'Algorithm which forms the Lookup Table for simple endgame evaluations.
     Private Sub PopulateEndgameEvalLookupTable()
-        Dim KingDeltaX, KingDeltaY, KingDistance As Decimal 'Variables which represent the distances between the two kings.
-        Dim KingCentreDistanceX, KingCentreDistanceY, KingCentreDistance As Decimal
+        Dim KingDeltaX, KingDeltaY, KingDistance As Double 'Variables which represent the distances between the two kings.
+        Dim KingCentreDistanceX, KingCentreDistanceY, KingCentreDistance As Double
 
         'For each possible configuration of king positions...
-        For MeKPos As Byte = 0 To 63
-            For EnemyKPos As Byte = 0 To 63
+        For MeKPos as Uint16 = 0 To 63
+            For EnemyKPos as Uint16 = 0 To 63
                 If MeKPos = EnemyKPos Then Continue For 'The two kings cannot be on the same square.
 
                 'Finds distances between kings.
@@ -130,7 +130,7 @@ Partial Public Class AI
                 'for each possible material count of the player. This value is then stored in the Lookup Table.
                 For c = 0 To 12
                     'Heuristic becomes more prevelant as the opponent has fewer and fewer pieces (exponential curve).
-                    EndgameEvalLookupTable(MeKPos, EnemyKPos, c) = Math.Round((KingCentreDistance * 1.5 + (7 - KingDistance)) * (1.25 ^ (12 - c)))
+                    EndgameEvalLookupTable(MeKPos, EnemyKPos, c) = CShort((KingCentreDistance * 1.5 + (7 - KingDistance)) * (1.25 ^ (12 - c)))
                 Next
             Next
         Next

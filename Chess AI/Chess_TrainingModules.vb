@@ -4,39 +4,50 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 
 'Class holding all the attributes & methods used in the training modes of my chess program. Part of the Chess form.
-Partial Public Class Chess
-    Private TrainingTimerTicks As UInt16
+Partial Public Class Chess 'Training Modules
 
-    'Below are all the attributes relating to the Puzzle training mode.
-    Private PuzzleSampleDatabase As New List(Of PuzzleEntry) 'Puzzle Database, sorted by puzzle rating.
-    Private CurrentPuzzleIndex As UInt32 'Represents a pointer in the Database of current puzzle that is being used.
-    Private UserPuzzleRating, AIPuzzleRating As Int16 'Represents the current rating of both the user and the AI.
-    Private UserPuzzleMode As Boolean = True 'True = the user is playing the puzzle. False = the AI is playing the puzzle.
-    Private UserTakenHint As Boolean 'Represents if the user has clicked the 'Hint' button.
-    Private NoOfPuzzleMovesComplete As Byte 'Represents the number of moves the user / the AI has successfully played (note that
-    'a puzzle is often comprised of multiple moves).
-    Private PuzzleTimeForSearch As Decimal 'Represents the total time the user / the AI has to make a single puzzle move (before
-    'the puzzle is automatically deemed incorrect).
-    Private Const AIWaitAfterPuzzleComplete As Boolean = True 'Determines if, when the AI is searching on a puzzle, and the puzzle is deemed complete,
-    'Whether the system waits before displaying the next puzzle.
+    'Structure containing all the objects we need for the Training Module.
+    Public Structure TrainingModeInfo
+        Public TrainingTimerTicks As UInt16
 
+        'Below are all the attributes relating to the Puzzle training mode.
+        Public PuzzleSampleDatabase As List(Of PuzzleEntry) 'Puzzle Database, sorted by puzzle rating.
+        Public CurrentPuzzleIndex As UInt32 'Represents a pointer in the Database of current puzzle that is being used.
+        Public UserPuzzleRating, AIPuzzleRating As Int16 'Represents the current rating of both the user and the AI.
+        Public UserPuzzleMode As Boolean 'True = the user is playing the puzzle. False = the AI is playing the puzzle.
+        Public UserTakenHint As Boolean 'Represents if the user has clicked the 'Hint' button.
+        Public NoOfPuzzleMovesComplete As Byte 'Represents the number of moves the user / the AI has successfully played (note that
+        'a puzzle is often comprised of multiple moves).
+        Public PuzzleTimeForSearch As Decimal 'Represents the total time the user / the AI has to make a single puzzle move (before
+        'the puzzle is automatically deemed incorrect).
+        Public AIWaitAfterPuzzleComplete As Boolean 'Determines if, when the AI is searching on a puzzle, and the puzzle is deemed complete,
+        'Whether the system waits before displaying the next puzzle.
 
-    'Below are all the attributes relating to the Coordinate & Move training modes.
-    Private TrainingMovesCompleted As Byte 'Represents the number of moves the user has completed on the position.
-    Private MovesInPosition(,) As String 'Represents the full number of legal moves in the position.
+        'Below are all the attributes relating to the Coordinate & Move training modes.
+        Public TrainingMovesCompleted As Byte 'Represents the number of moves the user has completed on the position.
+        Public MovesInPosition(,) As String 'Represents the full number of legal moves in the position.
+    End Structure
+    Private TrainingMode As New TrainingModeInfo With {
+       .PuzzleSampleDatabase = New List(Of PuzzleEntry),
+       .UserPuzzleMode = True,
+       .AIWaitAfterPuzzleComplete = True
+    }
     'Leaderboard info for training games: 0 = Index, 1 = Name, 2 = Score, 3 = Date Achieved.
-    Private WLeaderBoard(9, 2), BLeaderBoard(9, 2) As String
+    Private TrainingModeWLeaderBoard(9, 3), TrainingModeBLeaderBoard(9, 3) As String
+
+
+
 
 
     'Sets up sound effects.
     Private ReadOnly Sound_321Go As New Media.SoundPlayer With {
-    .SoundLocation = Application.StartupPath & "\Assets\Sounds\3210Effect.wav"
+    .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\3210Effect.wav"
 }
     Private ReadOnly Sound_Correct As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Correct.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Correct.wav"
     }
     Private ReadOnly Sound_Incorrect As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Incorrect.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Incorrect.wav"
     }
 
 
@@ -45,7 +56,7 @@ Partial Public Class Chess
     'the user has left to complete the puzzle move, and to determine how long the user has left in the
     'move & coordinate training games.
     Private Sub TrainingTimer_Tick() Handles TrainingTimer.Tick
-        TrainingTimerTicks += 1
+        TrainingMode.TrainingTimerTicks += 1
         'Updates Timer.
         If GameMode = 4 Then
             HandlePuzzleModeTimerTick()
@@ -61,20 +72,20 @@ Partial Public Class Chess
     'Subroutine which loads the User & AI puzzle ratings from the PuzzleStats file.
     Public Sub LoadPuzzleRatings()
         Try
-            Using SR As New StreamReader(Application.StartupPath & "\Assets\User\PuzzleStats.txt", Encoding.UTF8, True)
+            Using SR As New StreamReader(GlobalConstants.StartupPath & "\Assets\User\PuzzleStats.txt", Encoding.UTF8, True)
                 'Ensures that the Ratings are within the general confines of the lowest & highest rated puzzle
                 'in the Puzzle databse (50 rating points in both ways).
-                UserPuzzleRating = Math.Max(Math.Min(Val(SR.ReadLine()), 3200), 650) '650 = min puzzle rating.
-                AIPuzzleRating = Math.Max(Math.Min(Val(SR.ReadLine()), 3200), 650) '3000 = max puzzle rating.
+                TrainingMode.UserPuzzleRating = Math.Max(Math.Min(Val(SR.ReadLine()), 3200), 650) '650 = min puzzle rating.
+                TrainingMode.AIPuzzleRating = Math.Max(Math.Min(Val(SR.ReadLine()), 3200), 650) '3000 = max puzzle rating.
             End Using
         Catch ex As Exception
             'Unable to retrieve the puzzle ratings - reset them to their default values.
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error when retrieving Puzzle Stats. Resetting...")
-            UserPuzzleRating = 1500
-            AIPuzzleRating = 1500
+            TrainingMode.UserPuzzleRating = 1500
+            TrainingMode.AIPuzzleRating = 1500
         End Try
-        Console.ResetColor()
+        Console.ForegroundColor = ConsoleColor.White
     End Sub
 
 
@@ -82,32 +93,32 @@ Partial Public Class Chess
     Private Function GetRndPuzzle() As String
         'If the last puzzle has been successfully completed, remove it from the database, so that it
         'won't be tested on the user / the AI again.
-        If NextPuzzleBtn.Visible Then PuzzleSampleDatabase.RemoveAt(CurrentPuzzleIndex)
+        If NextPuzzleBtn.Visible Then TrainingMode.PuzzleSampleDatabase.RemoveAt(TrainingMode.CurrentPuzzleIndex)
 
         'Sets the min & max puzzle ratings that can be retrieved from the database.
         Dim LowerRatingBound, UpperRatingBound As UInt32
         Dim LowerBound, UpperBound As UInt32
-        If UserPuzzleMode Then
-            LowerRatingBound = UserPuzzleRating - 50
-            UpperRatingBound = UserPuzzleRating + 50
+        If TrainingMode.UserPuzzleMode Then
+            LowerRatingBound = TrainingMode.UserPuzzleRating - 50
+            UpperRatingBound = TrainingMode.UserPuzzleRating + 50
         Else
-            LowerRatingBound = AIPuzzleRating - 50
-            UpperRatingBound = AIPuzzleRating + 50
+            LowerRatingBound = TrainingMode.AIPuzzleRating - 50
+            UpperRatingBound = TrainingMode.AIPuzzleRating + 50
         End If
 
         'Gets the index of the puzzle in the databse that has the lowest possible rating in the range, along with the
         'index of the puzzle that has the greatest possible rating in the range.
-        For n = 0 To PuzzleSampleDatabase.Count - 1
-            If LowerRatingBound <= PuzzleSampleDatabase(n).GetRating() Then
+        For n = 0 To TrainingMode.PuzzleSampleDatabase.Count - 1
+            If LowerRatingBound <= TrainingMode.PuzzleSampleDatabase(n).GetRating() Then
                 LowerBound = n
                 Exit For
             End If
         Next
-        For n = LowerBound + 1 To PuzzleSampleDatabase.Count - 1
-            If UpperRatingBound < PuzzleSampleDatabase(n).GetRating() Then
+        For n = LowerBound + 1 To TrainingMode.PuzzleSampleDatabase.Count - 1
+            If UpperRatingBound < TrainingMode.PuzzleSampleDatabase(n).GetRating() Then
                 UpperBound = n - 1
                 Exit For
-            ElseIf n = PuzzleSampleDatabase.Count - 1 Then
+            ElseIf n = TrainingMode.PuzzleSampleDatabase.Count - 1 Then
                 'All puzzles >= LowerBound can be used - set upperbound to the final puzzle in the database.
                 UpperBound = n
             End If
@@ -118,33 +129,33 @@ Partial Public Class Chess
             'Provide appropriate error message, and return the user to the Main Menu.
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Unable to retrieve a puzzle. LB = " & LowerBound & ", UB = " & UpperBound & ".")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
             MsgBox("Error: Unable to retrive a Puzzle from the Database." & vbCrLf & "This likely means that you've exhausted all the puzzles in the sample database, which I didn't even know was possible tbh hahah." & vbCrLf & "To generate new puzzles, please re-enter Puzzle Mode from the Main Menu...", vbCritical + vbOKOnly + vbApplicationModal)
             ExitBtn_Click()
             Return Nothing
         Else
             'Retrive a random puzzle from the database that resides within the confines of LowerBound and UpperBound.
             Static RNDGen As New Random()
-            CurrentPuzzleIndex = RNDGen.Next(LowerBound, UpperBound + 1)
-            PuzzleSampleDatabase(CurrentPuzzleIndex).ComputeEntry() 'Fully constructs the entry, so we can perform calculations on it.
+            TrainingMode.CurrentPuzzleIndex = RNDGen.Next(LowerBound, UpperBound + 1)
+            TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).ComputeEntry() 'Fully constructs the entry, so we can perform calculations on it.
 
             Console.ForegroundColor = ConsoleColor.Green
-            Console.WriteLine("New Puzzle:  Index " & CurrentPuzzleIndex & ", with FEN " & PuzzleSampleDatabase(CurrentPuzzleIndex).GetFEN() & ", and rating " & PuzzleSampleDatabase(CurrentPuzzleIndex).GetRating() & ".")
-            Console.ResetColor()
+            Console.WriteLine("New Puzzle:  Index " & TrainingMode.CurrentPuzzleIndex & ", with FEN " & TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetFEN() & ", and rating " & TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetRating() & ".")
+            Console.ForegroundColor = ConsoleColor.White
 
             'Updates Labels to reflect this new puzzle, along with it's rating.
-            PuzzleRatingLabel.Text = "Puzzle Rating: " & PuzzleSampleDatabase(CurrentPuzzleIndex).GetRating()
-            If UserPuzzleMode Then
-                RatingLabel.Text = UserPuzzleRating
+            PuzzleRatingLabel.Text = "Puzzle Rating: " & TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetRating()
+            If TrainingMode.UserPuzzleMode Then
+                RatingLabel.Text = TrainingMode.UserPuzzleRating
             Else
-                RatingLabel.Text = AIPuzzleRating
+                RatingLabel.Text = TrainingMode.AIPuzzleRating
             End If
             'Calculates how much rating the user / the AI would gain / lose for getting the puzzle correct / incorrect.
             'Updates the appropriate labels with this information.
-            LostRatingLabel.Text = "-" & CStr(CalculateRatingLost(UserPuzzleMode, False))
-            GainedRatingLabel.Text = "+" & CStr(CalculateRatingGained(UserPuzzleMode, False))
+            LostRatingLabel.Text = "-" & CStr(CalculateRatingLost(TrainingMode.UserPuzzleMode, False))
+            GainedRatingLabel.Text = "+" & CStr(CalculateRatingGained(TrainingMode.UserPuzzleMode, False))
 
-            Return PuzzleSampleDatabase(CurrentPuzzleIndex).GetFEN()
+            Return TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetFEN()
         End If
     End Function
 
@@ -158,16 +169,16 @@ Partial Public Class Chess
         BoardHistory.Clear() 'Removes the Puzzle Data from BoardHistory.
         ResetPuzzleTimer()
         If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
-        If AutoAdvanceOnComplete.Checked AndAlso (UserPuzzleMode OrElse AIWaitAfterPuzzleComplete) Then Thread.Sleep(450) 'Allows the correct / incorrect sound to play.
+        If AutoAdvanceOnComplete.Checked AndAlso (TrainingMode.UserPuzzleMode OrElse TrainingMode.AIWaitAfterPuzzleComplete) Then Thread.Sleep(450) 'Allows the correct / incorrect sound to play.
 
         'Changes the mode from User to AI (or vice versa), if neeeded.
-        If HumanModeBtn.Checked <> UserPuzzleMode Then
+        If HumanModeBtn.Checked <> TrainingMode.UserPuzzleMode Then
             If HumanModeBtn.Checked Then
-                UserPuzzleMode = True
+                TrainingMode.UserPuzzleMode = True
                 ComputerIsSearching = False
                 RatingHeader.Text = "Your Rating:"
             Else
-                UserPuzzleMode = False
+                TrainingMode.UserPuzzleMode = False
                 ComputerIsSearching = True 'Prevents the user from being able to make moves whilst the AI
                 'is searching on the puzzle.
                 HintBtn.Enabled = False
@@ -176,21 +187,22 @@ Partial Public Class Chess
         End If
 
         'Resets the puzzle attributes, and retrieves a new puzzle from the database.
-        UserTakenHint = False
+        TrainingMode.UserTakenHint = False
+        PreviousFEN = CurrentFEN
         CurrentFEN = GetRndPuzzle()
         If CurrentFEN Is Nothing Then Exit Sub 'We have ran out of puzzles! Exit the method before the non-existent FEN breaks everything :O.
-        NoOfPuzzleMovesComplete = 0
+        TrainingMode.NoOfPuzzleMovesComplete = 0
         NextPuzzleBtn.Visible = False
 
         'Calibrates the board, along with its objects, for use on this new puzzle,
-        MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+        MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
         'Resets TrueFalse Tables.
         If PlayerTurn Then
             MasterBInCheck = 0 'Player is no longer in check.
-            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
         Else
             MasterWInCheck = 0 'Player is no longer in check.
-            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
         End If
         'Resets location of Previously Used Squares.
         SquareHistory(0, 0) = -1
@@ -199,7 +211,8 @@ Partial Public Class Chess
         SquareHistory(1, 1) = -1
 
         'Flips the board so that it will always be positioned in the user's favour.
-        If Not (PlayerTurn Xor OrientForWhite) Then FlipBoard() Else Checkerboard.Refresh()
+        Dim HasFlippedBoard As Boolean
+        If (Not PlayerTurn) Xor OrientForWhite Then FlipBoard() : HasFlippedBoard = True Else Checkerboard.Refresh()
         CheckChecker(False)
 
         'Resets labels.
@@ -208,13 +221,13 @@ Partial Public Class Chess
         AIPuzzleInfoLabel.Visible = True
 
         'Displays the board onto the GUI, then plays the first move of the puzzle.
-        DisplayPieces()
-        MasterZobristValue = SharedAlgorithms.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+        If HumanModeBtn.Checked And Not HasFlippedBoard Then AnimateBoard(PreviousFEN) Else DisplayPieces()
+        MasterZobristValue = Helper.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant))
         BoardHistory.PushZobrist(MasterZobristValue, False)
 
         MainAI.ResetTranspositionTable()
         PlayNextPuzzleMove(0, True)
-        If UserPuzzleMode Then HintBtn.Enabled = True
+        If TrainingMode.UserPuzzleMode Then HintBtn.Enabled = True
         GiveUpBtn.Enabled = True
         GameRunning = True
 
@@ -225,11 +238,10 @@ Partial Public Class Chess
     'Subroutine which plays a specific move of the puzzle on the board, then restarts the puzzle timer.
     Private Sub PlayNextPuzzleMove(ByVal MoveIndex As Byte, ByVal OutputToConsole As Boolean)
         'Retrieves the specific puzzle move (specified by MoveIndex), and plays it on the board.
-        Dim NextMove As New Move
-        NextMove = (PuzzleSampleDatabase(CurrentPuzzleIndex).GetAllMoves())(MoveIndex)
+        Dim NextMove As Move = (TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetAllMoves())(MoveIndex)
         AnimateMove(NextMove)
 
-        CalibrateCoreSystemsForMove(NextMove, False)
+        CalibrateCoreSystemsForMove(NextMove, False, False)
         MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates the AI in preparation for the new puzzle.
 
         FENExport_Click()
@@ -238,8 +250,8 @@ Partial Public Class Chess
         'has been called by the user clicking the GiveUp button - causing the user's / the AI's puzzle move to be made for them.
 
         'Starts the puzzle stopwatch.
-        If TimeForSearch <> Decimal.MaxValue Then
-            TrainingTimerTicks = 0
+        If AIHandles.TimeForSearch <> Decimal.MaxValue Then
+            TrainingMode.TrainingTimerTicks = 0
             TrainingTimer.Enabled = True
             TrainingTimer.Start() 'Starts timer. Every tick = 100ms.
         End If
@@ -249,19 +261,19 @@ Partial Public Class Chess
     'Subroutine that handles the user / the AI playing the correct puzzle move. Gives the user / the AI a rating gain if
     'appropriate, and plays the next move of the puzzle.
     Private Sub PuzzleMoveCompleted()
-        NoOfPuzzleMovesComplete += 1
+        TrainingMode.NoOfPuzzleMovesComplete += 1
         ResetPuzzleTimer() 'Resets the puzzle timer.
-        If NoOfPuzzleMovesComplete * 2 >= PuzzleSampleDatabase(CurrentPuzzleIndex).GetMoveCount() Then
+        If TrainingMode.NoOfPuzzleMovesComplete * 2 >= TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetMoveCount() Then
             'The last move of the puzzle has just been played; the puzzle is complete.
-            If Not UserPuzzleMode Then AIStopwatch.Stop() : UpdateAIPuzzleInfoLabel(True) 'Stops the AI's search.
+            If Not TrainingMode.UserPuzzleMode Then AIHandles.AIStopwatch.Stop() : UpdateAIPuzzleInfoLabel(True) 'Stops the AI's search.
             If GeneralOptions(0) = "T" Then Sound_Correct.Play()
             'If the NextPuzzle Button is visible, then the user has had help in completing the puzzle - therefore don't award rating.
-            If Not NextPuzzleBtn.Visible Then CalculateRatingGained(UserPuzzleMode, True) : GainedRatingLabel.ForeColor = Color.Green : Application.DoEvents()
+            If Not NextPuzzleBtn.Visible Then CalculateRatingGained(TrainingMode.UserPuzzleMode, True) : GainedRatingLabel.ForeColor = Color.Green : Application.DoEvents()
             'Stops the user from modifying the board, or from affecting the (now complete) puzzle.
             HintBtn.Enabled = False
             GiveUpBtn.Enabled = False
             GameRunning = False
-            If UserPuzzleMode Then AIPuzzleInfoLabel.Visible = False
+            If TrainingMode.UserPuzzleMode Then AIPuzzleInfoLabel.Visible = False
             If AutoAdvanceOnComplete.Checked Then
                 'Moves onto the next puzzle automatically.
                 NextPuzzleBtn_Click()
@@ -270,7 +282,7 @@ Partial Public Class Chess
             End If
         Else
             'Plays the next move of the puzzle, then makes the AI search on the puzzle.
-            PlayNextPuzzleMove(NoOfPuzzleMovesComplete * 2, True)
+            PlayNextPuzzleMove(TrainingMode.NoOfPuzzleMovesComplete * 2, True)
             RunAIOnPuzzle()
         End If
     End Sub
@@ -278,11 +290,10 @@ Partial Public Class Chess
     'Function which checks if the move matches the correct puzzle move.
     Private Function HandlePuzzleMoveInput(ByVal TempMove As Move) As Boolean
         'Retrieves the correct puzzle move.
-        Dim CorrectMove As New Move
-        CorrectMove = PuzzleSampleDatabase(CurrentPuzzleIndex).GetMove(NoOfPuzzleMovesComplete * 2 + 1)
+        Dim CorrectMove As Move = TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetMove(TrainingMode.NoOfPuzzleMovesComplete * 2 + 1)
 
         If (CorrectMove.OldMoveX = TempMove.OldMoveX AndAlso CorrectMove.OldMoveY = TempMove.OldMoveY) AndAlso (CorrectMove.NewMoveX = TempMove.NewMoveX AndAlso CorrectMove.NewMoveY = TempMove.NewMoveY) Then
-            If CorrectMove.EndState = "" OrElse CorrectMove.EndState = TempMove.EndState Then
+            If CorrectMove.Code = "" OrElse CorrectMove.Code = TempMove.Code Then
                 HandlePuzzleMoveInput = True
             Else
                 'The pawn is promoting to a piece, but the user has selected the wrong piece.
@@ -307,12 +318,11 @@ Partial Public Class Chess
     'and all other pieces are blocked from being able to move.
     Private Sub HintBtn_Click() Handles HintBtn.Click
         HintBtn.Enabled = False
-        UserTakenHint = True
+        TrainingMode.UserTakenHint = True
         If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
 
         'Retrives the next (correct) move of the puzzle, and extracts its starting square.
-        Dim CorrectMove As New Move
-        CorrectMove = PuzzleSampleDatabase(CurrentPuzzleIndex).GetMove(NoOfPuzzleMovesComplete * 2 + 1)
+        Dim CorrectMove As Move = TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetMove(TrainingMode.NoOfPuzzleMovesComplete * 2 + 1)
         'Locks this starting piece.
         If OrientForWhite Then
             PieceMoving.LockedPiece = CorrectMove.OldMoveX & CorrectMove.OldMoveY
@@ -321,7 +331,7 @@ Partial Public Class Chess
         End If
         Checkerboard.Refresh()
         'When the user has taken a hint, the potential rating gained is halved. Reflect this on the GainedRating Label.
-        GainedRatingLabel.Text = "+" & CStr(CalculateRatingGained(UserPuzzleMode, False))
+        GainedRatingLabel.Text = "+" & CStr(CalculateRatingGained(TrainingMode.UserPuzzleMode, False))
     End Sub
 
     'Button that handles either the user clicking the GiveUp Button, or the user / the AI running out of time on the puzzle move.
@@ -330,15 +340,15 @@ Partial Public Class Chess
             CancelAIPuzzleSearch()
             If GeneralOptions(0) = "T" Then Sound_Incorrect.Play()
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
-            If UserPuzzleMode OrElse AIWaitAfterPuzzleComplete Then Thread.Sleep(100) 'Gives the sound enough time to play before the position changes.
-            CalculateRatingLost(UserPuzzleMode, GiveUpBtn.Enabled) 'Decrements the user's / the AI's puzzle rating.
+            If TrainingMode.UserPuzzleMode OrElse TrainingMode.AIWaitAfterPuzzleComplete Then Thread.Sleep(100) 'Gives the sound enough time to play before the position changes.
+            CalculateRatingLost(TrainingMode.UserPuzzleMode, GiveUpBtn.Enabled) 'Decrements the user's / the AI's puzzle rating.
             'Note that the user / the AI should not be penelised multiple times per puzzle, so if the GiveUp Button
             'is not enabled (representing that the puzzle is already incorrect), then the rating should not change.
             LostRatingLabel.ForeColor = Color.Red
             GiveUpBtn.Enabled = False
-            If UserTakenHint Then PieceMoving.LockedPiece = "" 'Unlocks the Hint Starting Piece.
+            If TrainingMode.UserTakenHint Then PieceMoving.LockedPiece = "" 'Unlocks the Hint Starting Piece.
             'Plays the correct move in the puzzle, then flags the move as being complete.
-            PlayNextPuzzleMove(NoOfPuzzleMovesComplete * 2 + 1, False)
+            PlayNextPuzzleMove(TrainingMode.NoOfPuzzleMovesComplete * 2 + 1, False)
             If AutoAdvanceOnComplete.Checked Then
                 NextPuzzleBtn_Click() 'Automatically advance to the next puzzle.
             Else
@@ -354,28 +364,28 @@ Partial Public Class Chess
     Private Function CalculateRatingGained(ByVal UseUserRating As Boolean, ByVal CarryOutOperation As Boolean) As Int16
         Dim DeltaRating As Int16 'Difference in the user's / the AI's rating, and the puzzle's rating.
         If UseUserRating Then
-            DeltaRating = PuzzleSampleDatabase(CurrentPuzzleIndex).GetRating() - UserPuzzleRating
+            DeltaRating = TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetRating() - TrainingMode.UserPuzzleRating
         Else
-            DeltaRating = PuzzleSampleDatabase(CurrentPuzzleIndex).GetRating() - AIPuzzleRating
+            DeltaRating = TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetRating() - TrainingMode.AIPuzzleRating
         End If
         'Uses a weak exponential function to calculate the change in rating. More rating points are gained
         'for getting difficult puzzles correct, and few points are gained for getting easy puzzles correct.
         CalculateRatingGained = Math.Round((1.02 ^ DeltaRating) * 12 + 3)
         'Halves the potential rating gain if the user has taken a hint.
-        If UserTakenHint Then CalculateRatingGained = Math.Truncate(CalculateRatingGained / 2)
+        If TrainingMode.UserTakenHint Then CalculateRatingGained = Math.Truncate(CalculateRatingGained / 2)
 
         If CarryOutOperation Then
             'Actually give the user / the AI rating. Caps max rating at 3000.
             If UseUserRating Then
-                UserPuzzleRating = Math.Min(UserPuzzleRating + CalculateRatingGained, 3000)
+                TrainingMode.UserPuzzleRating = Math.Min(TrainingMode.UserPuzzleRating + CalculateRatingGained, 3000)
             Else
-                AIPuzzleRating = Math.Min(AIPuzzleRating + CalculateRatingGained, 3000)
+                TrainingMode.AIPuzzleRating = Math.Min(TrainingMode.AIPuzzleRating + CalculateRatingGained, 3000)
             End If
             'Outputs the user's / the AI's new puzzle rating, then saves them to the PuzzleStats file.
             Console.ForegroundColor = ConsoleColor.Green
             Console.Write("Puzzle correct. Change in Rating = " & CalculateRatingGained & ". New Rating = ")
-            If UseUserRating Then Console.WriteLine(UserPuzzleRating) Else Console.WriteLine(AIPuzzleRating)
-            Console.ResetColor()
+            If UseUserRating Then Console.WriteLine(TrainingMode.UserPuzzleRating) Else Console.WriteLine(TrainingMode.AIPuzzleRating)
+            Console.ForegroundColor = ConsoleColor.White
             SavePuzzleRatings()
         End If
 
@@ -384,9 +394,9 @@ Partial Public Class Chess
     Private Function CalculateRatingLost(ByVal UseUserRating As Boolean, ByVal CarryOutOperation As Boolean) As Int16
         Dim DeltaRating As Int16 'Difference in the user's / the AI's rating, and the puzzle's rating.
         If UseUserRating Then
-            DeltaRating = PuzzleSampleDatabase(CurrentPuzzleIndex).GetRating() - UserPuzzleRating
+            DeltaRating = TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetRating() - TrainingMode.UserPuzzleRating
         Else
-            DeltaRating = PuzzleSampleDatabase(CurrentPuzzleIndex).GetRating() - AIPuzzleRating
+            DeltaRating = TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetRating() - TrainingMode.AIPuzzleRating
         End If
         'Uses a weak exponential function to calculate the change in rating. More rating points are lost
         'for getting easy puzzles wrong, and few points are lost for getting difficult puzzles wrong.
@@ -395,15 +405,15 @@ Partial Public Class Chess
         If CarryOutOperation Then
             'Actually give the user / the AI rating. Caps min rating at 650.
             If UseUserRating Then
-                UserPuzzleRating = Math.Max(UserPuzzleRating - CalculateRatingLost, 650)
+                TrainingMode.UserPuzzleRating = Math.Max(TrainingMode.UserPuzzleRating - CalculateRatingLost, 650)
             Else
-                AIPuzzleRating = Math.Max(AIPuzzleRating - CalculateRatingLost, 650)
+                TrainingMode.AIPuzzleRating = Math.Max(TrainingMode.AIPuzzleRating - CalculateRatingLost, 650)
             End If
             'Outputs the user's / the AI's new puzzle rating, then saves them to the PuzzleStats file.
             Console.ForegroundColor = ConsoleColor.Red
             Console.Write("Puzzle incorrect. Change in Rating = " & CalculateRatingLost & ". New Rating = ")
-            If UseUserRating Then Console.WriteLine(UserPuzzleRating) Else Console.WriteLine(AIPuzzleRating)
-            Console.ResetColor()
+            If UseUserRating Then Console.WriteLine(TrainingMode.UserPuzzleRating) Else Console.WriteLine(TrainingMode.AIPuzzleRating)
+            Console.ForegroundColor = ConsoleColor.White
             SavePuzzleRatings()
         End If
 
@@ -412,9 +422,9 @@ Partial Public Class Chess
 
     'Subroutine that saves the user's and the AI's puzzle ratings to the PuzzleStats txt file.
     Private Sub SavePuzzleRatings()
-        Using SR As New StreamWriter(Application.StartupPath & "\Assets\User\PuzzleStats.txt")
-            SR.WriteLine(UserPuzzleRating)
-            SR.WriteLine(AIPuzzleRating)
+        Using SR As New StreamWriter(GlobalConstants.StartupPath & "\Assets\User\PuzzleStats.txt")
+            SR.WriteLine(TrainingMode.UserPuzzleRating)
+            SR.WriteLine(TrainingMode.AIPuzzleRating)
         End Using
     End Sub
 
@@ -426,13 +436,13 @@ Partial Public Class Chess
         TrainingTimer.Enabled = False
         ProgressBar.Value = 0
         ProgressBar.ForeColor = Color.FromArgb(0, 192, 0)
-        TimeForSearch = PuzzleTimeForSearch
+        AIHandles.TimeForSearch = TrainingMode.PuzzleTimeForSearch
     End Sub
     Private Sub HandlePuzzleModeTimerTick()
-        If Math.Max(TimeForSearch - 10, TimeForSearch * 0.6) * 10 <= TrainingTimerTicks Then
+        If Math.Max(AIHandles.TimeForSearch - 10, AIHandles.TimeForSearch * 0.6) * 10 <= TrainingMode.TrainingTimerTicks Then
             'Only 20% (or 10s, whichever is larger) of the puzzle's time remains - colour the progress bar red to signify.
             If ProgressBar.ForeColor = Color.FromArgb(0, 192, 0) Then ProgressBar.ForeColor = Color.Red
-            If TrainingTimerTicks >= TimeForSearch * 10 AndAlso Not PieceIsMoving Then
+            If TrainingMode.TrainingTimerTicks >= AIHandles.TimeForSearch * 10 AndAlso Not PieceIsMoving Then
                 'The total time to complete the puzzle move has expired - set the puzzle as being incorrect.
                 TrainingTimer.Enabled = False
                 'Resets Moved Piece, if the user is currently holding a piece.
@@ -447,7 +457,7 @@ Partial Public Class Chess
             End If
         End If
         'Increments the Progress bar to reflect how much time has expired.
-        ProgressBar.Value = Math.Min(Math.Round((TrainingTimerTicks / TimeForSearch) * 10), 100)
+        ProgressBar.Value = Math.Min(Math.Round((TrainingMode.TrainingTimerTicks / AIHandles.TimeForSearch) * 10), 100)
     End Sub
 
 
@@ -457,11 +467,12 @@ Partial Public Class Chess
         Console.WriteLine()
         'Calibrates the AI for the puzzle.
         MainAI.AddBoardHistory(BoardHistory.GetZobristArray())
-        CalculateStartingDepth()
+        CalculateAIStartingDepth()
 
         'Creates a new thread for the AI to run on, then starts the AI's search process.
+        Me.Text = "[Solving Puzzle...]  " + GlobalConstants.ProgramName
         Dim AIThread As New Task(AddressOf VariableAISearchHandler)
-        AIStopwatch.Restart()
+        AIHandles.AIStopwatch.Restart()
         AIThread.Start()
     End Sub
 
@@ -470,29 +481,29 @@ Partial Public Class Chess
     Private Function HandleAIPuzzleGuess() As Boolean
         If MainAI.GetABORTState() Then
             'Time to search on puzzle has expired - stop the search process.
-            AIStopwatch.Stop()
+            AIHandles.AIStopwatch.Stop()
             Return True
         Else
             'Checks if the AI's move matches the puzzle's correct move.
             'Fetches the correct puzzle move.
             Dim CorrectMove As New Move
-            CorrectMove = PuzzleSampleDatabase(CurrentPuzzleIndex).GetMove(NoOfPuzzleMovesComplete * 2 + 1)
+            CorrectMove = TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetMove(TrainingMode.NoOfPuzzleMovesComplete * 2 + 1)
             Console.Write("Correct Puzzle Move: ")
-            If Math.Abs(AIBestMove.Score) >= 295 OrElse ((CorrectMove.OldMoveX = AIBestMove.OldMoveX AndAlso CorrectMove.OldMoveY = AIBestMove.OldMoveY) AndAlso (CorrectMove.NewMoveX = AIBestMove.NewMoveX AndAlso CorrectMove.NewMoveY = AIBestMove.NewMoveY)) Then
+            If Math.Abs(AIHandles.AIBestMove.Score) >= 295 OrElse ((CorrectMove.OldMoveX = AIHandles.AIBestMove.OldMoveX AndAlso CorrectMove.OldMoveY = AIHandles.AIBestMove.OldMoveY) AndAlso (CorrectMove.NewMoveX = AIHandles.AIBestMove.NewMoveX AndAlso CorrectMove.NewMoveY = AIHandles.AIBestMove.NewMoveY)) Then
                 'AI's move is correct (or is a checkmating pattern, which we assume is correct; sometimes there are puzzles
                 'containing multiple ways to checkmate, but only one method is accepted, so if our AI produces a valid
                 'checkmating pattern then we just say that the move is correct).
-                If UserPuzzleMode Then AIStopwatch.Stop()
+                If TrainingMode.UserPuzzleMode Then AIHandles.AIStopwatch.Stop()
                 Console.ForegroundColor = ConsoleColor.Green
                 Console.WriteLine("Yes" & vbCrLf)
-                Console.ResetColor()
+                Console.ForegroundColor = ConsoleColor.White
                 Me.Invoke(Sub()
                               'Notify to the system that the AI's move is correct - meaning that GUI elements
                               'are updated, and the next puzzle move is played (if AIPuzzleMode is enabled).
                               UpdateAIPuzzleInfoLabel(True)
-                              If Not UserPuzzleMode Then
+                              If Not TrainingMode.UserPuzzleMode Then
                                   CancelAIPuzzleSearch()
-                                  PlayNextPuzzleMove(NoOfPuzzleMovesComplete * 2 + 1, False)
+                                  PlayNextPuzzleMove(TrainingMode.NoOfPuzzleMovesComplete * 2 + 1, False)
                                   PuzzleMoveCompleted()
                               End If
                           End Sub)
@@ -501,7 +512,7 @@ Partial Public Class Chess
                 'AI's move does not match the correct puzzle move - flag as incorrect.
                 Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("No")
-                Console.ResetColor()
+                Console.ForegroundColor = ConsoleColor.White
             End If
         End If
         Return False 'Move is incorrect - continue searching.
@@ -521,10 +532,11 @@ Partial Public Class Chess
     'on the puzzle.
     Private Sub UpdateAIPuzzleInfoLabel(ByVal PuzzleCorrect As Boolean)
         If PuzzleCorrect Then
-            AIPuzzleInfoLabel.Text = "AI Solved the Puzzle in " & AIStopwatch.ElapsedMilliseconds.ToString("N0") & "ms."
+            AIPuzzleInfoLabel.Text = "AI Solved the Puzzle in " & AIHandles.AIStopwatch.ElapsedMilliseconds.ToString("N0") & "ms."
         Else
             AIPuzzleInfoLabel.Text = "AI is Searching on the Puzzle..."
         End If
+        Me.Text = GlobalConstants.ProgramName
     End Sub
 
 
@@ -540,31 +552,31 @@ Partial Public Class Chess
         'Also updates the Puzzle's time for search attribute.
         If AutoAdvanceBar.Value = 14 Then
             'Max value = timer is disabled.
-            PuzzleTimeForSearch = Decimal.MaxValue
+            TrainingMode.PuzzleTimeForSearch = Decimal.MaxValue
             AutoAdvanceBox.Text = "Never."
         ElseIf AutoAdvanceBar.Value = 0 Then
-            PuzzleTimeForSearch = 5
+            TrainingMode.PuzzleTimeForSearch = 5
             AutoAdvanceBox.Text = "5 seconds."
         ElseIf AutoAdvanceBar.Value = 1 Then
-            PuzzleTimeForSearch = 10
+            TrainingMode.PuzzleTimeForSearch = 10
             AutoAdvanceBox.Text = "10 seconds."
         Else
             If AutoAdvanceBar.Value = 13 Then
-                PuzzleTimeForSearch = 600 '10 Minutes search time.
+                TrainingMode.PuzzleTimeForSearch = 600 '10 Minutes search time.
             ElseIf AutoAdvanceBar.Value = 12 Then
-                PuzzleTimeForSearch = 450 '7.5 Minute search time.
+                TrainingMode.PuzzleTimeForSearch = 450 '7.5 Minute search time.
             Else
-                'Sets PuzzleTimeForSearch between 1 minute and 5 minutes.
-                PuzzleTimeForSearch = (AutoAdvanceBar.Value - 1) * 30
+                'Sets TrainingMode.PuzzleTimeForSearch between 1 minute and 5 minutes.
+                TrainingMode.PuzzleTimeForSearch = (AutoAdvanceBar.Value - 1) * 30
             End If
 
-            'Changes the AutoAdvance Textbox to reflect the new value of PuzzleTimeForSearch.
+            'Changes the AutoAdvance Textbox to reflect the new value of TrainingMode.PuzzleTimeForSearch.
             If AutoAdvanceBar.Value = 2 Then
                 AutoAdvanceBox.Text = "30 seconds."
             ElseIf AutoAdvanceBar.Value = 3 Then
                 AutoAdvanceBox.Text = "1 minute."
             Else
-                AutoAdvanceBox.Text = PuzzleTimeForSearch / 60 & " minutes."
+                AutoAdvanceBox.Text = TrainingMode.PuzzleTimeForSearch / 60 & " minutes."
             End If
         End If
     End Sub
@@ -589,7 +601,7 @@ Partial Public Class Chess
                 'Delete the user puzzle rating file.
                 Console.ForegroundColor = ConsoleColor.DarkRed
                 Console.WriteLine("Deleting file...")
-                Dim UserDirectory As String = Application.StartupPath & "\Assets\User\PuzzleStats.txt"
+                Dim UserDirectory As String = GlobalConstants.StartupPath & "\Assets\User\PuzzleStats.txt"
                 If File.Exists(UserDirectory) Then
                     File.Delete(UserDirectory)
                 End If
@@ -601,7 +613,7 @@ Partial Public Class Chess
         Else
             Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("Please ensure that the Current Puzzle is complete (correct or incorrect), before attempting to Reset Puzzle Ratings.")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
         End If
     End Sub
 
@@ -616,51 +628,52 @@ Partial Public Class Chess
     Private Sub RetrieveLeaderboards()
         Dim TempLine As String
         Dim Counter As Byte
+
         'Attempts to retrieve White's leaderboard.
         Try
             'Fetches the correct leaderboard (based on the gamemode).
             If GameMode = 5 Then
-                FileOpen(1, Application.StartupPath & "\Assets\User\CoordinatePracticeLeaderboardW.txt", OpenMode.Input)
+                FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\CoordinatePracticeLeaderboardW.txt", OpenMode.Input)
             Else
-                FileOpen(1, Application.StartupPath & "\Assets\User\MovePracticeLeaderboardW.txt", OpenMode.Input)
+                FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\MovePracticeLeaderboardW.txt", OpenMode.Input)
             End If
             While Not EOF(1)
                 'Constructs White's leaderboard from the line input (in the format Name*Date Score).
                 TempLine = LineInput(1)
-                WLeaderBoard(Counter, 0) = TempLine.Substring(0, TempLine.IndexOf("*")) 'Name
+                TrainingModeWLeaderBoard(Counter, 0) = TempLine.Substring(0, TempLine.IndexOf("*")) 'Name
                 TempLine = TempLine.Substring(TempLine.IndexOf("*") + 1, TempLine.Length - TempLine.IndexOf("*") - 1)
-                WLeaderBoard(Counter, 2) = TempLine.Substring(0, TempLine.IndexOf(" ")) 'Score
+                TrainingModeWLeaderBoard(Counter, 2) = TempLine.Substring(0, TempLine.IndexOf(" ")) 'Score
                 TempLine = TempLine.Substring(TempLine.IndexOf(" ") + 1, TempLine.Length - TempLine.IndexOf(" ") - 1)
-                WLeaderBoard(Counter, 1) = TempLine.Substring(0, TempLine.Length) 'Date
+                TrainingModeWLeaderBoard(Counter, 1) = TempLine.Substring(0, TempLine.Length) 'Date
                 Counter += 1
             End While
         Catch ex As Exception 'Unable to retrieve leaderboard.
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error when retrieving White's Leaderboard data.")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
         End Try
         FileClose(1)
         'Attempts to retrieve Black's leaderboard (similar code).
         Counter = 0
         Try
             If GameMode = 5 Then
-                FileOpen(2, Application.StartupPath & "\Assets\User\CoordinatePracticeLeaderboardB.txt", OpenMode.Input)
+                FileOpen(2, GlobalConstants.StartupPath & "\Assets\User\CoordinatePracticeLeaderboardB.txt", OpenMode.Input)
             Else
-                FileOpen(2, Application.StartupPath & "\Assets\User\MovePracticeLeaderboardB.txt", OpenMode.Input)
+                FileOpen(2, GlobalConstants.StartupPath & "\Assets\User\MovePracticeLeaderboardB.txt", OpenMode.Input)
             End If
             While Not EOF(2)
                 TempLine = LineInput(2)
-                BLeaderBoard(Counter, 0) = TempLine.Substring(0, TempLine.IndexOf("*"))
+                TrainingModeBLeaderBoard(Counter, 0) = TempLine.Substring(0, TempLine.IndexOf("*"))
                 TempLine = TempLine.Substring(TempLine.IndexOf("*") + 1, TempLine.Length - TempLine.IndexOf("*") - 1)
-                BLeaderBoard(Counter, 2) = TempLine.Substring(0, TempLine.IndexOf(" "))
+                TrainingModeBLeaderBoard(Counter, 2) = TempLine.Substring(0, TempLine.IndexOf(" "))
                 TempLine = TempLine.Substring(TempLine.IndexOf(" ") + 1, TempLine.Length - TempLine.IndexOf(" ") - 1)
-                BLeaderBoard(Counter, 1) = TempLine.Substring(0, TempLine.Length)
+                TrainingModeBLeaderBoard(Counter, 1) = TempLine.Substring(0, TempLine.Length)
                 Counter += 1
             End While
         Catch ex As Exception
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error when retrieving Black's Leaderboard data.")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
         End Try
         FileClose(2)
 
@@ -672,24 +685,24 @@ Partial Public Class Chess
         If isWhite Then
             'Calls the correct file (or creates it if it doesn't exist).
             If GameMode = 5 Then
-                FileOpen(1, Application.StartupPath & "\Assets\User\CoordinatePracticeLeaderboardW.txt", OpenMode.Output)
+                FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\CoordinatePracticeLeaderboardW.txt", OpenMode.Output)
             Else
-                FileOpen(1, Application.StartupPath & "\Assets\User\MovePracticeLeaderboardW.txt", OpenMode.Output)
+                FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\MovePracticeLeaderboardW.txt", OpenMode.Output)
             End If
             'Writes to file in the format "Name*Date Score".
             For x = 0 To 9
-                If WLeaderBoard(x, 0) Is Nothing Then Exit For
-                PrintLine(1, WLeaderBoard(x, 0) & "*" & WLeaderBoard(x, 2) & " " & WLeaderBoard(x, 1))
+                If TrainingModeWLeaderBoard(x, 0) Is Nothing Then Exit For
+                PrintLine(1, TrainingModeWLeaderBoard(x, 0) & "*" & TrainingModeWLeaderBoard(x, 2) & " " & TrainingModeWLeaderBoard(x, 1))
             Next
         Else 'Similar code for the black leaderboard..
             If GameMode = 5 Then
-                FileOpen(1, Application.StartupPath & "\Assets\User\CoordinatePracticeLeaderboardB.txt", OpenMode.Output)
+                FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\CoordinatePracticeLeaderboardB.txt", OpenMode.Output)
             Else
-                FileOpen(1, Application.StartupPath & "\Assets\User\MovePracticeLeaderboardB.txt", OpenMode.Output)
+                FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\MovePracticeLeaderboardB.txt", OpenMode.Output)
             End If
             For x = 0 To 9
-                If BLeaderBoard(x, 0) Is Nothing Then Exit For
-                PrintLine(1, BLeaderBoard(x, 0) & "*" & BLeaderBoard(x, 2) & " " & BLeaderBoard(x, 1))
+                If TrainingModeBLeaderBoard(x, 0) Is Nothing Then Exit For
+                PrintLine(1, TrainingModeBLeaderBoard(x, 0) & "*" & TrainingModeBLeaderBoard(x, 2) & " " & TrainingModeBLeaderBoard(x, 1))
             Next
         End If
         FileClose(1)
@@ -698,25 +711,25 @@ Partial Public Class Chess
     'Subroutine that updates the DataGridView boxes to match their corresponding leaderboard array (for training modes).
     Private Sub UpdateLeaderboards()
         Dim TempIndex As Byte = 1
-        If WLeaderBoard(0, 0) IsNot Nothing Then
+        If TrainingModeWLeaderBoard(0, 0) IsNot Nothing Then
             WLeaderBoardGrid.Rows.Clear() 'Deletes leaderboard, then adds the correct data from the array.
-            WLeaderBoardGrid.Rows.Add(New String() {1, WLeaderBoard(0, 0), WLeaderBoard(0, 1), WLeaderBoard(0, 2)})
+            WLeaderBoardGrid.Rows.Add(New String() {1, TrainingModeWLeaderBoard(0, 0), TrainingModeWLeaderBoard(0, 1), TrainingModeWLeaderBoard(0, 2)})
             For x = 1 To 9
-                If WLeaderBoard(x, 0) Is Nothing Then Exit For
-                If Val(WLeaderBoard(x - 1, 1)) > Val(WLeaderBoard(x, 1)) Then TempIndex = x + 1 'Tie resolved - update Index (represents the score's place on the leaderboard).
-                WLeaderBoardGrid.Rows.Add(New String() {TempIndex, WLeaderBoard(x, 0), WLeaderBoard(x, 1), WLeaderBoard(x, 2)})
+                If TrainingModeWLeaderBoard(x, 0) Is Nothing Then Exit For
+                If Val(TrainingModeWLeaderBoard(x - 1, 1)) > Val(TrainingModeWLeaderBoard(x, 1)) Then TempIndex = x + 1 'Tie resolved - update Index (represents the score's place on the leaderboard).
+                WLeaderBoardGrid.Rows.Add(New String() {TempIndex, TrainingModeWLeaderBoard(x, 0), TrainingModeWLeaderBoard(x, 1), TrainingModeWLeaderBoard(x, 2)})
             Next
             Me.WLeaderBoardGrid.ClearSelection() 'Stops the first item in the leaderboard from being highlighted.
         End If
         'Similar code for black's leaderboard.
-        If BLeaderBoard(0, 0) IsNot Nothing Then
+        If TrainingModeBLeaderBoard(0, 0) IsNot Nothing Then
             TempIndex = 1
             BLeaderBoardGrid.Rows.Clear()
-            BLeaderBoardGrid.Rows.Add(New String() {1, BLeaderBoard(0, 0), BLeaderBoard(0, 1), BLeaderBoard(0, 2)})
+            BLeaderBoardGrid.Rows.Add(New String() {1, TrainingModeBLeaderBoard(0, 0), TrainingModeBLeaderBoard(0, 1), TrainingModeBLeaderBoard(0, 2)})
             For x = 1 To 9
-                If BLeaderBoard(x, 0) Is Nothing Then Exit For
-                If Val(BLeaderBoard(x - 1, 1)) > Val(BLeaderBoard(x, 1)) Then TempIndex = x + 1
-                BLeaderBoardGrid.Rows.Add(New String() {TempIndex, BLeaderBoard(x, 0), BLeaderBoard(x, 1), BLeaderBoard(x, 2)})
+                If TrainingModeBLeaderBoard(x, 0) Is Nothing Then Exit For
+                If Val(TrainingModeBLeaderBoard(x - 1, 1)) > Val(TrainingModeBLeaderBoard(x, 1)) Then TempIndex = x + 1
+                BLeaderBoardGrid.Rows.Add(New String() {TempIndex, TrainingModeBLeaderBoard(x, 0), TrainingModeBLeaderBoard(x, 1), TrainingModeBLeaderBoard(x, 2)})
             Next
             Me.BLeaderBoardGrid.ClearSelection()
         End If
@@ -735,7 +748,7 @@ Partial Public Class Chess
         End If
         If Not OrientForWhite Then XLocation = 7 - XLocation : YLocation = 7 - YLocation
 
-        If BoardEditMode AndAlso e.Button = Windows.Forms.MouseButtons.Right Then
+        If BoardEdit.isEnabled AndAlso e.Button = Windows.Forms.MouseButtons.Right Then
             If XLocation <= 8 Then HandleBoardEditEnPassantClick(XLocation, YLocation)
 
         ElseIf GameMode = 5 AndAlso GameRunning Then
@@ -757,23 +770,23 @@ Partial Public Class Chess
 
     'Function that returns a random FEN found in the RandomFENs file.
     Private Function RetrieveRandomPosition() As String(,)
-        Dim NewFEN As String
+        Dim NewFEN As String = ""
         Const FENsInFile As UInt16 = 10000
         Dim NoOfRetries As Byte
         Try
             While True
                 'Picks a random line from the file.
-                NewFEN = System.IO.File.ReadAllLines(Application.StartupPath & "\Assets\RandomFENs.txt")(Math.Truncate(Rnd() * FENsInFile))
+                NewFEN = System.IO.File.ReadAllLines(GlobalConstants.StartupPath & "\Assets\RandomFENs.txt")(Math.Truncate(Rnd() * FENsInFile))
                 'Applies that FEN to Masterboard and calibrates board info.
-                MasterBoard = SharedAlgorithms.FENConverter(NewFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                MasterBoard = Helper.FENConverter(NewFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                 If PlayerTurn Then
                     MasterWInCheck = 0
-                    SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                    Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
                     'If White is not in check, generate all the legal moves in the position.
                     MainAI.Reconfigure(NewFEN, True)
                     If MasterWInCheck < 128 Then
-                        MovesInPosition = MainAI.GetLegalMoves()
-                        If MovesInPosition.GetUpperBound(0) >= GlobalConstants.TrainingMovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
+                        TrainingMode.MovesInPosition = MainAI.GetLegalMoves()
+                        If TrainingMode.MovesInPosition.GetUpperBound(0) >= GlobalConstants.TrainingMovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
                     End If
                 End If
                 NoOfRetries += 1
@@ -782,7 +795,7 @@ Partial Public Class Chess
         Catch ex As Exception
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Unable to find a valid Training Position in the database.")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
             MsgBox("Error: Unable to retrieve a valid position from the database." & vbCrLf & "Returning to the Main Menu...", vbCritical + vbOKOnly + vbApplicationModal)
             ExitBtn_Click()
         End Try
@@ -790,24 +803,25 @@ Partial Public Class Chess
         Console.ForegroundColor = ConsoleColor.Green
         Console.WriteLine("New Position: " & NewFEN)
         If NoOfRetries > 0 Then Console.ForegroundColor = ConsoleColor.Red : Console.WriteLine("Number of Retries: " & NoOfRetries)
-        Console.ResetColor()
-        Return MovesInPosition
+        Console.ForegroundColor = ConsoleColor.White
+        Return TrainingMode.MovesInPosition
     End Function
 
     'Function that retieves a random move in the position (for the Move Training mode).
     Private Function GenerateNewTrainingMove() As String
+        Dim TrainingMove As String = ""
         Dim TempMove As New Move
-        While True
-            'Retrieves random move from MovesInPosition, then contructs TempMove using this data.
-            Dim RndIndex As Byte = Math.Truncate(Rnd() * (MovesInPosition.GetUpperBound(0) + 1))
-            TempMove.OldMoveX = MovesInPosition(RndIndex, 0)(0)
-            TempMove.OldMoveY = MovesInPosition(RndIndex, 0)(1)
-            TempMove.NewMoveX = MovesInPosition(RndIndex, 1)(0)
-            TempMove.NewMoveY = MovesInPosition(RndIndex, 1)(1)
+        While MoveDisplayer.Text <> TrainingMove
+            'Retrieves random move from TrainingMode.MovesInPosition, then contructs TempMove using this data.
+            Dim RndIndex As Byte = Math.Truncate(Rnd() * (TrainingMode.MovesInPosition.GetUpperBound(0) + 1))
+            TempMove.OldMoveX = TrainingMode.MovesInPosition(RndIndex, 0)(0)
+            TempMove.OldMoveY = TrainingMode.MovesInPosition(RndIndex, 0)(1)
+            TempMove.NewMoveX = TrainingMode.MovesInPosition(RndIndex, 1)(0)
+            TempMove.NewMoveY = TrainingMode.MovesInPosition(RndIndex, 1)(1)
             'Converts this Move to standard chess notation. If this is different to the current move then accept & return it.
-            GenerateNewTrainingMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-            If MoveDisplayer.Text <> GenerateNewTrainingMove Then Return GenerateNewTrainingMove
+            TrainingMove = Helper.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
         End While
+        Return TrainingMove
     End Function
 
     'Function that checks a user's input move on the Move Training Game, and retrieves a new move / position if needed. Returns true if a new position has been generated.
@@ -816,19 +830,19 @@ Partial Public Class Chess
         'The user is playing the Move Training Game, and the move they entered may be correct - test move.
         Dim UserMove As String
         If PlayerTurn Then
-            UserMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
+            UserMove = Helper.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
         Else
-            UserMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, False, MasterBKPos, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
+            UserMove = Helper.MoveConverter(MasterBoard, TempMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
         End If
         If UserMove = MoveDisplayer.Text Then
             'The move is correct - notify the user.
             TrainingScore.Text = CInt(TrainingScore.Text) + 1
             If GeneralOptions(0) = "T" Then Sound_Check.Play()
-            TrainingMovesCompleted += 1
-            If TrainingMovesCompleted = GlobalConstants.TrainingMovesPerPosition Then
+            TrainingMode.TrainingMovesCompleted += 1
+            If TrainingMode.TrainingMovesCompleted = GlobalConstants.TrainingMovesPerPosition Then
                 'Generate new position & move.
-                TrainingMovesCompleted = 0
-                MovesInPosition = RetrieveRandomPosition()
+                TrainingMode.TrainingMovesCompleted = 0
+                TrainingMode.MovesInPosition = RetrieveRandomPosition()
                 DisplayPieces()
                 MoveDisplayer.Text = GenerateNewTrainingMove()
                 HandleMoveTrainingInput = True
@@ -886,8 +900,8 @@ Partial Public Class Chess
                 Next
             Next
         ElseIf GameMode = 6 Then 'Generates a new position.
-            TrainingMovesCompleted = 0
-            MovesInPosition = RetrieveRandomPosition()
+            TrainingMode.TrainingMovesCompleted = 0
+            TrainingMode.MovesInPosition = RetrieveRandomPosition()
         End If
 
         'Starts the game.
@@ -903,18 +917,18 @@ Partial Public Class Chess
         TrainingScore.Text = "0"
         TrainingScore.Visible = True
         GameRunning = True
-        TrainingTimerTicks = 0
+        TrainingMode.TrainingTimerTicks = 0
         TrainingTimer.Enabled = True
         TrainingTimer.Start() 'Starts timer. Every tick = 100ms.
     End Sub
 
     'Subroutine that handles the Training Mode Timer. Also involves ending games and updating leaderboards accordingly.
     Private Sub HandleCoordinateAndMoveModeTimerTick()
-        TimerLabel.Text = "Time Left: " & Math.Round(20 + ((GameMode + 1) Mod 2) * 10 - (TrainingTimerTicks / 10), 1) & " Seconds"
-        If TrainingTimerTicks >= 150 + ((GameMode + 1) Mod 2) * 100 Then
+        TimerLabel.Text = "Time Left: " & Math.Round(20 + ((GameMode + 1) Mod 2) * 10 - (TrainingMode.TrainingTimerTicks / 10), 1) & " Seconds"
+        If TrainingMode.TrainingTimerTicks >= 150 + ((GameMode + 1) Mod 2) * 100 Then
             '5 seconds remaining - turn timer red.
             TimerLabel.ForeColor = Color.Red
-            If TrainingTimerTicks >= 200 + ((GameMode + 1) Mod 2) * 100 Then
+            If TrainingMode.TrainingTimerTicks >= 200 + ((GameMode + 1) Mod 2) * 100 Then
                 'Time's up! Notify the user.
                 TimerLabel.Text = "Time Left: 0.0 Seconds"
                 Application.DoEvents()
@@ -922,7 +936,7 @@ Partial Public Class Chess
                 TrainingTimer.Enabled = False
                 If GeneralOptions(0) = "T" Then Sound_GameOver.Play()
 
-                If Val(TrainingScore.Text) > 0 AndAlso OrientForWhite AndAlso Val(TrainingScore.Text) > WLeaderBoard(9, 1) OrElse Not OrientForWhite AndAlso Val(TrainingScore.Text) > BLeaderBoard(9, 1) Then
+                If Val(TrainingScore.Text) > 0 AndAlso OrientForWhite AndAlso Val(TrainingScore.Text) > TrainingModeWLeaderBoard(9, 1) OrElse Not OrientForWhite AndAlso Val(TrainingScore.Text) > TrainingModeBLeaderBoard(9, 1) Then
                     'The user's score put them in the top 10 - give the user the option to add their name & score to the leaderboard.
                     Dim NewName As String
                     Thread.Sleep(1000)
@@ -935,36 +949,36 @@ Partial Public Class Chess
                                 If OrientForWhite Then 'Edits white's leaderboard.
                                     For x = 9 To -1 Step -1
                                         'Finds the right index to place the player's score.
-                                        If x = -1 OrElse (WLeaderBoard(x, 0) IsNot Nothing AndAlso Val(TrainingScore.Text) <= WLeaderBoard(x, 1)) Then
+                                        If x = -1 OrElse (TrainingModeWLeaderBoard(x, 0) IsNot Nothing AndAlso Val(TrainingScore.Text) <= TrainingModeWLeaderBoard(x, 1)) Then
                                             For n = 8 To x + 1 Step -1
-                                                If WLeaderBoard(n, 0) IsNot Nothing Then
+                                                If TrainingModeWLeaderBoard(n, 0) IsNot Nothing Then
                                                     'Shifts all successive scores one index down (as they have been beaten).
-                                                    WLeaderBoard(n + 1, 0) = WLeaderBoard(n, 0)
-                                                    WLeaderBoard(n + 1, 1) = WLeaderBoard(n, 1)
-                                                    WLeaderBoard(n + 1, 2) = WLeaderBoard(n, 2)
+                                                    TrainingModeWLeaderBoard(n + 1, 0) = TrainingModeWLeaderBoard(n, 0)
+                                                    TrainingModeWLeaderBoard(n + 1, 1) = TrainingModeWLeaderBoard(n, 1)
+                                                    TrainingModeWLeaderBoard(n + 1, 2) = TrainingModeWLeaderBoard(n, 2)
                                                 End If
                                             Next
                                             'Puts the score data in the leaderboard.
-                                            WLeaderBoard(x + 1, 0) = NewName
-                                            WLeaderBoard(x + 1, 1) = Val(TrainingScore.Text)
-                                            WLeaderBoard(x + 1, 2) = DateTime.Now.ToString("dd'/'MM'/'yyyy")
+                                            TrainingModeWLeaderBoard(x + 1, 0) = NewName
+                                            TrainingModeWLeaderBoard(x + 1, 1) = Val(TrainingScore.Text)
+                                            TrainingModeWLeaderBoard(x + 1, 2) = DateTime.Now.ToString("dd'/'MM'/'yyyy")
                                             Exit For
                                         End If
                                     Next
                                     SaveToLeaderboards(True)
                                 Else 'Edits black's leaderboard (similar code).
                                     For x = 9 To -1 Step -1
-                                        If x = -1 OrElse (BLeaderBoard(x, 0) IsNot Nothing AndAlso Val(TrainingScore.Text) <= BLeaderBoard(x, 1)) Then
+                                        If x = -1 OrElse (TrainingModeBLeaderBoard(x, 0) IsNot Nothing AndAlso Val(TrainingScore.Text) <= TrainingModeBLeaderBoard(x, 1)) Then
                                             For n = 8 To x + 1 Step -1
-                                                If BLeaderBoard(n, 0) IsNot Nothing Then
-                                                    BLeaderBoard(n + 1, 0) = BLeaderBoard(n, 0)
-                                                    BLeaderBoard(n + 1, 1) = BLeaderBoard(n, 1)
-                                                    BLeaderBoard(n + 1, 2) = BLeaderBoard(n, 2)
+                                                If TrainingModeBLeaderBoard(n, 0) IsNot Nothing Then
+                                                    TrainingModeBLeaderBoard(n + 1, 0) = TrainingModeBLeaderBoard(n, 0)
+                                                    TrainingModeBLeaderBoard(n + 1, 1) = TrainingModeBLeaderBoard(n, 1)
+                                                    TrainingModeBLeaderBoard(n + 1, 2) = TrainingModeBLeaderBoard(n, 2)
                                                 End If
                                             Next
-                                            BLeaderBoard(x + 1, 0) = NewName
-                                            BLeaderBoard(x + 1, 1) = Val(TrainingScore.Text)
-                                            BLeaderBoard(x + 1, 2) = DateTime.Now.ToString("dd'/'MM'/'yyyy")
+                                            TrainingModeBLeaderBoard(x + 1, 0) = NewName
+                                            TrainingModeBLeaderBoard(x + 1, 1) = Val(TrainingScore.Text)
+                                            TrainingModeBLeaderBoard(x + 1, 2) = DateTime.Now.ToString("dd'/'MM'/'yyyy")
                                             Exit For
                                         End If
                                     Next
@@ -1009,24 +1023,9 @@ Partial Public Class Chess
                 TimerLabel.ForeColor = Color.Black
                 ResetLMS(True)
                 'Resets the board.
-                MasterBoard = SharedAlgorithms.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                MasterBoard = Helper.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                 DisplayPieces()
             End If
-        End If
-    End Sub
-
-
-
-
-
-    'Button that displays information about the training modes.
-    Private Sub InfoBtn_Click() Handles InfoBtn.Click
-        If GameMode = 4 Then
-            MsgBox("• In this training mode, you will be given a chess position, where the side to move only has one winning move. You will need to find that winning move, and play it on the board." & vbCrLf & "• Getting a puzzle correct will increase your rating, getting it incorrect will decrease your rating." & vbCrLf & "• If you cannot find the move(s), you can either take a hint (which displays the piece to move, but will halve the potential rating gain), or give up to reveal the move." & vbCrLf & "• The AI will search on the position in the background, and (if the toggle is set to AI mode) will automatically play its moves on the board." & vbCrLf & "• The AI will be set to its maximum difficulty during its search." & vbCrLf & "• Note: when modifying settings, your changes will be implemented on the next move / puzzle." & vbCrLf & "• Please note that you can only reset the puzzle ratings once the current puzzle has been solved / deemed as being incorrect.", vbInformation + vbApplicationModal, "Instructions")
-        ElseIf GameMode = 5 Then
-            MsgBox("• In this training game, you will be given a chess coordinate (in standard chess notation), and will be tasked with clicking the corresponding square on the chessboard as fast as you can." & vbCrLf & "• If you click the correct square, it will light up in green, and you will be given a new coordinate to click." & vbCrLf & "• Click the most coordinates you can in 20 seconds, and try to get a place on the leaderboard!" & vbCrLf & "• Clicking the 'Flip Board' button will rotate the board 180°, so that each coordinate will be from black's point of view.", vbInformation + vbApplicationModal, "Instructions")
-        Else
-            MsgBox("• In this training game, you will be given a random chess position along with a possible move (in standard chess notation). You will need to play that move as fast as you can." & vbCrLf & "• If you make the correct move, that square will light up in green, and you will be given a new move to make." & vbCrLf & "• After " & GlobalConstants.TrainingMovesPerPosition & " moves are made in a position, a new random position will be generated." & vbCrLf & "• Complete the most moves you can in 30 seconds, and try to get a place on the leaderboard!" & vbCrLf & "• Clicking the 'Flip Board' button will rotate the board 180°, so that each move will be from black's point of view." & vbCrLf & vbCrLf & "• Note: Regardless of whether the board is flipped or not, only the white pieces will need to be moved.", vbInformation + vbApplicationModal, "Instructions")
         End If
     End Sub
 

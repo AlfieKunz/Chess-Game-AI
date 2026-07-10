@@ -50,7 +50,7 @@ Partial Class TwoPlayerCustomisation
         Me.FENTextBox.Name = "FENTextBox"
         Me.FENTextBox.Size = New System.Drawing.Size(250, 35)
         Me.FENTextBox.TabIndex = 16
-        Me.FENTextBox.Text = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        Me.FENTextBox.Text = GlobalConstants.StartingFENPosition
         '
         'StartBtn
         '

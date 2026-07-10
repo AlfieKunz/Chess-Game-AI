@@ -14,7 +14,7 @@ Public Class Settings
     Private AnimationRunning, AnimationSettingsChanged As Boolean 'Information regarding the piece animation testing.
 
     Private ReadOnly Sound_Move As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Move.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Move.wav"
     }
 
     'Subroutines that sets up the form.
@@ -63,7 +63,7 @@ Public Class Settings
         KnightClicked() 'Knight = default piece to move.
         'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
         Try
-            FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
+            FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
             ColourScheme = LineInput(1)
             AnimationSpeed = Val(LineInput(1))
             GeneralOptions = LineInput(1)
@@ -140,7 +140,7 @@ Public Class Settings
     Private Sub SaveSettings()
         'Writes the colour preferences to a file (creates the file if one does not exist).
         Try
-            FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Output)
+            FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Output)
             PrintLine(1, ColourScheme)
             PrintLine(1, CStr(AnimationSpeed))
             PrintLine(1, GeneralOptions)
@@ -150,7 +150,7 @@ Public Class Settings
             FileClose(1)
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Unable to Save Settings. Please try again...")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
         End Try
 
         'Finds the 'chess' parent form, and runs one of its subroutines which configures the user's new settings.
@@ -162,7 +162,7 @@ Public Class Settings
         Next
         Console.ForegroundColor = ConsoleColor.Green
         Console.WriteLine("Settings Saved.")
-        Console.ResetColor()
+        Console.ForegroundColor = ConsoleColor.White
     End Sub
 
 
@@ -473,7 +473,7 @@ Public Class Settings
                     Piece = WR1
                 Case 1
                     Piece = WN1
-                Case 2
+                Case Else '= 2.
                     Piece = WB1
             End Select
             Dim Constant As SByte 'How many 'steps' it takes a piece to move from A to B.
@@ -591,12 +591,12 @@ Public Class Settings
         Else
             GeneralOptions = GeneralOptions.Remove(6, 1).Insert(6, "F")
             'Restores the images back to the PictureBoxes.
-            WP1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WPawn.png")
-            WP2.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WPawn.png")
-            WP3.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WPawn.png")
-            WR1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WRook.png")
-            WN1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WKnight.png")
-            WB1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WBishop.png")
+            WP1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WPawn.png")
+            WP2.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WPawn.png")
+            WP3.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WPawn.png")
+            WR1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WRook.png")
+            WN1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WKnight.png")
+            WB1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WBishop.png")
         End If
         If Not AnimationRunning Then SaveSettings()
     End Sub
@@ -625,7 +625,7 @@ Public Class Settings
         End If
     End Sub
 
-    'Subroutine that handles the FixedSearchBox - preventing the user from entering any invalid inputs, along with calibrating FixedSearchDepth.
+    'Subroutine that handles the FixedSearchBox - preventing the user from entering any invalid inputs, along with calibrating AIHandles.FixedSearchDepth.
     Private Sub FixedSearchBox_TextChanged() Handles FixedSearchBox.TextChanged
         If FixedSearchBox.Enabled Then
             If FixedSearchBox.Text = "" Then
@@ -636,7 +636,7 @@ Public Class Settings
                 End If
             ElseIf FixedSearchBox.Text.Length >= 3 Then 'Depth cannot exceed 99.
                 FixedSearchBox.Text = FixedSearchDepth
-            ElseIf System.Text.RegularExpressions.Regex.IsMatch(FixedSearchBox.Text, "^[0-9]+$") Then 'Correct syntax - replace FixedSearchDepth.
+            ElseIf System.Text.RegularExpressions.Regex.IsMatch(FixedSearchBox.Text, "^[0-9]+$") Then 'Correct syntax - replace AIHandles.FixedSearchDepth.
                 Try
                     If Val(FixedSearchBox.Text) <> FixedSearchDepth Then FixedSearchDepth = Val(FixedSearchBox.Text) : SaveSettings()
                 Catch ex As Exception
@@ -657,11 +657,14 @@ Public Class Settings
             'Deletes all files in the User folder.
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Deleting Files...")
-            Console.ResetColor()
-            Dim UserDirectory As String = Application.StartupPath & "\Assets\User"
+            Console.ForegroundColor = ConsoleColor.White
+            Dim UserDirectory As String = GlobalConstants.StartupPath & "\Assets\User"
             For Each FileToDelete In Directory.GetFiles(UserDirectory, "*.txt", SearchOption.TopDirectoryOnly)
                 File.Delete(FileToDelete)
             Next
+            'Creates the "FirstRemoteModeSession" file, to specify that the Remote Mode Popup should play if the user enters Remote Mode.
+            Dim RemoteModePath As String = GlobalConstants.StartupPath & "\Assets\User\FirstRemoteModeSession.txt"
+            If Not System.IO.File.Exists(RemoteModePath) Then System.IO.File.Create(RemoteModePath).Close()
             'Reconfigures the (default) settings.
             ConfigureSettings()
             Checkerboard.Refresh()

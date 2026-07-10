@@ -43,6 +43,8 @@ Partial Class OnePlayerCustomisation
         Me.UserTimeBar = New System.Windows.Forms.TrackBar()
         Me.UserTimeBox = New System.Windows.Forms.TextBox()
         Me.AISearchOnUsersTurnBox = New System.Windows.Forms.CheckBox()
+        Me.AIBox = New System.Windows.Forms.CheckBox()
+        Me.AdvancedSearchTimeBox = New System.Windows.Forms.CheckBox()
         CType(Me.DifficultySlider, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.Panel1.SuspendLayout()
         Me.Panel2.SuspendLayout()
@@ -218,7 +220,7 @@ Partial Class OnePlayerCustomisation
         Me.PieceHeatMapBox.Checked = True
         Me.PieceHeatMapBox.CheckState = System.Windows.Forms.CheckState.Checked
         Me.PieceHeatMapBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PieceHeatMapBox.Location = New System.Drawing.Point(68, 292)
+        Me.PieceHeatMapBox.Location = New System.Drawing.Point(69, 292)
         Me.PieceHeatMapBox.Name = "PieceHeatMapBox"
         Me.PieceHeatMapBox.Size = New System.Drawing.Size(152, 19)
         Me.PieceHeatMapBox.TabIndex = 30
@@ -262,7 +264,7 @@ Partial Class OnePlayerCustomisation
         Me.UserTimeBox.ReadOnly = True
         Me.UserTimeBox.Size = New System.Drawing.Size(164, 20)
         Me.UserTimeBox.TabIndex = 28
-        Me.UserTimeBox.Text = "Time For Search: 10 Seconds"
+        Me.UserTimeBox.Text = "Time For Search: 5 Seconds"
         Me.UserTimeBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
         Me.UserTimeBox.Visible = False
         '
@@ -272,7 +274,7 @@ Partial Class OnePlayerCustomisation
         Me.AISearchOnUsersTurnBox.Checked = True
         Me.AISearchOnUsersTurnBox.CheckState = System.Windows.Forms.CheckState.Checked
         Me.AISearchOnUsersTurnBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AISearchOnUsersTurnBox.Location = New System.Drawing.Point(52, 317)
+        Me.AISearchOnUsersTurnBox.Location = New System.Drawing.Point(55, 317)
         Me.AISearchOnUsersTurnBox.Name = "AISearchOnUsersTurnBox"
         Me.AISearchOnUsersTurnBox.Size = New System.Drawing.Size(180, 19)
         Me.AISearchOnUsersTurnBox.TabIndex = 30
@@ -281,13 +283,41 @@ Partial Class OnePlayerCustomisation
         Me.AISearchOnUsersTurnBox.UseVisualStyleBackColor = True
         Me.AISearchOnUsersTurnBox.Visible = False
         '
+        'AIBox
+        '
+        Me.AIBox.AutoSize = True
+        Me.AIBox.Checked = True
+        Me.AIBox.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.AIBox.Location = New System.Drawing.Point(217, 24)
+        Me.AIBox.Name = "AIBox"
+        Me.AIBox.Size = New System.Drawing.Size(58, 17)
+        Me.AIBox.TabIndex = 32
+        Me.AIBox.Text = "Use AI"
+        Me.AIBox.UseVisualStyleBackColor = True
+        Me.AIBox.Visible = False
+        '
+        'AdvancedSearchTimeBox
+        '
+        Me.AdvancedSearchTimeBox.AutoSize = True
+        Me.AdvancedSearchTimeBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AdvancedSearchTimeBox.Location = New System.Drawing.Point(53, 342)
+        Me.AdvancedSearchTimeBox.Name = "AdvancedSearchTimeBox"
+        Me.AdvancedSearchTimeBox.Size = New System.Drawing.Size(184, 19)
+        Me.AdvancedSearchTimeBox.TabIndex = 30
+        Me.AdvancedSearchTimeBox.Text = "Use Advanced Search Time?"
+        Me.AdvancedSearchTimeBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.AdvancedSearchTimeBox.UseVisualStyleBackColor = True
+        Me.AdvancedSearchTimeBox.Visible = False
+        '
         'OnePlayerCustomisation
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.LightGray
-        Me.ClientSize = New System.Drawing.Size(284, 331)
+        Me.ClientSize = New System.Drawing.Size(284, 361)
+        Me.Controls.Add(Me.AIBox)
+        Me.Controls.Add(Me.AdvancedSearchTimeBox)
         Me.Controls.Add(Me.AISearchOnUsersTurnBox)
         Me.Controls.Add(Me.PieceHeatMapBox)
         Me.Controls.Add(Me.QuiescenceBox)
@@ -338,4 +368,6 @@ Partial Class OnePlayerCustomisation
     Friend WithEvents UserTimeBox As TextBox
     Friend WithEvents RNDSide As RadioButton
     Friend WithEvents AISearchOnUsersTurnBox As CheckBox
+    Friend WithEvents AIBox As CheckBox
+    Friend WithEvents AdvancedSearchTimeBox As CheckBox
 End Class

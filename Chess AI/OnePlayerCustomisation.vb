@@ -1,15 +1,47 @@
 ﻿'Class that allows the user to customise their one-player game of chess.
 'Called from the main menu, and is involved in instantiating the Chess form.
+Imports System.IO
+
 Public Class OnePlayerCustomisation
 
     'Creates opening book (as received from Main Menu) - will be passed onto the Chess form.
     Private ReadOnly OpeningBook As New List(Of OpeningBookEntry)
     Private IsInCustomLayout As Boolean
+    Private RemoteMode As Boolean
+
+    Private AIDiffLabelBufferText As String
+    Private AIDiffLabelBufferColour As Color
+    Private TimeForSearch As Decimal
+
 
     Public Sub New(ByRef InputBook As List(Of OpeningBookEntry))
         InitializeComponent() ' This call is required by the designer.
         Randomize()
         If InputBook IsNot Nothing AndAlso InputBook.Count > 0 Then OpeningBook.AddRange(InputBook) Else UseBook.Enabled = False
+        Me.Height = 370
+        AIDiffLabel2.Text = "Beginner"
+        AIDiffLabel2.ForeColor = Color.Green
+    End Sub
+
+    Public Sub New(ByRef InputBook As List(Of OpeningBookEntry), ByVal UserRemoteMode As Boolean)
+        Me.New(InputBook)
+        If UserRemoteMode Then
+            RemoteMode = True
+            AIBox.Visible = True
+            RNDSide.Visible = False
+            White.Checked = True
+            AdvancedSearchTimeBox.Checked = True
+            White.Left += 47
+            Black.Left += 47
+
+            'Allow the user to be able to easily toggle the AdvancedSearchTime, by having it as an option next to the OpeningBook Toggle.
+            AdvancedSearchTimeBox.Top -= 92
+            AdvancedSearchTimeBox.Visible = True
+            Me.Height += 25 'Makes the form grow in height.
+            StartBtn.Top += 25
+            InfoBtn.Top += 25
+            BackBtn.Top += 25
+        End If
     End Sub
 
     'Functionality for the Start Button.
@@ -31,12 +63,6 @@ Public Class OnePlayerCustomisation
         'Takes the user to their Chess game, which varies based on their preferences.
         Dim UserStartingFEN As String
         Dim PlayAsWhite As Boolean
-        'Controls for a custom starting position (if left blank, assume the standard starting position).
-        If PosBtn2.Checked AndAlso FENTextBox.Text <> "" Then
-            UserStartingFEN = FENTextBox.Text
-        Else
-            UserStartingFEN = GlobalConstants.InitialFENPosition
-        End If
 
         'If the user has clicked the "Play as White" radio button, or 50% of the time if they have clicked the
         '"Play as RND", the user will play as White.
@@ -46,41 +72,88 @@ Public Class OnePlayerCustomisation
             PlayAsWhite = False
         End If
 
+        'Controls for a custom starting position (if left blank, assume the standard starting position).
+        If PosBtn2.Checked AndAlso FENTextBox.Text <> "" Then
+            UserStartingFEN = FENTextBox.Text
+            If RemoteMode Then
+                Dim FENPieces As String = UserStartingFEN.Substring(0, UserStartingFEN.IndexOf(" "))
+                Dim Pieces() As Char = {"n", "q"}
+                If Not PlayAsWhite Then
+                    For i = 0 To Pieces.Length - 1
+                        Pieces(i) = UCase(Pieces(i))
+                    Next
+                End If
+                For Each Piece In Pieces
+                    If FENPieces.IndexOf(Piece) < 0 Then
+                        If MsgBox("Error: When using Remote Mode, an enemy Knight & Queen must be Present, to Correctly Handle Pawn Promotions. If you proceed with this FEN, Promotions to Queens will be assumed - do you want to proceed?", vbCritical + vbYesNo + vbApplicationModal) = 7 Then Exit Sub
+                        Exit For
+                    End If
+                Next
+            End If
+        Else
+            UserStartingFEN = GlobalConstants.StartingFENPosition
+        End If
+
         'Calibrates the user's AI difficulty settings.
         Dim UserTimeForSearch As Decimal
-        Dim UserSearchSettings As New AISearchSettings
-        UserSearchSettings.OutputPath = False
+        Dim UserSearchSettings As New AISearchSettings With {
+            .OutputPath = RemoteMode
+        }
         Dim UserAICanSearchOnUsersTurn As Boolean
 
         If Not UseBook.Checked Then OpeningBook.Clear()
         If DifficultySlider.Value = 1 Then
             'User has selected a custom difficulty - choose their settings based on their options.
-            UserTimeForSearch = Math.Max(UserTimeBar.Value / 2, 0.1)
+            UserTimeForSearch = TimeForSearch
             UserSearchSettings.UseQuiescence = QuiescenceBox.Checked
             UserSearchSettings.UsePieceHeatMaps = PieceHeatMapBox.Checked
             UserAICanSearchOnUsersTurn = AISearchOnUsersTurnBox.Checked
         ElseIf DifficultySlider.Value = 2 Then
-            UserTimeForSearch = 1
+            'Beginner AI. 0.1s per search. Turns off Quiescence, PieceHeatMaps, TranspositionTable, Dynamic Depths, and Null-Pruning.
+            UserTimeForSearch = 0.1
             UserSearchSettings.UseQuiescence = False
             UserSearchSettings.UsePieceHeatMaps = False
+            UserSearchSettings.UseTranspositionTable = False
+            UserSearchSettings.StableSearch = True
+            UserSearchSettings.NullMoveRValue = Int16.MaxValue
         ElseIf DifficultySlider.Value = 3 Then
-            UserTimeForSearch = 3
+            'Easy AI. 0.5s per search. Same as Beginner; with PieceHeatMaps turned on.
+            UserTimeForSearch = 0.5
             UserSearchSettings.UseQuiescence = False
+            UserSearchSettings.UseTranspositionTable = False
+            UserSearchSettings.StableSearch = True
+            UserSearchSettings.NullMoveRValue = Int16.MaxValue
         ElseIf DifficultySlider.Value = 4 Then
-            UserTimeForSearch = 3
+            'Medium AI. 1s per search. Same as Beginner; with Quiescence and TranspositionTable turned on.
+            UserTimeForSearch = 1
             UserSearchSettings.UsePieceHeatMaps = False
+            UserSearchSettings.StableSearch = True
+            UserSearchSettings.NullMoveRValue = Int16.MaxValue
         ElseIf DifficultySlider.Value = 5 Then
-            UserTimeForSearch = 5
+            'Hard AI. 2s per search. Same as Medium; with Quiescence and TranspositionTable turned on.
+            UserTimeForSearch = 2
+            UserSearchSettings.StableSearch = True
+            UserSearchSettings.NullMoveRValue = Int16.MaxValue
         ElseIf DifficultySlider.Value = 6 Then
-            UserTimeForSearch = 10
+            'Expert AI. 5s per search. Same as Hard; with Null-Pruning, and Opponent Thinking Time turned on.
+            UserTimeForSearch = 5
             UserAICanSearchOnUsersTurn = True
-        Else
+        Else 'Pain AI. Same as Expert, but with 30s per search. TODO: Add more features that distinguishes Expert from Pain.
             UserTimeForSearch = 30
             UserAICanSearchOnUsersTurn = True
         End If
 
         'Initialises a new game of Chess.
-        Dim ChessGame As New Chess(1, UserStartingFEN, UserTimeForSearch, UserSearchSettings, UserAICanSearchOnUsersTurn, PlayAsWhite, OpeningBook)
+        Dim ChessGame As Chess
+        If RemoteMode Then
+            If AIBox.Checked Then
+                ChessGame = New Chess(True, UserStartingFEN, PlayAsWhite, OpeningBook, UserTimeForSearch, UserSearchSettings, UserAICanSearchOnUsersTurn, AdvancedSearchTimeBox.Checked)
+            Else
+                ChessGame = New Chess(True, UserStartingFEN, PlayAsWhite, OpeningBook)
+            End If
+        Else
+            ChessGame = New Chess(1, UserStartingFEN, UserTimeForSearch, UserSearchSettings, UserAICanSearchOnUsersTurn, AdvancedSearchTimeBox.Checked, PlayAsWhite, OpeningBook)
+        End If
         ChessGame.Show()
     End Sub
 
@@ -93,9 +166,34 @@ Public Class OnePlayerCustomisation
         FENTextBox.Enabled = True
     End Sub
 
+
+
+    Private Sub AIBox_CheckedChanged() Handles AIBox.CheckedChanged
+        If AIBox.Checked Then
+            AIDiffLabel2.Text = AIDiffLabelBufferText
+            AIDiffLabel2.ForeColor = AIDiffLabelBufferColour
+            If DifficultySlider.Value = 1 Then MoveLayoutDown()
+        Else
+            AIDiffLabelBufferText = AIDiffLabel2.Text
+            AIDiffLabelBufferColour = AIDiffLabel2.ForeColor
+            AIDiffLabel2.Text = "N/A"
+            AIDiffLabel2.ForeColor = Color.Black
+            If DifficultySlider.Value = 1 Then ResetLayout()
+        End If
+        DifficultySlider.Enabled = AIBox.Checked
+        If OpeningBook IsNot Nothing Then UseBook.Enabled = AIBox.Checked
+    End Sub
+
+
     'Button that displays information regarding the various AI difficulties.
     Private Sub InfoBtn_Click() Handles InfoBtn.Click
-        MsgBox("• Beginner: 1s per search, Quiescence off, Piece Heat Maps off." & vbCrLf & "• Easy: 3s per search, Quiescence off, Piece Heat Maps on." & vbCrLf & "• Medium: 3s per search, Quiescence on, Piece Heat Maps off." & vbCrLf & "• Hard: 5s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• Expert: 10s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• Pain: 30s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• (From difficulties 'Expert' and onwards, the AI will search on the position in the background, on the User's turn.)", vbInformation + vbApplicationModal, "AI Difficulty Information")
+        MsgBox("• Beginner: 0.1s per search. Turns off Quiescence, PieceHeatMaps, TranspositionTable, Dynamic Depths, and Null-Pruning." & vbCrLf &
+               "• Easy: 0.5s per search. Same as Beginner; with PieceHeatMaps turned on." & vbCrLf &
+               "• Medium: 1s per search. Same as Beginner; with Quiescence and TranspositionTable turned on." & vbCrLf &
+               "• Hard: 2s per search. Same as Medium; with Quiescence and TranspositionTable turned on." & vbCrLf &
+               "• Expert: 5s per search. Same as Hard; with Null-Pruning, and Opponent Thinking Time turned on." & vbCrLf &
+               "• Pain: 30s per search. All AI Enhancements Enabled (good luck ;D).",
+               vbInformation + vbApplicationModal, "AI Difficulty Information")
     End Sub
     'Button that takes the user back to the main menu.
     Private Sub BackBtn_Click() Handles BackBtn.Click
@@ -121,23 +219,7 @@ Public Class OnePlayerCustomisation
             IsInCustomLayout = True
             AIDiffLabel2.Text = "Custom"
             AIDiffLabel2.ForeColor = Color.RoyalBlue
-            'Modifies the layout of the screen to add these new customisation options, by moving
-            'object down.
-            Dim Scalar As UInt16 = 155
-            Me.Height += Scalar 'Makes the form grow in height.
-            Panel2.Top += Scalar
-            UseBook.Top += Scalar
-            StartBtn.Top += Scalar
-            InfoBtn.Top += Scalar
-            BackBtn.Top += Scalar
-
-            'Toggles the custom difficulty options.
-            UserTimeBox.Visible = True
-            UserTimeBar.Visible = True
-            QuiescenceBox.Visible = True
-            PieceHeatMapBox.Visible = True
-            AISearchOnUsersTurnBox.Visible = True
-
+            MoveLayoutDown()
         ElseIf DifficultySlider.Value = 2 Then
             AIDiffLabel2.Text = "Beginner"
             If IsInCustomLayout Then ResetLayout()
@@ -165,6 +247,29 @@ Public Class OnePlayerCustomisation
         End If
     End Sub
 
+
+    'Modifies the layout of the screen to add these new customisation options, by moving
+    'object down.
+    Private Sub MoveLayoutDown()
+        MoveBottomControlsDown(If(RemoteMode, 155, 180))
+        'Toggles the custom difficulty options.
+        UserTimeBox.Visible = True
+        UserTimeBar.Visible = True
+        QuiescenceBox.Visible = True
+        PieceHeatMapBox.Visible = True
+        AISearchOnUsersTurnBox.Visible = True
+        If Not RemoteMode Then AdvancedSearchTimeBox.Visible = True
+    End Sub
+    Private Sub MoveBottomControlsDown(ByVal Pixels As Integer)
+        Me.Height += Pixels 'Makes the form grow in height.
+        Panel2.Top += Pixels
+        UseBook.Top += Pixels
+        StartBtn.Top += Pixels
+        InfoBtn.Top += Pixels
+        BackBtn.Top += Pixels
+        If RemoteMode Then AdvancedSearchTimeBox.Top += Pixels
+    End Sub
+
     'Subroutine that resets the layout of the screen, for when the difficulty slider is not set to 'Custom'.
     Private Sub ResetLayout()
         'Hides the difficulty customisation options.
@@ -173,16 +278,20 @@ Public Class OnePlayerCustomisation
         QuiescenceBox.Visible = False
         PieceHeatMapBox.Visible = False
         AISearchOnUsersTurnBox.Visible = False
+        If Not RemoteMode Then AdvancedSearchTimeBox.Visible = False
 
         'Resets all objects back to their initial values.
-        Me.Height = 370
-        Panel2.Top = 199
-        UseBook.Top = 228
-        StartBtn.Top = 258
-        BackBtn.Top = 296
-        InfoBtn.Top = 296
+        MoveBottomControlsDown(-If(RemoteMode, 155, 180))
+        'Default Values:
+        'Me.Height = 370
+        'Panel2.Top = 199
+        'UseBook.Top = 228
+        'StartBtn.Top = 258
+        'BackBtn.Top = 296
+        'InfoBtn.Top = 296
         IsInCustomLayout = False
     End Sub
+
 
     'Subroutines that alter the design of the cursor when the user interacts with the TimeBar slider.
     Private Sub UserTimeBar_MouseDown() Handles UserTimeBar.MouseDown
@@ -198,24 +307,30 @@ Public Class OnePlayerCustomisation
     'Also updates TimeBox.
     Private Sub UserTimeBar_ValueChanged() Handles UserTimeBar.ValueChanged
         'Updates UserTimeBox.
-        UserTimeBox.Text = "Time For Search: " & Math.Max(UserTimeBar.Value / 2, 0.1) & " seconds."
+        Select Case UserTimeBar.Value
+            Case 0 'Lowest Possible Time For Search.
+                TimeForSearch = 0.1
+            Case < 20 'Between 0.25 and 5 seconds, increment in 0.25 seconds.
+                TimeForSearch = UserTimeBar.Value / 4
+            Case < 50 'Between 5 and 20 seconds, increment in 0.5 seconds.
+                TimeForSearch = (UserTimeBar.Value - 10) / 2
+            Case Else 'Between 20 and 30 seconds, increment in 1 second.
+                TimeForSearch = UserTimeBar.Value - 30
+        End Select
+        UserTimeBox.Text = $"Time For Search: {TimeForSearch} seconds."
+
         'Colours UserTimeBox red if the TimeForSearch setting the user has chosen is likely to not be enough time for the AI
         'to compelete a search in.
-        If (QuiescenceBox.Checked AndAlso UserTimeBar.Value < 4) OrElse Not QuiescenceBox.Checked AndAlso UserTimeBar.Value < 2 Then
-            UserTimeBox.BackColor = Color.LightCoral
-        Else
-            UserTimeBox.BackColor = Color.WhiteSmoke
-        End If
+        ChangeUserTimeBarBackColour()
     End Sub
 
     'Subroutines that control the Quiescence and Piece Heat Map Boxes.
-    Private Sub QuiescenceBox_CheckedChanged() Handles QuiescenceBox.CheckedChanged
-        'Toggles Quiescence depending on the state of the box.
-        If (QuiescenceBox.Checked AndAlso UserTimeBar.Value < 4) OrElse Not QuiescenceBox.Checked AndAlso UserTimeBar.Value < 2 Then
-            UserTimeBox.BackColor = Color.LightCoral
-        Else
-            UserTimeBox.BackColor = Color.WhiteSmoke
-        End If
+    Private Sub ChangeUserTimeBarBackColour() Handles QuiescenceBox.CheckedChanged, PieceHeatMapBox.CheckedChanged
+        Dim ThresholdValue As Integer = 1
+        If QuiescenceBox.Checked Then ThresholdValue += 3
+        If PieceHeatMapBox.Checked Then ThresholdValue += 2
+        'Gives the UserTimeBox a red highlight if the time allocated might not be enough for a search to complete (estimate).
+        UserTimeBox.BackColor = If(UserTimeBar.Value < Math.Min(ThresholdValue, 5), Color.LightCoral, Color.WhiteSmoke)
     End Sub
 
 End Class

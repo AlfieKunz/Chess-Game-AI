@@ -72,6 +72,7 @@ Partial Class MainMenu
         Me.PlayBtn = New System.Windows.Forms.Button()
         Me.Training = New System.Windows.Forms.Button()
         Me.PlayOptions = New System.Windows.Forms.Panel()
+        Me.RemoteBtn = New System.Windows.Forms.Button()
         CType(Me.RowHider8, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.RowHider7, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.RowHider6, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -551,10 +552,10 @@ Partial Class MainMenu
         Me.ExitBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None
         Me.ExitBtn.Cursor = System.Windows.Forms.Cursors.Hand
         Me.ExitBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.ExitBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.ExitBtn.Location = New System.Drawing.Point(465, 81)
+        Me.ExitBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 11.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.ExitBtn.Location = New System.Drawing.Point(60, 118)
         Me.ExitBtn.Name = "ExitBtn"
-        Me.ExitBtn.Size = New System.Drawing.Size(120, 60)
+        Me.ExitBtn.Size = New System.Drawing.Size(68, 28)
         Me.ExitBtn.TabIndex = 3
         Me.ExitBtn.Text = "Exit"
         Me.ExitBtn.UseVisualStyleBackColor = False
@@ -608,7 +609,7 @@ Partial Class MainMenu
         Me.Credits.Name = "Credits"
         Me.Credits.Size = New System.Drawing.Size(268, 18)
         Me.Credits.TabIndex = 37
-        Me.Credits.Text = "Created by: Alfie Kunz - 2021-2024"
+        Me.Credits.Text = "Created by: Alfie Kunz - 2021-2025"
         '
         'PlayBtn
         '
@@ -647,6 +648,20 @@ Partial Class MainMenu
         Me.PlayOptions.Name = "PlayOptions"
         Me.PlayOptions.Size = New System.Drawing.Size(152, 75)
         Me.PlayOptions.TabIndex = 39
+        '
+        'RemoteBtn
+        '
+        Me.RemoteBtn.BackColor = System.Drawing.Color.Silver
+        Me.RemoteBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None
+        Me.RemoteBtn.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.RemoteBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.RemoteBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.RemoteBtn.Location = New System.Drawing.Point(465, 81)
+        Me.RemoteBtn.Name = "RemoteBtn"
+        Me.RemoteBtn.Size = New System.Drawing.Size(120, 60)
+        Me.RemoteBtn.TabIndex = 3
+        Me.RemoteBtn.Text = "Remote Play"
+        Me.RemoteBtn.UseVisualStyleBackColor = False
         '
         'MainMenu
         '
@@ -692,6 +707,7 @@ Partial Class MainMenu
         Me.Controls.Add(Me.WB1)
         Me.Controls.Add(Me.WQ1)
         Me.Controls.Add(Me.WK1)
+        Me.Controls.Add(Me.RemoteBtn)
         Me.Controls.Add(Me.ExitBtn)
         Me.Controls.Add(Me.Analysis)
         Me.Controls.Add(Me.RowHider8)
@@ -803,4 +819,5 @@ Partial Class MainMenu
     Friend WithEvents PlayBtn As Button
     Friend WithEvents Training As Button
     Friend WithEvents PlayOptions As Panel
+    Friend WithEvents RemoteBtn As Button
 End Class

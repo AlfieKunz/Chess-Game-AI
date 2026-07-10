@@ -16,13 +16,13 @@ Public Class MainMenu
     Private BookLoaded As Boolean
     'Startup sound effect - sounds taken from Chess.com.
     ReadOnly Sound_Startup As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Startup.wav"
+        .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Startup.wav"
     }
 
     Private Sub MainMenu_Load() Handles Me.Load
         'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
         Try
-            FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
+            FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
             ColourScheme = LineInput(1)
             LineInput(1)
             Dim GeneralSettings As String = LineInput(1)
@@ -39,7 +39,7 @@ Public Class MainMenu
             UseSmallOpeningBook = False
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
-            Console.ResetColor()
+            Console.ForegroundColor = ConsoleColor.White
         End Try
         FileClose(1)
         CreateColourProfile(ColourScheme)
@@ -143,19 +143,19 @@ Public Class MainMenu
         'Gives all pieces their appropriate images.
         Dim Colour As String = "W"
         For x = 0 To 16 Step 16
-            Pieces(x).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "King.png")
-            Pieces(x + 1).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Queen.png")
+            Pieces(x).Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "King.png")
+            Pieces(x + 1).Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Queen.png")
             For n = x + 2 To x + 3
-                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Bishop.png")
+                Pieces(n).Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Bishop.png")
             Next
             For n = x + 4 To x + 5
-                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Knight.png")
+                Pieces(n).Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Knight.png")
             Next
             For n = x + 6 To x + 7
-                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Rook.png")
+                Pieces(n).Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Rook.png")
             Next
             For n = x + 8 To x + 15
-                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Pawn.png")
+                Pieces(n).Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\" & Colour & "Pawn.png")
             Next
             Colour = "B"
         Next
@@ -225,14 +225,19 @@ Public Class MainMenu
         Training.FlatAppearance.BorderSize = 0
         Training.BringToFront()
 
-        ExitBtn.Visible = False
-        ExitBtn.Location = New Point(352.5, 307.5)
-        ExitBtn.FlatAppearance.BorderSize = 0
-        ExitBtn.BringToFront()
+        RemoteBtn.Visible = False
+        RemoteBtn.Location = New Point(352.5, 307.5)
+        RemoteBtn.FlatAppearance.BorderSize = 0
+        RemoteBtn.BringToFront()
 
         Credits.Visible = False
-        Credits.Location = New Point(172, 404)
+        Credits.Location = New Point(172, 392)
         Credits.BringToFront()
+
+        ExitBtn.Visible = False
+        ExitBtn.Location = New Point(266, 417)
+        ExitBtn.FlatAppearance.BorderSize = 0
+        ExitBtn.BringToFront()
     End Sub
 
     'Subroutine which handles the animation of the pieces on boot-up, the retrieval of the Opening Book, and the
@@ -245,7 +250,7 @@ Public Class MainMenu
         Dim TempColour As String
         'Resets the user's colour profile (as it may have changed in the Settings form, and hence must be updated).
         Try
-            FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
+            FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
             TempColour = LineInput(1)
             FileClose(1)
             If TempColour <> ColourScheme Then
@@ -280,7 +285,7 @@ Public Class MainMenu
                 If n >= 7 Then RowHider7.Left += 75
                 If n >= 8 Then RowHider8.Left += 75
                 Application.DoEvents()
-                If n < 15 Then Thread.Sleep(-3 * Math.Abs(n - 7) + 70)
+                If n < 15 Then Thread.Sleep(-3 * Math.Abs(n - 7) + 55)
             Next
         Else
             'Makes all the RowHider objects invisible.
@@ -293,7 +298,7 @@ Public Class MainMenu
         AnimatePiece(WR2)
         AnimatePiece(BR1)
         AnimatePiece(BR2)
-        Wait(1)
+        Wait(0.8)
         AnimatePiece(WN1)
         AnimatePiece(WN2)
         AnimatePiece(BN1)
@@ -302,7 +307,7 @@ Public Class MainMenu
         AnimatePiece(WP2)
         AnimatePiece(BP1)
         AnimatePiece(BP2)
-        Wait(3)
+        Wait(0.8 * 3)
         AnimatePiece(WB1)
         AnimatePiece(WB2)
         AnimatePiece(BB1)
@@ -311,7 +316,7 @@ Public Class MainMenu
         AnimatePiece(WP4)
         AnimatePiece(BP3)
         AnimatePiece(BP4)
-        Wait(3)
+        Wait(0.8 * 3)
         AnimatePiece(WK1)
         AnimatePiece(WQ1)
         AnimatePiece(BK1)
@@ -320,20 +325,21 @@ Public Class MainMenu
         AnimatePiece(WP6)
         AnimatePiece(BP5)
         AnimatePiece(BP6)
-        Wait(3)
+        Wait(0.8 * 3)
         AnimatePiece(WP7)
         AnimatePiece(WP8)
         AnimatePiece(BP7)
         AnimatePiece(BP8)
-        Wait(2.5)
+        Wait(0.8 * 2.5)
 
         'Makes the labels & buttons visible, then audibly notifies the user that they can choose a menu option.
         Title.Visible = True
         PlayBtn.Visible = True
         Training.Visible = True
         Analysis.Visible = True
-        ExitBtn.Visible = True
+        RemoteBtn.Visible = True
         Credits.Visible = True
+        ExitBtn.Visible = True
         If Not AlreadyBooted AndAlso PlaySounds Then Sound_Startup.Play()
     End Sub
     Private Sub AnimatePiece(ByVal Piece As PictureBox)
@@ -365,7 +371,7 @@ Public Class MainMenu
             'so that it can be loaded into memory quicker.
             Timer.Start()
             'Opens opening book from file using StreamReader.
-            Using SR As New StreamReader(Application.StartupPath & BookPath, Encoding.UTF8, True, 16384)
+            Using SR As New StreamReader(GlobalConstants.StartupPath & BookPath, Encoding.UTF8, True, 16384)
                 While Not (SR.EndOfStream OrElse BookLoaded)
                     TempEntry = New OpeningBookEntry(SR.ReadLine())
                     OpeningBook.Add(TempEntry)
@@ -381,7 +387,7 @@ Public Class MainMenu
             OpeningBook = Nothing
         End Try
         GCSettings.LatencyMode = GCLatencyMode.Interactive
-        Console.ResetColor()
+        Console.ForegroundColor = ConsoleColor.White
     End Sub
 
 
@@ -465,29 +471,33 @@ Public Class MainMenu
     End Sub
     Private Sub Analysis_Click() Handles Analysis.Click
         If Not BookLoaded Then HandleOpeningBookNotLoaded()
-        'Creates the chess game (if Opening Book could not be retrieved then do not pass book.
+        'Creates the chess game (if Opening Book could not be retrieved then do not pass book).
         Dim ChessGame As Chess
         If OpeningBook.Count > 0 Then ChessGame = New Chess(OpeningBook) : Else ChessGame = New Chess()
         ChessGame.Show()
         Me.Hide()
     End Sub
 
-    Private Sub ExitBtn_MouseEnter() Handles ExitBtn.MouseEnter
+    Private Sub RemoteBtn_MouseEnter() Handles RemoteBtn.MouseEnter
         'Grows the Button.
-        ExitBtn.Size = New Size(150, 75)
-        ExitBtn.Left -= 15
-        ExitBtn.Top -= 7.5
-        ExitBtn.Font = New Font("Microsoft Sans Serif", 24, FontStyle.Bold)
+        RemoteBtn.Size = New Size(150, 75)
+        RemoteBtn.Left -= 15
+        RemoteBtn.Top -= 7.5
+        RemoteBtn.Font = New Font("Microsoft Sans Serif", 22, FontStyle.Bold)
     End Sub
-    Private Sub ExitBtn_MouseLeave() Handles ExitBtn.MouseLeave
+    Private Sub RemoteBtn_MouseLeave() Handles RemoteBtn.MouseLeave
         'Shrinks the Button.
-        ExitBtn.Size = New Size(120, 60)
-        ExitBtn.Left += 15
-        ExitBtn.Top += 7.5
-        ExitBtn.Font = New Font("Microsoft Sans Serif", 18, FontStyle.Bold)
+        RemoteBtn.Size = New Size(120, 60)
+        RemoteBtn.Left += 15
+        RemoteBtn.Top += 7.5
+        RemoteBtn.Font = New Font("Microsoft Sans Serif", 16, FontStyle.Bold)
     End Sub
-    Private Sub ExitBtn_Click() Handles ExitBtn.Click
-        Me.Close()
+    Private Sub RemoteBtn_Click() Handles RemoteBtn.Click
+        If Not BookLoaded Then HandleOpeningBookNotLoaded()
+        'Instantiates a new version of the OnePlayerCustomisation form.
+        Dim Customisation = New OnePlayerCustomisation(OpeningBook, True)
+        Customisation.Show()
+        Me.Hide()
     End Sub
 
 
@@ -496,11 +506,11 @@ Public Class MainMenu
     Private Sub HandleOpeningBookNotLoaded()
         Console.ForegroundColor = ConsoleColor.DarkRed
         Console.WriteLine("WARNING: Opening Book not fully Loaded into the System - Continuing Without...")
-        Console.ResetColor()
+        Console.WriteLine("Tip: Consider using the 'Smaller Opening Book' in the Program's Settings for faster load times.")
+        Console.ForegroundColor = ConsoleColor.White
         OpeningBook.Clear()
         BookLoaded = True
     End Sub
-
 
 
 
@@ -511,7 +521,11 @@ Public Class MainMenu
         MsgBoxThread.Start()
     End Sub
     Sub ShowCreditsBox()
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2024)", vbInformation, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2025)", vbInformation, "Credits")
+    End Sub
+
+    Private Sub ExitBtn_Click() Handles ExitBtn.Click
+        Me.Close()
     End Sub
 
 End Class

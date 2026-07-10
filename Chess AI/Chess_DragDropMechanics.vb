@@ -1,7 +1,7 @@
 ﻿Imports System.Threading
 
 'This class contains all the information regarding the drag & drop mechanics of the UI, along with the handles for submitting a move into the system.
-Partial Public Class Chess
+Partial Public Class Chess 'DragDrop Mechanics
 
     Private Structure PieceInfo 'Contains information about a piece that the user is moving on the GUI.
         Dim IsMovingPiece As Boolean 'Is the piece being moved by the user?
@@ -31,7 +31,7 @@ Partial Public Class Chess
         If e.Button = Windows.Forms.MouseButtons.Left Then
             Dim CoorX As SByte = sender.location.X / 75
             Dim CoorY As SByte = sender.location.Y / 75
-            If BoardEditMode Then
+            If BoardEdit.isEnabled Then
                 'Handles BoardEdit piece drag & dropping - duplicates the piece if it is a template.
                 If sender.location.X > 600 Then
                     'Piece is off-screen: duplicate it.
@@ -39,7 +39,7 @@ Partial Public Class Chess
                     ReplacedPiece.Location = sender.location
                     ReplacedPiece.Visible = True
                 Else
-                    'Remove the piece from the board.
+                    'Remove the piece from the board, so that the user can replace the piece on the original square (also useful for Copy mode).
                     If OrientForWhite Then
                         MasterBoard(CoorX, CoorY) = " "
                     Else
@@ -50,7 +50,7 @@ Partial Public Class Chess
                 ResetDragDropMechanics(sender, e)
                 Checkerboard.Refresh()
 
-            ElseIf GameRunning AndAlso Not ComputerIsSearching AndAlso Not PieceIsMoving Then
+            ElseIf GameRunning AndAlso Not ComputerIsSearching AndAlso Not PieceIsMoving AndAlso (GameMode <> 0 OrElse RemoteModeCanClickPiece()) Then
                 'If the user clicks on an enemy piece during 'Click-Move Mode', then they may be wanting to capture this piece.
                 If ClickMoveMode AndAlso (sender.Name(0) = "W" Xor PlayerTurn) Then HandleClickMoveMode(CoorX, CoorY) : Exit Sub
 
@@ -107,7 +107,7 @@ Partial Public Class Chess
             If Not (PieceMoving.HasMoved = 0 OrElse PieceMoving.StartMouseLocation = PieceMoving.EndPoint) Then PieceMoving.HasMoved -= 1
 
             'Duplicate piece as it moves across the board.
-            If BoardEditMode AndAlso Control.ModifierKeys = Keys.Control Then HandleBoardEditModeCopy(sender)
+            If BoardEdit.isEnabled AndAlso Control.ModifierKeys = Keys.Control Then HandleBoardEditModeCopy(sender)
 
             'Updates the Checkerboard object for a smoother animation.
             Checkerboard.Invalidate()
@@ -117,14 +117,13 @@ Partial Public Class Chess
 
     Private Sub Piece_MouseUp(ByVal sender As Object, ByVal e As System.Windows.Forms.MouseEventArgs)
         Dim IsLegalMove As Boolean
-        Dim ReplacedPiece As PictureBox = Nothing
+        Dim ReplacedPiece As PictureBox
         Dim TempMove As New Move
         If e.Button = Windows.Forms.MouseButtons.Left AndAlso PieceMoving.IsMovingPiece Then
 
             For Each Piece In PieceArray
                 'If the PictureBox is within the confines of the Checkerboard, and it isn't the piece being moved by the user...
                 If Piece.Location.X >= 0 AndAlso Piece.Location.Y >= 0 AndAlso Piece.Name <> PieceMoving.Piece.Name Then
-                    'Draws the PictureBox's image into the Checkerboard.
                     Piece.Visible = True 'Alternate style of flickering - may be less distracting??
                 End If
             Next
@@ -134,7 +133,7 @@ Partial Public Class Chess
             PieceMoving.IsMovingPiece = False
             Dim SnapLocation As Point = CalculatePieceSquareSnapPosition(sender)
 
-            If BoardEditMode Then HandleBoardEditModeDrop(sender, SnapLocation, PieceMoving.StartPoint) : Exit Sub
+            If BoardEdit.isEnabled Then HandleBoardEditModeDrop(sender, SnapLocation, PieceMoving.StartPoint) : Exit Sub
             'If the piece has not moved (much), snap it back into place and enable ClickMoveMode.
             'This retains the LMS information on the GUI, so that the user can make a move by clicking on one of these squares.
             If PieceMoving.HasMoved > 0 Then ClickMoveMode = True : sender.location = PieceMoving.StartPoint : Exit Sub Else ClickMoveMode = False
@@ -149,12 +148,7 @@ Partial Public Class Chess
                 TempMove.OldMoveY = PieceMoving.StartPoint.Y / 75
                 TempMove.NewMoveX = SnapLocation.X / 75
                 TempMove.NewMoveY = SnapLocation.Y / 75
-                If Not OrientForWhite Then 'Flips coordinates 180 degrees.
-                    TempMove.OldMoveX = 7 - TempMove.OldMoveX
-                    TempMove.OldMoveY = 7 - TempMove.OldMoveY
-                    TempMove.NewMoveX = 7 - TempMove.NewMoveX
-                    TempMove.NewMoveY = 7 - TempMove.NewMoveY
-                End If
+                If Not OrientForWhite Then TempMove.Flip() 'Flips coordinates 180 degrees.
 
                 'Checks if the user's move is in the list of that piece's legal moves.
                 IsLegalMove = False
@@ -174,7 +168,7 @@ Partial Public Class Chess
                     If sender.name(1) = "P" AndAlso (sender.name(0) = "W" AndAlso TempMove.NewMoveY = 0 OrElse sender.name(0) = "B" AndAlso TempMove.NewMoveY = 7) Then
                         'If the user is holding down SHIFT, then the pawn is promoted to a knight.
                         PromotionFlag = True
-                        TempMove.EndState = If(Control.ModifierKeys = Keys.Shift, "N", "Q")
+                        TempMove.Code = If(Control.ModifierKeys = Keys.Control, "N", "Q")
                     End If
 
                     If GameMode = 6 Then
@@ -195,15 +189,12 @@ Partial Public Class Chess
 
 
                     'Move is legal for the standard game of chess.
-                    'If the AI is searching on the position in the background, then terminate this AI immediately.
-                    If AIIsSearchingOnUsersTurn Then MainAI.ABORTSearch()
-                    PieceMoving.LockedPiece = ""
-
                     If UCase(sender.name(1)) = "K" AndAlso Math.Abs(TempMove.NewMoveX - TempMove.OldMoveX) = 2 Then
                         'Player is castling - animate the rook moving to the other side of the king.
-                        Dim RookMove As New Move
-                        RookMove.OldMoveY = TempMove.NewMoveY
-                        RookMove.NewMoveY = TempMove.NewMoveY
+                        Dim RookMove As New Move With {
+                            .OldMoveY = TempMove.NewMoveY,
+                            .NewMoveY = TempMove.NewMoveY
+                        }
                         'Sets coordinates for king-side and queen-side castling.
                         If TempMove.NewMoveX > TempMove.OldMoveX Then
                             RookMove.OldMoveX = 7
@@ -215,7 +206,7 @@ Partial Public Class Chess
                         AnimateMove(RookMove)
                         'If the move is a capture, the required sound is played and the captured piece is removed from the board.
                     ElseIf MasterBoard(TempMove.NewMoveX, TempMove.NewMoveY) <> " " Then
-                        ReplacedPiece = CoorToPieceConverter(TempMove.NewMoveX, TempMove.NewMoveY) 'Finds captured PictureBox.
+                        ReplacedPiece = FindPieceFromCoor(TempMove.NewMoveX, TempMove.NewMoveY, MasterBoard(TempMove.NewMoveX, TempMove.NewMoveY)) 'Finds captured PictureBox.
                         'Removes captured PictureBox.
                         ReplacedPiece.Visible = False
                         ReplacedPiece.Location = New Point(-100, -100)
@@ -226,7 +217,7 @@ Partial Public Class Chess
                         'If a pawn has made it to the end of the board, it is promoted to a Queen / Knight.
                         If PromotionFlag Then
                             'Pawn promotion - finds a queen / knight to replace the pawn.
-                            ReplacedPiece = FindNewPiece(sender.name(0), TempMove.EndState)
+                            ReplacedPiece = FindNewPiece(sender.name(0), TempMove.Code)
                             'Moves this queen piece to replace the pawn.
                             ReplacedPiece.Location = New Point(sender.location.X, sender.location.Y)
                             ReplacedPiece.Visible = True
@@ -239,7 +230,7 @@ Partial Public Class Chess
                             Dim IndexShifter As SByte
                             'Locates the pawn behind it.
                             If sender.name(0) = "W" Then IndexShifter = 1 Else IndexShifter = -1
-                            ReplacedPiece = CoorToPieceConverter(TempMove.NewMoveX, TempMove.NewMoveY + IndexShifter)
+                            ReplacedPiece = FindPieceFromCoor(TempMove.NewMoveX, TempMove.NewMoveY + IndexShifter)
                             'Removes this pawn.
                             ReplacedPiece.Visible = False
                             ReplacedPiece.Location = New Point(-100, -100)
@@ -247,7 +238,7 @@ Partial Public Class Chess
                     End If
 
                     'Move has been successfully animated on the screen - process the move into the system.
-                    SubmitMoveIntoSystem(TempMove)
+                    SubmitMoveIntoSystem(TempMove, True)
 
                 Else
                     'The move is not legal - move it back to its original position.
@@ -279,9 +270,13 @@ Partial Public Class Chess
     'Calculates the position of a given piece, after being 'snapped' into its respective square on the chessboard.
     Private Function CalculatePieceSquareSnapPosition(ByVal Piece As PictureBox) As Point
         'Anchors position to top-left corner of square.
-        Dim XCoor As Int16 = Piece.Location.X + 37.5 - (Piece.Location.X + 37.5) Mod 75
-        Dim YCoor As Int16 = Piece.Location.Y + 37.5 - (Piece.Location.Y + 37.5) Mod 75
-        Return New Point(XCoor, YCoor)
+        Dim ScaledXCoor As Double = Piece.Location.X + 37.5
+        Dim ScaledYCoor As Double = Piece.Location.Y + 37.5
+        'If the piece is _just_ outside the confines of the LHS / Top-Side, mod will -> 0. To make this piece easier to remove in
+        'Board Edit Mode, manually override this to index -1, so that it does not map to a proper square.
+        Dim SnappedXCoor As Double = If(ScaledXCoor >= 0, ScaledXCoor - (ScaledXCoor Mod 75), -75)
+        Dim SnappedYCoor As Double = If(ScaledYCoor >= 0, ScaledYCoor - (ScaledYCoor Mod 75), -75)
+        Return New Point(CInt(SnappedXCoor), CInt(SnappedYCoor))
     End Function
 
 
@@ -293,14 +288,15 @@ Partial Public Class Chess
             ClickMoveMode = False
             If LegalMoveSquares(XLocation, YLocation) Then
                 'Creates a new Move corresponding to this action.
-                Dim ClickMove As New Move
-                ClickMove.OldMoveX = If(OrientForWhite, PieceMoving.StartPoint.X / 75, 7 - PieceMoving.StartPoint.X / 75)
-                ClickMove.OldMoveY = If(OrientForWhite, PieceMoving.StartPoint.Y / 75, 7 - PieceMoving.StartPoint.Y / 75)
-                ClickMove.NewMoveX = If(OrientForWhite, XLocation, 7 - XLocation)
-                ClickMove.NewMoveY = If(OrientForWhite, YLocation, 7 - YLocation)
+                Dim ClickMove As New Move With {
+                    .OldMoveX = If(OrientForWhite, PieceMoving.StartPoint.X / 75, 7 - PieceMoving.StartPoint.X / 75),
+                    .OldMoveY = If(OrientForWhite, PieceMoving.StartPoint.Y / 75, 7 - PieceMoving.StartPoint.Y / 75),
+                    .NewMoveX = If(OrientForWhite, XLocation, 7 - XLocation),
+                    .NewMoveY = If(OrientForWhite, YLocation, 7 - YLocation)
+                }
                 'Sets promotion piece, if needed (if the user is holding SHIFT, then promotion to a knight).
                 If (ClickMove.NewMoveY = 0 AndAlso ClickMove.OldMoveY = 1) OrElse (ClickMove.NewMoveY = 7 AndAlso ClickMove.OldMoveY = 6) Then
-                    ClickMove.EndState = If(Control.ModifierKeys = Keys.Shift, "N", "Q")
+                    ClickMove.Code = If(Control.ModifierKeys = Keys.Control, "N", "Q")
                 End If
 
                 If GameMode = 6 Then
@@ -311,7 +307,7 @@ Partial Public Class Chess
                 ElseIf GameMode <> 4 OrElse (GameMode = 4 AndAlso HandlePuzzleMoveInput(ClickMove)) Then
                     'If the user is in puzzle mode, the move is only submitted if it matches the puzzle's correct move.
                     AnimateMove(ClickMove)
-                    SubmitMoveIntoSystem(ClickMove)
+                    SubmitMoveIntoSystem(ClickMove, True)
                     Exit Sub
                 End If
             End If
@@ -324,21 +320,26 @@ Partial Public Class Chess
 
 
     'Function that takes a user's move, and enters it into the system - handling core system calibration, PGNs, AI calibration & playing (for 1-player modes), etc.
-    Private Sub SubmitMoveIntoSystem(ByVal TempMove As Move)
+    Private Sub SubmitMoveIntoSystem(ByVal TempMove As Move, ByVal PrintUpdatedBoard As Boolean)
+        'If the AI is searching on the position in the background, then terminate this AI immediately.
+        If AIIsSearchingOnUsersTurn Then MainAI.ABORTSearch()
+        PieceMoving.LockedPiece = ""
+
         'Calculates the PGN equivilent of the user's move.
         Dim PGNMove As String
         If PlayerTurn Then
-            PGNMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
+            PGNMove = Helper.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
         Else
-            PGNMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, False, MasterBKPos, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
+            PGNMove = Helper.MoveConverter(MasterBoard, TempMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
         End If
 
 
         'GUI controls have been completed - update board to match the user's move.
-        CalibrateCoreSystemsForMove(TempMove, True)
+        CalibrateCoreSystemsForMove(TempMove, True, False)
+
         If GameMode <> 4 Then
             'If the AI is searching on the position in the background, then give the AI enough time to exit the search.
-            If AIIsSearchingOnUsersTurn Then Thread.Sleep(5) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
+            If AIIsSearchingOnUsersTurn Then Thread.Sleep(2) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
             'Perform GC Collect if AIIsSearchingOnUsersTurn??????
             MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI before checking for end states.
             EnforceEndStates(True)
@@ -348,8 +349,9 @@ Partial Public Class Chess
             If CurrentFEN = PreviousFEN AndAlso UserPlayer = PlayerTurn Then Exit Sub 'Stops AI from running if it is the start position (and it is the user's turn).
         End If
 
+        'Outputs the debug information for the new position, and prepares the next position / move, if needed.
         If GameMode <= 3 Then
-            OutputDebugInfo()
+            If PrintUpdatedBoard Then OutputDebugInfo()
             If GameMode < 3 Then
                 If PGNAutoOutputter.Checked Then PGNExport_Click() Else FENExport_Click()
             End If
@@ -365,16 +367,16 @@ Partial Public Class Chess
 
 
     'Subroutine which updates the core characteristics of the chess system, after a move has been played (ie: makes move onto board).
-    Private Sub CalibrateCoreSystemsForMove(ByVal TempMove As Move, ByVal CanUndoMove As Boolean)
+    Private Sub CalibrateCoreSystemsForMove(ByVal TempMove As Move, ByVal CanUndoMove As Boolean, ByVal FastUpdate As Boolean)
         'Makes move onto board, and resets the correct player's TFTable.
         If PlayerTurn Then
             MasterWInCheck = 0 'Player is no longer in check.
             MakeMove(MasterBoard, TempMove, MasterWCanCastle, MasterWKPos, MasterEnPassant, GeneralOptions(0) = "T")
-            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
         Else
             MasterBInCheck = 0 'Player is no longer in check.
             MakeMove(MasterBoard, TempMove, MasterBCanCastle, MasterBKPos, MasterEnPassant, GeneralOptions(0) = "T")
-            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
         End If
 
 
@@ -396,19 +398,22 @@ Partial Public Class Chess
             SquareHistory(1, 1) = 7 - SquareHistory(1, 1)
         End If
 
+
         'Resets LegalMoveSquares.
         ResetLMS(False)
         If AutoFlipper.Checked Then
             FlipBoard()
         Else
-            Checkerboard.Refresh()
+            If FastUpdate Then Checkerboard.Invalidate() Else Checkerboard.Refresh()
         End If
         CheckChecker(False)
 
         'Ends the turn, then calculates the new position's FEN.
         PlayerTurn = Not PlayerTurn
         If CanUndoMove Then PreviousFEN = CurrentFEN
-        CurrentFEN = SharedAlgorithms.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
+        CurrentFEN = Helper.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
+
+        If GameMode = 0 AndAlso Not ((Not PlayerTurn) Xor OrientForWhite) Then PlayMoveOnInterface(TempMove)
     End Sub
 
 End Class
