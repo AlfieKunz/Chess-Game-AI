@@ -2,6 +2,7 @@
 'my AI class (either via instavintiation or by inheritance). It will contain the algorithms that will be used by both my Chess
 '& AI classes, such as the ‘PieceLegalMoves’ generator, the ‘TFTable’ Generator, ‘DoesMoveResolveCheck’, and others.
 Public Class CoreMethods
+    Inherits PieceSquaresTable
     'TrueTables are just TrueFalse Tables containing only the letter T. Very useful for resetting TrueFalse Tables
     'and debugging.
     Public MasterTrueTable(7, 7), TrueTable(7, 7) As Char
@@ -1225,31 +1226,23 @@ Public Class CoreMethods
     End Function
 
 
-    'Function which counts up all the material (and their values) on the board and subtracts black's total from
-    'white's total. Rough metric as to who is winning.
-    Public Function CountMaterial(ByVal Board(,) As Char, ByVal TotalMaterial As Boolean) As Int16
-        Dim WhiteMaterial As Int16
-        Dim BlackMaterial As Int16
+    'Function which counts up all the material (and their values) on the board. Stores this information in two
+    'variables - one for white's total material count, and the other for black's total material count.
+    Public Function CountMaterial(ByVal Board(,) As Char) As SByte()
+        Dim MaterialCount(1) As SByte
         For y = 0 To 7
             For x = 0 To 7
                 If Board(x, y) <> " " Then
                     'Add the value of the piece to either White or Black's total.
                     If Char.IsUpper(Board(x, y)) Then
-                        WhiteMaterial += ReturnPieceValue(Board(x, y))
+                        MaterialCount(0) += ReturnPieceValue(Board(x, y))
                     Else
-                        BlackMaterial += ReturnPieceValue(Board(x, y))
+                        MaterialCount(1) += ReturnPieceValue(Board(x, y))
                     End If
                 End If
             Next
         Next
-        'This subroutine has two modes: one that finds the total weight of the board (for calculating
-        'AbsoluteDepth), and the other that finds the difference in weight between the two sides
-        '(to help evaluate a board position).
-        If Not TotalMaterial Then
-            CountMaterial = WhiteMaterial - BlackMaterial
-        Else
-            CountMaterial = WhiteMaterial + BlackMaterial
-        End If
+        Return MaterialCount
     End Function
 
     'Subroutine that converts a Move into standard chess notation (eg: e4, Nf4, Ka2).
