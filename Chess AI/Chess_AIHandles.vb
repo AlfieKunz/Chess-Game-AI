@@ -1,4 +1,6 @@
 ﻿Imports System.Diagnostics.Eventing.Reader
+Imports System.Reflection
+Imports System.Reflection.Metadata
 Imports System.Runtime
 Imports System.Threading
 
@@ -9,6 +11,7 @@ Partial Public Class Chess 'AI Handles
     'Chess AI, along with appropriate objects.
     Private MainAI As AI
     Private SearchSettings As New AISearchSettings() 'User's chosen settings for the AI's search.
+    Private AISettingsFields As FieldInfo() 'Defines all the different fields in the AISearchSettings class, so the user can chanage them easily.
 
     'Data structures that bridge the gap between user and AI.
     Public Structure AIHandleInfo
@@ -16,6 +19,8 @@ Partial Public Class Chess 'AI Handles
         Public FixedSearchDepth As Byte 'Number representing the fixed depth the AI will search to (0 = off).
         Public TimeForSearch As Decimal 'Time the AI is allowed to search for.
         Public AdvancedTimeForSearch As Decimal 'Buffer that holds the original TimeForSearch, when the user is using 'Advanced Search Time' Mode.
+        Public JustMadePremove As Boolean
+
         Public CurrentDepth As Integer 'Highest depth successfully searched to.
         Public CurrentMove As String 'Move of the highest depth successfully searched to.
         Public CurrentEvaluation As String 'Eval of the highest depth successfully searched to.
@@ -29,6 +34,11 @@ Partial Public Class Chess 'AI Handles
         Public AIFinishedSearch As Boolean 'Set to True when a given search has been complete, so that GUI elements can be updated.
         Public InitialMemoryUsage As UInt64 'Variable that keeps track of how much memory the program uses when it boots up (in Bytes).
         'Used to determine how much memory is being used by the AI during its search, for memory management tools.
+
+        Public FENToResetTo As String 'Represents if the user has activated the AI before making a move on the board (resetting the board
+        'or changing the FEN resets this to the Starting Position). Used for knowing what position to reset to for AI AutoResetter.
+
+        Public MoveWasAIPredicted As Boolean 'Was the last move entered into the system the move predicted by the Transposition Table of the AI?
     End Structure
 
     Private AIHandles As New AIHandleInfo With {
@@ -62,7 +72,7 @@ Partial Public Class Chess 'AI Handles
             'depth that is required to achieve that Checkmate. This saves on a lot of unnecessary processing, as
             'forced Checkmates are unavoidable.
             If AIHandles.CurrentEvaluation <> "-" AndAlso Math.Abs(Val(AIHandles.CurrentEvaluation)) >= 295 Then
-                AIHandles.StartingDepth = Math.Min((30000 - (Math.Abs(Val(AIHandles.CurrentEvaluation)) * 100)), AIHandles.CurrentDepth) - 3
+                AIHandles.StartingDepth = Math.Min((30000 - (Math.Abs(Val(AIHandles.CurrentEvaluation)) * 100)), AIHandles.CurrentDepth) - 4
             Else
                 AIHandles.StartingDepth = DepthAlgorithm
             End If
@@ -77,6 +87,7 @@ Partial Public Class Chess 'AI Handles
         Console.WriteLine("Starting Depth = " & AIHandles.StartingDepth)
     End Sub
 
+
     'Algorithm that sets the TimeForSearch if the user is using the 'Advanced Search Time' Mode. This sets the search time to be a random,
     'human-like, and intelligent value that is representative of the position & AI data.
     Private Sub SetAdvancedSearchTime()
@@ -87,17 +98,30 @@ Partial Public Class Chess 'AI Handles
             Dim NewTime As Double
             Select Case RNDValue
                 Case < 0.1
-                    'really short think
-                    NewTime = AIHandles.AdvancedTimeForSearch / 10
+                    'Really short think (~10x faster).
+                    RNDValue += 9
+                    NewTime = AIHandles.AdvancedTimeForSearch / RNDValue
                 Case > 0.9
-                    NewTime = AIHandles.AdvancedTimeForSearch * 5
+                    'Really deep think (~5x slower).
+                    RNDValue += 4
+                    NewTime = AIHandles.AdvancedTimeForSearch * RNDValue
                 Case Else
                     NewTime = RNDValue * 2 * DeltaTime + AIHandles.AdvancedTimeForSearch - DeltaTime
                     'Extends the search time if the user has a lot of possible moves (and vice versa).
                     Dim NoLegalMoves As Integer = MainAI.GetNoOfLegalMoves()
                     NewTime *= 0.75 * Math.Log10(NoLegalMoves + 5)
+                    'Gives the AI longer to think on the moves after pre-moves (ie: book / forced moves), to get the TranspositionTable better calibrated.
+                    If AIHandles.JustMadePremove Then NewTime *= 1.2
             End Select
-            AIHandles.TimeForSearch = Math.Round(NewTime, 2)
+
+            'Give the AI longer to think if the position is complex, ie lots of captures and checks available.
+            NewTime *= (MainAI.NumCapturesThreatsInBasePos * MainAI.NumCapturesThreatsInBasePos / 70) + 0.75
+            'If the move that the user just made was in the AI's last PV line (ie: the move stored in the AI's TT for the previous position), 
+            'our opponent is presumed to be playing optimally - give the AI more time.
+            If AIHandles.MoveWasAIPredicted Then NewTime *= 1.5
+
+            AIHandles.TimeForSearch = Math.Round(Math.Max(NewTime, 0.05), 2) 'Caps the search time at 50ms.
+            AIHandles.JustMadePremove = False
         End If
     End Sub
 
@@ -122,10 +146,14 @@ Partial Public Class Chess 'AI Handles
                 WaitTimer.Stop()
             End If
         End If
+        AIHandles.JustMadePremove = True
     End Sub
+
 
     'Function that uses the binary search to find a given FEN in the opening book.
     Private Function FindPositionInBook(ByVal FEN As String) As UInt32
+        'Note that the FEN can very often have its full & have move count different, and in the opening book, _all_ FENs end in 0 1.
+        FEN = Helper.StripFENOfMoveCounts(FEN) & " 0 1"
         Dim LB As Integer = 0 'Lower Bound of Binary Search.
         Dim UB As Integer = OpeningBook.Count - 1 'Upper Bound of Binary Search.
         Dim MidPoint As UInt32
@@ -149,7 +177,7 @@ Partial Public Class Chess 'AI Handles
     'returning the only move in the position, or calling the AI to search on the position. After calculating its move,
     'the subroutine makes this move on the board.
     Private Sub InitialiseAISystem() Handles AIMoveBtn.Click
-        If AIEndlessMode.Checked AndAlso AutoResetter.Checked AndAlso Not GameRunning Then Reset_Btn_Click() 'Enables AI Endless Mode (across multiple games).
+        If AIEndlessMode.Checked AndAlso AutoResetter.Checked AndAlso Not GameRunning Then AcceptFENIntoSystem(AIHandles.FENToResetTo, False) 'Enables AI Endless Mode (across multiple games).
         If GameRunning AndAlso Not ComputerIsSearching Then
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
             Dim BestMove As Move = MainAI.CheckForEndState() 'Ensures that the position is valid, and that the
@@ -159,18 +187,16 @@ Partial Public Class Chess 'AI Handles
             If BestMove.Code = "f" OrElse BestMove.Code = "o" Then
                 Dim IndexInBook As UInt32
                 If UseBook.Checked Then IndexInBook = FindPositionInBook(CurrentFEN) 'Finds the index of the opening book that the position exists in.
-                Console.WriteLine()
                 If BestMove.Code = "o" Then
                     'Move was forced - make move instantly without searching.
                     Console.WriteLine(vbCrLf & "Search Aborted - Only 1 Move in Position.")
                     CurrentAIDepth.Text = "Current Depth: 1"
-                    Dim MoveString As String
                     If PlayerTurn Then
-                        MoveString = Helper.MoveConverter(MasterBoard, BestMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
+                        PGNMove = Helper.MoveConverter(MasterBoard, BestMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
                     Else
-                        MoveString = Helper.MoveConverter(MasterBoard, BestMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
+                        PGNMove = Helper.MoveConverter(MasterBoard, BestMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
                     End If
-                    CurrentAIMove.Text = "Current Move: " & MoveString & " (FORCED)."
+                    CurrentAIMove.Text = "Current Move: " & PGNMove & " (FORCED)."
                     WaitAdvancedSearchPremoveTime("o")
                 ElseIf IndexInBook > 0 Then 'Position found in book - play move from book instantly.
 
@@ -235,8 +261,6 @@ Partial Public Class Chess 'AI Handles
 
                     'Resets GUI objects & cursor design.
                     UserTimeBar.Enabled = True
-                    QuiescenceBox.Enabled = True
-                    PieceHeatMapBox.Enabled = True
                     ComputerIsSearching = False
                     If UpdateAllGUI Then
                         Me.Cursor = Cursors.Default
@@ -245,11 +269,11 @@ Partial Public Class Chess 'AI Handles
                     Application.DoEvents() 'Allows the GUI to update after the AI's move.
 
                     If BestMove.Code <> "t" Then
-                        Dim NextPositionState As Char = EnforceEndStates(GameMode <> 1) 'Checks for end states found from the AI's move.
-                        'As two moves are made in one game 'state', we do not copy BoardHistory to its Buffer (so we don't false-trigger 3FR).
                         'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
                         If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GameRunning Then PGNMove &= "+"
-                        BoardHistory.PushPGN(PGNMove) 'Adds this new move to the History of the game.
+                        BoardHistory.PushPGN(PGNMove, GameMode <> 1) 'Adds this new move to the History of the game.
+                        Dim NextPositionState As Char = EnforceEndStates() 'Checks for end states found from the AI's move.
+                        'As two moves are made in one game 'state', we do not copy BoardHistory to its Buffer (so we don't false-trigger 3FR).
                         OutputDebugInfo(Not UpdateAllGUI)
                         If GameMode < 3 Then
                             If PGNAutoOutputter.Checked Then PGNExport_Click() Else FENExport_Click()
@@ -265,13 +289,13 @@ Partial Public Class Chess 'AI Handles
                                 'It is the user's turn to make a move - notify them by changing the program's title.
                                 If GameMode = 1 AndAlso UpdateAllGUI Then Me.Text = "[Your Turn...]  " + GlobalConstants.ProgramName
 
-                                If AICanSearchOnUsersTurn AndAlso IndexInBook = 0 AndAlso NextPositionState = "f" Then
+                                If AICanSearchOnUsersTurn AndAlso IndexInBook = 0 AndAlso NextPositionState <> "o" Then
                                     'The AI is not in its book, and the new position has multiple moves. Allow it to search on the position in the background.
                                     SearchSettings.OutputToConsole = False
                                     MainAI.ConfigureSettings(SearchSettings, True)
                                     'As the AI's last search has already populated the Transposition Table with entries from depth
-                                    '= 2 -> AIHandles.CurrentDepth, start searching at AIHandles.CurrentDepth - 1, so that unnecessary work isn't repeated.
-                                    AIHandles.StartingDepth = Math.Max(AIHandles.CurrentDepth - 1, 2)
+                                    '= 2 -> AIHandles.CurrentDepth, start searching at AIHandles.CurrentDepth - 2, so that unnecessary work isn't repeated.
+                                    AIHandles.StartingDepth = Math.Max(AIHandles.CurrentDepth - 2, 2)
                                     'Creates a new thread for the AI to run on, then starts the AI's search process.
                                     Dim AIThread As New Task(AddressOf VariableAISearchHandler)
                                     AIIsSearchingOnUsersTurn = True
@@ -291,6 +315,7 @@ Partial Public Class Chess 'AI Handles
     'Algorithm that creates all the threads & AIs that will search on a position. Handles time management & overtime,
     'interactions with the GUI chessboard, live updates via GUI objects, selecting best moves, and more.
     Private Function InitialiseAI() As Move
+        SetAdvancedSearchTime()
         Dim UpdateAllGUI As Boolean = AIHandles.TimeForSearch >= 0.5
         Dim BestMove As New Move
         'Creates the AI thread (to enable backgound searching / multithreading).
@@ -308,9 +333,6 @@ Partial Public Class Chess 'AI Handles
         ProgressBar.Value = 0
         AIHandles.AIIsLate = False
         AIHandles.AIPanicMode = 0
-        UserTimeBar.Enabled = False
-        QuiescenceBox.Enabled = False
-        PieceHeatMapBox.Enabled = False
         'Erases the information from the last AI search.
         AIHandles.AIBestMove.Code = "a"c
         AIHandles.CurrentDepth = 2
@@ -320,13 +342,12 @@ Partial Public Class Chess 'AI Handles
         AIHandles.AIFinishedSearch = False
 
         'Prepares the AI for its search.
-        MainAI.AddBoardHistory(BoardHistory.GetZobristArray())
+        MainAI.AddBoardHistory(BoardHistory.GetZobristArray(), BoardHistory.GetHalfSize)
         MainAI.ConfigureSettings(SearchSettings, True)
         MainAI.SetDetailedMoveOutput(UpdateAllGUI)
 
         'Begins the search.
         ComputerIsSearching = True
-        SetAdvancedSearchTime()
         If UpdateAllGUI Then Me.Text = "[Thinking...]  " & GlobalConstants.ProgramName
         Console.ForegroundColor = ConsoleColor.DarkCyan
         Console.Write(vbCrLf & "The AI is now searching..." & vbCrLf & "Search Time = ")
@@ -360,7 +381,7 @@ Partial Public Class Chess 'AI Handles
             End If
 
             If TerminateSearch OrElse AIHandles.AIStopwatch.ElapsedMilliseconds / 1000 > AIHandles.TimeForSearch OrElse Not Me.IsHandleCreated Then 'Time's up!
-                If AIHandles.AIBestMove.Code = "a" Then
+                If AIHandles.AIBestMove.Code = "a" OrElse (AIHandles.AdvancedTimeForSearch <> 0 AndAlso MainAI.CheckIfInAspirationBreak()) Then
                     'There has been no move performed in the current amount of time - enable overtime.
                     AIHandles.AIIsLate = True
                     ProgressBar.ForeColor = Color.Red 'Red progress bar - visual indication to user that time is up.
@@ -502,7 +523,7 @@ Partial Public Class Chess 'AI Handles
                             Console.WriteLine("Memory Limit Exceeded (Usage = " & (MemoryUsage / (1024 * 1024)).ToString("N0") & "MB). Resetting Transposition Table to free up Memory...")
                             Console.ForegroundColor = ConsoleColor.White
                             MainAI.ResetTranspositionTable()
-                            MainAI.AddBoardHistory(BoardHistory.GetZobristArray())
+                            MainAI.AddBoardHistory(BoardHistory.GetZobristArray(), BoardHistory.GetHalfSize)
                         End If
                         GC.Collect()
                     End If
@@ -518,8 +539,8 @@ Partial Public Class Chess 'AI Handles
                     Else
                         AIHandles.CurrentMove = Helper.MoveConverter(MasterBoard, AIHandles.AIBestMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
                     End If
-                    AIHandles.CurrentEvaluation = AIHandles.AIBestMove.Score * If(PlayerTurn, 1, -1)
                     AIHandles.CurrentDepth = CurrentAIDepth
+                    AIHandles.CurrentEvaluation = AIHandles.AIBestMove.Score * If(PlayerTurn, 1, -1)
                     AIHandles.AIFinishedSearch = True
 
                     If MainAI.GetABORTState() OrElse AIHandles.AIIsLate Then
@@ -532,7 +553,8 @@ Partial Public Class Chess 'AI Handles
                     End If
 
                     'Checks if the score has changed significantly, compared to the previous depth. If it has, we dynamically change the AI's remaining Time to Search.
-                    If AIHandles.AdvancedTimeForSearch <> 0 AndAlso CurrentAIDepth > AIHandles.StartingDepth + 2 AndAlso Math.Abs(PreviousEvaluation - AICurrentMove.Score) >= 0.75 AndAlso Not MainAI.GetABORTState() AndAlso AIHandles.AIPanicMode = 0 AndAlso SearchSettings.UseQuiescence Then
+                    Dim DeltaScoreNeededForPanicMode As Double = 0.75
+                    If AIHandles.AdvancedTimeForSearch <> 0 AndAlso CurrentAIDepth > AIHandles.StartingDepth + 2 AndAlso Math.Abs(PreviousEvaluation - AICurrentMove.Score) >= DeltaScoreNeededForPanicMode AndAlso Not MainAI.GetABORTState() AndAlso AIHandles.AIPanicMode = 0 AndAlso SearchSettings.UseQuiescence Then
                         Console.ForegroundColor = ConsoleColor.Magenta
                         If PlayerTurn Xor (PreviousEvaluation < AICurrentMove.Score) Then
                             'If under 1/3 of the search has completed, the AI still has enough time to figure it out.

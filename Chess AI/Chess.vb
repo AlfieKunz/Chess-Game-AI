@@ -1,18 +1,18 @@
 ﻿'Working Version of Chess, along with AI using NegaMax and Alpha Beta Pruning. Created by Alfie Kunz - 8158.
-Imports System.Threading
-Imports System.Text.RegularExpressions
-Imports System.Security.Cryptography
-Imports System.Diagnostics.Eventing.Reader
-Imports System.Windows.Forms.VisualStyles.VisualStyleElement
-Imports System.IO
-Imports System.Text
-Imports System.Runtime
-Imports System.Reflection
-Imports System.Runtime.Remoting.Messaging
-Imports Microsoft.VisualBasic.Devices
-Imports System.Windows.Input
 Imports System.Diagnostics.Eventing
+Imports System.Diagnostics.Eventing.Reader
+Imports System.IO
+Imports System.Net.WebRequestMethods
+Imports System.Reflection
+Imports System.Runtime
+Imports System.Security.Cryptography
+Imports System.Text
+Imports System.Text.RegularExpressions
+Imports System.Threading
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement
+Imports System.Windows.Input
 Imports Microsoft.SqlServer
+Imports Microsoft.VisualBasic.Devices
 
 'This class forms the CORE User Interface and the basic game of chess, along with its rules. It will control moving pieces,
 'importing / exporting positions, manipulating the board + its visual design ext, along with converting a user’s actions onto
@@ -85,11 +85,45 @@ Partial Public Class Chess 'ew- danny
         Me.New(Mode, UserStartingFEN, 0, New AISearchSettings(), False, False, True, Nothing)
     End Sub
 
-    Public Sub New(ByRef InputBook As List(Of OpeningBookEntry)) 'Call used for a standard game of chess (usually in Analysis Mode / Remote Mode).
+    Public Sub New(ByRef InputBook As List(Of OpeningBookEntry)) 'Call used for a standard game of chess.
         GameRunning = False
         InitializeComponent() 'This call is required by the designer.
         'Loads the opening book into the system.
         If InputBook IsNot Nothing AndAlso InputBook.Count > 0 Then OpeningBook.AddRange(InputBook) : UseBook.Enabled = True
+        If GameMode = 3 Then
+            AISettingsBox.SelectedIndex = 0
+            'Loads all the AI settings into the settings panel.
+            AISettingsFields = GetType(AISearchSettings).GetFields()
+            Dim CheckBoxHeight As Integer = 6
+            For Each Field As FieldInfo In AISettingsFields
+                If Not SearchSettings.NonDisplayable.Contains(Field.Name) Then
+                    'Adds all the fields to the panel, with decent spacing.
+                    Dim AISetting As Control = If(Field.FieldType = GetType(Boolean), New CheckBox(), New Label())
+                    'Converts the Field Name into a readable name, by inserting spaces before each capital letter.
+                    AISetting.Text = Regex.Replace(Field.Name, "([A-Z])", " $1").TrimStart()
+                    AISetting.Location = New Point(15 + If(Field.FieldType = GetType(Boolean), 0, 22), CheckBoxHeight)
+                    AISetting.Width = 180
+                    AISettingsPanel.Size = New Size(AISettingsPanel.Size.Width, AISettingsPanel.Size.Height + 25)
+
+                    If Field.FieldType = GetType(Boolean) Then
+                        AISetting.Name = Field.Name 'Represents the item that will be assigned values by the settings (indexed by name).
+                        AddHandler DirectCast(AISetting, CheckBox).CheckedChanged, AddressOf AISettingValueChanged
+                    Else
+                        'Adds a textbox to enable the user to enter their own value.
+                        Dim SettingBox As New System.Windows.Forms.TextBox With {
+                            .Location = New Point(8, CheckBoxHeight - 2),
+                            .Size = New Size(30, 20)
+                        }
+                        SettingBox.Name = Field.Name
+                        AddHandler SettingBox.TextChanged, AddressOf AISettingValueChanged
+                        AISettingsPanel.Controls.Add(SettingBox)
+                    End If
+                    AISettingsPanel.Controls.Add(AISetting) 'Adds to the settings panel.
+                    CheckBoxHeight += 25
+                End If
+            Next
+            AISettingResetBtn.Top += CheckBoxHeight
+        End If
     End Sub
 
     'The below constructor method rearranges the location of objects on the form (to save space on the screen).
@@ -109,11 +143,9 @@ Partial Public Class Chess 'ew- danny
         PGNExport.Visible = False
         UndoMove.Top -= 70
         BoardEditorBtn.Visible = False
-        CheckLabel.Location = New Point(89, 138)
+        CheckLabel.Location = New Point(89, 163)
         UserTimeBar.Visible = False
         UserTimeBox.Visible = False
-        QuiescenceBox.Visible = False
-        PieceHeatMapBox.Visible = False
         UseBook.Visible = False
         AIEndlessMode.Visible = False
         NodeTestBtn.Visible = False
@@ -127,7 +159,7 @@ Partial Public Class Chess 'ew- danny
             AutoOutputterPanel.Visible = True
             FlipperButton.Visible = False
             AutoFlipper.Visible = False
-            ProgressBar.Location = New Point(46, 250)
+            ProgressBar.Location = New Point(46, 270)
             CurrentAIDepth.Location = New Point(ProgressBar.Location.X + 10, ProgressBar.Location.Y + 80)
             CurrentAIMove.Location = New Point(CurrentAIDepth.Location.X, CurrentAIDepth.Location.Y + 30)
             CurrentAIEval.Location = New Point(CurrentAIDepth.Location.X, CurrentAIDepth.Location.Y + 60)
@@ -193,8 +225,9 @@ Partial Public Class Chess 'ew- danny
             StartingFEN = GetRndPuzzle() 'Sets Random Puzzle to be starting position.
 
             'Calibrates objects specific to the puzzle mode.
+            InputTextBox.Size = New Size(282, 35)
             UndoMove.Visible = False
-            CheckLabel.Top += 36
+            CheckLabel.Top += 15
             FlipperButton.Visible = False
             AutoFlipper.Visible = False
             ProgressBar.Location = New Point(10, 470)
@@ -270,7 +303,7 @@ Partial Public Class Chess 'ew- danny
         CurrentAIMove.Top += 60
         CurrentAIEval.Top += 60
         RemoteModeBtn.Visible = True
-        AITerminator.Location = New Point(59, 243)
+        AITerminator.Location = New Point(59, 263)
         AITerminator.Size = New Size(181, 43)
         AITerminator.Enabled = False
         AITerminator.Visible = True
@@ -340,18 +373,18 @@ Partial Public Class Chess 'ew- danny
                 DisplayPieces()
                 'Forms the TFTable for the players.
                 If PlayerTurn Then
-                    Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+                    Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
                 Else
-                    Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+                    Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
                 End If
                 If GameMode <> 3 Then CustomisationForm.Close() 'Closes the customisation form.
-                CheckChecker(False)
+                EditCheckText()
                 FENIsValid = True
             Catch ex As Exception 'FEN is not valid, as the board could not be constructed - provide error message.
                 If MsgBox("Starting Position Rejected - Invalid FEN Code. Please Input a Genuinine FEN and try again." & vbCr & "Please Click 'Retry' to enter another FEN, or Click 'Cancel' to Start the Game with the Standard Starting Position.", vbCritical + vbRetryCancel + vbApplicationModal) = 4 Then
-                'The user wants to enter another FEN.
-                Me.Close()
-            End If
+                    'The user wants to enter another FEN.
+                    Me.Close()
+                End If
             End Try
         Else
             'Displays the appropriate error message, as stated by the FENErrorDetection Sub.
@@ -368,7 +401,7 @@ Partial Public Class Chess 'ew- danny
             StartingFEN = GlobalConstants.StartingFENPosition
             MasterBoard = Helper.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
             DisplayPieces()
-            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
             'Resets Black's TFTable.
             Array.Copy(Helper.MasterTrueTable, MasterBlackTFTable, 64)
         End If
@@ -397,6 +430,7 @@ Partial Public Class Chess 'ew- danny
             MainAI = New AI(CurrentFEN)
             MainAI.ConfigureSettings(SearchSettings, False)
             MasterZobristValue = Helper.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant))
+            AIHandles.FENToResetTo = StartingFEN
 
             LoadUserProfile()
 
@@ -411,7 +445,7 @@ Partial Public Class Chess 'ew- danny
 
     'Subroutine containing all the code that will be performed upon boot-up, after the Chess form has been shown to the user.
     Private Sub Form1_Load_AfterWindowShown()
-        EnforceEndStates(False) 'Checks for end positions in the starting FEN.
+        EnforceEndStates() 'Checks for end positions in the starting FEN.
         AIHandles.InitialMemoryUsage = (Process.GetCurrentProcess()).WorkingSet64 'Calibrates the initial memory usage of the program.
         If GameMode < 3 Then
             If GameMode = 0 Then
@@ -525,11 +559,7 @@ Partial Public Class Chess 'ew- danny
             Else
                 'Restores images to pieces.
                 AssignImagesToPieces()
-                CheckChecker(True)
             End If
-        ElseIf GeneralOptions(4) <> TempGeneralOptions(4) AndAlso GeneralOptions(6) = "F" Then
-            GeneralOptions = TempGeneralOptions
-            CheckChecker(True) 'Restores / Removes king highlights.
         Else
             GeneralOptions = TempGeneralOptions
         End If
@@ -571,7 +601,7 @@ Partial Public Class Chess 'ew- danny
     Private Function FENErrorDetection(ByVal FEN As String, ByVal OutputToBox As Boolean, ByRef FENErrorMessage As String) As Boolean
         'If OutputToBox = True then the error message is stored in InputTextBox. If it is false then the message is stored in FENErrorMessage.
         Dim MaxWQueens, MaxBQueens, WKingCount, BKingCount As Byte
-        If FEN.Length > 22 AndAlso FEN.Length < 88 Then 'Length validation
+        If FEN.Length > 14 AndAlso FEN.Length < 90 Then 'Length validation
             'Checks if each player has a king.
             For n = 0 To Len(FEN) - 1
                 If FEN(n) = " " Then Exit For 'Early exit clause.
@@ -786,10 +816,10 @@ Partial Public Class Chess 'ew- danny
                         'Updates TFTable for appropriate player.
                         If PlayerTurn Then
                             MasterWInCheck = 0 'Player is no longer in check.
-                            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+                            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
                         Else
                             MasterBInCheck = 0 'Player is no longer in check.
-                            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+                            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
                         End If
 
                         'Update Previously Used Squares, then flips the board if necessary.
@@ -812,17 +842,17 @@ Partial Public Class Chess 'ew- danny
                         'Resets LegalMoveSquares.
                         ResetLMS(False)
                         Checkerboard.Refresh()
-                        CheckChecker(False)
+                        EditCheckText()
 
                         'Ends the turn, then calculates the new position's FEN.
                         PlayerTurn = Not PlayerTurn
                         If FirstMove Then PreviousFEN = CurrentFEN
                         CurrentFEN = Helper.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
                         MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI.
-                        EnforceEndStates(FirstMove)
                         'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
                         If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GameRunning AndAlso TempPGNMove.Last() <> "+" Then TempPGNMove &= "+"
-                        BoardHistory.PushPGN(TempPGNMove)
+                        BoardHistory.PushPGN(TempPGNMove, FirstMove)
+                        EnforceEndStates()
 
                         FirstMove = False
                         Exit For
@@ -924,7 +954,24 @@ Partial Public Class Chess 'ew- danny
         If Not (EnPassant = "-" OrElse HasEnPassanted) Then EnPassant = "-" 'Removal of EnPassant (if required).
         'At the end of the subroutine, the Piece is placed at the new coordinates, and the old position is cleared.
         'If the new position contains a piece, then the material count is updated for only that piece.
-        If Board(NewCoorX, NewCoorY) <> " " AndAlso MakeSounds Then Sound_Capture.Play()
+        If Board(NewCoorX, NewCoorY) <> " " Then
+            If Board(NewCoorX, NewCoorY) = "R"c AndAlso MasterWCanCastle.CanICastle() Then
+                If MasterWCanCastle.KS AndAlso NewCoorY = 7 AndAlso NewCoorX = 7 Then
+                    'KS Rook has been captured - king can no longer castle KS.
+                    MasterWCanCastle.KS = False
+                ElseIf MasterWCanCastle.QS AndAlso NewCoorY = 7 AndAlso NewCoorX = 0 Then
+                    'QS Rook has been captured - king can no longer castle QS.
+                    MasterWCanCastle.QS = False
+                End If
+            ElseIf Board(NewCoorX, NewCoorY) = "r"c AndAlso MasterBCanCastle.CanICastle() Then
+                If MasterBCanCastle.KS AndAlso NewCoorY = 0 AndAlso NewCoorX = 7 Then
+                    MasterBCanCastle.KS = False
+                ElseIf MasterBCanCastle.QS AndAlso NewCoorY = 0 AndAlso NewCoorX = 0 Then
+                    MasterBCanCastle.QS = False
+                End If
+            End If
+            If MakeSounds Then Sound_Capture.Play()
+        End If
         Board(NewCoorX, NewCoorY) = TempPiece
         Board(OldCoorX, OldCoorY) = " "
     End Sub
@@ -932,17 +979,18 @@ Partial Public Class Chess 'ew- danny
 
 
 
-    'Checks for Checkmate & Stalemate are calculated by running the opponent AI on a special mode,
-    'where the AI runs to a depth of 1 but makes no moves on the board. This determines if the opponent
-    'actually has any legal moves (or if there is only 1 forced move), and if they don't, then then the
-    'game will end. This algorithm also checks for draws by insufficient material. If the procedure does
-    'detect any of these end states, then it stops the game and/or notifies the user (depending on gamemode).
-    Private Function EnforceEndStates(ByVal NormalMove As Boolean) As Char
+    'Checks for Checkmate & Stalemate are calculated by running the opponent AI on a special mode, where the
+    'AI runs to a depth of 1 but makes no moves on the board. This determines if the opponent actually has any
+    'legal moves (or if there is only 1 forced move), and if they don't, then then the game will end. This
+    'algorithm also checks for draws by insufficient material, three-fold repetition, or 50-move rule. If the
+    'procedure does detect any of these end states, then it stops the game and/or notifies the user (depending on gamemode).
+    Private Function EnforceEndStates() As Char
         'Adds the new board position's hash value to the Game History.
         MasterZobristValue = Helper.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant))
-        BoardHistory.PushZobrist(MasterZobristValue, NormalMove) 'NormalMove specifies if the move is a move that the user or the AI has made,
+        BoardHistory.PushZobrist(MasterZobristValue, False) 'NormalMove specifies if the move is a move that the user or the AI has made,
         'or whether it is a move formed by, for example, undoing the board position. Depending on which it is, GameHistory will store
-        'the previous state to its buffer (allowing the state to be undone, if needed).
+        'the previous state to its buffer (allowing the state to be undone, if needed). Note that we do this for the PGN push rather than the Zobrist push,
+        'as this happens before :) (and we don't want to do it twice).
 
         Dim TempMove As Move = MainAI.CheckForEndState() 'Checks for endstates in the current position.
         Select Case TempMove.Code
@@ -1036,16 +1084,23 @@ Partial Public Class Chess 'ew- danny
             Next
         End If
 
-        'Checks for three-fold repetition.
-        If BoardHistory.CheckNoOfZobristOccurances(MasterZobristValue) = 3 Then
+        'Checks for three-fold repetition and 50-move rule occurence, using BoardHistory arrays.
+        If BoardHistory.CheckNoOfZobristOccurances(MasterZobristValue) = 3 OrElse BoardHistory.GetHalfSize() >= 100 Then
             'Position has ocurred three times - end game.
             CheckLabel.Text = "     Draw!     "
             If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
             GameRunning = False
             Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine("The Game has Ended. Cause = Draw by Three-fold Repetition.")
+            Console.Write("The Game has Ended. Cause = Draw by ")
+            If BoardHistory.GetHalfSize() >= 100 Then
+                Console.WriteLine("50 Move Rule.")
+            Else
+                Console.WriteLine("Three-fold Repetition.")
+            End If
             If GameMode < 3 Then NotifyGameEnd("d")
+            Return "d"
         End If
+
         Return TempMove.Code
     End Function
 

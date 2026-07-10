@@ -3,7 +3,6 @@ Imports System.Data.SqlClient
 Imports System.Diagnostics.Eventing.Reader
 Imports System.Drawing.Imaging
 Imports System.Runtime.InteropServices
-Imports System.Runtime.Remoting.Messaging
 Imports System.Security.Cryptography
 Imports System.Threading
 Imports System.Timers
@@ -80,7 +79,7 @@ Partial Public Class Chess 'Remote Mode
                 Console.ForegroundColor = ConsoleColor.Blue
                 'We either need to wait for the user, wait for the opponent, or start the AI search.
                 If PlayerTurn Xor OrientForWhite Then
-                    RemoteModeTimer.Start()
+                    ChessTimer.Start()
                     Console.WriteLine("Waiting for Opponent's Move...")
                     Console.ForegroundColor = ConsoleColor.White
                     Me.Text = "[Waiting...]  " & GlobalConstants.ProgramName
@@ -95,7 +94,7 @@ Partial Public Class Chess 'Remote Mode
                 End If
             Else
                 'The 'Abort' button has been pressed - terminate the connection.
-                RemoteModeTimer.Stop()
+                ChessTimer.Stop()
                 GameRunning = False
                 RemoteMode.ConnectedToInterface = False
                 If ComputerIsSearching Then
@@ -458,26 +457,28 @@ Partial Public Class Chess 'Remote Mode
 
 
 
-    Private Sub RemoteModeTimer_Tick() Handles RemoteModeTimer.Tick
-        If Control.ModifierKeys = Keys.Shift Then
-            'In case of a catastrophic error, the user can press the SHIFT button at any time to suspend the game. The interface remains connected,
-            'but the game (and hence, the mouse movements) will be paused.
-            RemoteModeTimer.Stop()
-            GameRunning = False
-            If AIIsSearchingOnUsersTurn Then MainAI.ABORTSearch()
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine(vbCrLf & "Connection Manually Terminated.")
-            Console.ForegroundColor = ConsoleColor.White
-            RemoteModeBtn.Text = "Commense Game"
-        Else
-            'Detects any changes on the board, that may represent an opponent's move.
-            HandleScreenMove(True, True)
+    Private Sub RemoteModeTimer_Tick() Handles ChessTimer.Tick
+        If GameMode = 0 Then
+            If Control.ModifierKeys = Keys.Shift Then
+                'In case of a catastrophic error, the user can press the SHIFT button at any time to suspend the game. The interface remains connected,
+                'but the game (and hence, the mouse movements) will be paused.
+                ChessTimer.Stop()
+                GameRunning = False
+                If AIIsSearchingOnUsersTurn Then MainAI.ABORTSearch()
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine(vbCrLf & "Connection Manually Terminated.")
+                Console.ForegroundColor = ConsoleColor.White
+                RemoteModeBtn.Text = "Commense Game"
+            Else
+                'Detects any changes on the board, that may represent an opponent's move.
+                HandleScreenMove(True, True)
+            End If
         End If
     End Sub
 
     'Method that disconnects from the interface, for use when the game is over, and for terminations by the user specifically.
     Private Sub ManuallyDisconnectFromInterface()
-        RemoteModeTimer.Stop()
+        ChessTimer.Stop()
         RemoteMode.ConnectedToInterface = False
         If AIIsSearchingOnUsersTurn Then MainAI.ABORTSearch()
         RemoteModeBtn.Text = "Connect To Interface"
@@ -507,7 +508,7 @@ Partial Public Class Chess 'Remote Mode
                 Return False
             Case Else 'A move has been made! Can be 1 discrepency, 2 discrepencies (meaning castling), or a pawn promotion.
                 'Either way, we assume the move is valid. We play this move on the GUI, and commense the next move.
-                RemoteModeTimer.Stop()
+                ChessTimer.Stop()
                 AnimateMove(TestMove)
                 SubmitMoveIntoSystem(TestMove, GameInProgress)
                 If GameInProgress Then
@@ -728,8 +729,8 @@ Partial Public Class Chess 'Remote Mode
             y = 7 - y
         End If
         'Start Pixels are the centre of the square.
-        Dim PixelX As UInt16 = RemoteMode.ScaledRes.Left + RemoteMode.InterfaceStartX + Math.Floor((x + 0.5) * RemoteMode.InterfaceSquareSize)
-        Dim StartPixelY As UInt16 = RemoteMode.ScaledRes.Top + RemoteMode.InterfaceStartY + Math.Floor(y * RemoteMode.InterfaceSquareSize)
+        Dim PixelX As UInt16 = RemoteMode.InterfaceStartX + Math.Floor((x + 0.5) * RemoteMode.InterfaceSquareSize)
+        Dim StartPixelY As UInt16 = RemoteMode.InterfaceStartY + Math.Floor(y * RemoteMode.InterfaceSquareSize)
 
         Dim ScannedPixel As UInt16
         Dim ScannedPieceValue As Double
@@ -789,6 +790,7 @@ Partial Public Class Chess 'Remote Mode
 
     'Method that plays a given move on the chess interface, by moving & interacting with the user's mouse.
     Private Sub PlayMoveOnInterface(ByVal Move As Move)
+        'RemoteMode.MoveDelay = 500
         AITerminator.Enabled = False
         If RemoteMode.ConnectedToInterface Then
             If Not OrientForWhite Then Move.Flip()
@@ -843,7 +845,7 @@ Partial Public Class Chess 'Remote Mode
             Console.WriteLine(vbCrLf & "Move Transmitted. Waiting for Opponent's Move...")
             Console.ForegroundColor = ConsoleColor.White
             Me.Text = "[Waiting...]  " & GlobalConstants.ProgramName
-            RemoteModeTimer.Start()
+            ChessTimer.Start()
         End If
     End Sub
 

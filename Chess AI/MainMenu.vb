@@ -14,6 +14,11 @@ Public Class MainMenu
     Private ColourScheme As String 'Colour code from the text file.
     Private OpeningBook As New List(Of OpeningBookEntry)
     Private BookLoaded As Boolean
+
+    'Objects for allowing the user to drag the form.
+    Private IsDraggingForm As Boolean
+    Private FormDragInitPos As Point
+
     'Startup sound effect - sounds taken from Chess.com.
     ReadOnly Sound_Startup As New Media.SoundPlayer With {
         .SoundLocation = GlobalConstants.StartupPath & "\Assets\Sounds\Chess_Startup.wav"
@@ -136,8 +141,16 @@ Public Class MainMenu
         Pieces(29) = BP6
         Pieces(30) = BP7
         Pieces(31) = BP8
+
+        'Adds event handles to all the pieces, and the title header, so that the user is able to drag the window around by clicking on these objects.
+        AddHandler Title.MouseDown, AddressOf Form_MouseDown
+        AddHandler Title.MouseMove, AddressOf Form_MouseMove
+        AddHandler Title.MouseUp, AddressOf Form_MouseUp
         For x = 0 To 31
             Pieces(x).Visible = False
+            AddHandler Pieces(x).MouseDown, AddressOf Form_MouseDown
+            AddHandler Pieces(x).MouseMove, AddressOf Form_MouseMove
+            AddHandler Pieces(x).MouseUp, AddressOf Form_MouseUp
         Next
 
         'Gives all pieces their appropriate images.
@@ -501,6 +514,24 @@ Public Class MainMenu
     End Sub
 
 
+
+    'Methods that allow the user to move the form around the screen (as it does not have a handle). We do this in the same way as the
+    'drag-drop mechanics in the main Chess.vb form :).
+    Private Sub Form_MouseDown(sender As Object, e As MouseEventArgs) Handles Me.MouseDown
+        IsDraggingForm = True
+        FormDragInitPos = New Point(e.X, e.Y)
+    End Sub
+    Private Sub Form_MouseMove(sender As Object, e As MouseEventArgs) Handles Me.MouseMove
+        If IsDraggingForm Then
+            Dim ScreenPos As Point = PointToScreen(e.Location)
+            Me.Location = New Point(ScreenPos.X - FormDragInitPos.X, ScreenPos.Y - FormDragInitPos.Y)
+        End If
+    End Sub
+    Private Sub Form_MouseUp() Handles Me.MouseUp
+        IsDraggingForm = False
+    End Sub
+
+
     'Subroutine which clears the Opening Book, in case it has not been fully loaded by the time the user has clicked on a Game Mode.
     'This is to prevent an unfinished / broken Book from entering the System.
     Private Sub HandleOpeningBookNotLoaded()
@@ -527,5 +558,6 @@ Public Class MainMenu
     Private Sub ExitBtn_Click() Handles ExitBtn.Click
         Me.Close()
     End Sub
+
 
 End Class

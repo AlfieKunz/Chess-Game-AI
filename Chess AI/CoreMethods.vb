@@ -2,6 +2,7 @@
 'my AI class (either via instavintiation or by inheritance). It will contain the algorithms that will be used by both my Chess
 '& AI classes, such as the ‘TFTable’ Generator, ‘DoesMoveResolveCheck’, 'Move Converters', and others.
 Imports System.Data.OleDb
+Imports System.Runtime.CompilerServices
 Imports System.Xml.XPath
 
 Partial Public Class CoreMethods
@@ -10,6 +11,8 @@ Partial Public Class CoreMethods
     Public MasterTrueTable(7, 7), TrueTable(7, 7) As Char
     Public CannotCastle As New CanCastle
     Private Shared ReadOnly PieceValue(9) As Integer 'Array Containing the Value or Weight of each Piece.
+    Protected Shared MVVLVAValues(9, 9) As UInt16 'Array Containing the score associated with each possible capture configuration in chess.
+    'This is used for move ordering, and represents the premise of encouraging high captures, and capturing _with_ low material.
 
     Protected Shared ReadOnly ZobristHashTable(9, 1, 7, 7) As UInt64 '(a, b, c, d), where a = piece type, b = piece colour, c = x-coor, d = y-coor.
     'a is Similar to PieceValue: use (Asc(UCase(PieceName)) Mod 11) to calculate - [2] used for EnPassant square.
@@ -25,6 +28,19 @@ Partial Public Class CoreMethods
         PieceValue(4) = GlobalConstants.PieceWeight.Queen 'Queen Weight
         PieceValue(5) = GlobalConstants.PieceWeight.Rook 'Rook Weight
         PieceValue(9) = GlobalConstants.PieceWeight.King 'King Weight
+
+        'Loads the appropriate values into MVA-LVA. For more info, see rustic-chess.org/search/ordering/mvv_lva.html
+        MVVLVAValues = {
+            {33, 34, 0, 35, 31, 32, 0, 0, 0, 30}, 'Victim = Bishop.
+            {23, 24, 0, 25, 21, 22, 0, 0, 0, 20}, 'Victim = Knight.
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {13, 14, 0, 15, 11, 12, 0, 0, 0, 10}, 'Victim = Pawn.
+            {53, 54, 0, 55, 51, 52, 0, 0, 0, 50}, 'Victim = Queen.
+            {43, 44, 0, 45, 41, 42, 0, 0, 0, 40}, 'Victim = Rook.
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}} 'Victim = King.
 
         'Creates MasterTrueTable and TrueTable.
         For x As Byte = 0 To 7
@@ -202,6 +218,12 @@ Partial Public Class CoreMethods
         Return ConvertToFEN
     End Function
 
+    'Function which removes all the Move Counts (ie: the full-move and half-move counts) from a FEN.
+    'Eg: 5B2/NR6/1np5/p7/p1kp4/K4Q2/3P4/8 w - - 2 16  -->  5B2/NR6/1np5/p7/p1kp4/K4Q2/3P4/8 w - -
+    Public Function StripFENOfMoveCounts(ByVal FEN As String) As String
+        Dim FENFullCutOff As String = FEN.Substring(0, FEN.LastIndexOf(" "c))
+        Return FENFullCutOff.Substring(0, FENFullCutOff.LastIndexOf(" "c))
+    End Function
 
 
     'Function which chcecks if the EnPassant square (given by a FEN) is valid on the board.
@@ -212,10 +234,10 @@ Partial Public Class CoreMethods
         'Checks that the row is correct, and that there is an enemy pawn behind the square.
         If isWhite AndAlso YCoor = 2 AndAlso Board(XCoor, YCoor + 1) = "p" Then
             'Checks that there is a friendly pawn next to that enemy pawn.
-            Return (Board(XCoor + 1, YCoor + 1) = "P" OrElse Board(XCoor - 1, YCoor + 1) = "P")
+            Return (Board(Math.Min(XCoor + 1, 7), YCoor + 1) = "P" OrElse Board(Math.Max(XCoor - 1, 0), YCoor + 1) = "P")
         ElseIf Not isWhite AndAlso YCoor = 5 AndAlso Board(XCoor, YCoor - 1) = "P" Then
             'Similar code for black en-passant.
-            Return (Board(XCoor + 1, YCoor - 1) = "p" OrElse Board(XCoor - 1, YCoor - 1) = "p")
+            Return (Board(Math.Min(XCoor + 1, 7), YCoor - 1) = "p" OrElse Board(Math.Max(XCoor - 1, 0), YCoor - 1) = "p")
         End If
         Return False
     End Function
@@ -251,10 +273,11 @@ Partial Public Class CoreMethods
     End Sub
 
     'Subroutine which outputs a given BitMove (as used by my AI) to the console.
-    Protected Sub OutputBitMoveToConsole(ByVal Move As UInt16)
+    Protected Sub OutputBitMoveToConsole(ByVal Move As UInt16, Optional ByVal PrecedingText As String = "")
         'Converts the BitMove to binary (base 2).
         Dim BinaryString As String = (Convert.ToString(Move, 2)).PadLeft(16, "0"c)
         Dim OldMove, NewMove As String
+        If PrecedingText <> "" Then Console.Write(PrecedingText)
         For n As Byte = 0 To 15
             Select Case n
                 Case 0
@@ -299,7 +322,34 @@ Partial Public Class CoreMethods
         Console.WriteLine(" (" & CoorToPGNConverter(OldMove) & CoorToPGNConverter(NewMove) & ").")
     End Sub
 
+    Protected Sub OutputBitMaskToConsole(ByVal Mask As ULong, Optional ByVal PawnPosition As Integer = -1, Optional ByVal EnemyPawnMask As ULong = 0UL)
+        Console.ForegroundColor = ConsoleColor.DarkCyan
+        Console.WriteLine("Denary: " & Mask)
+        Dim BinaryMask As String = String.Join("", BitConverter.GetBytes(CULng(Mask)).Reverse().Select(Function(b) Convert.ToString(b, 2).PadLeft(8, "0"c)))
+        Dim BinaryEnemyMask As String = String.Join("", BitConverter.GetBytes(CULng(EnemyPawnMask)).Reverse().Select(Function(b) Convert.ToString(b, 2).PadLeft(8, "0"c)))
+        Dim Counter As Integer
+        For i = 63 To 0 Step -1
+            If i = PawnPosition Then
+                Console.ForegroundColor = ConsoleColor.Cyan
+            ElseIf BinaryMask(i) = "1"c Then
+                Console.ForegroundColor = If(BinaryMask(i) = BinaryEnemyMask(i), ConsoleColor.DarkYellow, ConsoleColor.Green)
+            Else
+                Console.ForegroundColor = ConsoleColor.Red
+            End If
+            Console.Write(BinaryMask(i))
+            Counter += 1
+            If Counter = 8 Then Counter = 0 : Console.WriteLine()
+        Next
+        Console.WriteLine()
+    End Sub
+
+
     'Subroutine which constructs the coordinates of a Move structure, from an AI's BitMove.
+    Protected Function ConvertBitMoveToMove(ByVal BitMove As UInt16) As Move
+        Dim TempMove As New Move
+        ConvertBitMoveToMove(TempMove, BitMove)
+        Return TempMove
+    End Function
     Protected Sub ConvertBitMoveToMove(ByRef TempMove As Move, ByVal BitMove As UInt16)
         TempMove.OldMoveX = CStr((BitMove And 3584US) >> 9)
         TempMove.OldMoveY = CStr((BitMove And 448US) >> 6)
@@ -312,6 +362,8 @@ Partial Public Class CoreMethods
         Else
             TempMove.Code = "f"c
         End If
+        'Saves a copy of the BitMove inside the Move object, in case it needs to be called later (eg: iterative deepening, or altering the board afterwards).
+        TempMove.BitMove = BitMove
     End Sub
 
     'Function which converts a string coordinate (eg: "54") to its BitMove counterpart (eg: "00101100")
@@ -327,7 +379,7 @@ Partial Public Class CoreMethods
     'This creates a 'field' around the king (stating where its legal moves are), along with creating pinned pieces
     'and checks.
     'This method returns true if the player to move contains at least 1 piece (ie: anything other than pawns). This will be useful for detecting Zugzwang in Null Move Pruning.
-    Public Sub FixTFTable(ByRef Board(,) As Char, ByVal FixWhite As Boolean, ByRef TFTableToFix(,) As Char, ByRef KPos As Int16, ByRef InCheck As UInt16, ByVal EnPassant As Int16, Optional ByRef CheckForPiece As Boolean = False)
+    Public Sub FixTFTable(ByRef Board(,) As Char, ByVal FixWhite As Boolean, ByRef TFTableToFix(,) As Char, ByRef KPos As Int16, ByRef InCheck As UInt16, ByVal CanICastle As Boolean, ByVal EnPassant As Int16, Optional ByRef CheckForPiece As Boolean = False)
         Dim dx, dy As Int16
         Dim PieceInfluenceKing As Boolean
         'Resets TFTables.
@@ -341,13 +393,15 @@ Partial Public Class CoreMethods
                         dy = Math.Abs((KPos And 7S) - y)
                         Select Case Board(x, y)
                             Case "p"c
-                                PieceInfluenceKing = Math.Max(dx, dy) <= 2 AndAlso (KPos And 7) >= y
+                                'If the king hasn't castled, a pawn on a2 needs to prevent a castling attempt.
+                                PieceInfluenceKing = (KPos And 7) >= y AndAlso (Math.Max(dx, dy) <= 2 OrElse (CanICastle AndAlso y = 6))
                             Case "b"c
                                 PieceInfluenceKing = Math.Abs(dx - dy) <= 2
                             Case "n"c
                                 PieceInfluenceKing = Math.Max(dx, dy) <= 3 AndAlso dx + dy <= 5
                             Case "r"c
-                                PieceInfluenceKing = Math.Min(dx, dy) <= 1
+                                'If the king can castle, the rook might be able to cut off the king's motion - give the rook one more move of sight.
+                                PieceInfluenceKing = Math.Min(dx, dy) <= If(CanICastle, 2, 1)
                             Case "q"c
                                 PieceInfluenceKing = Math.Min(dx, dy) <= 1 OrElse Math.Abs(dx - dy) <= 2
                             Case Else
@@ -368,13 +422,13 @@ Partial Public Class CoreMethods
                         dy = Math.Abs((KPos And 7S) - y)
                         Select Case Board(x, y)
                             Case "P"c
-                                PieceInfluenceKing = Math.Max(dx, dy) <= 2 AndAlso (KPos And 7) <= y
+                                PieceInfluenceKing = (KPos And 7) <= y AndAlso (Math.Max(dx, dy) <= 2 OrElse (CanICastle AndAlso y = 1))
                             Case "B"c
                                 PieceInfluenceKing = Math.Abs(dx - dy) <= 2
                             Case "N"c
                                 PieceInfluenceKing = Math.Max(dx, dy) <= 3 AndAlso dx + dy <= 5
                             Case "R"c
-                                PieceInfluenceKing = Math.Min(dx, dy) <= 1
+                                PieceInfluenceKing = Math.Min(dx, dy) <= If(CanICastle, 2, 1)
                             Case "Q"c
                                 PieceInfluenceKing = Math.Min(dx, dy) <= 1 OrElse Math.Abs(dx - dy) <= 2
                             Case Else
@@ -391,8 +445,10 @@ Partial Public Class CoreMethods
 
 
 
-    'Algorithm that returns the weight / value of a given piece. Links to the array of hashed values PieceValue.
-    'Note that the input of this function must be uppercase!!
+
+    'Algorithm that returns the weight / value of a given piece. Links to the array of hashed values PieceValue. Aggressive Inlining
+    'replaces all references of the function (which appears many times in my program) with the function itself, to reduce on overhead.
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Public Function ReturnPieceValue(ByVal Piece As Char) As Integer
         Return PieceValue(Asc(UCase(Piece)) Mod 11)
     End Function

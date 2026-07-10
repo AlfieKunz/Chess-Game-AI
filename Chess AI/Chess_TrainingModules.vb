@@ -55,13 +55,15 @@ Partial Public Class Chess 'Training Modules
     'Subroutine which runs every time the TrainingTimer ticks (every 100ms). Used both to determine how long
     'the user has left to complete the puzzle move, and to determine how long the user has left in the
     'move & coordinate training games.
-    Private Sub TrainingTimer_Tick() Handles TrainingTimer.Tick
-        TrainingMode.TrainingTimerTicks += 1
-        'Updates Timer.
-        If GameMode = 4 Then
-            HandlePuzzleModeTimerTick()
-        Else
-            HandleCoordinateAndMoveModeTimerTick()
+    Private Sub TrainingTimer_Tick() Handles ChessTimer.Tick
+        If GameMode >= 4 Then
+            TrainingMode.TrainingTimerTicks += 1
+            'Updates Timer.
+            If GameMode = 4 Then
+                HandlePuzzleModeTimerTick()
+            Else
+                HandleCoordinateAndMoveModeTimerTick()
+            End If
         End If
     End Sub
 
@@ -199,10 +201,10 @@ Partial Public Class Chess 'Training Modules
         'Resets TrueFalse Tables.
         If PlayerTurn Then
             MasterBInCheck = 0 'Player is no longer in check.
-            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
         Else
             MasterWInCheck = 0 'Player is no longer in check.
-            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
         End If
         'Resets location of Previously Used Squares.
         SquareHistory(0, 0) = -1
@@ -213,7 +215,7 @@ Partial Public Class Chess 'Training Modules
         'Flips the board so that it will always be positioned in the user's favour.
         Dim HasFlippedBoard As Boolean
         If (Not PlayerTurn) Xor OrientForWhite Then FlipBoard() : HasFlippedBoard = True Else Checkerboard.Refresh()
-        CheckChecker(False)
+        EditCheckText()
 
         'Resets labels.
         LostRatingLabel.ForeColor = SystemColors.ControlText
@@ -245,15 +247,15 @@ Partial Public Class Chess 'Training Modules
         MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates the AI in preparation for the new puzzle.
 
         FENExport_Click()
-        EnforceEndStates(True)
+        EnforceEndStates()
         If OutputToConsole Then OutputDebugInfo() 'The board position will not be outputted if, for example, this subroutine
         'has been called by the user clicking the GiveUp button - causing the user's / the AI's puzzle move to be made for them.
 
         'Starts the puzzle stopwatch.
         If AIHandles.TimeForSearch <> Decimal.MaxValue Then
             TrainingMode.TrainingTimerTicks = 0
-            TrainingTimer.Enabled = True
-            TrainingTimer.Start() 'Starts timer. Every tick = 100ms.
+            ChessTimer.Enabled = True
+            ChessTimer.Start() 'Starts timer. Every tick = 100ms.
         End If
     End Sub
 
@@ -433,7 +435,7 @@ Partial Public Class Chess 'Training Modules
     Private Sub ResetPuzzleTimer()
         'Stops the Timer from ticking, recalibrates the timer & its objects,
         'and sets how long the user / the AI has to make each puzzle move.
-        TrainingTimer.Enabled = False
+        ChessTimer.Enabled = False
         ProgressBar.Value = 0
         ProgressBar.ForeColor = Color.FromArgb(0, 192, 0)
         AIHandles.TimeForSearch = TrainingMode.PuzzleTimeForSearch
@@ -444,7 +446,7 @@ Partial Public Class Chess 'Training Modules
             If ProgressBar.ForeColor = Color.FromArgb(0, 192, 0) Then ProgressBar.ForeColor = Color.Red
             If TrainingMode.TrainingTimerTicks >= AIHandles.TimeForSearch * 10 AndAlso Not PieceIsMoving Then
                 'The total time to complete the puzzle move has expired - set the puzzle as being incorrect.
-                TrainingTimer.Enabled = False
+                ChessTimer.Enabled = False
                 'Resets Moved Piece, if the user is currently holding a piece.
                 If PieceMoving.IsMovingPiece Then
                     PieceMoving.IsMovingPiece = False
@@ -484,6 +486,18 @@ Partial Public Class Chess 'Training Modules
             AIHandles.AIStopwatch.Stop()
             Return True
         Else
+            If Not TrainingMode.UserPuzzleMode Then
+                'Outputs the eval of the AI's latest search (to help illustrate whether it has found a winning sequence).
+                Console.Write("Eval: ")
+                If AIHandles.AIBestMove.Score > 0 Then
+                    Console.ForegroundColor = ConsoleColor.Green
+                ElseIf AIHandles.AIBestMove.Score < 0 Then
+                    Console.ForegroundColor = ConsoleColor.Red
+                End If
+                Console.Write(AIHandles.AIBestMove.Score)
+                Console.ForegroundColor = ConsoleColor.White
+                Console.Write(". ".PadRight(9 - AIHandles.AIBestMove.Score.ToString().Length))
+            End If
             'Checks if the AI's move matches the puzzle's correct move.
             'Fetches the correct puzzle move.
             Dim CorrectMove As New Move
@@ -748,7 +762,7 @@ Partial Public Class Chess 'Training Modules
         End If
         If Not OrientForWhite Then XLocation = 7 - XLocation : YLocation = 7 - YLocation
 
-        If BoardEdit.isEnabled AndAlso e.Button = Windows.Forms.MouseButtons.Right Then
+        If BoardEdit.isEnabled AndAlso e.Button = MouseButtons.Right Then
             If XLocation <= 8 Then HandleBoardEditEnPassantClick(XLocation, YLocation)
 
         ElseIf GameMode = 5 AndAlso GameRunning Then
@@ -781,7 +795,7 @@ Partial Public Class Chess 'Training Modules
                 MasterBoard = Helper.FENConverter(NewFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                 If PlayerTurn Then
                     MasterWInCheck = 0
-                    Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+                    Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
                     'If White is not in check, generate all the legal moves in the position.
                     MainAI.Reconfigure(NewFEN, True)
                     If MasterWInCheck < 128 Then
@@ -864,7 +878,7 @@ Partial Public Class Chess 'Training Modules
     Private Sub TrainingStart_Click() Handles TrainingStart.Click
         If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
         'Prepares timer & objects.
-        TrainingTimer.Enabled = False
+        ChessTimer.Enabled = False
         If GeneralOptions(0) = "T" Then Sound_321Go.Play() 'Countdown sound.
         ResetLMS(True)
         TrainingScore.Visible = False
@@ -918,8 +932,8 @@ Partial Public Class Chess 'Training Modules
         TrainingScore.Visible = True
         GameRunning = True
         TrainingMode.TrainingTimerTicks = 0
-        TrainingTimer.Enabled = True
-        TrainingTimer.Start() 'Starts timer. Every tick = 100ms.
+        ChessTimer.Enabled = True
+        ChessTimer.Start() 'Starts timer. Every tick = 100ms.
     End Sub
 
     'Subroutine that handles the Training Mode Timer. Also involves ending games and updating leaderboards accordingly.
@@ -933,7 +947,7 @@ Partial Public Class Chess 'Training Modules
                 TimerLabel.Text = "Time Left: 0.0 Seconds"
                 Application.DoEvents()
                 GameRunning = False
-                TrainingTimer.Enabled = False
+                ChessTimer.Enabled = False
                 If GeneralOptions(0) = "T" Then Sound_GameOver.Play()
 
                 If Val(TrainingScore.Text) > 0 AndAlso OrientForWhite AndAlso Val(TrainingScore.Text) > TrainingModeWLeaderBoard(9, 1) OrElse Not OrientForWhite AndAlso Val(TrainingScore.Text) > TrainingModeBLeaderBoard(9, 1) Then

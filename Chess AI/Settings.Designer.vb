@@ -23,562 +23,563 @@ Partial Class Settings
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Settings))
-        Me.Checkerboard = New System.Windows.Forms.PictureBox()
-        Me.AnimationTester = New System.Windows.Forms.Button()
-        Me.SpeedSetter = New System.Windows.Forms.TrackBar()
-        Me.WP3 = New System.Windows.Forms.PictureBox()
-        Me.WP2 = New System.Windows.Forms.PictureBox()
-        Me.WP1 = New System.Windows.Forms.PictureBox()
-        Me.WN1 = New System.Windows.Forms.PictureBox()
-        Me.WB1 = New System.Windows.Forms.PictureBox()
-        Me.WR1 = New System.Windows.Forms.PictureBox()
-        Me.ColourLabel = New System.Windows.Forms.Label()
-        Me.Label3 = New System.Windows.Forms.Label()
-        Me.Label4 = New System.Windows.Forms.Label()
-        Me.ResetBtn = New System.Windows.Forms.Button()
-        Me.BackBtn = New System.Windows.Forms.Button()
-        Me.AnimationInfo = New System.Windows.Forms.Label()
-        Me.PictureBox3 = New System.Windows.Forms.PictureBox()
-        Me.PictureBox4 = New System.Windows.Forms.PictureBox()
-        Me.Def = New System.Windows.Forms.RadioButton()
-        Me.ColourSelectorL = New System.Windows.Forms.PictureBox()
-        Me.Blu = New System.Windows.Forms.RadioButton()
-        Me.Bl2 = New System.Windows.Forms.RadioButton()
-        Me.Gld = New System.Windows.Forms.RadioButton()
-        Me.Grn = New System.Windows.Forms.RadioButton()
-        Me.Red = New System.Windows.Forms.RadioButton()
-        Me.Ppl = New System.Windows.Forms.RadioButton()
-        Me.Mon = New System.Windows.Forms.RadioButton()
-        Me.ColourPanel = New System.Windows.Forms.Panel()
-        Me.ColourSelectorR = New System.Windows.Forms.PictureBox()
-        Me.SoundBtn = New System.Windows.Forms.CheckBox()
-        Me.AnimationBtn = New System.Windows.Forms.CheckBox()
-        Me.BoardBtn = New System.Windows.Forms.CheckBox()
-        Me.PieceBtn = New System.Windows.Forms.CheckBox()
-        Me.InvisBtn = New System.Windows.Forms.CheckBox()
-        Me.AnimationPieceInfo = New System.Windows.Forms.Label()
-        Me.HammadBtn = New System.Windows.Forms.CheckBox()
-        Me.FixedSearchBtn = New System.Windows.Forms.CheckBox()
-        Me.FixedSearchBox = New System.Windows.Forms.TextBox()
-        Me.TouchMoveBtn = New System.Windows.Forms.CheckBox()
-        Me.OpeningBookBtn = New System.Windows.Forms.CheckBox()
-        CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.SpeedSetter, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WP3, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WP2, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WP1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WN1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WB1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.WR1, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.PictureBox3, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.PictureBox4, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.ColourSelectorL, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.ColourPanel.SuspendLayout()
-        CType(Me.ColourSelectorR, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.SuspendLayout()
-        '
-        'Checkerboard
-        '
-        Me.Checkerboard.BackColor = System.Drawing.Color.Transparent
-        Me.Checkerboard.Location = New System.Drawing.Point(343, 58)
-        Me.Checkerboard.Name = "Checkerboard"
-        Me.Checkerboard.Size = New System.Drawing.Size(225, 225)
-        Me.Checkerboard.TabIndex = 2
-        Me.Checkerboard.TabStop = False
-        '
-        'AnimationTester
-        '
-        Me.AnimationTester.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationTester.Location = New System.Drawing.Point(398, 350)
-        Me.AnimationTester.Name = "AnimationTester"
-        Me.AnimationTester.Size = New System.Drawing.Size(115, 42)
-        Me.AnimationTester.TabIndex = 4
-        Me.AnimationTester.Text = "Test Animation:"
-        Me.AnimationTester.UseVisualStyleBackColor = True
-        '
-        'SpeedSetter
-        '
-        Me.SpeedSetter.LargeChange = 1
-        Me.SpeedSetter.Location = New System.Drawing.Point(343, 290)
-        Me.SpeedSetter.Maximum = 4
-        Me.SpeedSetter.Name = "SpeedSetter"
-        Me.SpeedSetter.Size = New System.Drawing.Size(224, 45)
-        Me.SpeedSetter.TabIndex = 1
-        '
-        'WP3
-        '
-        Me.WP3.BackColor = System.Drawing.Color.Transparent
-        Me.WP3.Image = CType(resources.GetObject("WP3.Image"), System.Drawing.Image)
-        Me.WP3.InitialImage = Nothing
-        Me.WP3.Location = New System.Drawing.Point(492, 53)
-        Me.WP3.Name = "WP3"
-        Me.WP3.Size = New System.Drawing.Size(75, 75)
-        Me.WP3.TabIndex = 5
-        Me.WP3.TabStop = False
-        '
-        'WP2
-        '
-        Me.WP2.BackColor = System.Drawing.Color.Transparent
-        Me.WP2.Image = CType(resources.GetObject("WP2.Image"), System.Drawing.Image)
-        Me.WP2.InitialImage = Nothing
-        Me.WP2.Location = New System.Drawing.Point(418, 53)
-        Me.WP2.Name = "WP2"
-        Me.WP2.Size = New System.Drawing.Size(75, 75)
-        Me.WP2.TabIndex = 6
-        Me.WP2.TabStop = False
-        '
-        'WP1
-        '
-        Me.WP1.BackColor = System.Drawing.Color.Transparent
-        Me.WP1.Image = CType(resources.GetObject("WP1.Image"), System.Drawing.Image)
-        Me.WP1.InitialImage = Nothing
-        Me.WP1.Location = New System.Drawing.Point(343, 53)
-        Me.WP1.Name = "WP1"
-        Me.WP1.Size = New System.Drawing.Size(75, 75)
-        Me.WP1.TabIndex = 7
-        Me.WP1.TabStop = False
-        '
-        'WN1
-        '
-        Me.WN1.BackColor = System.Drawing.Color.Transparent
-        Me.WN1.Image = CType(resources.GetObject("WN1.Image"), System.Drawing.Image)
-        Me.WN1.InitialImage = Nothing
-        Me.WN1.Location = New System.Drawing.Point(418, 128)
-        Me.WN1.Name = "WN1"
-        Me.WN1.Size = New System.Drawing.Size(75, 75)
-        Me.WN1.TabIndex = 8
-        Me.WN1.TabStop = False
-        '
-        'WB1
-        '
-        Me.WB1.BackColor = System.Drawing.Color.Transparent
-        Me.WB1.Image = CType(resources.GetObject("WB1.Image"), System.Drawing.Image)
-        Me.WB1.InitialImage = Nothing
-        Me.WB1.Location = New System.Drawing.Point(492, 128)
-        Me.WB1.Name = "WB1"
-        Me.WB1.Size = New System.Drawing.Size(75, 75)
-        Me.WB1.TabIndex = 9
-        Me.WB1.TabStop = False
-        '
-        'WR1
-        '
-        Me.WR1.BackColor = System.Drawing.Color.Transparent
-        Me.WR1.Image = CType(resources.GetObject("WR1.Image"), System.Drawing.Image)
-        Me.WR1.InitialImage = Nothing
-        Me.WR1.Location = New System.Drawing.Point(343, 127)
-        Me.WR1.Name = "WR1"
-        Me.WR1.Size = New System.Drawing.Size(75, 75)
-        Me.WR1.TabIndex = 10
-        Me.WR1.TabStop = False
-        '
-        'ColourLabel
-        '
-        Me.ColourLabel.AutoSize = True
-        Me.ColourLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Underline), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.ColourLabel.Location = New System.Drawing.Point(32, 9)
-        Me.ColourLabel.Name = "ColourLabel"
-        Me.ColourLabel.Size = New System.Drawing.Size(248, 25)
-        Me.ColourLabel.TabIndex = 16
-        Me.ColourLabel.Text = "Board Colour Scheme:"
-        '
-        'Label3
-        '
-        Me.Label3.AutoSize = True
-        Me.Label3.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Underline), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label3.Location = New System.Drawing.Point(331, 9)
-        Me.Label3.Name = "Label3"
-        Me.Label3.Size = New System.Drawing.Size(263, 25)
-        Me.Label3.TabIndex = 16
-        Me.Label3.Text = "Piece Animation Speed:"
-        '
-        'Label4
-        '
-        Me.Label4.AutoSize = True
-        Me.Label4.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Underline), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label4.Location = New System.Drawing.Point(652, 9)
-        Me.Label4.Name = "Label4"
-        Me.Label4.Size = New System.Drawing.Size(195, 25)
-        Me.Label4.TabIndex = 17
-        Me.Label4.Text = "General Settings:"
-        '
-        'ResetBtn
-        '
-        Me.ResetBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.ResetBtn.Location = New System.Drawing.Point(696, 353)
-        Me.ResetBtn.Name = "ResetBtn"
-        Me.ResetBtn.Size = New System.Drawing.Size(114, 36)
-        Me.ResetBtn.TabIndex = 11
-        Me.ResetBtn.Text = "Reset Program"
-        Me.ResetBtn.UseVisualStyleBackColor = True
-        '
-        'BackBtn
-        '
-        Me.BackBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BackBtn.Location = New System.Drawing.Point(849, 376)
-        Me.BackBtn.Name = "BackBtn"
-        Me.BackBtn.Size = New System.Drawing.Size(23, 23)
-        Me.BackBtn.TabIndex = 18
-        Me.BackBtn.Text = "↺"
-        Me.BackBtn.UseVisualStyleBackColor = True
-        '
-        'AnimationInfo
-        '
-        Me.AnimationInfo.AutoSize = True
-        Me.AnimationInfo.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationInfo.Location = New System.Drawing.Point(343, 322)
-        Me.AnimationInfo.Name = "AnimationInfo"
-        Me.AnimationInfo.Size = New System.Drawing.Size(230, 16)
-        Me.AnimationInfo.TabIndex = 19
-        Me.AnimationInfo.Text = "Off       VFast       Fast     Medium    Slow"
-        '
-        'PictureBox3
-        '
-        Me.PictureBox3.BackColor = System.Drawing.Color.FromArgb(CType(CType(50, Byte), Integer), CType(CType(50, Byte), Integer), CType(CType(50, Byte), Integer))
-        Me.PictureBox3.Location = New System.Drawing.Point(300, -4)
-        Me.PictureBox3.Name = "PictureBox3"
-        Me.PictureBox3.Size = New System.Drawing.Size(10, 420)
-        Me.PictureBox3.TabIndex = 23
-        Me.PictureBox3.TabStop = False
-        '
-        'PictureBox4
-        '
-        Me.PictureBox4.BackColor = System.Drawing.Color.FromArgb(CType(CType(50, Byte), Integer), CType(CType(50, Byte), Integer), CType(CType(50, Byte), Integer))
-        Me.PictureBox4.Location = New System.Drawing.Point(604, -4)
-        Me.PictureBox4.Name = "PictureBox4"
-        Me.PictureBox4.Size = New System.Drawing.Size(10, 420)
-        Me.PictureBox4.TabIndex = 24
-        Me.PictureBox4.TabStop = False
-        '
-        'Def
-        '
-        Me.Def.AutoSize = True
-        Me.Def.CheckAlign = System.Drawing.ContentAlignment.TopLeft
-        Me.Def.Checked = True
-        Me.Def.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.Def.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Def.Location = New System.Drawing.Point(4, 4)
-        Me.Def.Name = "Def"
-        Me.Def.Size = New System.Drawing.Size(63, 19)
-        Me.Def.TabIndex = 15
-        Me.Def.TabStop = True
-        Me.Def.Text = "Default"
-        Me.Def.UseVisualStyleBackColor = True
-        '
-        'ColourSelectorL
-        '
-        Me.ColourSelectorL.BackColor = System.Drawing.Color.Transparent
-        Me.ColourSelectorL.BackgroundImage = CType(resources.GetObject("ColourSelectorL.BackgroundImage"), System.Drawing.Image)
-        Me.ColourSelectorL.InitialImage = Nothing
-        Me.ColourSelectorL.Location = New System.Drawing.Point(0, 70)
-        Me.ColourSelectorL.Name = "ColourSelectorL"
-        Me.ColourSelectorL.Size = New System.Drawing.Size(110, 70)
-        Me.ColourSelectorL.TabIndex = 25
-        Me.ColourSelectorL.TabStop = False
-        '
-        'Blu
-        '
-        Me.Blu.AutoSize = True
-        Me.Blu.CheckAlign = System.Drawing.ContentAlignment.TopLeft
-        Me.Blu.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.Blu.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Blu.Location = New System.Drawing.Point(4, 29)
-        Me.Blu.Name = "Blu"
-        Me.Blu.Size = New System.Drawing.Size(67, 19)
-        Me.Blu.TabIndex = 15
-        Me.Blu.TabStop = True
-        Me.Blu.Text = "Blue (L)"
-        Me.Blu.UseVisualStyleBackColor = True
-        '
-        'Bl2
-        '
-        Me.Bl2.AutoSize = True
-        Me.Bl2.CheckAlign = System.Drawing.ContentAlignment.TopLeft
-        Me.Bl2.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.Bl2.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Bl2.Location = New System.Drawing.Point(4, 54)
-        Me.Bl2.Name = "Bl2"
-        Me.Bl2.Size = New System.Drawing.Size(69, 19)
-        Me.Bl2.TabIndex = 15
-        Me.Bl2.TabStop = True
-        Me.Bl2.Text = "Blue (D)"
-        Me.Bl2.UseVisualStyleBackColor = True
-        '
-        'Gld
-        '
-        Me.Gld.AutoSize = True
-        Me.Gld.CheckAlign = System.Drawing.ContentAlignment.TopLeft
-        Me.Gld.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.Gld.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Gld.Location = New System.Drawing.Point(4, 79)
-        Me.Gld.Name = "Gld"
-        Me.Gld.Size = New System.Drawing.Size(50, 19)
-        Me.Gld.TabIndex = 15
-        Me.Gld.TabStop = True
-        Me.Gld.Text = "Gold"
-        Me.Gld.UseVisualStyleBackColor = True
-        '
-        'Grn
-        '
-        Me.Grn.AutoSize = True
-        Me.Grn.CheckAlign = System.Drawing.ContentAlignment.TopLeft
-        Me.Grn.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.Grn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Grn.Location = New System.Drawing.Point(4, 104)
-        Me.Grn.Name = "Grn"
-        Me.Grn.Size = New System.Drawing.Size(58, 19)
-        Me.Grn.TabIndex = 15
-        Me.Grn.TabStop = True
-        Me.Grn.Text = "Green"
-        Me.Grn.UseVisualStyleBackColor = True
-        '
-        'Red
-        '
-        Me.Red.AutoSize = True
-        Me.Red.CheckAlign = System.Drawing.ContentAlignment.TopLeft
-        Me.Red.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.Red.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Red.Location = New System.Drawing.Point(4, 129)
-        Me.Red.Name = "Red"
-        Me.Red.Size = New System.Drawing.Size(47, 19)
-        Me.Red.TabIndex = 15
-        Me.Red.TabStop = True
-        Me.Red.Text = "Red"
-        Me.Red.UseVisualStyleBackColor = True
-        '
-        'Ppl
-        '
-        Me.Ppl.AutoSize = True
-        Me.Ppl.CheckAlign = System.Drawing.ContentAlignment.TopLeft
-        Me.Ppl.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.Ppl.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Ppl.Location = New System.Drawing.Point(4, 154)
-        Me.Ppl.Name = "Ppl"
-        Me.Ppl.Size = New System.Drawing.Size(60, 19)
-        Me.Ppl.TabIndex = 15
-        Me.Ppl.TabStop = True
-        Me.Ppl.Text = "Purple"
-        Me.Ppl.UseVisualStyleBackColor = True
-        '
-        'Mon
-        '
-        Me.Mon.AutoSize = True
-        Me.Mon.CheckAlign = System.Drawing.ContentAlignment.TopLeft
-        Me.Mon.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.Mon.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Mon.Location = New System.Drawing.Point(4, 179)
-        Me.Mon.Name = "Mon"
-        Me.Mon.Size = New System.Drawing.Size(49, 19)
-        Me.Mon.TabIndex = 15
-        Me.Mon.Text = "Gray"
-        Me.Mon.UseVisualStyleBackColor = True
-        '
-        'ColourPanel
-        '
-        Me.ColourPanel.BackColor = System.Drawing.Color.Transparent
-        Me.ColourPanel.Controls.Add(Me.Def)
-        Me.ColourPanel.Controls.Add(Me.Blu)
-        Me.ColourPanel.Controls.Add(Me.Gld)
-        Me.ColourPanel.Controls.Add(Me.Grn)
-        Me.ColourPanel.Controls.Add(Me.Red)
-        Me.ColourPanel.Controls.Add(Me.Ppl)
-        Me.ColourPanel.Controls.Add(Me.Mon)
-        Me.ColourPanel.Controls.Add(Me.Bl2)
-        Me.ColourPanel.Location = New System.Drawing.Point(113, 90)
-        Me.ColourPanel.Name = "ColourPanel"
-        Me.ColourPanel.Size = New System.Drawing.Size(76, 202)
-        Me.ColourPanel.TabIndex = 26
-        '
-        'ColourSelectorR
-        '
-        Me.ColourSelectorR.BackColor = System.Drawing.Color.Transparent
-        Me.ColourSelectorR.BackgroundImage = CType(resources.GetObject("ColourSelectorR.BackgroundImage"), System.Drawing.Image)
-        Me.ColourSelectorR.InitialImage = Nothing
-        Me.ColourSelectorR.Location = New System.Drawing.Point(190, 70)
-        Me.ColourSelectorR.Name = "ColourSelectorR"
-        Me.ColourSelectorR.Size = New System.Drawing.Size(110, 70)
-        Me.ColourSelectorR.TabIndex = 27
-        Me.ColourSelectorR.TabStop = False
-        '
-        'SoundBtn
-        '
-        Me.SoundBtn.AutoSize = True
-        Me.SoundBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.SoundBtn.Location = New System.Drawing.Point(637, 48)
-        Me.SoundBtn.Name = "SoundBtn"
-        Me.SoundBtn.Size = New System.Drawing.Size(154, 20)
-        Me.SoundBtn.TabIndex = 28
-        Me.SoundBtn.Text = "Enable Sound Effects"
-        Me.SoundBtn.UseVisualStyleBackColor = True
-        '
-        'AnimationBtn
-        '
-        Me.AnimationBtn.AutoSize = True
-        Me.AnimationBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationBtn.Location = New System.Drawing.Point(637, 82)
-        Me.AnimationBtn.Name = "AnimationBtn"
-        Me.AnimationBtn.Size = New System.Drawing.Size(169, 20)
-        Me.AnimationBtn.TabIndex = 28
-        Me.AnimationBtn.Text = "Play Opening Animation"
-        Me.AnimationBtn.UseVisualStyleBackColor = True
-        '
-        'BoardBtn
-        '
-        Me.BoardBtn.AutoSize = True
-        Me.BoardBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BoardBtn.Location = New System.Drawing.Point(637, 150)
-        Me.BoardBtn.Name = "BoardBtn"
-        Me.BoardBtn.Size = New System.Drawing.Size(174, 20)
-        Me.BoardBtn.TabIndex = 28
-        Me.BoardBtn.Text = "Display Board Highlights"
-        Me.BoardBtn.UseVisualStyleBackColor = True
-        '
-        'PieceBtn
-        '
-        Me.PieceBtn.AutoSize = True
-        Me.PieceBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PieceBtn.Location = New System.Drawing.Point(637, 184)
-        Me.PieceBtn.Name = "PieceBtn"
-        Me.PieceBtn.Size = New System.Drawing.Size(172, 20)
-        Me.PieceBtn.TabIndex = 28
-        Me.PieceBtn.Text = "Display Piece Highlights"
-        Me.PieceBtn.UseVisualStyleBackColor = True
-        '
-        'InvisBtn
-        '
-        Me.InvisBtn.AutoSize = True
-        Me.InvisBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.InvisBtn.Location = New System.Drawing.Point(637, 252)
-        Me.InvisBtn.Name = "InvisBtn"
-        Me.InvisBtn.Size = New System.Drawing.Size(120, 20)
-        Me.InvisBtn.TabIndex = 28
-        Me.InvisBtn.Text = "Invisible Pieces"
-        Me.InvisBtn.UseVisualStyleBackColor = True
-        '
-        'AnimationPieceInfo
-        '
-        Me.AnimationPieceInfo.AutoSize = True
-        Me.AnimationPieceInfo.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationPieceInfo.Location = New System.Drawing.Point(369, 38)
-        Me.AnimationPieceInfo.Name = "AnimationPieceInfo"
-        Me.AnimationPieceInfo.Size = New System.Drawing.Size(170, 13)
-        Me.AnimationPieceInfo.TabIndex = 16
-        Me.AnimationPieceInfo.Text = "Click a Piece to Test its Animation!"
-        '
-        'HammadBtn
-        '
-        Me.HammadBtn.AutoSize = True
-        Me.HammadBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.HammadBtn.Location = New System.Drawing.Point(637, 320)
-        Me.HammadBtn.Name = "HammadBtn"
-        Me.HammadBtn.Size = New System.Drawing.Size(209, 20)
-        Me.HammadBtn.TabIndex = 28
-        Me.HammadBtn.Text = "'Hammad AI' Mode  (Unstable)"
-        Me.HammadBtn.UseVisualStyleBackColor = True
-        '
-        'FixedSearchBtn
-        '
-        Me.FixedSearchBtn.AutoSize = True
-        Me.FixedSearchBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.FixedSearchBtn.Location = New System.Drawing.Point(637, 286)
-        Me.FixedSearchBtn.Name = "FixedSearchBtn"
-        Me.FixedSearchBtn.Size = New System.Drawing.Size(195, 20)
-        Me.FixedSearchBtn.TabIndex = 28
-        Me.FixedSearchBtn.Text = "Fixed AI Search:           Depth:"
-        Me.FixedSearchBtn.UseVisualStyleBackColor = True
-        '
-        'FixedSearchBox
-        '
-        Me.FixedSearchBox.Enabled = False
-        Me.FixedSearchBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.FixedSearchBox.Location = New System.Drawing.Point(829, 285)
-        Me.FixedSearchBox.Name = "FixedSearchBox"
-        Me.FixedSearchBox.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.FixedSearchBox.Size = New System.Drawing.Size(35, 22)
-        Me.FixedSearchBox.TabIndex = 29
-        Me.FixedSearchBox.Text = "0"
-        Me.FixedSearchBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
-        '
-        'TouchMoveBtn
-        '
-        Me.TouchMoveBtn.AutoSize = True
-        Me.TouchMoveBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.TouchMoveBtn.Location = New System.Drawing.Point(637, 218)
-        Me.TouchMoveBtn.Name = "TouchMoveBtn"
-        Me.TouchMoveBtn.Size = New System.Drawing.Size(132, 20)
-        Me.TouchMoveBtn.TabIndex = 28
-        Me.TouchMoveBtn.Text = "Touch Move Rule"
-        Me.TouchMoveBtn.UseVisualStyleBackColor = True
-        '
-        'OpeningBookBtn
-        '
-        Me.OpeningBookBtn.AutoSize = True
-        Me.OpeningBookBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.OpeningBookBtn.Location = New System.Drawing.Point(637, 116)
-        Me.OpeningBookBtn.Name = "OpeningBookBtn"
-        Me.OpeningBookBtn.Size = New System.Drawing.Size(216, 20)
-        Me.OpeningBookBtn.TabIndex = 28
-        Me.OpeningBookBtn.Text = "Use Small Book  (Faster Loads)"
-        Me.OpeningBookBtn.UseVisualStyleBackColor = True
-        '
-        'Settings
-        '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
-        Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(884, 411)
-        Me.Controls.Add(Me.FixedSearchBox)
-        Me.Controls.Add(Me.FixedSearchBtn)
-        Me.Controls.Add(Me.HammadBtn)
-        Me.Controls.Add(Me.TouchMoveBtn)
-        Me.Controls.Add(Me.InvisBtn)
-        Me.Controls.Add(Me.PieceBtn)
-        Me.Controls.Add(Me.BoardBtn)
-        Me.Controls.Add(Me.OpeningBookBtn)
-        Me.Controls.Add(Me.AnimationBtn)
-        Me.Controls.Add(Me.SoundBtn)
-        Me.Controls.Add(Me.ColourSelectorR)
-        Me.Controls.Add(Me.ColourPanel)
-        Me.Controls.Add(Me.PictureBox4)
-        Me.Controls.Add(Me.PictureBox3)
-        Me.Controls.Add(Me.AnimationInfo)
-        Me.Controls.Add(Me.BackBtn)
-        Me.Controls.Add(Me.Label4)
-        Me.Controls.Add(Me.AnimationPieceInfo)
-        Me.Controls.Add(Me.Label3)
-        Me.Controls.Add(Me.ColourLabel)
-        Me.Controls.Add(Me.ResetBtn)
-        Me.Controls.Add(Me.WR1)
-        Me.Controls.Add(Me.WP3)
-        Me.Controls.Add(Me.WP2)
-        Me.Controls.Add(Me.WP1)
-        Me.Controls.Add(Me.WN1)
-        Me.Controls.Add(Me.WB1)
-        Me.Controls.Add(Me.SpeedSetter)
-        Me.Controls.Add(Me.AnimationTester)
-        Me.Controls.Add(Me.Checkerboard)
-        Me.Controls.Add(Me.ColourSelectorL)
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximizeBox = False
-        Me.Name = "Settings"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Settings"
-        CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.SpeedSetter, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WP3, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WP2, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WP1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WN1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WB1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.WR1, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.PictureBox3, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.PictureBox4, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.ColourSelectorL, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.ColourPanel.ResumeLayout(False)
-        Me.ColourPanel.PerformLayout()
-        CType(Me.ColourSelectorR, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.ResumeLayout(False)
-        Me.PerformLayout()
+        Checkerboard = New PictureBox()
+        AnimationTester = New Button()
+        SpeedSetter = New TrackBar()
+        WP3 = New PictureBox()
+        WP2 = New PictureBox()
+        WP1 = New PictureBox()
+        WN1 = New PictureBox()
+        WB1 = New PictureBox()
+        WR1 = New PictureBox()
+        ColourLabel = New Label()
+        Label3 = New Label()
+        Label4 = New Label()
+        ResetBtn = New Button()
+        BackBtn = New Button()
+        AnimationInfo = New Label()
+        PictureBox3 = New PictureBox()
+        PictureBox4 = New PictureBox()
+        Def = New RadioButton()
+        ColourSelectorL = New PictureBox()
+        Blu = New RadioButton()
+        Bl2 = New RadioButton()
+        Gld = New RadioButton()
+        Grn = New RadioButton()
+        Red = New RadioButton()
+        Ppl = New RadioButton()
+        Mon = New RadioButton()
+        ColourPanel = New Panel()
+        ColourSelectorR = New PictureBox()
+        SoundBtn = New CheckBox()
+        AnimationBtn = New CheckBox()
+        BoardBtn = New CheckBox()
+        PieceBtn = New CheckBox()
+        InvisBtn = New CheckBox()
+        AnimationPieceInfo = New Label()
+        HammadBtn = New CheckBox()
+        FixedSearchBtn = New CheckBox()
+        FixedSearchBox = New TextBox()
+        TouchMoveBtn = New CheckBox()
+        OpeningBookBtn = New CheckBox()
+        CType(Checkerboard, ComponentModel.ISupportInitialize).BeginInit()
+        CType(SpeedSetter, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WP3, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WP2, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WP1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WN1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WB1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(WR1, ComponentModel.ISupportInitialize).BeginInit()
+        CType(PictureBox3, ComponentModel.ISupportInitialize).BeginInit()
+        CType(PictureBox4, ComponentModel.ISupportInitialize).BeginInit()
+        CType(ColourSelectorL, ComponentModel.ISupportInitialize).BeginInit()
+        ColourPanel.SuspendLayout()
+        CType(ColourSelectorR, ComponentModel.ISupportInitialize).BeginInit()
+        SuspendLayout()
+        ' 
+        ' Checkerboard
+        ' 
+        Checkerboard.BackColor = Color.Transparent
+        Checkerboard.Location = New Point(343, 58)
+        Checkerboard.Name = "Checkerboard"
+        Checkerboard.Size = New Size(225, 225)
+        Checkerboard.TabIndex = 2
+        Checkerboard.TabStop = False
+        ' 
+        ' AnimationTester
+        ' 
+        AnimationTester.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AnimationTester.Location = New Point(398, 350)
+        AnimationTester.Name = "AnimationTester"
+        AnimationTester.Size = New Size(115, 42)
+        AnimationTester.TabIndex = 4
+        AnimationTester.Text = "Test Animation:"
+        AnimationTester.UseVisualStyleBackColor = True
+        ' 
+        ' SpeedSetter
+        ' 
+        SpeedSetter.LargeChange = 1
+        SpeedSetter.Location = New Point(343, 290)
+        SpeedSetter.Maximum = 4
+        SpeedSetter.Name = "SpeedSetter"
+        SpeedSetter.Size = New Size(224, 45)
+        SpeedSetter.TabIndex = 1
+        ' 
+        ' WP3
+        ' 
+        WP3.BackColor = Color.Transparent
+        WP3.Image = CType(resources.GetObject("WP3.Image"), Image)
+        WP3.InitialImage = Nothing
+        WP3.Location = New Point(492, 53)
+        WP3.Name = "WP3"
+        WP3.Size = New Size(75, 75)
+        WP3.TabIndex = 5
+        WP3.TabStop = False
+        ' 
+        ' WP2
+        ' 
+        WP2.BackColor = Color.Transparent
+        WP2.Image = CType(resources.GetObject("WP2.Image"), Image)
+        WP2.InitialImage = Nothing
+        WP2.Location = New Point(418, 53)
+        WP2.Name = "WP2"
+        WP2.Size = New Size(75, 75)
+        WP2.TabIndex = 6
+        WP2.TabStop = False
+        ' 
+        ' WP1
+        ' 
+        WP1.BackColor = Color.Transparent
+        WP1.Image = CType(resources.GetObject("WP1.Image"), Image)
+        WP1.InitialImage = Nothing
+        WP1.Location = New Point(343, 53)
+        WP1.Name = "WP1"
+        WP1.Size = New Size(75, 75)
+        WP1.TabIndex = 7
+        WP1.TabStop = False
+        ' 
+        ' WN1
+        ' 
+        WN1.BackColor = Color.Transparent
+        WN1.Image = CType(resources.GetObject("WN1.Image"), Image)
+        WN1.InitialImage = Nothing
+        WN1.Location = New Point(418, 128)
+        WN1.Name = "WN1"
+        WN1.Size = New Size(75, 75)
+        WN1.TabIndex = 8
+        WN1.TabStop = False
+        ' 
+        ' WB1
+        ' 
+        WB1.BackColor = Color.Transparent
+        WB1.Image = CType(resources.GetObject("WB1.Image"), Image)
+        WB1.InitialImage = Nothing
+        WB1.Location = New Point(492, 128)
+        WB1.Name = "WB1"
+        WB1.Size = New Size(75, 75)
+        WB1.TabIndex = 9
+        WB1.TabStop = False
+        ' 
+        ' WR1
+        ' 
+        WR1.BackColor = Color.Transparent
+        WR1.Image = CType(resources.GetObject("WR1.Image"), Image)
+        WR1.InitialImage = Nothing
+        WR1.Location = New Point(343, 127)
+        WR1.Name = "WR1"
+        WR1.Size = New Size(75, 75)
+        WR1.TabIndex = 10
+        WR1.TabStop = False
+        ' 
+        ' ColourLabel
+        ' 
+        ColourLabel.AutoSize = True
+        ColourLabel.Font = New Font("Microsoft Sans Serif", 15.75F, FontStyle.Bold Or FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        ColourLabel.Location = New Point(32, 9)
+        ColourLabel.Name = "ColourLabel"
+        ColourLabel.Size = New Size(248, 25)
+        ColourLabel.TabIndex = 16
+        ColourLabel.Text = "Board Colour Scheme:"
+        ' 
+        ' Label3
+        ' 
+        Label3.AutoSize = True
+        Label3.Font = New Font("Microsoft Sans Serif", 15.75F, FontStyle.Bold Or FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        Label3.Location = New Point(331, 9)
+        Label3.Name = "Label3"
+        Label3.Size = New Size(263, 25)
+        Label3.TabIndex = 16
+        Label3.Text = "Piece Animation Speed:"
+        ' 
+        ' Label4
+        ' 
+        Label4.AutoSize = True
+        Label4.Font = New Font("Microsoft Sans Serif", 15.75F, FontStyle.Bold Or FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        Label4.Location = New Point(652, 9)
+        Label4.Name = "Label4"
+        Label4.Size = New Size(195, 25)
+        Label4.TabIndex = 17
+        Label4.Text = "General Settings:"
+        ' 
+        ' ResetBtn
+        ' 
+        ResetBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        ResetBtn.Location = New Point(696, 353)
+        ResetBtn.Name = "ResetBtn"
+        ResetBtn.Size = New Size(114, 36)
+        ResetBtn.TabIndex = 11
+        ResetBtn.Text = "Reset Program"
+        ResetBtn.UseVisualStyleBackColor = True
+        ' 
+        ' BackBtn
+        ' 
+        BackBtn.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        BackBtn.Location = New Point(849, 376)
+        BackBtn.Name = "BackBtn"
+        BackBtn.Size = New Size(23, 23)
+        BackBtn.TabIndex = 18
+        BackBtn.Text = "↺"
+        BackBtn.UseVisualStyleBackColor = True
+        ' 
+        ' AnimationInfo
+        ' 
+        AnimationInfo.AutoSize = True
+        AnimationInfo.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AnimationInfo.Location = New Point(343, 322)
+        AnimationInfo.Name = "AnimationInfo"
+        AnimationInfo.Size = New Size(230, 16)
+        AnimationInfo.TabIndex = 19
+        AnimationInfo.Text = "Off       VFast       Fast     Medium    Slow"
+        ' 
+        ' PictureBox3
+        ' 
+        PictureBox3.BackColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
+        PictureBox3.Location = New Point(300, -4)
+        PictureBox3.Name = "PictureBox3"
+        PictureBox3.Size = New Size(10, 420)
+        PictureBox3.TabIndex = 23
+        PictureBox3.TabStop = False
+        ' 
+        ' PictureBox4
+        ' 
+        PictureBox4.BackColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
+        PictureBox4.Location = New Point(604, -4)
+        PictureBox4.Name = "PictureBox4"
+        PictureBox4.Size = New Size(10, 420)
+        PictureBox4.TabIndex = 24
+        PictureBox4.TabStop = False
+        ' 
+        ' Def
+        ' 
+        Def.AutoSize = True
+        Def.CheckAlign = ContentAlignment.TopLeft
+        Def.Checked = True
+        Def.FlatStyle = FlatStyle.Popup
+        Def.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Def.Location = New Point(4, 4)
+        Def.Name = "Def"
+        Def.Size = New Size(63, 19)
+        Def.TabIndex = 15
+        Def.TabStop = True
+        Def.Text = "Default"
+        Def.UseVisualStyleBackColor = True
+        ' 
+        ' ColourSelectorL
+        ' 
+        ColourSelectorL.BackColor = Color.Transparent
+        ColourSelectorL.BackgroundImage = CType(resources.GetObject("ColourSelectorL.BackgroundImage"), Image)
+        ColourSelectorL.InitialImage = Nothing
+        ColourSelectorL.Location = New Point(0, 70)
+        ColourSelectorL.Name = "ColourSelectorL"
+        ColourSelectorL.Size = New Size(110, 70)
+        ColourSelectorL.TabIndex = 25
+        ColourSelectorL.TabStop = False
+        ' 
+        ' Blu
+        ' 
+        Blu.AutoSize = True
+        Blu.CheckAlign = ContentAlignment.TopLeft
+        Blu.FlatStyle = FlatStyle.Popup
+        Blu.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Blu.Location = New Point(4, 29)
+        Blu.Name = "Blu"
+        Blu.Size = New Size(67, 19)
+        Blu.TabIndex = 15
+        Blu.TabStop = True
+        Blu.Text = "Blue (L)"
+        Blu.UseVisualStyleBackColor = True
+        ' 
+        ' Bl2
+        ' 
+        Bl2.AutoSize = True
+        Bl2.CheckAlign = ContentAlignment.TopLeft
+        Bl2.FlatStyle = FlatStyle.Popup
+        Bl2.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Bl2.Location = New Point(4, 54)
+        Bl2.Name = "Bl2"
+        Bl2.Size = New Size(69, 19)
+        Bl2.TabIndex = 15
+        Bl2.TabStop = True
+        Bl2.Text = "Blue (D)"
+        Bl2.UseVisualStyleBackColor = True
+        ' 
+        ' Gld
+        ' 
+        Gld.AutoSize = True
+        Gld.CheckAlign = ContentAlignment.TopLeft
+        Gld.FlatStyle = FlatStyle.Popup
+        Gld.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Gld.Location = New Point(4, 79)
+        Gld.Name = "Gld"
+        Gld.Size = New Size(50, 19)
+        Gld.TabIndex = 15
+        Gld.TabStop = True
+        Gld.Text = "Gold"
+        Gld.UseVisualStyleBackColor = True
+        ' 
+        ' Grn
+        ' 
+        Grn.AutoSize = True
+        Grn.CheckAlign = ContentAlignment.TopLeft
+        Grn.FlatStyle = FlatStyle.Popup
+        Grn.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Grn.Location = New Point(4, 104)
+        Grn.Name = "Grn"
+        Grn.Size = New Size(58, 19)
+        Grn.TabIndex = 15
+        Grn.TabStop = True
+        Grn.Text = "Green"
+        Grn.UseVisualStyleBackColor = True
+        ' 
+        ' Red
+        ' 
+        Red.AutoSize = True
+        Red.CheckAlign = ContentAlignment.TopLeft
+        Red.FlatStyle = FlatStyle.Popup
+        Red.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Red.Location = New Point(4, 129)
+        Red.Name = "Red"
+        Red.Size = New Size(47, 19)
+        Red.TabIndex = 15
+        Red.TabStop = True
+        Red.Text = "Red"
+        Red.UseVisualStyleBackColor = True
+        ' 
+        ' Ppl
+        ' 
+        Ppl.AutoSize = True
+        Ppl.CheckAlign = ContentAlignment.TopLeft
+        Ppl.FlatStyle = FlatStyle.Popup
+        Ppl.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Ppl.Location = New Point(4, 154)
+        Ppl.Name = "Ppl"
+        Ppl.Size = New Size(60, 19)
+        Ppl.TabIndex = 15
+        Ppl.TabStop = True
+        Ppl.Text = "Purple"
+        Ppl.UseVisualStyleBackColor = True
+        ' 
+        ' Mon
+        ' 
+        Mon.AutoSize = True
+        Mon.CheckAlign = ContentAlignment.TopLeft
+        Mon.FlatStyle = FlatStyle.Popup
+        Mon.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Mon.Location = New Point(4, 179)
+        Mon.Name = "Mon"
+        Mon.Size = New Size(49, 19)
+        Mon.TabIndex = 15
+        Mon.Text = "Gray"
+        Mon.UseVisualStyleBackColor = True
+        ' 
+        ' ColourPanel
+        ' 
+        ColourPanel.BackColor = Color.Transparent
+        ColourPanel.Controls.Add(Def)
+        ColourPanel.Controls.Add(Blu)
+        ColourPanel.Controls.Add(Gld)
+        ColourPanel.Controls.Add(Grn)
+        ColourPanel.Controls.Add(Red)
+        ColourPanel.Controls.Add(Ppl)
+        ColourPanel.Controls.Add(Mon)
+        ColourPanel.Controls.Add(Bl2)
+        ColourPanel.Location = New Point(113, 90)
+        ColourPanel.Name = "ColourPanel"
+        ColourPanel.Size = New Size(76, 202)
+        ColourPanel.TabIndex = 26
+        ' 
+        ' ColourSelectorR
+        ' 
+        ColourSelectorR.BackColor = Color.Transparent
+        ColourSelectorR.BackgroundImage = CType(resources.GetObject("ColourSelectorR.BackgroundImage"), Image)
+        ColourSelectorR.InitialImage = Nothing
+        ColourSelectorR.Location = New Point(190, 70)
+        ColourSelectorR.Name = "ColourSelectorR"
+        ColourSelectorR.Size = New Size(110, 70)
+        ColourSelectorR.TabIndex = 27
+        ColourSelectorR.TabStop = False
+        ' 
+        ' SoundBtn
+        ' 
+        SoundBtn.AutoSize = True
+        SoundBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        SoundBtn.Location = New Point(637, 48)
+        SoundBtn.Name = "SoundBtn"
+        SoundBtn.Size = New Size(154, 20)
+        SoundBtn.TabIndex = 28
+        SoundBtn.Text = "Enable Sound Effects"
+        SoundBtn.UseVisualStyleBackColor = True
+        ' 
+        ' AnimationBtn
+        ' 
+        AnimationBtn.AutoSize = True
+        AnimationBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AnimationBtn.Location = New Point(637, 82)
+        AnimationBtn.Name = "AnimationBtn"
+        AnimationBtn.Size = New Size(169, 20)
+        AnimationBtn.TabIndex = 28
+        AnimationBtn.Text = "Play Opening Animation"
+        AnimationBtn.UseVisualStyleBackColor = True
+        ' 
+        ' BoardBtn
+        ' 
+        BoardBtn.AutoSize = True
+        BoardBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        BoardBtn.Location = New Point(637, 150)
+        BoardBtn.Name = "BoardBtn"
+        BoardBtn.Size = New Size(174, 20)
+        BoardBtn.TabIndex = 28
+        BoardBtn.Text = "Display Board Highlights"
+        BoardBtn.UseVisualStyleBackColor = True
+        ' 
+        ' PieceBtn
+        ' 
+        PieceBtn.AutoSize = True
+        PieceBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        PieceBtn.Location = New Point(637, 184)
+        PieceBtn.Name = "PieceBtn"
+        PieceBtn.Size = New Size(172, 20)
+        PieceBtn.TabIndex = 28
+        PieceBtn.Text = "Display Piece Highlights"
+        PieceBtn.UseVisualStyleBackColor = True
+        ' 
+        ' InvisBtn
+        ' 
+        InvisBtn.AutoSize = True
+        InvisBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        InvisBtn.Location = New Point(637, 252)
+        InvisBtn.Name = "InvisBtn"
+        InvisBtn.Size = New Size(120, 20)
+        InvisBtn.TabIndex = 28
+        InvisBtn.Text = "Invisible Pieces"
+        InvisBtn.UseVisualStyleBackColor = True
+        ' 
+        ' AnimationPieceInfo
+        ' 
+        AnimationPieceInfo.AutoSize = True
+        AnimationPieceInfo.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AnimationPieceInfo.Location = New Point(369, 38)
+        AnimationPieceInfo.Name = "AnimationPieceInfo"
+        AnimationPieceInfo.Size = New Size(170, 13)
+        AnimationPieceInfo.TabIndex = 16
+        AnimationPieceInfo.Text = "Click a Piece to Test its Animation!"
+        ' 
+        ' HammadBtn
+        ' 
+        HammadBtn.AutoSize = True
+        HammadBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        HammadBtn.Location = New Point(637, 320)
+        HammadBtn.Name = "HammadBtn"
+        HammadBtn.Size = New Size(209, 20)
+        HammadBtn.TabIndex = 28
+        HammadBtn.Text = "'Hammad AI' Mode  (Unstable)"
+        HammadBtn.UseVisualStyleBackColor = True
+        ' 
+        ' FixedSearchBtn
+        ' 
+        FixedSearchBtn.AutoSize = True
+        FixedSearchBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        FixedSearchBtn.Location = New Point(637, 286)
+        FixedSearchBtn.Name = "FixedSearchBtn"
+        FixedSearchBtn.Size = New Size(195, 20)
+        FixedSearchBtn.TabIndex = 28
+        FixedSearchBtn.Text = "Fixed AI Search:           Depth:"
+        FixedSearchBtn.UseVisualStyleBackColor = True
+        ' 
+        ' FixedSearchBox
+        ' 
+        FixedSearchBox.Enabled = False
+        FixedSearchBox.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        FixedSearchBox.Location = New Point(829, 285)
+        FixedSearchBox.Name = "FixedSearchBox"
+        FixedSearchBox.RightToLeft = RightToLeft.No
+        FixedSearchBox.Size = New Size(35, 22)
+        FixedSearchBox.TabIndex = 29
+        FixedSearchBox.Text = "0"
+        FixedSearchBox.TextAlign = HorizontalAlignment.Center
+        ' 
+        ' TouchMoveBtn
+        ' 
+        TouchMoveBtn.AutoSize = True
+        TouchMoveBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        TouchMoveBtn.Location = New Point(637, 218)
+        TouchMoveBtn.Name = "TouchMoveBtn"
+        TouchMoveBtn.Size = New Size(132, 20)
+        TouchMoveBtn.TabIndex = 28
+        TouchMoveBtn.Text = "Touch Move Rule"
+        TouchMoveBtn.UseVisualStyleBackColor = True
+        ' 
+        ' OpeningBookBtn
+        ' 
+        OpeningBookBtn.AutoSize = True
+        OpeningBookBtn.Font = New Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        OpeningBookBtn.Location = New Point(637, 116)
+        OpeningBookBtn.Name = "OpeningBookBtn"
+        OpeningBookBtn.Size = New Size(216, 20)
+        OpeningBookBtn.TabIndex = 28
+        OpeningBookBtn.Text = "Use Small Book  (Faster Loads)"
+        OpeningBookBtn.UseVisualStyleBackColor = True
+        ' 
+        ' Settings
+        ' 
+        AutoScaleDimensions = New SizeF(6F, 13F)
+        AutoScaleMode = AutoScaleMode.Font
+        AutoSizeMode = AutoSizeMode.GrowAndShrink
+        BackColor = Color.FromArgb(CByte(155), CByte(155), CByte(155))
+        ClientSize = New Size(884, 411)
+        Controls.Add(FixedSearchBox)
+        Controls.Add(FixedSearchBtn)
+        Controls.Add(HammadBtn)
+        Controls.Add(TouchMoveBtn)
+        Controls.Add(InvisBtn)
+        Controls.Add(PieceBtn)
+        Controls.Add(BoardBtn)
+        Controls.Add(OpeningBookBtn)
+        Controls.Add(AnimationBtn)
+        Controls.Add(SoundBtn)
+        Controls.Add(ColourSelectorR)
+        Controls.Add(ColourPanel)
+        Controls.Add(PictureBox4)
+        Controls.Add(PictureBox3)
+        Controls.Add(AnimationInfo)
+        Controls.Add(BackBtn)
+        Controls.Add(Label4)
+        Controls.Add(AnimationPieceInfo)
+        Controls.Add(Label3)
+        Controls.Add(ColourLabel)
+        Controls.Add(ResetBtn)
+        Controls.Add(WR1)
+        Controls.Add(WP3)
+        Controls.Add(WP2)
+        Controls.Add(WP1)
+        Controls.Add(WN1)
+        Controls.Add(WB1)
+        Controls.Add(SpeedSetter)
+        Controls.Add(AnimationTester)
+        Controls.Add(Checkerboard)
+        Controls.Add(ColourSelectorL)
+        Font = New Font("Microsoft Sans Serif", 8.25F)
+        Icon = CType(resources.GetObject("$this.Icon"), Icon)
+        MaximizeBox = False
+        Name = "Settings"
+        StartPosition = FormStartPosition.CenterScreen
+        Text = "Settings"
+        CType(Checkerboard, ComponentModel.ISupportInitialize).EndInit()
+        CType(SpeedSetter, ComponentModel.ISupportInitialize).EndInit()
+        CType(WP3, ComponentModel.ISupportInitialize).EndInit()
+        CType(WP2, ComponentModel.ISupportInitialize).EndInit()
+        CType(WP1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WN1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WB1, ComponentModel.ISupportInitialize).EndInit()
+        CType(WR1, ComponentModel.ISupportInitialize).EndInit()
+        CType(PictureBox3, ComponentModel.ISupportInitialize).EndInit()
+        CType(PictureBox4, ComponentModel.ISupportInitialize).EndInit()
+        CType(ColourSelectorL, ComponentModel.ISupportInitialize).EndInit()
+        ColourPanel.ResumeLayout(False)
+        ColourPanel.PerformLayout()
+        CType(ColourSelectorR, ComponentModel.ISupportInitialize).EndInit()
+        ResumeLayout(False)
+        PerformLayout()
 
     End Sub
     Friend WithEvents Checkerboard As PictureBox

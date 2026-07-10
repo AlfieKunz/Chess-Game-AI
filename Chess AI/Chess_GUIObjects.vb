@@ -1,6 +1,9 @@
 ﻿Imports System.IO
+Imports System.Net.WebRequestMethods
+Imports System.Reflection
 Imports System.Runtime
 Imports System.Text
+Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 
@@ -24,6 +27,8 @@ Partial Public Class Chess 'GUI Objects
         .WCanCastle = New CanCastle,
         .BCanCastle = New CanCastle
     }
+    'Notifies if the system is modifying the Settings in the AISettingsPanel, so that they do not recursively update the global settings.
+    Private UserCanChangeAISettings As Boolean
 
     'Sends the FEN a user types in to be converted & displayed.
     Private Sub InputButton_Click() Handles InputButton.Click
@@ -33,37 +38,134 @@ Partial Public Class Chess 'GUI Objects
             'the TextBox contains an error message.
             If InputTextBox.Text.Length > 1 AndAlso InputTextBox.Text(1) <> "o" Then
                 If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
+
+                'Looks to see if the input is hybrid, in which we mean it contains an initial FEN, and then a set of moves stemming from that position.
+                Dim RegexMatch As Match = Regex.Match(InputTextBox.Text, "\[FEN\s+""([^""]*)""\]")
+                If RegexMatch.Success Then
+                    If FENErrorDetection(RegexMatch.Groups(1).Value, True, "") Then
+                        GUIFENInputHandle(RegexMatch.Groups(1).Value)
+                        If GameRunning Then EnterMovesIntoSystem(InputTextBox.Text, True, True)
+                        Exit Sub
+                    End If
+                End If
                 'Performs tests on the input to determine whether the user is inputting a FEN or a series of PGN moves.
                 If GameRunning AndAlso (InputTextBox.Text.IndexOf("/") = -1 OrElse (InputTextBox.Text.IndexOf(".") > -1 OrElse (InputTextBox.Text.IndexOf(" ") > 1 AndAlso InputTextBox.Text.IndexOf(" ") < 10))) Then
                     'Can assume that input is a move / moves.
                     EnterMovesIntoSystem(InputTextBox.Text, True, True)
                 ElseIf FENErrorDetection(InputTextBox.Text, True, "") Then 'Is a Valid FEN.
-                    If UndoFENChange.Visible = True Then UndoFENChange.Visible = False
-                    Dim TempFEN As String = PreviousFEN
-                    'Try displaying the FEN on the board graphically. If this fails, then the FEN is invalid.
-                    'In this case, the board is reset to the previous position.
-                    Try
-                        PreviousFEN = CurrentFEN
-                        MasterBoard = Helper.FENConverter(InputTextBox.Text, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-                        AnimateBoard(PreviousFEN)
-                    Catch ex As Exception
-                        InvalidInput = InputTextBox.Text
-                        PreviousFEN = TempFEN
-                        MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-                        DisplayPieces()
-                        UndoFENChange.Visible = True
-                        InputTextBox.Text = "Position Rejected - Invalid FEN Code (" & ex.Message.TrimEnd("."c) & "). Please Input a Genuinine FEN and try again."
-                    End Try
-
-                    If UndoFENChange.Visible = False Then AcceptFENIntoSystem(InputTextBox.Text, False)
+                    GUIFENInputHandle(InputTextBox.Text)
                 End If
+
             End If
         End If
     End Sub
+    Private Sub GUIFENInputHandle(ByVal FEN As String)
+        'Appends extra information to the end of the FEN (eg: "8/8/8/8/8/8/8/8" --> "8/8/8/8/8/8/8/8 w KQkq - 0 1"),
+        'and corrects the order of this extra data, if needed.
+        Dim FENInfo As List(Of String) = FEN.Trim(" "c).Split(" "c).ToList()
+        'Splits all the info into a list, then assignes the pieces part of the FEN.
+        Dim FormattedFEN As String = FENInfo(0)
+        FENInfo.RemoveAt(0)
+        Dim ItemFound As Boolean
+        Dim EnPassantInfo As String = "-"
 
-    Private Sub AcceptFENIntoSystem(ByVal FEN As String, ByVal FlipBoardForPlayer As Boolean)
+        'Locates player to move in FENInfo, and adds it to the FEN.
+        ItemFound = False
+        For Each Info In FENInfo
+            If Info = "w"c OrElse Info = "b"c Then
+                'Info found!
+                FormattedFEN &= " " & Info
+                FENInfo.Remove(Info)
+                ItemFound = True
+                Exit For
+            End If
+        Next
+        If Not ItemFound Then FormattedFEN &= " w" 'Default to white.
+
+        'Locates En Passant data in FENInfo. Note that we do this before castling rules (and add the data to FEN later), as we want a single "-"
+        'in the user's FEN to default to remove castling rules, rather than clearing En Passant (less common).
+        ItemFound = False
+        For Each Info In FENInfo
+            If Info(0) >= "a" AndAlso Info(0) <= "h" Then
+                'Info found!
+                EnPassantInfo = Info
+                FENInfo.Remove(Info)
+                ItemFound = True
+                Exit For
+            End If
+        Next
+        FENInfo.Remove(EnPassantInfo) 'Defaults to "-".
+
+        'Locates castling info in FENInfo, and adds it to the FEN.
+        ItemFound = False
+        For Each Info In FENInfo
+            If UCase(Info(0)) = "K"c OrElse UCase(Info(0)) = "Q"c OrElse Info = "-" Then
+                'Info found!
+                FormattedFEN &= " " & Info
+                FENInfo.Remove(Info)
+                ItemFound = True
+                Exit For
+            End If
+        Next
+        If Not ItemFound Then FormattedFEN &= " KQkq" : FENInfo.Remove("-")
+        FormattedFEN &= " " & EnPassantInfo 'Adds En Passant info.
+
+        'Locates half-move round in FENInfo (ie: locate first numerical value), and adds it to the FEN.
+        ItemFound = False
+        For Each Info In FENInfo
+            If Integer.TryParse(Info, 0) Then
+                'Info found!
+                FormattedFEN &= " " & Info
+                FENInfo.Remove(Info)
+                ItemFound = True
+                Exit For
+            End If
+        Next
+        If Not ItemFound Then FormattedFEN &= " 0"
+
+        'Locates full-move round in FENInfo (ie: locate second numerical value, if it exists), and adds it to the FEN.
+        ItemFound = False
+        Dim ResultNum As Integer 'Make sure that the full move counter is always greater than or equal to 1.
+        For Each Info In FENInfo
+            If Integer.TryParse(Info, ResultNum) AndAlso ResultNum > 0 Then
+                'Info found!
+                FormattedFEN &= " " & Info
+                FENInfo.Remove(Info)
+                ItemFound = True
+                Exit For
+            End If
+        Next
+        If Not ItemFound Then FormattedFEN &= " 1"
+
+
+        'Send the FEN into the system.
+        If UndoFENChange.Visible = True Then UndoFENChange.Visible = False
+        Dim FENErrorMessage As Exception = AcceptFENIntoSystem(FormattedFEN, False)
+        If FENErrorMessage IsNot Nothing Then
+            'There was an error displaying the FEN - write an error message.
+            InvalidInput = InputTextBox.Text
+            UndoFENChange.Visible = True
+            InputTextBox.Text = "Position Rejected - Invalid FEN Code (" & FENErrorMessage.Message.TrimEnd("."c) & "). Please Input a Genuinine FEN and try again."
+        End If
+    End Sub
+
+    Private Function AcceptFENIntoSystem(ByVal FEN As String, ByVal FlipBoardForPlayer As Boolean, Optional ByVal NeedAnimate As Boolean = True) As Exception
+        Dim TempFEN As String = PreviousFEN
+        'Try displaying the FEN on the board graphically. If this fails, then the FEN is invalid.
+        'In this case, the board is reset to the previous position.
+        Try
+            PreviousFEN = CurrentFEN
+            MasterBoard = Helper.FENConverter(FEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+            If NeedAnimate Then AnimateBoard(PreviousFEN)
+        Catch ex As Exception
+            PreviousFEN = TempFEN
+            MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+            DisplayPieces()
+            Return ex 'Returns debug values to be written to either the screen or the console.
+        End Try
+
         CurrentFEN = FEN
-        Console.Clear()
+        'Console.Clear()
         'Edits location of Previously Used Squares.
         SquareHistory(2, 0) = SquareHistory(0, 0)
         SquareHistory(2, 1) = SquareHistory(0, 1)
@@ -73,21 +175,22 @@ Partial Public Class Chess 'GUI Objects
         SquareHistory(0, 1) = -1
         SquareHistory(1, 0) = -1
         SquareHistory(1, 1) = -1
+        GameRunning = True
+
+        'Resets TrueFalse Tables, then checks for Checks.
+        MasterWInCheck = 0
+        MasterBInCheck = 0
+        Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
+        Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
         If FlipBoardForPlayer AndAlso (PlayerTurn Xor OrientForWhite) Then
             FlipBoard()
         Else
             Checkerboard.Refresh()
         End If
-        GameRunning = True
-        'Resets TrueFalse Tables, then checks for Checks.
-        'Resets Check and Castling Properties.
-        MasterWInCheck = 0
-        MasterBInCheck = 0
-        Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
-        Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+
         'Final logical detection of invalid board positions.
         If Not CheckForInvalidGameStates() AndAlso GeneralOptions(0) = "T" Then Sound_Move.Play()
-        CheckChecker(False)
+        EditCheckText()
 
         'Recalibrates AI and resets AI move info.
         MainAI.Reconfigure(CurrentFEN, True)
@@ -97,12 +200,18 @@ Partial Public Class Chess 'GUI Objects
         CurrentAIDepth.Text = "Current Depth: -"
         CurrentAIMove.Text = "Current Move: -"
         CurrentAIEval.Text = "Evaluation: -"
+        AIHandles.FENToResetTo = CurrentFEN
 
-        'Resets BoardHistory (as the position is new), then check for end states in the position.
+        'Resets BoardHistory (as the position is new), but also ensuring that the 50 move counter is updated.
         BoardHistory.Clear()
-        EnforceEndStates(False)
+        Dim HalfSize As String = FEN.Substring(0, FEN.LastIndexOf(" "))
+        HalfSize = HalfSize.Substring(HalfSize.LastIndexOf(" ") + 1)
+        BoardHistory.SetHalfSize(HalfSize)
+        'Checks for end states in the position.
+        EnforceEndStates()
         OutputDebugInfo()
-    End Sub
+        Return Nothing
+    End Function
 
     'Button which resets the FEN in the InputTextBox, in case it is invalid.
     Private Sub UndoFENChange_Click(sender As Object, e As EventArgs) Handles UndoFENChange.Click
@@ -130,15 +239,15 @@ Partial Public Class Chess 'GUI Objects
             SquareHistory(0, 1) = -1
             SquareHistory(1, 0) = -1
             SquareHistory(1, 1) = -1
-            Checkerboard.Refresh()
             'Resets TrueFalse Table, then check for Checks.
             If PlayerTurn Then
-                Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+                Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
             Else
-                Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
+                Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
             End If
+            Checkerboard.Refresh()
             AnimateBoard(PreviousFEN)
-            CheckChecker(False)
+            EditCheckText()
 
             Select Case GameMode
                 Case 0
@@ -163,11 +272,12 @@ Partial Public Class Chess 'GUI Objects
             CurrentAIDepth.Text = "Current Depth: -"
             CurrentAIMove.Text = "Current Move: -"
             CurrentAIEval.Text = "Evaluation: -"
+            AIHandles.FENToResetTo = StartingFEN
 
             'Resets BoardHistory (as the position is new), then check for end states in the position.
             BoardHistory.Clear()
             Console.Clear()
-            EnforceEndStates(False)
+            EnforceEndStates()
             OutputDebugInfo()
             If GeneralOptions(0) = "T" Then Sound_Move.Play()
         End If
@@ -177,15 +287,21 @@ Partial Public Class Chess 'GUI Objects
     Private Sub FENExport_Click() Handles FENExport.Click
         If CurrentFEN <> "" Then
             Dim TempFEN As String = CurrentFEN
-            'Trims TempFEN to remove its fullmove number, then appends the size of the BoardHistory array
-            '(representing how many moves have been made in the position).
+            Dim SpaceOccurence As Integer
+            'Trims TempFEN to remove its fullmove number & halfmove number, then appends the size of the BoardHistory array
+            '(representing how many moves have been made in the position, and how many half moves have been made since the last capture or pawn move).
             For n = TempFEN.Length - 2 To 0 Step -1
                 If TempFEN(n) = " " Then
-                    TempFEN = TempFEN.Substring(0, n + 1)
-                    Exit For
+                    SpaceOccurence += 1
+                    If SpaceOccurence = 2 Then
+                        'We are right in front of the half move count.
+                        TempFEN = TempFEN.Substring(0, n + 1)
+                        Exit For
+                    End If
                 End If
             Next
-            TempFEN &= (BoardHistory.GetSize() + 1) \ 2
+            TempFEN &= BoardHistory.GetHalfSize() & " " 'Adds the half-move count.
+            TempFEN &= (BoardHistory.GetSize() + 1) \ 2 'Adds the full-move count.
             InputTextBox.Text = TempFEN
         End If
     End Sub
@@ -229,32 +345,33 @@ Partial Public Class Chess 'GUI Objects
             SquareHistory(2, 1) = TempSH(0, 1)
             SquareHistory(3, 0) = TempSH(1, 0)
             SquareHistory(3, 1) = TempSH(1, 1)
+
+            GameRunning = True
+            'Resets TrueFalse Tables, then checks for Checks.
+            If PlayerTurn Then
+                Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
+            Else
+                Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
+            End If
             If AutoFlipper.Checked Then
                 FlipBoard()
             Else
                 Checkerboard.Refresh() 'This makes the newly-changed Previously used Squares visible to the user.
             End If
 
-            GameRunning = True
-            'Resets TrueFalse Tables, then checks for Checks.
-            If PlayerTurn Then
-                Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
-            Else
-                Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, Helper.ConvertStringToBitCoor(MasterEnPassant))
-            End If
             If GeneralOptions(0) = "T" Then Sound_Move.Play()
-            CheckChecker(False)
+            EditCheckText()
             'Final logical detection of invalid board positions.
             If Not CheckForInvalidGameStates() AndAlso GeneralOptions(0) = "T" Then Sound_Move.Play()
 
-            If GameMode < 3 Then
-                If PGNAutoOutputter.Checked Then PGNExport_Click() Else FENExport_Click()
-            End If
             'Recalibrates AI, then checks for end positions.
             If AIIsSearchingOnUsersTurn Then Thread.Sleep(5) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
             MainAI.Reconfigure(CurrentFEN, False)
             BoardHistory.Swap()
-            EnforceEndStates(False)
+            EnforceEndStates()
+            If GameMode < 3 Then
+                If PGNAutoOutputter.Checked Then PGNExport_Click() Else FENExport_Click()
+            End If
             OutputDebugInfo()
         End If
     End Sub
@@ -280,8 +397,7 @@ Partial Public Class Chess 'GUI Objects
             Else
                 'Attempt to submit the user's FEN into the system. If it is invalid, an appropriate message is displayed.
                 If FENErrorDetection(InputTextBox.Text, False, FENErrorMessage) Then
-                    MasterBoard = Helper.FENConverter(InputTextBox.Text, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-                    AcceptFENIntoSystem(InputTextBox.Text, False) 'Assume the FEN is valid = submit it into the system.
+                    AcceptFENIntoSystem(InputTextBox.Text, False, False) 'Assume the FEN is valid = submit it into the system.
                     CalibrateBoardEditorObjectHandling() 'Resets the GUI to its original layout.
                 Else
                     'Displays the appropriate error message, as stated by the FENErrorDetection Sub.
@@ -299,10 +415,6 @@ Partial Public Class Chess 'GUI Objects
         CalibrateBoardEditorObjectHandling()
         'Reconstructs MasterBoard from its backup, and recalibrates the GUI & its current position.
         Array.Copy(BoardEdit.BoardBackup, MasterBoard, 64)
-        If GeneralOptions(4) = "T" Then
-            If MasterWInCheck >= 128 Then WK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WKingCheck.png")
-            If MasterBInCheck >= 128 Then BK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\BKingCheck.png")
-        End If
         AnimateBoard(OldFEN)
     End Sub
 
@@ -310,11 +422,12 @@ Partial Public Class Chess 'GUI Objects
     Private Sub CalibrateBoardEditorObjectHandling()
         '{Removes & Disables}, or {Shows & Enables} all elements of the GUI that are not strictly related to Board Edit Mode.
         Dim ObjectsToRemove() As Object = {CheckLabel, ProgressBar, AIMoveBtn, CurrentAIDepth, CurrentAIMove,
-    CurrentAIEval, UserTimeBar, UserTimeBox, QuiescenceBox, PieceHeatMapBox, UseBook, AIEndlessMode}
+    CurrentAIEval, UserTimeBar, UserTimeBox, AISettingsBox, UseBook, AIEndlessMode}
         Dim ObjectsToDisable() As Object = {Reset_Btn, InputButton, FENExport, PGNExport, UndoMove, NodeTestBtn}
         For Each Item In ObjectsToRemove
             Item.Visible = BoardEdit.isEnabled
         Next
+        AISettingsPanel.Visible = False
         If AIEndlessMode.Checked Then AutoResetter.Visible = BoardEdit.isEnabled
         For Each Item In ObjectsToDisable
             Item.Enabled = BoardEdit.isEnabled
@@ -394,12 +507,10 @@ Partial Public Class Chess 'GUI Objects
         'Sets the board, and the FEN.
         For y = 0 To 7
             For x = 0 To 7
-                MasterBoard(x, y) = " "
+                If UCase(MasterBoard(x, y)) <> "K" Then MasterBoard(x, y) = " "
             Next
         Next
-        MasterBoard(4, 0) = "k"
-        MasterBoard(4, 7) = "K"
-        InputTextBox.Text = "4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1"
+        InputTextBox.Text = Helper.ConvertToFEN(MasterBoard, Helper.CannotCastle, Helper.CannotCastle, 0, True)
 
         'Resets the backup board attributes for the base position set in Board Edit Mode.
         BoardEditWhiteMove.Checked = True
@@ -657,10 +768,12 @@ Partial Public Class Chess 'GUI Objects
     End Sub
     'Method that gives the UserTimeBox a red highlight if the time allocated might not be enough for a search to complete (estimate).
     Private Sub ChangeUserTimeBarBackColour()
-        Dim ThresholdValue As Integer = 1
-        If SearchSettings.UseQuiescence Then ThresholdValue += 3
-        If SearchSettings.UsePieceHeatMaps Then ThresholdValue += 2
-        UserTimeBox.BackColor = If(UserTimeBar.Value < Math.Min(ThresholdValue, 5), Color.LightCoral, Color.WhiteSmoke)
+        Dim ThresholdValue As Double = 1
+        If SearchSettings.UseQuiescence Then ThresholdValue += 2.5
+        If SearchSettings.UsePieceHeatMaps Then ThresholdValue += 1.5
+        If SearchSettings.UseTranspositionTable Then ThresholdValue -= 0.75
+        If SearchSettings.StableSearch Then ThresholdValue += 0.75
+        UserTimeBox.BackColor = If(UserTimeBar.Value < Math.Round(Math.Min(ThresholdValue, 5)), Color.LightCoral, Color.WhiteSmoke)
     End Sub
     'Subroutine that allows the user to enter in the time for the AI to search - the user's input
     'is reflected on the TimeBar and the TimeBox. Includes error detection.
@@ -709,19 +822,87 @@ Partial Public Class Chess 'GUI Objects
         Me.ActiveControl = Nothing 'Stops the cursor from appearing in the box.
     End Sub
 
-    'Subroutines that control the Quiescence and Piece Heat Map Boxes.
-    Private Sub QuiescenceBox_CheckedChanged() Handles QuiescenceBox.CheckedChanged
-        'Toggles Quiescence depending on the state of the box.
-        If QuiescenceBox.Checked Then SearchSettings.UseQuiescence = True : Else SearchSettings.UseQuiescence = False
-        'Colours UserTimeBox red if the TimeForSearch setting the user has chosen is likely to not be enough time for the AI
-        'to compelete a search in.
-        ChangeUserTimeBarBackColour()
+
+    'Controls for modifying the AI Settings, using a ComboBox + Panel combination. When the user opens the (empty) ComboBox, a panel is shown
+    'that contains all the controls.
+    Private Sub AISettingsBox_Open() Handles AISettingsBox.DropDown
+        If AISettingsPanel.Visible Then
+            AISettingsBox_Collapse() 'Safety.
+        Else
+            'Shows the AI settings, and then the panel.
+            SetAISettingPanelValues()
+            AISettingsPanel.Visible = True
+            AISettingsPanel.BringToFront()
+            AISettingsPanel.Focus() 'Focusses on the panel to prevent box selection (note that this does not trigger the collapse via WndProc).
+            UserCanChangeAISettings = True
+        End If
     End Sub
-    Private Sub PieceHeatMapBox_CheckedChanged() Handles PieceHeatMapBox.CheckedChanged
-        'Toggles Piece Heat Maps depending on the state of the box.
-        If PieceHeatMapBox.Checked Then SearchSettings.UsePieceHeatMaps = True : Else SearchSettings.UsePieceHeatMaps = False
-        ChangeUserTimeBarBackColour()
+    Private Sub AISettingsBox_Collapse() Handles AISettingsBox.DropDownClosed
+        UserCanChangeAISettings = False
+        AISettingsPanel.Visible = False
+        Checkerboard.Focus() 'Prevents the ComboBox text from being highlighted.
     End Sub
+
+    'Subroutine that sets all values in the AISettingsPanel, based on the current AI settings.
+    Private Sub SetAISettingPanelValues()
+        For Each Field As FieldInfo In AISettingsFields
+            For Each c As Control In AISettingsPanel.Controls
+                'Finds the control in the Settings Panel that matches the Field in AISettings.
+                If c.Name = Field.Name Then
+                    'There are two types of controls - numerical, and boolean. Set either the checkbox or the textbox values accordingly (for textbox,
+                    'we also have a label, that contains no name).
+                    If Field.FieldType = GetType(Boolean) Then
+                        'CheckBox.
+                        DirectCast(c, CheckBox).Checked = Field.GetValue(SearchSettings)
+                    Else
+                        'TextBox.
+                        c.Text = Field.GetValue(SearchSettings)
+                    End If
+                End If
+            Next
+        Next
+    End Sub
+
+    'Modifies the AI settings in case the user changes anything.
+    Private Sub AISettingValueChanged(sender As Object, e As EventArgs)
+        If UserCanChangeAISettings Then
+            'Finds the field associated with this value, then modifies it directly.
+            For Each Field As FieldInfo In AISettingsFields
+                If sender.Name = Field.Name Then
+                    If Field.FieldType = GetType(Boolean) Then
+                        'Set the boolean value based on the state of the check.
+                        Field.SetValue(SearchSettings, DirectCast(sender, CheckBox).Checked)
+                    ElseIf System.Text.RegularExpressions.Regex.IsMatch(sender.Text, "^[0-9]+$") Then
+                        'If we are using numerical values, we need to ensure that there purely numbers. If so, we convert the value to the
+                        'specific numerical type that that field uses, then assigns it.
+                        Field.SetValue(SearchSettings, Convert.ChangeType(sender.Text, Field.FieldType))
+                    End If
+                End If
+            Next
+            'Modifies the TimeBar colour to represent if we are pushing the AI a little too much.
+            Dim TimeBarColourChangeObjects() As String = {"UseQuiescence", "UsePieceHeatMaps", "UseTranspositionTable"}
+            If TimeBarColourChangeObjects.Contains(sender.Name) Then ChangeUserTimeBarBackColour()
+        End If
+    End Sub
+    'Resets the AI Settings.
+    Private Sub AISettingResetBtn_Click() Handles AISettingResetBtn.Click
+        SearchSettings.SetDefaultSettings()
+        SetAISettingPanelValues()
+    End Sub
+
+    'Method that overwrites the 'de-focus' mechanic of the form, so that if we have lost focus from the ComboBox, but we are still inside it, we do not collapse it.
+    Protected Overrides Sub WndProc(ByRef m As Message)
+        If m.Msg = &H111 AndAlso ((m.WParam.ToInt32() >> 16) And &HFFFF) = 8 Then
+            'Checks if the mouse is inside the settings panel. If so, we prevent dropdown closing.
+            If AISettingsPanel.ClientRectangle.Contains(AISettingsPanel.PointToClient(Control.MousePosition)) OrElse AISettingsBox.ClientRectangle.Contains(AISettingsBox.PointToClient(Control.MousePosition)) Then
+                Return
+            End If
+        End If
+        MyBase.WndProc(m)
+    End Sub
+
+
+
 
     'Subroutine that terminates the AI search, and displays on the board the AI's current move.
     Private Sub AITerminator_Click() Handles AITerminator.Click
@@ -735,11 +916,7 @@ Partial Public Class Chess 'GUI Objects
 
 
     Private Sub AutoOutputter_CheckedChanged() Handles PGNAutoOutputter.CheckedChanged, FENAutoOutputter.CheckedChanged
-        If PGNAutoOutputter.Checked Then
-            PGNExport_Click()
-        Else
-            FENExport_Click()
-        End If
+        If PGNAutoOutputter.Checked Then PGNExport_Click() Else FENExport_Click()
     End Sub
 
 
@@ -750,6 +927,7 @@ Partial Public Class Chess 'GUI Objects
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
             'Creates a new thread for the Node Test to run on, then starts the search.
             ComputerIsSearching = True
+            MainAI.ConfigureSettings(SearchSettings, False)
             Me.Text = "[Running Test...]  " + GlobalConstants.ProgramName
             Dim NodeTestThread As New Task(AddressOf InstantiateNodeTest)
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency 'Relaxes garbage collection during the NegaMax search.
@@ -782,10 +960,14 @@ Partial Public Class Chess 'GUI Objects
     Private Sub SettingsBtn_Click() Handles SettingsBtn.Click
         'Creates and reveals the Settings Form.
         If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
+        AISettingsBox_Collapse()
         Dim CurrentSettings As Form = CType(Application.OpenForms("Settings"), Settings)
         If CurrentSettings Is Nothing Then 'If there are no other Settings forms open.
             Dim SettingsMenu As New Settings(GameMode <= 3, GameMode < 3, GameMode > 1 AndAlso GameMode <= 3)
             SettingsMenu.Show()
+        Else
+            'Highlights the settings window.
+            CurrentSettings.BringToFront()
         End If
     End Sub
 
@@ -826,6 +1008,7 @@ Partial Public Class Chess 'GUI Objects
 
         Me.Close() 'Closes the current form.
         Menu.Show()
+        Menu.BringToFront()
     End Sub
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).

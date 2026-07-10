@@ -23,329 +23,329 @@ Partial Class OnePlayerCustomisation
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(OnePlayerCustomisation))
-        Me.StartBtn = New System.Windows.Forms.Button()
-        Me.PosBtn1 = New System.Windows.Forms.RadioButton()
-        Me.PosBtn2 = New System.Windows.Forms.RadioButton()
-        Me.FENTextBox = New System.Windows.Forms.TextBox()
-        Me.BackBtn = New System.Windows.Forms.Button()
-        Me.DifficultySlider = New System.Windows.Forms.TrackBar()
-        Me.AIDiffLabel1 = New System.Windows.Forms.Label()
-        Me.AIDiffLabel2 = New System.Windows.Forms.Label()
-        Me.Panel1 = New System.Windows.Forms.Panel()
-        Me.Panel2 = New System.Windows.Forms.Panel()
-        Me.White = New System.Windows.Forms.RadioButton()
-        Me.RNDSide = New System.Windows.Forms.RadioButton()
-        Me.Black = New System.Windows.Forms.RadioButton()
-        Me.InfoBtn = New System.Windows.Forms.Button()
-        Me.UseBook = New System.Windows.Forms.CheckBox()
-        Me.PieceHeatMapBox = New System.Windows.Forms.CheckBox()
-        Me.QuiescenceBox = New System.Windows.Forms.CheckBox()
-        Me.UserTimeBar = New System.Windows.Forms.TrackBar()
-        Me.UserTimeBox = New System.Windows.Forms.TextBox()
-        Me.AISearchOnUsersTurnBox = New System.Windows.Forms.CheckBox()
-        Me.AIBox = New System.Windows.Forms.CheckBox()
-        Me.AdvancedSearchTimeBox = New System.Windows.Forms.CheckBox()
-        CType(Me.DifficultySlider, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.Panel1.SuspendLayout()
-        Me.Panel2.SuspendLayout()
-        CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.SuspendLayout()
-        '
-        'StartBtn
-        '
-        Me.StartBtn.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.StartBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.StartBtn.Location = New System.Drawing.Point(98, 258)
-        Me.StartBtn.Name = "StartBtn"
-        Me.StartBtn.Size = New System.Drawing.Size(90, 40)
-        Me.StartBtn.TabIndex = 0
-        Me.StartBtn.Text = "Start!"
-        Me.StartBtn.UseVisualStyleBackColor = True
-        '
-        'PosBtn1
-        '
-        Me.PosBtn1.AutoSize = True
-        Me.PosBtn1.Checked = True
-        Me.PosBtn1.Location = New System.Drawing.Point(3, 3)
-        Me.PosBtn1.Name = "PosBtn1"
-        Me.PosBtn1.Size = New System.Drawing.Size(159, 17)
-        Me.PosBtn1.TabIndex = 1
-        Me.PosBtn1.TabStop = True
-        Me.PosBtn1.Text = "Use Normal Starting Position"
-        Me.PosBtn1.UseVisualStyleBackColor = True
-        '
-        'PosBtn2
-        '
-        Me.PosBtn2.AutoSize = True
-        Me.PosBtn2.Location = New System.Drawing.Point(3, 26)
-        Me.PosBtn2.Name = "PosBtn2"
-        Me.PosBtn2.Size = New System.Drawing.Size(161, 17)
-        Me.PosBtn2.TabIndex = 2
-        Me.PosBtn2.Text = "Use Custom Starting Position"
-        Me.PosBtn2.UseVisualStyleBackColor = True
-        '
-        'FENTextBox
-        '
-        Me.FENTextBox.Enabled = False
-        Me.FENTextBox.Location = New System.Drawing.Point(15, 70)
-        Me.FENTextBox.Multiline = True
-        Me.FENTextBox.Name = "FENTextBox"
-        Me.FENTextBox.Size = New System.Drawing.Size(250, 35)
-        Me.FENTextBox.TabIndex = 3
-        Me.FENTextBox.Text = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        '
-        'BackBtn
-        '
-        Me.BackBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BackBtn.Location = New System.Drawing.Point(12, 296)
-        Me.BackBtn.Name = "BackBtn"
-        Me.BackBtn.Size = New System.Drawing.Size(23, 23)
-        Me.BackBtn.TabIndex = 12
-        Me.BackBtn.Text = "↺"
-        Me.BackBtn.UseVisualStyleBackColor = True
-        '
-        'DifficultySlider
-        '
-        Me.DifficultySlider.LargeChange = 1
-        Me.DifficultySlider.Location = New System.Drawing.Point(15, 151)
-        Me.DifficultySlider.Maximum = 7
-        Me.DifficultySlider.Minimum = 1
-        Me.DifficultySlider.Name = "DifficultySlider"
-        Me.DifficultySlider.Size = New System.Drawing.Size(250, 45)
-        Me.DifficultySlider.TabIndex = 13
-        Me.DifficultySlider.TickStyle = System.Windows.Forms.TickStyle.TopLeft
-        Me.DifficultySlider.Value = 2
-        '
-        'AIDiffLabel1
-        '
-        Me.AIDiffLabel1.AutoSize = True
-        Me.AIDiffLabel1.Font = New System.Drawing.Font("Microsoft Sans Serif", 11.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AIDiffLabel1.Location = New System.Drawing.Point(42, 126)
-        Me.AIDiffLabel1.Name = "AIDiffLabel1"
-        Me.AIDiffLabel1.Size = New System.Drawing.Size(83, 18)
-        Me.AIDiffLabel1.TabIndex = 14
-        Me.AIDiffLabel1.Text = "AI Difficulty:"
-        Me.AIDiffLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'AIDiffLabel2
-        '
-        Me.AIDiffLabel2.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AIDiffLabel2.ForeColor = System.Drawing.Color.Green
-        Me.AIDiffLabel2.Location = New System.Drawing.Point(149, 127)
-        Me.AIDiffLabel2.Name = "AIDiffLabel2"
-        Me.AIDiffLabel2.Size = New System.Drawing.Size(85, 20)
-        Me.AIDiffLabel2.TabIndex = 15
-        Me.AIDiffLabel2.Text = "Beginner"
-        Me.AIDiffLabel2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        '
-        'Panel1
-        '
-        Me.Panel1.Controls.Add(Me.PosBtn1)
-        Me.Panel1.Controls.Add(Me.PosBtn2)
-        Me.Panel1.Location = New System.Drawing.Point(7, 7)
-        Me.Panel1.Name = "Panel1"
-        Me.Panel1.Size = New System.Drawing.Size(200, 57)
-        Me.Panel1.TabIndex = 17
-        '
-        'Panel2
-        '
-        Me.Panel2.Controls.Add(Me.White)
-        Me.Panel2.Controls.Add(Me.RNDSide)
-        Me.Panel2.Controls.Add(Me.Black)
-        Me.Panel2.Location = New System.Drawing.Point(3, 199)
-        Me.Panel2.Name = "Panel2"
-        Me.Panel2.Size = New System.Drawing.Size(279, 26)
-        Me.Panel2.TabIndex = 18
-        '
-        'White
-        '
-        Me.White.AutoSize = True
-        Me.White.Location = New System.Drawing.Point(3, 3)
-        Me.White.Name = "White"
-        Me.White.Size = New System.Drawing.Size(90, 17)
-        Me.White.TabIndex = 16
-        Me.White.Text = "Play as White"
-        Me.White.UseVisualStyleBackColor = True
-        '
-        'RNDSide
-        '
-        Me.RNDSide.AutoSize = True
-        Me.RNDSide.Checked = True
-        Me.RNDSide.Location = New System.Drawing.Point(193, 3)
-        Me.RNDSide.Name = "RNDSide"
-        Me.RNDSide.Size = New System.Drawing.Size(86, 17)
-        Me.RNDSide.TabIndex = 16
-        Me.RNDSide.TabStop = True
-        Me.RNDSide.Text = "Play as RND"
-        Me.RNDSide.UseVisualStyleBackColor = True
-        '
-        'Black
-        '
-        Me.Black.AutoSize = True
-        Me.Black.Location = New System.Drawing.Point(98, 3)
-        Me.Black.Name = "Black"
-        Me.Black.Size = New System.Drawing.Size(89, 17)
-        Me.Black.TabIndex = 16
-        Me.Black.Text = "Play as Black"
-        Me.Black.UseVisualStyleBackColor = True
-        '
-        'InfoBtn
-        '
-        Me.InfoBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.InfoBtn.Location = New System.Drawing.Point(254, 296)
-        Me.InfoBtn.Name = "InfoBtn"
-        Me.InfoBtn.Size = New System.Drawing.Size(18, 23)
-        Me.InfoBtn.TabIndex = 19
-        Me.InfoBtn.Text = "?"
-        Me.InfoBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        Me.InfoBtn.UseVisualStyleBackColor = True
-        '
-        'UseBook
-        '
-        Me.UseBook.AutoSize = True
-        Me.UseBook.Checked = True
-        Me.UseBook.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.UseBook.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.UseBook.Location = New System.Drawing.Point(85, 228)
-        Me.UseBook.Name = "UseBook"
-        Me.UseBook.Size = New System.Drawing.Size(122, 17)
-        Me.UseBook.TabIndex = 27
-        Me.UseBook.Text = "Use Opening Book?"
-        Me.UseBook.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.UseBook.UseVisualStyleBackColor = True
-        '
-        'PieceHeatMapBox
-        '
-        Me.PieceHeatMapBox.AutoSize = True
-        Me.PieceHeatMapBox.Checked = True
-        Me.PieceHeatMapBox.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.PieceHeatMapBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PieceHeatMapBox.Location = New System.Drawing.Point(69, 292)
-        Me.PieceHeatMapBox.Name = "PieceHeatMapBox"
-        Me.PieceHeatMapBox.Size = New System.Drawing.Size(152, 19)
-        Me.PieceHeatMapBox.TabIndex = 30
-        Me.PieceHeatMapBox.Text = "Use Piece Heat Maps?"
-        Me.PieceHeatMapBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.PieceHeatMapBox.UseVisualStyleBackColor = True
-        Me.PieceHeatMapBox.Visible = False
-        '
-        'QuiescenceBox
-        '
-        Me.QuiescenceBox.AutoSize = True
-        Me.QuiescenceBox.Checked = True
-        Me.QuiescenceBox.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.QuiescenceBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.QuiescenceBox.Location = New System.Drawing.Point(81, 267)
-        Me.QuiescenceBox.Name = "QuiescenceBox"
-        Me.QuiescenceBox.Size = New System.Drawing.Size(123, 19)
-        Me.QuiescenceBox.TabIndex = 31
-        Me.QuiescenceBox.Text = "Use Quiescence?"
-        Me.QuiescenceBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.QuiescenceBox.UseVisualStyleBackColor = True
-        Me.QuiescenceBox.Visible = False
-        '
-        'UserTimeBar
-        '
-        Me.UserTimeBar.LargeChange = 10
-        Me.UserTimeBar.Location = New System.Drawing.Point(60, 226)
-        Me.UserTimeBar.Maximum = 60
-        Me.UserTimeBar.Name = "UserTimeBar"
-        Me.UserTimeBar.Size = New System.Drawing.Size(164, 45)
-        Me.UserTimeBar.TabIndex = 29
-        Me.UserTimeBar.Value = 20
-        Me.UserTimeBar.Visible = False
-        '
-        'UserTimeBox
-        '
-        Me.UserTimeBox.BackColor = System.Drawing.Color.WhiteSmoke
-        Me.UserTimeBox.Cursor = System.Windows.Forms.Cursors.Default
-        Me.UserTimeBox.Location = New System.Drawing.Point(60, 202)
-        Me.UserTimeBox.Name = "UserTimeBox"
-        Me.UserTimeBox.ReadOnly = True
-        Me.UserTimeBox.Size = New System.Drawing.Size(164, 20)
-        Me.UserTimeBox.TabIndex = 28
-        Me.UserTimeBox.Text = "Time For Search: 5 Seconds"
-        Me.UserTimeBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
-        Me.UserTimeBox.Visible = False
-        '
-        'AISearchOnUsersTurnBox
-        '
-        Me.AISearchOnUsersTurnBox.AutoSize = True
-        Me.AISearchOnUsersTurnBox.Checked = True
-        Me.AISearchOnUsersTurnBox.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.AISearchOnUsersTurnBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AISearchOnUsersTurnBox.Location = New System.Drawing.Point(55, 317)
-        Me.AISearchOnUsersTurnBox.Name = "AISearchOnUsersTurnBox"
-        Me.AISearchOnUsersTurnBox.Size = New System.Drawing.Size(180, 19)
-        Me.AISearchOnUsersTurnBox.TabIndex = 30
-        Me.AISearchOnUsersTurnBox.Text = "AI Searches in Background?"
-        Me.AISearchOnUsersTurnBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.AISearchOnUsersTurnBox.UseVisualStyleBackColor = True
-        Me.AISearchOnUsersTurnBox.Visible = False
-        '
-        'AIBox
-        '
-        Me.AIBox.AutoSize = True
-        Me.AIBox.Checked = True
-        Me.AIBox.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.AIBox.Location = New System.Drawing.Point(217, 24)
-        Me.AIBox.Name = "AIBox"
-        Me.AIBox.Size = New System.Drawing.Size(58, 17)
-        Me.AIBox.TabIndex = 32
-        Me.AIBox.Text = "Use AI"
-        Me.AIBox.UseVisualStyleBackColor = True
-        Me.AIBox.Visible = False
-        '
-        'AdvancedSearchTimeBox
-        '
-        Me.AdvancedSearchTimeBox.AutoSize = True
-        Me.AdvancedSearchTimeBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AdvancedSearchTimeBox.Location = New System.Drawing.Point(53, 342)
-        Me.AdvancedSearchTimeBox.Name = "AdvancedSearchTimeBox"
-        Me.AdvancedSearchTimeBox.Size = New System.Drawing.Size(184, 19)
-        Me.AdvancedSearchTimeBox.TabIndex = 30
-        Me.AdvancedSearchTimeBox.Text = "Use Advanced Search Time?"
-        Me.AdvancedSearchTimeBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        Me.AdvancedSearchTimeBox.UseVisualStyleBackColor = True
-        Me.AdvancedSearchTimeBox.Visible = False
-        '
-        'OnePlayerCustomisation
-        '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
-        Me.BackColor = System.Drawing.Color.LightGray
-        Me.ClientSize = New System.Drawing.Size(284, 361)
-        Me.Controls.Add(Me.AIBox)
-        Me.Controls.Add(Me.AdvancedSearchTimeBox)
-        Me.Controls.Add(Me.AISearchOnUsersTurnBox)
-        Me.Controls.Add(Me.PieceHeatMapBox)
-        Me.Controls.Add(Me.QuiescenceBox)
-        Me.Controls.Add(Me.UserTimeBar)
-        Me.Controls.Add(Me.UserTimeBox)
-        Me.Controls.Add(Me.UseBook)
-        Me.Controls.Add(Me.InfoBtn)
-        Me.Controls.Add(Me.Panel2)
-        Me.Controls.Add(Me.Panel1)
-        Me.Controls.Add(Me.AIDiffLabel2)
-        Me.Controls.Add(Me.AIDiffLabel1)
-        Me.Controls.Add(Me.DifficultySlider)
-        Me.Controls.Add(Me.BackBtn)
-        Me.Controls.Add(Me.FENTextBox)
-        Me.Controls.Add(Me.StartBtn)
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximizeBox = False
-        Me.Name = "OnePlayerCustomisation"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Customise Game!"
-        CType(Me.DifficultySlider, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.Panel1.ResumeLayout(False)
-        Me.Panel1.PerformLayout()
-        Me.Panel2.ResumeLayout(False)
-        Me.Panel2.PerformLayout()
-        CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.ResumeLayout(False)
-        Me.PerformLayout()
+        StartBtn = New Button()
+        PosBtn1 = New RadioButton()
+        PosBtn2 = New RadioButton()
+        FENTextBox = New TextBox()
+        BackBtn = New Button()
+        DifficultySlider = New TrackBar()
+        AIDiffLabel1 = New Label()
+        AIDiffLabel2 = New Label()
+        Panel1 = New Panel()
+        Panel2 = New Panel()
+        White = New RadioButton()
+        RNDSide = New RadioButton()
+        Black = New RadioButton()
+        InfoBtn = New Button()
+        UseBook = New CheckBox()
+        PieceHeatMapBox = New CheckBox()
+        QuiescenceBox = New CheckBox()
+        UserTimeBar = New TrackBar()
+        UserTimeBox = New TextBox()
+        AISearchOnUsersTurnBox = New CheckBox()
+        AIBox = New CheckBox()
+        AdvancedSearchTimeBox = New CheckBox()
+        CType(DifficultySlider, ComponentModel.ISupportInitialize).BeginInit()
+        Panel1.SuspendLayout()
+        Panel2.SuspendLayout()
+        CType(UserTimeBar, ComponentModel.ISupportInitialize).BeginInit()
+        SuspendLayout()
+        ' 
+        ' StartBtn
+        ' 
+        StartBtn.Cursor = Cursors.Hand
+        StartBtn.Font = New Font("Microsoft Sans Serif", 15.75F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        StartBtn.Location = New Point(98, 258)
+        StartBtn.Name = "StartBtn"
+        StartBtn.Size = New Size(90, 40)
+        StartBtn.TabIndex = 0
+        StartBtn.Text = "Start!"
+        StartBtn.UseVisualStyleBackColor = True
+        ' 
+        ' PosBtn1
+        ' 
+        PosBtn1.AutoSize = True
+        PosBtn1.Checked = True
+        PosBtn1.Location = New Point(3, 3)
+        PosBtn1.Name = "PosBtn1"
+        PosBtn1.Size = New Size(159, 17)
+        PosBtn1.TabIndex = 1
+        PosBtn1.TabStop = True
+        PosBtn1.Text = "Use Normal Starting Position"
+        PosBtn1.UseVisualStyleBackColor = True
+        ' 
+        ' PosBtn2
+        ' 
+        PosBtn2.AutoSize = True
+        PosBtn2.Location = New Point(3, 26)
+        PosBtn2.Name = "PosBtn2"
+        PosBtn2.Size = New Size(161, 17)
+        PosBtn2.TabIndex = 2
+        PosBtn2.Text = "Use Custom Starting Position"
+        PosBtn2.UseVisualStyleBackColor = True
+        ' 
+        ' FENTextBox
+        ' 
+        FENTextBox.Enabled = False
+        FENTextBox.Location = New Point(15, 70)
+        FENTextBox.Multiline = True
+        FENTextBox.Name = "FENTextBox"
+        FENTextBox.Size = New Size(250, 35)
+        FENTextBox.TabIndex = 3
+        FENTextBox.Text = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        ' 
+        ' BackBtn
+        ' 
+        BackBtn.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        BackBtn.Location = New Point(12, 296)
+        BackBtn.Name = "BackBtn"
+        BackBtn.Size = New Size(23, 23)
+        BackBtn.TabIndex = 12
+        BackBtn.Text = "↺"
+        BackBtn.UseVisualStyleBackColor = True
+        ' 
+        ' DifficultySlider
+        ' 
+        DifficultySlider.LargeChange = 1
+        DifficultySlider.Location = New Point(15, 151)
+        DifficultySlider.Maximum = 7
+        DifficultySlider.Minimum = 1
+        DifficultySlider.Name = "DifficultySlider"
+        DifficultySlider.Size = New Size(250, 45)
+        DifficultySlider.TabIndex = 13
+        DifficultySlider.TickStyle = TickStyle.TopLeft
+        DifficultySlider.Value = 2
+        ' 
+        ' AIDiffLabel1
+        ' 
+        AIDiffLabel1.AutoSize = True
+        AIDiffLabel1.Font = New Font("Microsoft Sans Serif", 11.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AIDiffLabel1.Location = New Point(42, 126)
+        AIDiffLabel1.Name = "AIDiffLabel1"
+        AIDiffLabel1.Size = New Size(83, 18)
+        AIDiffLabel1.TabIndex = 14
+        AIDiffLabel1.Text = "AI Difficulty:"
+        AIDiffLabel1.TextAlign = ContentAlignment.MiddleLeft
+        ' 
+        ' AIDiffLabel2
+        ' 
+        AIDiffLabel2.Font = New Font("Microsoft Sans Serif", 12F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        AIDiffLabel2.ForeColor = Color.Green
+        AIDiffLabel2.Location = New Point(149, 127)
+        AIDiffLabel2.Name = "AIDiffLabel2"
+        AIDiffLabel2.Size = New Size(85, 20)
+        AIDiffLabel2.TabIndex = 15
+        AIDiffLabel2.Text = "Beginner"
+        AIDiffLabel2.TextAlign = ContentAlignment.MiddleCenter
+        ' 
+        ' Panel1
+        ' 
+        Panel1.Controls.Add(PosBtn1)
+        Panel1.Controls.Add(PosBtn2)
+        Panel1.Location = New Point(7, 7)
+        Panel1.Name = "Panel1"
+        Panel1.Size = New Size(200, 57)
+        Panel1.TabIndex = 17
+        ' 
+        ' Panel2
+        ' 
+        Panel2.Controls.Add(White)
+        Panel2.Controls.Add(RNDSide)
+        Panel2.Controls.Add(Black)
+        Panel2.Location = New Point(3, 199)
+        Panel2.Name = "Panel2"
+        Panel2.Size = New Size(279, 26)
+        Panel2.TabIndex = 18
+        ' 
+        ' White
+        ' 
+        White.AutoSize = True
+        White.Location = New Point(3, 3)
+        White.Name = "White"
+        White.Size = New Size(90, 17)
+        White.TabIndex = 16
+        White.Text = "Play as White"
+        White.UseVisualStyleBackColor = True
+        ' 
+        ' RNDSide
+        ' 
+        RNDSide.AutoSize = True
+        RNDSide.Checked = True
+        RNDSide.Location = New Point(193, 3)
+        RNDSide.Name = "RNDSide"
+        RNDSide.Size = New Size(86, 17)
+        RNDSide.TabIndex = 16
+        RNDSide.TabStop = True
+        RNDSide.Text = "Play as RND"
+        RNDSide.UseVisualStyleBackColor = True
+        ' 
+        ' Black
+        ' 
+        Black.AutoSize = True
+        Black.Location = New Point(98, 3)
+        Black.Name = "Black"
+        Black.Size = New Size(89, 17)
+        Black.TabIndex = 16
+        Black.Text = "Play as Black"
+        Black.UseVisualStyleBackColor = True
+        ' 
+        ' InfoBtn
+        ' 
+        InfoBtn.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        InfoBtn.Location = New Point(254, 296)
+        InfoBtn.Name = "InfoBtn"
+        InfoBtn.Size = New Size(18, 23)
+        InfoBtn.TabIndex = 19
+        InfoBtn.Text = "?"
+        InfoBtn.TextAlign = ContentAlignment.MiddleLeft
+        InfoBtn.UseVisualStyleBackColor = True
+        ' 
+        ' UseBook
+        ' 
+        UseBook.AutoSize = True
+        UseBook.Checked = True
+        UseBook.CheckState = CheckState.Checked
+        UseBook.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        UseBook.Location = New Point(85, 228)
+        UseBook.Name = "UseBook"
+        UseBook.Size = New Size(122, 17)
+        UseBook.TabIndex = 27
+        UseBook.Text = "Use Opening Book?"
+        UseBook.TextAlign = ContentAlignment.MiddleCenter
+        UseBook.UseVisualStyleBackColor = True
+        ' 
+        ' PieceHeatMapBox
+        ' 
+        PieceHeatMapBox.AutoSize = True
+        PieceHeatMapBox.Checked = True
+        PieceHeatMapBox.CheckState = CheckState.Checked
+        PieceHeatMapBox.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        PieceHeatMapBox.Location = New Point(69, 292)
+        PieceHeatMapBox.Name = "PieceHeatMapBox"
+        PieceHeatMapBox.Size = New Size(152, 19)
+        PieceHeatMapBox.TabIndex = 30
+        PieceHeatMapBox.Text = "Use Piece Heat Maps?"
+        PieceHeatMapBox.TextAlign = ContentAlignment.MiddleCenter
+        PieceHeatMapBox.UseVisualStyleBackColor = True
+        PieceHeatMapBox.Visible = False
+        ' 
+        ' QuiescenceBox
+        ' 
+        QuiescenceBox.AutoSize = True
+        QuiescenceBox.Checked = True
+        QuiescenceBox.CheckState = CheckState.Checked
+        QuiescenceBox.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        QuiescenceBox.Location = New Point(81, 267)
+        QuiescenceBox.Name = "QuiescenceBox"
+        QuiescenceBox.Size = New Size(123, 19)
+        QuiescenceBox.TabIndex = 31
+        QuiescenceBox.Text = "Use Quiescence?"
+        QuiescenceBox.TextAlign = ContentAlignment.MiddleCenter
+        QuiescenceBox.UseVisualStyleBackColor = True
+        QuiescenceBox.Visible = False
+        ' 
+        ' UserTimeBar
+        ' 
+        UserTimeBar.LargeChange = 10
+        UserTimeBar.Location = New Point(60, 226)
+        UserTimeBar.Maximum = 60
+        UserTimeBar.Name = "UserTimeBar"
+        UserTimeBar.Size = New Size(164, 45)
+        UserTimeBar.TabIndex = 29
+        UserTimeBar.Value = 20
+        UserTimeBar.Visible = False
+        ' 
+        ' UserTimeBox
+        ' 
+        UserTimeBox.BackColor = Color.WhiteSmoke
+        UserTimeBox.Location = New Point(60, 202)
+        UserTimeBox.Name = "UserTimeBox"
+        UserTimeBox.ReadOnly = True
+        UserTimeBox.Size = New Size(164, 20)
+        UserTimeBox.TabIndex = 28
+        UserTimeBox.Text = "Time For Search: 5 Seconds"
+        UserTimeBox.TextAlign = HorizontalAlignment.Center
+        UserTimeBox.Visible = False
+        ' 
+        ' AISearchOnUsersTurnBox
+        ' 
+        AISearchOnUsersTurnBox.AutoSize = True
+        AISearchOnUsersTurnBox.Checked = True
+        AISearchOnUsersTurnBox.CheckState = CheckState.Checked
+        AISearchOnUsersTurnBox.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AISearchOnUsersTurnBox.Location = New Point(55, 317)
+        AISearchOnUsersTurnBox.Name = "AISearchOnUsersTurnBox"
+        AISearchOnUsersTurnBox.Size = New Size(180, 19)
+        AISearchOnUsersTurnBox.TabIndex = 30
+        AISearchOnUsersTurnBox.Text = "AI Searches in Background?"
+        AISearchOnUsersTurnBox.TextAlign = ContentAlignment.MiddleCenter
+        AISearchOnUsersTurnBox.UseVisualStyleBackColor = True
+        AISearchOnUsersTurnBox.Visible = False
+        ' 
+        ' AIBox
+        ' 
+        AIBox.AutoSize = True
+        AIBox.Checked = True
+        AIBox.CheckState = CheckState.Checked
+        AIBox.Location = New Point(217, 24)
+        AIBox.Name = "AIBox"
+        AIBox.Size = New Size(58, 17)
+        AIBox.TabIndex = 32
+        AIBox.Text = "Use AI"
+        AIBox.UseVisualStyleBackColor = True
+        AIBox.Visible = False
+        ' 
+        ' AdvancedSearchTimeBox
+        ' 
+        AdvancedSearchTimeBox.AutoSize = True
+        AdvancedSearchTimeBox.Font = New Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AdvancedSearchTimeBox.Location = New Point(53, 342)
+        AdvancedSearchTimeBox.Name = "AdvancedSearchTimeBox"
+        AdvancedSearchTimeBox.Size = New Size(184, 19)
+        AdvancedSearchTimeBox.TabIndex = 30
+        AdvancedSearchTimeBox.Text = "Use Advanced Search Time?"
+        AdvancedSearchTimeBox.TextAlign = ContentAlignment.MiddleCenter
+        AdvancedSearchTimeBox.UseVisualStyleBackColor = True
+        AdvancedSearchTimeBox.Visible = False
+        ' 
+        ' OnePlayerCustomisation
+        ' 
+        AutoScaleDimensions = New SizeF(6F, 13F)
+        AutoScaleMode = AutoScaleMode.Font
+        AutoSizeMode = AutoSizeMode.GrowAndShrink
+        BackColor = Color.LightGray
+        ClientSize = New Size(284, 361)
+        Controls.Add(AIBox)
+        Controls.Add(AdvancedSearchTimeBox)
+        Controls.Add(AISearchOnUsersTurnBox)
+        Controls.Add(PieceHeatMapBox)
+        Controls.Add(QuiescenceBox)
+        Controls.Add(UserTimeBar)
+        Controls.Add(UserTimeBox)
+        Controls.Add(UseBook)
+        Controls.Add(InfoBtn)
+        Controls.Add(Panel2)
+        Controls.Add(Panel1)
+        Controls.Add(AIDiffLabel2)
+        Controls.Add(AIDiffLabel1)
+        Controls.Add(DifficultySlider)
+        Controls.Add(BackBtn)
+        Controls.Add(FENTextBox)
+        Controls.Add(StartBtn)
+        Font = New Font("Microsoft Sans Serif", 8.25F)
+        Icon = CType(resources.GetObject("$this.Icon"), Icon)
+        MaximizeBox = False
+        Name = "OnePlayerCustomisation"
+        StartPosition = FormStartPosition.CenterScreen
+        Text = "Customise Game!"
+        CType(DifficultySlider, ComponentModel.ISupportInitialize).EndInit()
+        Panel1.ResumeLayout(False)
+        Panel1.PerformLayout()
+        Panel2.ResumeLayout(False)
+        Panel2.PerformLayout()
+        CType(UserTimeBar, ComponentModel.ISupportInitialize).EndInit()
+        ResumeLayout(False)
+        PerformLayout()
 
     End Sub
     Friend WithEvents StartBtn As System.Windows.Forms.Button

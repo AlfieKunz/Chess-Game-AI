@@ -109,36 +109,44 @@ Public Class OnePlayerCustomisation
             UserSearchSettings.UsePieceHeatMaps = PieceHeatMapBox.Checked
             UserAICanSearchOnUsersTurn = AISearchOnUsersTurnBox.Checked
         ElseIf DifficultySlider.Value = 2 Then
-            'Beginner AI. 0.1s per search. Turns off Quiescence, PieceHeatMaps, TranspositionTable, Dynamic Depths, and Null-Pruning.
+            'Beginner AI. 0.1s per search. Makes the AI as bad as possible...
             UserTimeForSearch = 0.1
             UserSearchSettings.UseQuiescence = False
             UserSearchSettings.UsePieceHeatMaps = False
             UserSearchSettings.UseTranspositionTable = False
             UserSearchSettings.StableSearch = True
             UserSearchSettings.NullMoveRValue = Int16.MaxValue
+            UserSearchSettings.AspirationWindowWidth = 0
+            UserSearchSettings.UseBitMasks = False
+            UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 3 Then
-            'Easy AI. 0.5s per search. Same as Beginner; with PieceHeatMaps turned on.
+            'Easy AI. 0.5s per search. Same as Beginner; with PieceHeatMaps & Null Move Pruning turned on.
             UserTimeForSearch = 0.5
             UserSearchSettings.UseQuiescence = False
             UserSearchSettings.UseTranspositionTable = False
             UserSearchSettings.StableSearch = True
-            UserSearchSettings.NullMoveRValue = Int16.MaxValue
+            UserSearchSettings.AspirationWindowWidth = 0
+            UserSearchSettings.UseBitMasks = False
+            UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 4 Then
-            'Medium AI. 1s per search. Same as Beginner; with Quiescence and TranspositionTable turned on.
+            'Medium AI. 1s per search. Same as Beginner; with Quiescence, TranspositionTable & Aspiration Windows turned on.
             UserTimeForSearch = 1
             UserSearchSettings.UsePieceHeatMaps = False
             UserSearchSettings.StableSearch = True
             UserSearchSettings.NullMoveRValue = Int16.MaxValue
+            UserSearchSettings.UseBitMasks = False
+            UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 5 Then
-            'Hard AI. 2s per search. Same as Medium; with Quiescence and TranspositionTable turned on.
+            'Hard AI. 2s per search. Same as Medium; with PieceHeatMaps and Null-Pruning turned on.
             UserTimeForSearch = 2
             UserSearchSettings.StableSearch = True
-            UserSearchSettings.NullMoveRValue = Int16.MaxValue
+            UserSearchSettings.UseBitMasks = False
+            UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 6 Then
-            'Expert AI. 5s per search. Same as Hard; with Null-Pruning, and Opponent Thinking Time turned on.
+            'Expert AI. 5s per search. Same as Hard; with Dynamic Depths, Pawn Bitboards, PVS and Opponent Thinking Time turned on.
             UserTimeForSearch = 5
             UserAICanSearchOnUsersTurn = True
-        Else 'Pain AI. Same as Expert, but with 30s per search. TODO: Add more features that distinguishes Expert from Pain.
+        Else 'Pain AI. Same as Expert, but with 6x thinking time.
             UserTimeForSearch = 30
             UserAICanSearchOnUsersTurn = True
         End If
@@ -190,9 +198,9 @@ Public Class OnePlayerCustomisation
         MsgBox("• Beginner: 0.1s per search. Turns off Quiescence, PieceHeatMaps, TranspositionTable, Dynamic Depths, and Null-Pruning." & vbCrLf &
                "• Easy: 0.5s per search. Same as Beginner; with PieceHeatMaps turned on." & vbCrLf &
                "• Medium: 1s per search. Same as Beginner; with Quiescence and TranspositionTable turned on." & vbCrLf &
-               "• Hard: 2s per search. Same as Medium; with Quiescence and TranspositionTable turned on." & vbCrLf &
-               "• Expert: 5s per search. Same as Hard; with Null-Pruning, and Opponent Thinking Time turned on." & vbCrLf &
-               "• Pain: 30s per search. All AI Enhancements Enabled (good luck ;D).",
+               "• Hard: 2s per search. Same as Medium; with PieceHeatMaps and Null-Pruning turned on." & vbCrLf &
+               "• Expert: 5s per search. Same as Hard; with Dynamic Depths, Pawn Bitboards, and Opponent Thinking Time turned on." & vbCrLf &
+               "• Pain: Same as Expert, but with 'Deep Search' Mode on - 30s per search (good luck ;D).",
                vbInformation + vbApplicationModal, "AI Difficulty Information")
     End Sub
     'Button that takes the user back to the main menu.

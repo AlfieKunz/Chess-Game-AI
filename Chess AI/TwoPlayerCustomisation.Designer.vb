@@ -23,96 +23,97 @@ Partial Class TwoPlayerCustomisation
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(TwoPlayerCustomisation))
-        Me.BackBtn = New System.Windows.Forms.Button()
-        Me.FENTextBox = New System.Windows.Forms.TextBox()
-        Me.StartBtn = New System.Windows.Forms.Button()
-        Me.Panel1 = New System.Windows.Forms.Panel()
-        Me.PosBtn1 = New System.Windows.Forms.RadioButton()
-        Me.PosBtn2 = New System.Windows.Forms.RadioButton()
-        Me.Panel1.SuspendLayout()
-        Me.SuspendLayout()
-        '
-        'BackBtn
-        '
-        Me.BackBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BackBtn.Location = New System.Drawing.Point(12, 176)
-        Me.BackBtn.Name = "BackBtn"
-        Me.BackBtn.Size = New System.Drawing.Size(23, 23)
-        Me.BackBtn.TabIndex = 17
-        Me.BackBtn.Text = "↺"
-        Me.BackBtn.UseVisualStyleBackColor = True
-        '
-        'FENTextBox
-        '
-        Me.FENTextBox.Enabled = False
-        Me.FENTextBox.Location = New System.Drawing.Point(15, 70)
-        Me.FENTextBox.Multiline = True
-        Me.FENTextBox.Name = "FENTextBox"
-        Me.FENTextBox.Size = New System.Drawing.Size(250, 35)
-        Me.FENTextBox.TabIndex = 16
-        Me.FENTextBox.Text = GlobalConstants.StartingFENPosition
-        '
-        'StartBtn
-        '
-        Me.StartBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.StartBtn.Location = New System.Drawing.Point(98, 138)
-        Me.StartBtn.Name = "StartBtn"
-        Me.StartBtn.Size = New System.Drawing.Size(90, 40)
-        Me.StartBtn.TabIndex = 13
-        Me.StartBtn.Text = "Start!"
-        Me.StartBtn.UseVisualStyleBackColor = True
-        '
-        'Panel1
-        '
-        Me.Panel1.Controls.Add(Me.PosBtn1)
-        Me.Panel1.Controls.Add(Me.PosBtn2)
-        Me.Panel1.Location = New System.Drawing.Point(7, 7)
-        Me.Panel1.Name = "Panel1"
-        Me.Panel1.Size = New System.Drawing.Size(200, 57)
-        Me.Panel1.TabIndex = 18
-        '
-        'PosBtn1
-        '
-        Me.PosBtn1.AutoSize = True
-        Me.PosBtn1.Checked = True
-        Me.PosBtn1.Location = New System.Drawing.Point(3, 3)
-        Me.PosBtn1.Name = "PosBtn1"
-        Me.PosBtn1.Size = New System.Drawing.Size(159, 17)
-        Me.PosBtn1.TabIndex = 1
-        Me.PosBtn1.TabStop = True
-        Me.PosBtn1.Text = "Use Normal Starting Position"
-        Me.PosBtn1.UseVisualStyleBackColor = True
-        '
-        'PosBtn2
-        '
-        Me.PosBtn2.AutoSize = True
-        Me.PosBtn2.Location = New System.Drawing.Point(3, 26)
-        Me.PosBtn2.Name = "PosBtn2"
-        Me.PosBtn2.Size = New System.Drawing.Size(161, 17)
-        Me.PosBtn2.TabIndex = 2
-        Me.PosBtn2.Text = "Use Custom Starting Position"
-        Me.PosBtn2.UseVisualStyleBackColor = True
-        '
-        'TwoPlayerCustomisation
-        '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
-        Me.BackColor = System.Drawing.Color.LightGray
-        Me.ClientSize = New System.Drawing.Size(284, 211)
-        Me.Controls.Add(Me.Panel1)
-        Me.Controls.Add(Me.BackBtn)
-        Me.Controls.Add(Me.FENTextBox)
-        Me.Controls.Add(Me.StartBtn)
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximizeBox = False
-        Me.Name = "TwoPlayerCustomisation"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Customise Game!"
-        Me.Panel1.ResumeLayout(False)
-        Me.Panel1.PerformLayout()
-        Me.ResumeLayout(False)
-        Me.PerformLayout()
+        BackBtn = New Button()
+        FENTextBox = New TextBox()
+        StartBtn = New Button()
+        Panel1 = New Panel()
+        PosBtn1 = New RadioButton()
+        PosBtn2 = New RadioButton()
+        Panel1.SuspendLayout()
+        SuspendLayout()
+        ' 
+        ' BackBtn
+        ' 
+        BackBtn.Font = New Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        BackBtn.Location = New Point(12, 176)
+        BackBtn.Name = "BackBtn"
+        BackBtn.Size = New Size(23, 23)
+        BackBtn.TabIndex = 17
+        BackBtn.Text = "↺"
+        BackBtn.UseVisualStyleBackColor = True
+        ' 
+        ' FENTextBox
+        ' 
+        FENTextBox.Enabled = False
+        FENTextBox.Location = New Point(15, 70)
+        FENTextBox.Multiline = True
+        FENTextBox.Name = "FENTextBox"
+        FENTextBox.Size = New Size(250, 35)
+        FENTextBox.TabIndex = 16
+        FENTextBox.Text = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        ' 
+        ' StartBtn
+        ' 
+        StartBtn.Font = New Font("Microsoft Sans Serif", 15.75F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        StartBtn.Location = New Point(98, 138)
+        StartBtn.Name = "StartBtn"
+        StartBtn.Size = New Size(90, 40)
+        StartBtn.TabIndex = 13
+        StartBtn.Text = "Start!"
+        StartBtn.UseVisualStyleBackColor = True
+        ' 
+        ' Panel1
+        ' 
+        Panel1.Controls.Add(PosBtn1)
+        Panel1.Controls.Add(PosBtn2)
+        Panel1.Location = New Point(7, 7)
+        Panel1.Name = "Panel1"
+        Panel1.Size = New Size(200, 57)
+        Panel1.TabIndex = 18
+        ' 
+        ' PosBtn1
+        ' 
+        PosBtn1.AutoSize = True
+        PosBtn1.Checked = True
+        PosBtn1.Location = New Point(3, 3)
+        PosBtn1.Name = "PosBtn1"
+        PosBtn1.Size = New Size(159, 17)
+        PosBtn1.TabIndex = 1
+        PosBtn1.TabStop = True
+        PosBtn1.Text = "Use Normal Starting Position"
+        PosBtn1.UseVisualStyleBackColor = True
+        ' 
+        ' PosBtn2
+        ' 
+        PosBtn2.AutoSize = True
+        PosBtn2.Location = New Point(3, 26)
+        PosBtn2.Name = "PosBtn2"
+        PosBtn2.Size = New Size(161, 17)
+        PosBtn2.TabIndex = 2
+        PosBtn2.Text = "Use Custom Starting Position"
+        PosBtn2.UseVisualStyleBackColor = True
+        ' 
+        ' TwoPlayerCustomisation
+        ' 
+        AutoScaleDimensions = New SizeF(6F, 13F)
+        AutoScaleMode = AutoScaleMode.Font
+        AutoSizeMode = AutoSizeMode.GrowAndShrink
+        BackColor = Color.LightGray
+        ClientSize = New Size(284, 211)
+        Controls.Add(Panel1)
+        Controls.Add(BackBtn)
+        Controls.Add(FENTextBox)
+        Controls.Add(StartBtn)
+        Font = New Font("Microsoft Sans Serif", 8.25F)
+        Icon = CType(resources.GetObject("$this.Icon"), Icon)
+        MaximizeBox = False
+        Name = "TwoPlayerCustomisation"
+        StartPosition = FormStartPosition.CenterScreen
+        Text = "Customise Game!"
+        Panel1.ResumeLayout(False)
+        Panel1.PerformLayout()
+        ResumeLayout(False)
+        PerformLayout()
 
     End Sub
     Friend WithEvents BackBtn As System.Windows.Forms.Button
