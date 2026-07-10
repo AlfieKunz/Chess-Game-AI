@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{5874F2BD-DBE2-4E72-A2F8-3E78393C82CD}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>Chess_AI.Chess</StartupObject>
+    <StartupObject>Chess_AI.MainMenu</StartupObject>
     <RootNamespace>Chess_AI</RootNamespace>
     <AssemblyName>Chess AI</AssemblyName>
     <FileAlignment>512</FileAlignment>
@@ -61,6 +61,9 @@
   <PropertyGroup>
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -96,6 +99,12 @@
       <DependentUpon>Chess.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="MainMenu.Designer.vb">
+      <DependentUpon>MainMenu.vb</DependentUpon>
+    </Compile>
+    <Compile Include="MainMenu.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -116,6 +125,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Chess.resx">
       <DependentUpon>Chess.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainMenu.resx">
+      <DependentUpon>MainMenu.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
@@ -145,6 +157,21 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\arrow-computer-icons-drop-down-list-arrow.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\arrow-computer-icons-drop-down-list-arrow1.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\9c4679b53a732e5fd7493555db6e832e.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="128bit.ico" />
+    <Content Include="Icon.ico" />
+    <None Include="Resources\uiehf.png" />
+    <None Include="Resources\test.jpg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
