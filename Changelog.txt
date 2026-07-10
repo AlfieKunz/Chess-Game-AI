@@ -1,2 +1,3 @@
-Small AI Improvements
-Last Version Before AI Multithreading redesign.
+Full AI Structure Redesign (including multithreading for separate depths).
+UI Improvements & Overhaul
+Prototype Quiescence.

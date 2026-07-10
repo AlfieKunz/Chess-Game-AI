@@ -26,13 +26,12 @@ Partial Class Chess
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Chess))
         Me.FENTextBox = New System.Windows.Forms.TextBox()
         Me.FENButton = New System.Windows.Forms.Button()
-        Me.BlackAIMove = New System.Windows.Forms.Button()
+        Me.AIMoveBtn = New System.Windows.Forms.Button()
         Me.Reset_Btn = New System.Windows.Forms.Button()
         Me.FENExport = New System.Windows.Forms.Button()
         Me.CheckLabel = New System.Windows.Forms.Label()
-        Me.CurrentEval = New System.Windows.Forms.Label()
+        Me.CurrentAIEval = New System.Windows.Forms.Label()
         Me.UndoMove = New System.Windows.Forms.Button()
-        Me.WhiteAIMove = New System.Windows.Forms.Button()
         Me.Credits = New System.Windows.Forms.Label()
         Me.UndoFENChange = New System.Windows.Forms.Button()
         Me.ProgressBar = New System.Windows.Forms.ProgressBar()
@@ -97,6 +96,11 @@ Partial Class Chess
         Me.FlipperButton = New System.Windows.Forms.Button()
         Me.AutoFlipper = New System.Windows.Forms.CheckBox()
         Me.ExitBtn = New System.Windows.Forms.Button()
+        Me.UserTimeBox = New System.Windows.Forms.TextBox()
+        Me.UserTimeBar = New System.Windows.Forms.TrackBar()
+        Me.CurrentAIMove = New System.Windows.Forms.Label()
+        Me.CurrentAIDepth = New System.Windows.Forms.Label()
+        Me.QuiescenceBox = New System.Windows.Forms.CheckBox()
         Me.ColourChanger.SuspendLayout()
         CType(Me.WP8, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WP7, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -147,6 +151,7 @@ Partial Class Chess
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'FENTextBox
@@ -166,14 +171,15 @@ Partial Class Chess
         Me.FENButton.Text = "Click to Set FEN:"
         Me.FENButton.UseVisualStyleBackColor = True
         '
-        'BlackAIMove
+        'AIMoveBtn
         '
-        Me.BlackAIMove.Location = New System.Drawing.Point(1054, 85)
-        Me.BlackAIMove.Name = "BlackAIMove"
-        Me.BlackAIMove.Size = New System.Drawing.Size(100, 57)
-        Me.BlackAIMove.TabIndex = 4
-        Me.BlackAIMove.Text = "Make Computer Move: (Black)"
-        Me.BlackAIMove.UseVisualStyleBackColor = True
+        Me.AIMoveBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 11.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.AIMoveBtn.Location = New System.Drawing.Point(945, 85)
+        Me.AIMoveBtn.Name = "AIMoveBtn"
+        Me.AIMoveBtn.Size = New System.Drawing.Size(209, 57)
+        Me.AIMoveBtn.TabIndex = 4
+        Me.AIMoveBtn.Text = "Make Computer Move:"
+        Me.AIMoveBtn.UseVisualStyleBackColor = True
         '
         'Reset_Btn
         '
@@ -206,14 +212,15 @@ Partial Class Chess
         Me.CheckLabel.TabIndex = 8
         Me.CheckLabel.Text = "Checkmate!"
         '
-        'CurrentEval
+        'CurrentAIEval
         '
-        Me.CurrentEval.AutoSize = True
-        Me.CurrentEval.Location = New System.Drawing.Point(1042, 187)
-        Me.CurrentEval.Name = "CurrentEval"
-        Me.CurrentEval.Size = New System.Drawing.Size(13, 13)
-        Me.CurrentEval.TabIndex = 9
-        Me.CurrentEval.Text = "0"
+        Me.CurrentAIEval.AutoSize = True
+        Me.CurrentAIEval.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.CurrentAIEval.Location = New System.Drawing.Point(955, 280)
+        Me.CurrentAIEval.Name = "CurrentAIEval"
+        Me.CurrentAIEval.Size = New System.Drawing.Size(93, 16)
+        Me.CurrentAIEval.TabIndex = 9
+        Me.CurrentAIEval.Text = "Evaluation: -"
         '
         'UndoMove
         '
@@ -225,15 +232,6 @@ Partial Class Chess
         Me.UndoMove.Text = "Undo Last Action"
         Me.UndoMove.UseVisualStyleBackColor = True
         '
-        'WhiteAIMove
-        '
-        Me.WhiteAIMove.Location = New System.Drawing.Point(945, 85)
-        Me.WhiteAIMove.Name = "WhiteAIMove"
-        Me.WhiteAIMove.Size = New System.Drawing.Size(100, 57)
-        Me.WhiteAIMove.TabIndex = 4
-        Me.WhiteAIMove.Text = "Make Computer Move: (White)"
-        Me.WhiteAIMove.UseVisualStyleBackColor = True
-        '
         'Credits
         '
         Me.Credits.AutoSize = True
@@ -242,7 +240,7 @@ Partial Class Chess
         Me.Credits.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
         Me.Credits.Location = New System.Drawing.Point(988, 575)
         Me.Credits.Name = "Credits"
-        Me.Credits.Size = New System.Drawing.Size(204, 16)
+        Me.Credits.Size = New System.Drawing.Size(203, 16)
         Me.Credits.TabIndex = 10
         Me.Credits.Text = "Created by: Alfie Kunz - 2022"
         '
@@ -260,7 +258,6 @@ Partial Class Chess
         '
         Me.ProgressBar.ForeColor = System.Drawing.Color.FromArgb(CType(CType(0, Byte), Integer), CType(CType(192, Byte), Integer), CType(CType(0, Byte), Integer))
         Me.ProgressBar.Location = New System.Drawing.Point(945, 150)
-        Me.ProgressBar.Maximum = 8
         Me.ProgressBar.Name = "ProgressBar"
         Me.ProgressBar.Size = New System.Drawing.Size(209, 25)
         Me.ProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous
@@ -317,7 +314,7 @@ Partial Class Chess
         'ColourChangerButton
         '
         Me.ColourChangerButton.ImageAlign = System.Drawing.ContentAlignment.MiddleRight
-        Me.ColourChangerButton.Location = New System.Drawing.Point(992, 300)
+        Me.ColourChangerButton.Location = New System.Drawing.Point(95, 300)
         Me.ColourChangerButton.Name = "ColourChangerButton"
         Me.ColourChangerButton.Size = New System.Drawing.Size(113, 40)
         Me.ColourChangerButton.TabIndex = 15
@@ -891,6 +888,61 @@ Partial Class Chess
         Me.ExitBtn.Text = "Exit to Main Menu"
         Me.ExitBtn.UseVisualStyleBackColor = True
         '
+        'UserTimeBox
+        '
+        Me.UserTimeBox.BackColor = System.Drawing.Color.WhiteSmoke
+        Me.UserTimeBox.Location = New System.Drawing.Point(962, 340)
+        Me.UserTimeBox.Name = "UserTimeBox"
+        Me.UserTimeBox.ReadOnly = True
+        Me.UserTimeBox.Size = New System.Drawing.Size(164, 20)
+        Me.UserTimeBox.TabIndex = 23
+        Me.UserTimeBox.Text = "Time For Search: 10 Seconds"
+        Me.UserTimeBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
+        '
+        'UserTimeBar
+        '
+        Me.UserTimeBar.LargeChange = 10
+        Me.UserTimeBar.Location = New System.Drawing.Point(962, 364)
+        Me.UserTimeBar.Maximum = 60
+        Me.UserTimeBar.Name = "UserTimeBar"
+        Me.UserTimeBar.Size = New System.Drawing.Size(164, 45)
+        Me.UserTimeBar.TabIndex = 25
+        Me.UserTimeBar.Value = 20
+        '
+        'CurrentAIMove
+        '
+        Me.CurrentAIMove.AutoSize = True
+        Me.CurrentAIMove.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.CurrentAIMove.Location = New System.Drawing.Point(955, 250)
+        Me.CurrentAIMove.Name = "CurrentAIMove"
+        Me.CurrentAIMove.Size = New System.Drawing.Size(111, 16)
+        Me.CurrentAIMove.TabIndex = 9
+        Me.CurrentAIMove.Text = "Current Move: -"
+        '
+        'CurrentAIDepth
+        '
+        Me.CurrentAIDepth.AutoSize = True
+        Me.CurrentAIDepth.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.CurrentAIDepth.Location = New System.Drawing.Point(955, 220)
+        Me.CurrentAIDepth.Name = "CurrentAIDepth"
+        Me.CurrentAIDepth.Size = New System.Drawing.Size(114, 16)
+        Me.CurrentAIDepth.TabIndex = 9
+        Me.CurrentAIDepth.Text = "Current Depth: -"
+        '
+        'QuiescenceBox
+        '
+        Me.QuiescenceBox.AutoSize = True
+        Me.QuiescenceBox.Checked = True
+        Me.QuiescenceBox.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.QuiescenceBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.QuiescenceBox.Location = New System.Drawing.Point(983, 405)
+        Me.QuiescenceBox.Name = "QuiescenceBox"
+        Me.QuiescenceBox.Size = New System.Drawing.Size(123, 19)
+        Me.QuiescenceBox.TabIndex = 26
+        Me.QuiescenceBox.Text = "Use Quiescence?"
+        Me.QuiescenceBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.QuiescenceBox.UseVisualStyleBackColor = True
+        '
         'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -898,6 +950,9 @@ Partial Class Chess
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.QuiescenceBox)
+        Me.Controls.Add(Me.UserTimeBar)
+        Me.Controls.Add(Me.UserTimeBox)
         Me.Controls.Add(Me.ExitBtn)
         Me.Controls.Add(Me.AutoFlipper)
         Me.Controls.Add(Me.FlipperButton)
@@ -905,13 +960,14 @@ Partial Class Chess
         Me.Controls.Add(Me.ProgressBar)
         Me.Controls.Add(Me.UndoFENChange)
         Me.Controls.Add(Me.Credits)
-        Me.Controls.Add(Me.CurrentEval)
+        Me.Controls.Add(Me.CurrentAIDepth)
+        Me.Controls.Add(Me.CurrentAIMove)
+        Me.Controls.Add(Me.CurrentAIEval)
         Me.Controls.Add(Me.CheckLabel)
         Me.Controls.Add(Me.UndoMove)
         Me.Controls.Add(Me.FENExport)
         Me.Controls.Add(Me.Reset_Btn)
-        Me.Controls.Add(Me.WhiteAIMove)
-        Me.Controls.Add(Me.BlackAIMove)
+        Me.Controls.Add(Me.AIMoveBtn)
         Me.Controls.Add(Me.FENButton)
         Me.Controls.Add(Me.FENTextBox)
         Me.Controls.Add(Me.WP8)
@@ -1019,6 +1075,7 @@ Partial Class Chess
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -1072,13 +1129,12 @@ Partial Class Chess
     Friend WithEvents BQ5 As System.Windows.Forms.PictureBox
     Friend WithEvents BQ8 As System.Windows.Forms.PictureBox
     Friend WithEvents BQ6 As System.Windows.Forms.PictureBox
-    Friend WithEvents BlackAIMove As Button
+    Friend WithEvents AIMoveBtn As Button
     Friend WithEvents Reset_Btn As Button
     Friend WithEvents FENExport As Button
     Friend WithEvents CheckLabel As Label
-    Friend WithEvents CurrentEval As Label
+    Friend WithEvents CurrentAIEval As Label
     Friend WithEvents UndoMove As System.Windows.Forms.Button
-    Friend WithEvents WhiteAIMove As Button
     Friend WithEvents Credits As Label
     Friend WithEvents UndoFENChange As System.Windows.Forms.Button
     Friend WithEvents ProgressBar As ProgressBar
@@ -1096,4 +1152,9 @@ Partial Class Chess
     Friend WithEvents FlipperButton As System.Windows.Forms.Button
     Friend WithEvents AutoFlipper As System.Windows.Forms.CheckBox
     Friend WithEvents ExitBtn As Button
+    Friend WithEvents UserTimeBox As TextBox
+    Friend WithEvents UserTimeBar As TrackBar
+    Friend WithEvents CurrentAIMove As Label
+    Friend WithEvents CurrentAIDepth As Label
+    Friend WithEvents QuiescenceBox As CheckBox
 End Class

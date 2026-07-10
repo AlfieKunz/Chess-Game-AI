@@ -9,7 +9,7 @@ Public Class MainMenu
         .SoundLocation = Application.StartupPath & "\Sounds\Chess_Startup.wav"
     }
 
-    Private Sub MainMenu_Load(sender As Object, e As System.EventArgs) Handles Me.Load
+    Private Sub MainMenu_Load() Handles Me.Load
         'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
         Try
             FileOpen(1, Application.StartupPath & "\ColourPreferences.txt", OpenMode.Input)
@@ -369,4 +369,5 @@ Public Class MainMenu
     Private Sub ExitBtn_Click() Handles ExitBtn.Click
         Me.Close()
     End Sub
+
 End Class
