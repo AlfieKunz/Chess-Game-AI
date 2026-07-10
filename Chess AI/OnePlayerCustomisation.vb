@@ -42,6 +42,7 @@ Public Class OnePlayerCustomisation
             PlayAsWhite = False
         End If
         'Instantiates a new game of Chess.
+        If Not UseBook.Checked Then OpeningBook(0, 0) = "ERROR"
         Dim ChessGame As New Chess(1, UserStartingFEN, DifficultySlider.Value, PlayAsWhite, OpeningBook)
         ChessGame.Show()
     End Sub
@@ -57,7 +58,7 @@ Public Class OnePlayerCustomisation
 
     'Button that displays information regarding the various AI difficulties.
     Private Sub Button1_Click() Handles InfoBtn.Click
-        MsgBox("Beginner: 1s per search, Quiescence off, Opening Book off." & vbCrLf & "Easy: 3s per search, Quiescence off, Opening Book on." & vbCrLf & "Medium: 5s per search, Quiescence off, Opening Book on." & vbCrLf & "Hard: 5s per search, Quiescence on, Opening Book on." & vbCrLf & "Expert: 10s per search, Quiescence on, Opening Book on." & vbCrLf & "Pain: 30s per search, Quiescence on, Opening Book on.", vbInformation + vbApplicationModal, "AI Difficulty Information")
+        MsgBox("Beginner: 1s per search, Quiescence off." & vbCrLf & "Easy: 3s per search, Quiescence off." & vbCrLf & "Medium: 5s per search, Quiescence off." & vbCrLf & "Hard: 5s per search, Quiescence on." & vbCrLf & "Expert: 10s per search, Quiescence on." & vbCrLf & "Pain: 30s per search, Quiescence on.", vbInformation + vbApplicationModal, "AI Difficulty Information")
     End Sub
     'Button that takes the user back to the main menu.
     Private Sub BackBtn_Click() Handles BackBtn.Click
@@ -95,5 +96,4 @@ Public Class OnePlayerCustomisation
             AIDiffLabel2.ForeColor = Color.Black
         End If
     End Sub
-
 End Class

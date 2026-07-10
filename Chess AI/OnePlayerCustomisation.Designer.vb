@@ -36,6 +36,7 @@ Partial Class OnePlayerCustomisation
         Me.White = New System.Windows.Forms.RadioButton()
         Me.Black = New System.Windows.Forms.RadioButton()
         Me.InfoBtn = New System.Windows.Forms.Button()
+        Me.UseBook = New System.Windows.Forms.CheckBox()
         CType(Me.DifficultySlider, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.Panel1.SuspendLayout()
         Me.Panel2.SuspendLayout()
@@ -45,7 +46,7 @@ Partial Class OnePlayerCustomisation
         '
         Me.StartBtn.Cursor = System.Windows.Forms.Cursors.Hand
         Me.StartBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.StartBtn.Location = New System.Drawing.Point(98, 238)
+        Me.StartBtn.Location = New System.Drawing.Point(98, 258)
         Me.StartBtn.Name = "StartBtn"
         Me.StartBtn.Size = New System.Drawing.Size(90, 40)
         Me.StartBtn.TabIndex = 0
@@ -87,7 +88,7 @@ Partial Class OnePlayerCustomisation
         'BackBtn
         '
         Me.BackBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BackBtn.Location = New System.Drawing.Point(12, 276)
+        Me.BackBtn.Location = New System.Drawing.Point(12, 296)
         Me.BackBtn.Name = "BackBtn"
         Me.BackBtn.Size = New System.Drawing.Size(23, 23)
         Me.BackBtn.TabIndex = 12
@@ -171,7 +172,7 @@ Partial Class OnePlayerCustomisation
         'InfoBtn
         '
         Me.InfoBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.InfoBtn.Location = New System.Drawing.Point(254, 276)
+        Me.InfoBtn.Location = New System.Drawing.Point(254, 296)
         Me.InfoBtn.Name = "InfoBtn"
         Me.InfoBtn.Size = New System.Drawing.Size(18, 23)
         Me.InfoBtn.TabIndex = 19
@@ -179,13 +180,28 @@ Partial Class OnePlayerCustomisation
         Me.InfoBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         Me.InfoBtn.UseVisualStyleBackColor = True
         '
+        'UseBook
+        '
+        Me.UseBook.AutoSize = True
+        Me.UseBook.Checked = True
+        Me.UseBook.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.UseBook.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.UseBook.Location = New System.Drawing.Point(85, 228)
+        Me.UseBook.Name = "UseBook"
+        Me.UseBook.Size = New System.Drawing.Size(122, 17)
+        Me.UseBook.TabIndex = 27
+        Me.UseBook.Text = "Use Opening Book?"
+        Me.UseBook.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.UseBook.UseVisualStyleBackColor = True
+        '
         'OnePlayerCustomisation
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.LightGray
-        Me.ClientSize = New System.Drawing.Size(284, 311)
+        Me.ClientSize = New System.Drawing.Size(284, 331)
+        Me.Controls.Add(Me.UseBook)
         Me.Controls.Add(Me.InfoBtn)
         Me.Controls.Add(Me.Panel2)
         Me.Controls.Add(Me.Panel1)
@@ -222,4 +238,5 @@ Partial Class OnePlayerCustomisation
     Friend WithEvents White As System.Windows.Forms.RadioButton
     Friend WithEvents Black As System.Windows.Forms.RadioButton
     Friend WithEvents InfoBtn As Button
+    Friend WithEvents UseBook As System.Windows.Forms.CheckBox
 End Class

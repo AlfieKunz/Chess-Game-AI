@@ -446,7 +446,7 @@ Public Class MainMenu
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.0)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.1)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
     Private Sub OnePlayer_Click(sender As Object, e As EventArgs) Handles OnePlayer.Click
