@@ -1,1 +1,2 @@
-AndAlso & OrElse Redesign
+Subtle AI & UI Improvements.
+Last Version with Row Multitasking.
