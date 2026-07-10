@@ -1698,15 +1698,15 @@ Public Class Chess
                     'meaning that a depth of 1 is conducted but no moves are actually made on the board. This
                     'determines if the opponent actually has any legal moves, and if they don't, then then the
                     'game will end. (If in check then Checkmate, otherwise Stalemate.)
-                    PlayerTurn = Not PlayerTurn
                     AbsoluteDepth = 0
                     If PlayerTurn Then
-                        WhiteAIMove_Click()
-                    Else
                         BlackAIMove_Click()
+                    Else
+                        WhiteAIMove_Click()
                     End If
                     'Absolute depth is then restored, and the next turn begins.
                     CalculateAbsoluteDepth()
+                    PlayerTurn = Not PlayerTurn
                     PreviousFEN = CurrentFEN
                     ConvertToFEN()
                     Console.WriteLine()
@@ -2030,7 +2030,7 @@ Public Class Chess
 
 
     Private Sub WhiteAIMove_Click() Handles WhiteAIMove.Click
-        If GameRunning AndAlso PlayerTurn Then
+        If GameRunning AndAlso (PlayerTurn OrElse AbsoluteDepth = 0) Then
             TotalPositionsSearched = 0
             Dim Tasks As New List(Of Task)
             Tasks.Add(New Task(AddressOf InitialiseThread1))
@@ -2090,14 +2090,14 @@ Public Class Chess
                 FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
                 CheckChecker()
                 If MasterBInCheck.IsInCheck Then Sound_Check.Play()
-                PlayerTurn = False
-                AbsoluteDepth = 0
-                BlackAIMove_Click()
-                CalculateAbsoluteDepth()
                 MasterMaterialCount = CountMaterial(MasterBoard, False)
+                PlayerTurn = False
                 PreviousFEN = CurrentFEN
                 ConvertToFEN()
                 CurrentEval.Text = BestMove.Score
+                AbsoluteDepth = 0
+                BlackAIMove_Click()
+                CalculateAbsoluteDepth()
                 ProgressBar.Value = 0
                 ComputerIsSearching = False
 
@@ -2188,7 +2188,7 @@ Public Class Chess
 
 
     Private Sub BlackAIMove_Click() Handles BlackAIMove.Click
-        If GameRunning AndAlso Not PlayerTurn Then
+        If GameRunning AndAlso (Not PlayerTurn OrElse AbsoluteDepth = 0) Then
             TotalPositionsSearched = 0
             Dim Tasks As New List(Of Task)
             Tasks.Add(New Task(AddressOf InitialiseThread1))
@@ -2248,14 +2248,14 @@ Public Class Chess
                 FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
                 CheckChecker()
                 If MasterWInCheck.IsInCheck Then Sound_Check.Play()
-                PlayerTurn = True
-                AbsoluteDepth = 0
-                WhiteAIMove_Click()
-                CalculateAbsoluteDepth()
                 MasterMaterialCount = CountMaterial(MasterBoard, False)
+                PlayerTurn = True
                 PreviousFEN = CurrentFEN
                 ConvertToFEN()
                 CurrentEval.Text = BestMove.Score
+                AbsoluteDepth = 0
+                WhiteAIMove_Click()
+                CalculateAbsoluteDepth()
                 ProgressBar.Value = 0
                 ComputerIsSearching = False
 
@@ -2493,7 +2493,7 @@ Public Class Chess
     End Sub
 
     Public Function MiniMax(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As String, ByVal BKPos As String, ByVal EnPassant As String, ByVal MaterialCount As Int16, ByVal Alpha As Decimal, ByVal Beta As Decimal) As NewMove
-        totalpositionssearched += 1
+        TotalPositionsSearched += 1
         Dim CurrentMove As NewMove
         If depth > 0 Then
             Dim BestMove As NewMove

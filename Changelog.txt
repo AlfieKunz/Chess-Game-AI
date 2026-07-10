@@ -1,2 +1,1 @@
-UI Overhaul
-AI Improvements
+AndAlso & OrElse Redesign
