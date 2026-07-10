@@ -1,5 +1,4 @@
-~~~~~~~~~~~~~~~~~~~~
-First version of my Chess program.
-Pseudo-legal move implementation.
-FEN setter textbox.
-Pseudo-legal move generator.
+Check visualisation
+LegalMove implementation, instead of pseudolegal chess.
+FENExport button.
+Board resetter.

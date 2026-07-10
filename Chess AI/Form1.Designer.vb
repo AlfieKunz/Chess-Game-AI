@@ -73,6 +73,9 @@ Partial Class Form1
         Me.BQ8 = New System.Windows.Forms.PictureBox()
         Me.BQ6 = New System.Windows.Forms.PictureBox()
         Me.Button1 = New System.Windows.Forms.Button()
+        Me.Reset_Btn = New System.Windows.Forms.Button()
+        Me.CheckBox = New System.Windows.Forms.TextBox()
+        Me.FENExport = New System.Windows.Forms.Button()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WB1, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -656,12 +659,39 @@ Partial Class Form1
         '
         'Button1
         '
-        Me.Button1.Location = New System.Drawing.Point(80, 165)
+        Me.Button1.Location = New System.Drawing.Point(111, 213)
         Me.Button1.Name = "Button1"
         Me.Button1.Size = New System.Drawing.Size(75, 57)
         Me.Button1.TabIndex = 4
         Me.Button1.Text = "Button1"
         Me.Button1.UseVisualStyleBackColor = True
+        '
+        'Reset_Btn
+        '
+        Me.Reset_Btn.Location = New System.Drawing.Point(9, 85)
+        Me.Reset_Btn.Name = "Reset_Btn"
+        Me.Reset_Btn.Size = New System.Drawing.Size(133, 43)
+        Me.Reset_Btn.TabIndex = 5
+        Me.Reset_Btn.Text = "Reset Board"
+        Me.Reset_Btn.UseVisualStyleBackColor = True
+        '
+        'CheckBox
+        '
+        Me.CheckBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.CheckBox.Location = New System.Drawing.Point(1000, 16)
+        Me.CheckBox.Name = "CheckBox"
+        Me.CheckBox.Size = New System.Drawing.Size(100, 31)
+        Me.CheckBox.TabIndex = 6
+        Me.CheckBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
+        '
+        'FENExport
+        '
+        Me.FENExport.Location = New System.Drawing.Point(150, 85)
+        Me.FENExport.Name = "FENExport"
+        Me.FENExport.Size = New System.Drawing.Size(141, 43)
+        Me.FENExport.TabIndex = 7
+        Me.FENExport.Text = "Export to FEN"
+        Me.FENExport.UseVisualStyleBackColor = True
         '
         'Form1
         '
@@ -669,6 +699,9 @@ Partial Class Form1
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.DarkGray
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.FENExport)
+        Me.Controls.Add(Me.CheckBox)
+        Me.Controls.Add(Me.Reset_Btn)
         Me.Controls.Add(Me.Button1)
         Me.Controls.Add(Me.FENButton)
         Me.Controls.Add(Me.FENTextBox)
@@ -822,4 +855,7 @@ Partial Class Form1
     Friend WithEvents BQ8 As System.Windows.Forms.PictureBox
     Friend WithEvents BQ6 As System.Windows.Forms.PictureBox
     Friend WithEvents Button1 As Button
+    Friend WithEvents Reset_Btn As Button
+    Friend WithEvents CheckBox As TextBox
+    Friend WithEvents FENExport As Button
 End Class
