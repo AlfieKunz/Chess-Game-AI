@@ -7,8 +7,8 @@ Public Class Settings
     Private SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
     Private ColourScheme As String 'Colour code from the text file.
     Private AnimationSpeed As SByte 'Represents the speed of the piece-moving animation: 0 = Off, 1 = Fast, 2 = Medium, 3 = Slow
-    Private GeneralOptions As String = "TTTTFF" '6-character string that represents the configuration of the program.
-    'Index: 0 = Sound, 1 = Opening Animation, 2 = Board Highlights, 3 = Piece Highlights, 4 = Invisible Pieces, 5 = Hammad Mode (bad AI).
+    Private GeneralOptions As String = "TTTTFFF" '7-character string that represents the configuration of the program.
+    'Index: 0 = Sound, 1 = Opening Animation, 2 = Board Highlights, 3 = Piece Highlights, 4 = Touch Move, 5 = Invisible Pieces, 6 = Hammad Mode (bad AI).
     Private FixedSearchDepth As Byte = 0 'Number representing the fixed depth the AI will search to (0 = off).
 
     Private SquareHistory(1, 1) As SByte
@@ -19,10 +19,11 @@ Public Class Settings
     }
 
     'Subroutines that sets up the form.
-    Public Sub New(ByVal CanToggleInvis As Boolean)
+    Public Sub New(ByVal CanToggleInvis As Boolean, ByVal CanToggleTouchMove As Boolean)
         ' This call is required by the designer.
         InitializeComponent()
         InvisBtn.Enabled = CanToggleInvis
+        TouchMoveBtn.Enabled = CanToggleTouchMove
     End Sub
     Private Sub Settings_Load() Handles MyBase.Load
         'Calibrates the colour selector
@@ -64,11 +65,11 @@ Public Class Settings
             AnimationSpeed = Val(LineInput(1))
             GeneralOptions = LineInput(1)
             FixedSearchDepth = Val(LineInput(1))
-            Dim temp As String = GeneralOptions(5) 'Tests that the General Options are the correct length.
+            Dim temp As String = GeneralOptions(6) 'Tests that the General Options are the correct length.
         Catch ex As Exception
             ColourScheme = "def"
             AnimationSpeed = 3
-            GeneralOptions = "TTTTFF"
+            GeneralOptions = "TTTTFFF"
             FixedSearchDepth = 0
         End Try
         FileClose(1)
@@ -78,8 +79,9 @@ Public Class Settings
         If GeneralOptions(1) = "T" Then AnimationBtn.Checked = True : Else AnimationBtn.Checked = False
         If GeneralOptions(2) = "T" Then BoardBtn.Checked = True : Else BoardBtn.Checked = False
         If GeneralOptions(3) = "T" Then PieceBtn.Checked = True : Else PieceBtn.Checked = False
-        If GeneralOptions(4) = "T" Then InvisBtn.Checked = True : Else InvisBtn.Checked = False
-        If GeneralOptions(5) = "T" Then HammadBtn.Checked = True : Else HammadBtn.Checked = False
+        If GeneralOptions(4) = "T" Then TouchMoveBtn.Checked = True : Else TouchMoveBtn.Checked = False
+        If GeneralOptions(5) = "T" Then InvisBtn.Checked = True : Else InvisBtn.Checked = False
+        If GeneralOptions(6) = "T" Then HammadBtn.Checked = True : Else HammadBtn.Checked = False
         If FixedSearchDepth = 0 Then 'No Fixed Search Toggled
             FixedSearchBtn.Checked = False
             FixedSearchBox.Text = "0"
@@ -147,7 +149,9 @@ Public Class Settings
                 FormInstance.LoadUserProfile()
             End If
         Next
+        Console.ForegroundColor = ConsoleColor.Green
         Console.WriteLine("Settings Saved.")
+        Console.ResetColor()
     End Sub
 
 
@@ -534,9 +538,17 @@ Public Class Settings
             SaveSettings()
         End If
     End Sub
+    Private Sub TouchMoveBtn_CheckedChanged() Handles TouchMoveBtn.CheckedChanged
+        If TouchMoveBtn.Checked Then
+            GeneralOptions = GeneralOptions.Remove(4, 1).Insert(4, "T")
+        Else
+            GeneralOptions = GeneralOptions.Remove(4, 1).Insert(4, "F")
+        End If
+        If Not AnimationRunning Then SaveSettings()
+    End Sub
     Private Sub InvisBtn_CheckedChanged() Handles InvisBtn.CheckedChanged
         If InvisBtn.Checked Then
-            GeneralOptions = GeneralOptions.Remove(4, 1).Insert(4, "T")
+            GeneralOptions = GeneralOptions.Remove(5, 1).Insert(5, "T")
             'Removes all the pictures from the PictureBoxes.
             WP1.Image = Nothing
             WP2.Image = Nothing
@@ -545,7 +557,7 @@ Public Class Settings
             WN1.Image = Nothing
             WB1.Image = Nothing
         Else
-            GeneralOptions = GeneralOptions.Remove(4, 1).Insert(4, "F")
+            GeneralOptions = GeneralOptions.Remove(5, 1).Insert(5, "F")
             'Restores the images back to the PictureBoxes.
             WP1.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WPawn.png")
             WP2.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WPawn.png")
@@ -558,9 +570,9 @@ Public Class Settings
     End Sub
     Private Sub HammadBtn_CheckedChanged() Handles HammadBtn.CheckedChanged
         If HammadBtn.Checked Then
-            GeneralOptions = GeneralOptions.Remove(5, 1).Insert(5, "T")
+            GeneralOptions = GeneralOptions.Remove(6, 1).Insert(6, "T")
         Else
-            GeneralOptions = GeneralOptions.Remove(5, 1).Insert(5, "F")
+            GeneralOptions = GeneralOptions.Remove(6, 1).Insert(6, "F")
         End If
         If Not AnimationRunning Then SaveSettings()
     End Sub

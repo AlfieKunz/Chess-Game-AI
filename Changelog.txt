@@ -1,4 +1,6 @@
-Addition of Settings form.
-Hammad Mode :DD
-KillerMoves in move ordering.
-Generation Redesign.
+Transposition Table
+Addition of PieceHeatMaps
+Three-fold repetition
+Colours & Console design overhaul.
+Incremental Deepening (overhaul of AI multithreading).
+PieceLegalMoves changes.

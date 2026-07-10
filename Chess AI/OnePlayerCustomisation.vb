@@ -3,14 +3,10 @@
 Public Class OnePlayerCustomisation
 
     'Creates opening book (as received from Main Menu).
-    Private ReadOnly OpeningBook(100000, 1) As String
-    Public Sub New(ByRef InputBook(,) As String)
+    Private ReadOnly OpeningBook As New List(Of OpeningBookEntry)
+    Public Sub New(ByRef InputBook As List(Of OpeningBookEntry))
         InitializeComponent() ' This call is required by the designer.
-        OpeningBook(0, 0) = InputBook(0, 0)
-        If OpeningBook(0, 0) <> "ERROR" Then
-            Dim BookLength As UInt32 = 2 * (Val(InputBook(0, 0)) + 1)
-            Array.Copy(InputBook, OpeningBook, BookLength)
-        End If
+        If InputBook.Count > 0 Then OpeningBook.AddRange(InputBook)
     End Sub
 
     Private Sub StartBtn_MouseEnter() Handles StartBtn.MouseEnter
@@ -42,7 +38,7 @@ Public Class OnePlayerCustomisation
             PlayAsWhite = False
         End If
         'Instantiates a new game of Chess.
-        If Not UseBook.Checked Then OpeningBook(0, 0) = "ERROR"
+        If Not UseBook.Checked Then OpeningBook.Clear()
         Dim ChessGame As New Chess(1, UserStartingFEN, DifficultySlider.Value, PlayAsWhite, OpeningBook)
         ChessGame.Show()
     End Sub
@@ -58,7 +54,7 @@ Public Class OnePlayerCustomisation
 
     'Button that displays information regarding the various AI difficulties.
     Private Sub Button1_Click() Handles InfoBtn.Click
-        MsgBox("Beginner: 1s per search, Quiescence off." & vbCrLf & "Easy: 3s per search, Quiescence off." & vbCrLf & "Medium: 5s per search, Quiescence off." & vbCrLf & "Hard: 5s per search, Quiescence on." & vbCrLf & "Expert: 10s per search, Quiescence on." & vbCrLf & "Pain: 30s per search, Quiescence on.", vbInformation + vbApplicationModal, "AI Difficulty Information")
+        MsgBox("Beginner: 1s per search, Quiescence off, Piece Heat Maps off." & vbCrLf & "Easy: 3s per search, Quiescence off, Piece Heat Maps on." & vbCrLf & "Medium: 3s per search, Quiescence on, Piece Heat Maps off." & vbCrLf & "Hard: 5s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "Expert: 10s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "Pain: 30s per search, Quiescence on, Piece Heat Maps on.", vbInformation + vbApplicationModal, "AI Difficulty Information")
     End Sub
     'Button that takes the user back to the main menu.
     Private Sub BackBtn_Click() Handles BackBtn.Click

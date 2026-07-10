@@ -1,19 +1,24 @@
 ﻿'Working Version of Chess, along with AI using MiniMax and Alpha Beta Pruning. Created by Alfie Kunz - 8158.
 Imports System.Threading
+Imports System.Text.RegularExpressions
+Imports System.Security.Cryptography
+Imports System.Diagnostics.Eventing.Reader
 
 'This class forms the main User Interface and the basic game of chess, along with its rules. It will control moving pieces,
 'importing / exporting positions, manipulating the board + its visual design ext, along with converting a user’s actions onto
 'a computer-friendly interface (for the AI to use). This also instantiates the AI class and interacts with it.
 Public Class Chess 'ew- danny
-    Private Structure PieceInfo 'Contains information about a piece that the user is moving on the GUI
+    Private Structure PieceInfo 'Contains information about a piece that the user is moving on the GUI.
         Dim IsMovingPiece As Boolean 'is the piece being moved by the user?
         Dim LegalMoves() As String 'Array containing the legal Moves of the piece being dragged.
+        Dim LockedPiece As String 'Contains the location of the piece that is locked by the user (applies if Touch Move is enabled).
         Dim StartPoint As Point
         Dim MidPoint As Point
         Dim EndPoint As Point
     End Structure
 
     Private SharedAlgorithms As New CoreMethods 'Calls all objects from the CoreMethods class.
+    Private BoardHistory As New GameHistory
 
     'Here are the computer's primary "eyes" - MasterBoard (which contains each piece's location on the board) and,
     'derived from this, Master TrueFalse Tables for each player. These Tables display information such as Legal
@@ -31,12 +36,13 @@ Public Class Chess 'ew- danny
     Private UserPlayer As Boolean = True 'Represents what colour the user is playing with.
     Private MasterWKPos, MasterBKPos As String 'Loaction of Kings.
     Private MasterEnPassant As String 'Location of EnPassant Square
+    Private MasterZobristValue As UInt64
 
     'Data for castling & checks for each player.
     Private MasterWCanCastle, MasterBCanCastle As New CanCastle
     Private MasterWInCheck, MasterBInCheck As New InCheck
 
-    Private ReadOnly OpeningBook(100000, 1)
+    Private ReadOnly OpeningBook As New List(Of OpeningBookEntry)
     Private ReadOnly PieceArray(47) As PictureBox 'Contains all the PictureBoxes on the board.
     Private PieceMoving As PieceInfo
     Private PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
@@ -46,12 +52,12 @@ Public Class Chess 'ew- danny
     '... generated when the user clicks on a piece. Used when redrawing the checkerboard pattern.
     Private OrientForWhite As Boolean = True 'Represents which way the board is flipped.
     Private AnimationSpeed As Byte = 3 'Represents the speed of the piece-moving animation: 0 = Off, 1 = Fast, 2 = Medium, 3 = Slow
-    Private GeneralOptions As String = "TTTTFF" '6-character string that represents the configuration of the program.
+    Private GeneralOptions As String = "TTTTFFF" '7-character string that represents the configuration of the program.
     Private FixedSearchDepth As Byte = 0 'Number representing the fixed depth the AI will search to (0 = off).
-    'Index: 0 = Sound, 1 = Opening Animation, 2 = Board Highlights, 3 = Piece Highlights, 4 = Invisible Pieces, 5 = Hammad Mode (bad AI).
+    'Index: 0 = Sound, 1 = Opening Animation, 2 = Board Highlights, 3 = Piece Highlights, 4 = Touch Move, 5 = Invisible Pieces, 6 = Hammad Mode (bad AI).
 
     'Data structures that bridge the gap between user and AI.
-    Private AbsoluteDepth As SByte 'Estimate of the optimal depth used for searching.
+    Private StartingDepth As SByte 'Estimate of the optimal depth used for searching.
     Private TimeForSearch As Decimal = 10 'Time the AIs are allowed to search for.
     Private CurrentDepth As Byte 'Highest depth successfully searched to.
     Private CurrentMove As String 'Move of the highest depth successfully searched to.
@@ -59,14 +65,15 @@ Public Class Chess 'ew- danny
     Private TerminateSearch As Boolean 'Set to True if the user preemptively aborts the AI search.
     Private ComputerIsSearching As Boolean = False
     Private UseQuiescence As Boolean = True 'Determines whether or not the AI will use Quiescence in its searching.
+    Private UsePieceHeatMaps As Boolean = True 'Determines whether or not the AI will use Piece Heat Maps in its searching.
     'Please see my project report for information about Quiescence.
 
     'Below are the sets of AIs (that will all run simultaneously), along with their corresponding Move Outputs.
     'Also contains data such as which AIs have moved to a higher depth, and which have finished their search
     '(so that GUI controls can be updated).
-    Private MainAI, AI2, AI3, AI4, AI5 As New AI()
-    Private AIBestMoves(6) As Move
-    Private AIMovedToHigherDepth(1), AIFinishedSearch As Boolean
+    Private MainAI As New AI()
+    Private AIBestMove As Move
+    Private AIFinishedSearch As Boolean
     Private AIStopwatch As New Stopwatch 'For timing AI searches.
 
     Private TrainingTimerTicks As UInt16
@@ -111,18 +118,16 @@ Public Class Chess 'ew- danny
         StartingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     End Sub
 
-    Public Sub New(ByRef InputBook(,) As String) 'Call used for a standard game of chess (usually in Analysis Mode).
+    Public Sub New(ByRef InputBook As List(Of OpeningBookEntry)) 'Call used for a standard game of chess (usually in Analysis Mode).
         InitializeComponent() ' This call is required by the designer.
         StartingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         'Creates opening book.
-        Dim BookLength As UInt32 = 2 * (Val(InputBook(0, 0)) + 1)
-        Array.Copy(InputBook, OpeningBook, BookLength)
-        UseBook.Enabled = True
+        If InputBook.Count > 0 Then OpeningBook.AddRange(InputBook) : UseBook.Enabled = True
     End Sub
 
     'The below constructor method rearranges the location of objects on the form (to save space on the screen).
     'This will be called for 1-Player Games and 2-Player Games.
-    Public Sub New(ByVal Mode As Byte, ByVal UserStartingFEN As String, ByVal Difficulty As Byte, ByVal PlayAsWhite As Boolean, ByRef InputBook(,) As String)
+    Public Sub New(ByVal Mode As Byte, ByVal UserStartingFEN As String, ByVal Difficulty As Byte, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry))
         InitializeComponent() ' This call is required by the designer.
         GameMode = Mode
         'Edits the size of the forms, and modifies the obejct now off-screen.
@@ -137,8 +142,9 @@ Public Class Chess 'ew- danny
         UserTimeBar.Visible = False
         UserTimeBox.Visible = False
         QuiescenceBox.Visible = False
-        AIEndlessMode.Visible = False
+        PieceHeatMapBox.Visible = False
         UseBook.Visible = False
+        AIEndlessMode.Visible = False
         SettingsBtn.Location = New Point(40, 520)
         ExitBtn.Location = New Point(181, 520)
         Credits.Location = New Point(78.5, 575)
@@ -153,31 +159,26 @@ Public Class Chess 'ew- danny
             CurrentAIEval.Location = New Point(CurrentAIDepth.Location.X, CurrentAIDepth.Location.Y + 60)
             UserPlayer = PlayAsWhite
             'Difficulty generator.
-            If InputBook(0, 0) <> "ERROR" Then UseBook.Checked = True
+            If InputBook.Count > 0 Then UseBook.Checked = True
             If Difficulty = 1 Then
                 TimeForSearch = 1
                 UseQuiescence = False
+                UsePieceHeatMaps = False
             ElseIf Difficulty = 2 Then
                 TimeForSearch = 3
                 UseQuiescence = False
             ElseIf Difficulty = 3 Then
-                TimeForSearch = 5
-                UseQuiescence = False
+                TimeForSearch = 3
+                UsePieceHeatMaps = False
             ElseIf Difficulty = 4 Then
                 TimeForSearch = 5
-                UseQuiescence = True
             ElseIf Difficulty = 5 Then
                 TimeForSearch = 10
-                UseQuiescence = True
             Else
                 TimeForSearch = 30
-                UseQuiescence = True
             End If
             'Creates opening book.
-            If UseBook.Checked Then
-                Dim BookLength As UInt16 = 2 * (Val(InputBook(0, 0)) + 1)
-                Array.Copy(InputBook, OpeningBook, BookLength)
-            End If
+            If InputBook.Count > 0 Then OpeningBook.AddRange(InputBook) : UseBook.Enabled = True
 
         ElseIf Mode = 2 Then '2P Mode
             FlipperButton.Top -= 100
@@ -220,6 +221,7 @@ Public Class Chess 'ew- danny
         Dim StartupStopwatch As New Stopwatch
         StartupStopwatch.Start()
         Application.EnableVisualStyles()
+        Console.OutputEncoding = System.Text.Encoding.UTF8
         Randomize()
 
         'Assigns each piece to PieceArray and sets the 'board' picturebox as their parent.
@@ -338,28 +340,35 @@ Public Class Chess 'ew- danny
             If MasterWInCheck.IsInCheck AndAlso Not PlayerTurn Then
                 'If White is in check, and it is black to move, then black can take white's king. This is illegal.
                 GameRunning = False
+                Console.ForegroundColor = ConsoleColor.DarkRed
                 Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
             ElseIf MasterBInCheck.IsInCheck AndAlso PlayerTurn Then
                 'If Black is in check, and it is white to move, then white can take black's king. This is illegal.
+                Console.ForegroundColor = ConsoleColor.DarkRed
                 Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
                 GameRunning = False
             ElseIf Math.Abs(Val(MasterWKPos(0)) - Val(MasterBKPos(0))) <= 1 AndAlso Math.Abs(Val(MasterWKPos(1)) - Val(MasterBKPos(1))) <= 1 Then
                 'Kings are too close together.
                 GameRunning = False
+                Console.ForegroundColor = ConsoleColor.DarkRed
                 Console.WriteLine("The Game has Ended. Cause = Invalid King Positions.")
                 CheckLabel.Text = " Stalemate! "
                 If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
             Else
                 Console.Clear()
+                Console.ForegroundColor = ConsoleColor.Green
                 Console.WriteLine("The Game has Begun.")
             End If
+            Console.ResetColor()
 
             'Creates our AI (for legal move generation).
             CurrentFEN = StartingFEN
             MainAI.Reconfigure(CurrentFEN)
+            MasterZobristValue = SharedAlgorithms.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, MasterEnPassant)
 
             StartupStopwatch.Stop()
-            Console.WriteLine("Startup Time: " & StartupStopwatch.Elapsed.TotalMilliseconds & " Milliseconds." & vbCrLf)
+            Console.WriteLine("Startup Time: " & StartupStopwatch.Elapsed.TotalMilliseconds & " Milliseconds.")
+            OutputDebugInfo()
             StartupStopwatch.Reset()
 
             If GameMode < 3 Then
@@ -377,7 +386,8 @@ Public Class Chess 'ew- danny
             Else
                 PreviousFEN = StartingFEN 'if CurrentFEN = PreviousFEN then the user cannot undo a move.
             End If
-            EnforceEndStates() 'Checks for end positions in the starting FEN.
+            EnforceEndStates(False) 'Checks for end positions in the starting FEN.
+            If GameMode = 1 Then BoardHistory.Pop() 'The previous line duplicates the Starting FEN into BoardHistory, so we need to remove it.
         End If
     End Sub
 
@@ -420,30 +430,38 @@ Public Class Chess 'ew- danny
             ColourScheme = LineInput(1)
             AnimationSpeed = Val(LineInput(1))
             TempGeneralOptions = LineInput(1)
-            Dim temp As String = TempGeneralOptions(5) 'Tests that the General Options are the correct length.
+            Dim temp As String = TempGeneralOptions(6) 'Tests that the General Options are the correct length.
+            'Touch Move rule is only supported in the 1-Player and 2-Player modes - disable the control otherwise.
+            If GameMode >= 3 Then TempGeneralOptions = TempGeneralOptions.Remove(4, 1).Insert(4, "F")
             'Invisible pieces are not supported in the training modes - forcibly disable this control.
-            If GameMode > 3 Then TempGeneralOptions = TempGeneralOptions.Remove(4, 1).Insert(4, "F")
+            If GameMode > 3 Then TempGeneralOptions = TempGeneralOptions.Remove(5, 1).Insert(5, "F")
             FixedSearchDepth = Val(LineInput(1))
         Catch ex As Exception
             'Default settings.
             ColourScheme = "def"
             AnimationSpeed = 3
-            TempGeneralOptions = "TTTTFF"
+            TempGeneralOptions = "TTTTFFF"
             FixedSearchDepth = 0
+            Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
+            Console.ResetColor()
         End Try
         FileClose(1)
 
+        If GeneralOptions(4) <> TempGeneralOptions(4) Then
+            PieceMoving.LockedPiece = "" 'Resets locked piece.
+            If TempGeneralOptions(4) = "T" Then UndoMove.Enabled = False : Else UndoMove.Enabled = True
+        End If
         'Toggles Hammad Mode.
-        If GeneralOptions(5) <> TempGeneralOptions(5) Then
-            If TempGeneralOptions(5) = "T" Then MainAI.HammadMode = True : Else MainAI.HammadMode = False
+        If GeneralOptions(6) <> TempGeneralOptions(6) Then
+            If TempGeneralOptions(6) = "T" Then MainAI.HammadMode = True : Else MainAI.HammadMode = False
         End If
 
         'Calibrates General Options
-        If GeneralOptions(4) <> TempGeneralOptions(4) Then
+        If GeneralOptions(5) <> TempGeneralOptions(5) Then
             'Invisible pieces setting modified...
             GeneralOptions = TempGeneralOptions
-            If TempGeneralOptions(4) = "T" Then
+            If TempGeneralOptions(5) = "T" Then
                 'Removes images from pieces.
                 For x = 0 To 47
                     PieceArray(x).Image = Nothing
@@ -453,7 +471,7 @@ Public Class Chess 'ew- danny
                 AssignImagesToPieces()
                 CheckChecker(True)
             End If
-        ElseIf GeneralOptions(3) <> TempGeneralOptions(3) AndAlso GeneralOptions(4) = "F" Then
+        ElseIf GeneralOptions(3) <> TempGeneralOptions(3) AndAlso GeneralOptions(5) = "F" Then
             GeneralOptions = TempGeneralOptions
             CheckChecker(True) 'Restores / Removes king highlights.
         Else
@@ -549,8 +567,13 @@ Public Class Chess 'ew- danny
             Next
             isLight = Not isLight
         Next
-        'Gives the starting square for a piece a distinctive colour, when the user clicks on one.
-        If PieceMoving.IsMovingPiece AndAlso GeneralOptions(3) = "T" Then 'the piece is being moved by the user.
+        'Gives the starting square for a piece a distinctive colour, when the user clicks on one, or when the piece is locked (touch move).
+        If PieceMoving.LockedPiece <> "" Then
+            Dim Square As New Rectangle(Val(PieceMoving.LockedPiece(0)) * 75, Val(PieceMoving.LockedPiece(1)) * 75, 75, 75)
+            Using Brush As New SolidBrush(Color.LightCoral)
+                g.FillRectangle(Brush, Square)
+            End Using
+        ElseIf PieceMoving.IsMovingPiece AndAlso GeneralOptions(3) = "T" Then 'the piece is being moved by the user.
             Dim Square As New Rectangle(PieceMoving.StartPoint.X, PieceMoving.StartPoint.Y, 75, 75)
             Using Brush As New SolidBrush(Color.LightCoral)
                 g.FillRectangle(Brush, Square)
@@ -630,29 +653,66 @@ Public Class Chess 'ew- danny
     'Outputs the board position, along with the TFTables & King positions (to the console).
     'Used for debugging purposes.
     Private Sub OutputDebugInfo()
-        Console.WriteLine(vbCrLf & "Board Position:")
+        Dim Player As String
+        Console.ForegroundColor = ConsoleColor.DarkYellow
+        Console.WriteLine(vbCrLf & vbCrLf & "Board Position: " & CurrentFEN)
         For y = 0 To 7
             For x = 0 To 7
-                Console.Write(MasterBoard(x, y))
+                If MasterBoard(x, y) = " " Then
+                    Console.ResetColor()
+                    Console.Write(ChrW(&H25AB))
+                Else
+                    If Char.IsUpper(MasterBoard(x, y)) Then
+                        Console.ForegroundColor = ConsoleColor.White
+                    Else
+                        Console.ForegroundColor = ConsoleColor.DarkGray
+                    End If
+                    Console.Write(MasterBoard(x, y))
+                End If
             Next
+            Console.ResetColor()
+            If y = 0 Then
+                If PlayerTurn Then Player = "White" Else Player = "Black"
+                Console.Write(New String(" ", 4) & "Player Turn: " & Player)
+            End If
+            If y = 2 Then Console.Write(New String(" ", 4) & "WKPos: " & SharedAlgorithms.PosToCoorConverter(MasterWKPos))
+            If y = 4 Then Console.Write(New String(" ", 4) & "BKPos: " & SharedAlgorithms.PosToCoorConverter(MasterBKPos))
+            If y = 6 Then Console.Write(New String(" ", 4) & "En Passant: " & SharedAlgorithms.PosToCoorConverter(MasterEnPassant))
             Console.WriteLine()
         Next
         Console.WriteLine()
-        Console.WriteLine("WhiteTFTable:")
+        Console.WriteLine("WhiteTFT:" & New String(" ", 5) & "BlackTFT:")
         For y = 0 To 7
             For x = 0 To 7
+                If x & y = MasterWKPos Then
+                    Console.ForegroundColor = ConsoleColor.DarkYellow
+                ElseIf MasterWhiteTFTable(x, y) = "T" Then
+                    Console.ForegroundColor = ConsoleColor.Green
+                ElseIf MasterWhiteTFTable(x, y) = "F" Then
+                    Console.ForegroundColor = ConsoleColor.Red
+                Else
+                    Console.ForegroundColor = ConsoleColor.Blue
+                End If
                 Console.Write(MasterWhiteTFTable(x, y))
             Next
-            Console.WriteLine()
-        Next
-        Console.WriteLine("BlackTFTable:")
-        For y = 0 To 7
+            Console.Write(New String(" ", 6))
             For x = 0 To 7
+                If x & y = MasterBKPos Then
+                    Console.ForegroundColor = ConsoleColor.DarkYellow
+                ElseIf MasterBlackTFTable(x, y) = "T" Then
+                    Console.ForegroundColor = ConsoleColor.Green
+                ElseIf MasterBlackTFTable(x, y) = "F" Then
+                    Console.ForegroundColor = ConsoleColor.Red
+                Else
+                    Console.ForegroundColor = ConsoleColor.Blue
+                End If
                 Console.Write(MasterBlackTFTable(x, y))
             Next
             Console.WriteLine()
         Next
-        Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
+        Console.ForegroundColor = ConsoleColor.Magenta
+        Console.WriteLine("Hash Value: " & MasterZobristValue)
+        Console.ResetColor()
     End Sub
 
 
@@ -772,6 +832,7 @@ Public Class Chess 'ew- danny
                         FormattedPGN &= Moves(n)
                 End Select
             Next
+            If FormattedPGN = "" Then Throw New Exception("Invalid Input.")
         Catch ex As Exception
             'Unable to format moves - assume input is invalid.
             If OutputToTextBox Then
@@ -779,7 +840,9 @@ Public Class Chess 'ew- danny
                 UndoFENChange.Visible = True
                 InputTextBox.Text = "Move Unable to be Formatted. Please Input a valid set of Moves and try again."
             Else
+                Console.ForegroundColor = ConsoleColor.DarkRed
                 Console.WriteLine("Move Unable to be Formatted.")
+                Console.ResetColor()
             End If
             Exit Sub
         End Try
@@ -846,7 +909,9 @@ Public Class Chess 'ew- danny
                             UndoFENChange.Visible = True
                             InputTextBox.Text = "Move (" & TempPGNMove & ") is " & OutputResponce & ". Please Input a valid set of Moves and try again."
                         Else
+                            Console.ForegroundColor = ConsoleColor.DarkRed
                             Console.WriteLine("Move (" & TempPGNMove & ") is " & OutputResponce & ". Please Input a valid set of Moves and try again.")
+                            Console.ResetColor()
                         End If
                         Exit Sub
                     End Try
@@ -888,7 +953,8 @@ Public Class Chess 'ew- danny
                         If FirstMove Then PreviousFEN = CurrentFEN : FirstMove = False
                         CurrentFEN = SharedAlgorithms.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, MasterEnPassant, PlayerTurn)
                         MainAI.Reconfigure(CurrentFEN) 'Recalibrates AI.
-                        EnforceEndStates()
+                        EnforceEndStates(True)
+                        MainAI.AddBoardHistory(BoardHistory.GetArray)
 
                         Exit For
                     End If
@@ -906,7 +972,7 @@ Public Class Chess 'ew- danny
         If InputTextBox.Text <> "" AndAlso InputTextBox.Text <> CurrentFEN AndAlso Not ComputerIsSearching Then
             'Checks for first form of validation (if the 2nd letter is "o", then that usually implies that 
             'the TextBox contains an error message.
-            If InputTextBox.Text(1) <> "o" Then
+            If InputTextBox.Text.Length > 1 AndAlso InputTextBox.Text(1) <> "o" Then
                 'Performs tests on the input to determine whether the user is inputting a FEN or a series of PGN moves.
                 If GameRunning AndAlso (InputTextBox.Text.IndexOf("/") = -1 OrElse (InputTextBox.Text.IndexOf(".") > -1 OrElse (InputTextBox.Text.IndexOf(" ") > 1 AndAlso InputTextBox.Text.IndexOf(" ") < 10))) Then
                     'Can assume that input is a move / moves.
@@ -961,17 +1027,21 @@ Public Class Chess 'ew- danny
                             'If White is in check, and it is black to move, then black can take white's king. This is illegal.
                             GameRunning = False
                             Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
+                            Console.ForegroundColor = ConsoleColor.DarkRed
                         ElseIf MasterBInCheck.IsInCheck AndAlso PlayerTurn Then
                             'If Black is in check, and it is white to move, then white can take black's king. This is illegal.
                             Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
+                            Console.ForegroundColor = ConsoleColor.DarkRed
                             GameRunning = False
                         ElseIf Math.Abs(Val(MasterWKPos(0)) - Val(MasterBKPos(0))) <= 1 AndAlso Math.Abs(Val(MasterWKPos(1)) - Val(MasterBKPos(1))) <= 1 Then
                             'Kings are too close together.
                             GameRunning = False
+                            Console.ForegroundColor = ConsoleColor.DarkRed
                             Console.WriteLine("The Game has Ended. Cause = Invalid King Positions.")
                             CheckLabel.Text = " Stalemate! "
                             If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
                         End If
+                        Console.ResetColor()
 
                         'Recalibrates AI and resets AI move info.
                         MainAI.Reconfigure(CurrentFEN)
@@ -981,7 +1051,9 @@ Public Class Chess 'ew- danny
                         CurrentAIDepth.Text = "Current Depth: -"
                         CurrentAIMove.Text = "Current Move: -"
                         CurrentAIEval.Text = "Evaluation: -"
-                        EnforceEndStates()
+                        BoardHistory.Clear()
+                        EnforceEndStates(False)
+                        OutputDebugInfo()
                     End If
                 End If
             End If
@@ -1037,15 +1109,27 @@ Public Class Chess 'ew- danny
             CurrentAIDepth.Text = "Current Depth: -"
             CurrentAIMove.Text = "Current Move: -"
             CurrentAIEval.Text = "Evaluation: -"
-            EnforceEndStates()
+            BoardHistory.Clear()
             Console.Clear()
+            EnforceEndStates(False)
+            OutputDebugInfo()
             If GeneralOptions(0) = "T" Then Sound_Move.Play()
         End If
     End Sub
 
     'Outputs the current FEN into the FEN textbox.
     Private Sub FENExport_Click() Handles FENExport.Click
-        InputTextBox.Text = CurrentFEN
+        Dim TempFEN As String = CurrentFEN
+        'Trims TempFEN to remove its fullmove number, then appends the size of the BoardHistory array
+        '(representing how many moves have been made in the position).
+        For n = TempFEN.Length - 2 To 0 Step -1
+            If TempFEN(n) = " " Then
+                TempFEN = TempFEN.Substring(0, n + 1)
+                Exit For
+            End If
+        Next
+        TempFEN &= (BoardHistory.GetSize() + 1) \ 2
+        InputTextBox.Text = TempFEN
     End Sub
 
     'Converts the board to the previous FEN Position.
@@ -1092,24 +1176,31 @@ Public Class Chess 'ew- danny
                 'If White is in check, and it is black to move, then black can take white's king. This is illegal.
                 GameRunning = False
                 Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
+                Console.ForegroundColor = ConsoleColor.DarkRed
             ElseIf MasterBInCheck.IsInCheck AndAlso PlayerTurn Then
                 'If Black is in check, and it is white to move, then white can take black's king. This is illegal.
                 Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
+                Console.ForegroundColor = ConsoleColor.DarkRed
                 GameRunning = False
             ElseIf Math.Abs(Val(MasterWKPos(0)) - Val(MasterBKPos(0))) <= 1 AndAlso Math.Abs(Val(MasterWKPos(1)) - Val(MasterBKPos(1))) <= 1 Then
                 'Kings are too close together.
                 GameRunning = False
                 Console.WriteLine("The Game has Ended. Cause = Invalid King Positions.")
+                Console.ForegroundColor = ConsoleColor.DarkRed
                 CheckLabel.Text = " Stalemate! "
                 If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
             Else
                 If GeneralOptions(0) = "T" Then Sound_Move.Play()
             End If
+            Console.ResetColor()
 
-            If GameMode < 3 Then InputTextBox.Text = CurrentFEN
+            If GameMode < 3 Then FENExport_Click()
             'Recalibrates AI, then checks for end positions.
             MainAI.Reconfigure(CurrentFEN)
-            EnforceEndStates()
+            BoardHistory.Swap()
+            EnforceEndStates(False)
+            MainAI.AddBoardHistory(BoardHistory.GetArray)
+            OutputDebugInfo()
         End If
     End Sub
 
@@ -1185,13 +1276,13 @@ Public Class Chess 'ew- danny
             While True
                 Try
                     'Displays text box popup to user, where they can enter their time.
-                    Temp = InputBox("Please input how long you want the AI to search for (in seconds)." & vbCrLf & vbCrLf & "(Min Time = 0.1s, Max Time = 600s)", "Time Inputter")
+                    Temp = InputBox("Please input how long you want the AI to search for (in seconds):" & vbCrLf & vbCrLf & "Min Time = 0.1s, Max Time = 600s." & vbCrLf & "0 = Infinity (Indefinite Search)", "Time Inputter")
                     If Temp = "" OrElse Temp = " " Then 'Cancel / Exit button was pressed - abort.
                         UserTime = TimeForSearch
                         Exit While
                     End If
                     UserTime = Math.Round(CDec(Temp), 1)
-                    If UserTime >= 0.1 AndAlso UserTime <= 600 Then
+                    If UserTime = 0 OrElse (UserTime >= 0.1 AndAlso UserTime <= 600) Then
                         Exit While 'Inside range - input has passed all the checks :).
                     Else 'Input was outside the given range - displays appropriate message.
                         If MsgBox("Invalid Number - Please make sure your input is in the correct range.", vbCritical + vbRetryCancel + vbApplicationModal) = 2 Then
@@ -1209,13 +1300,20 @@ Public Class Chess 'ew- danny
                 End Try
             End While
 
+            If UserTime = 0 Then UserTime = Decimal.MaxValue
             'Edits GUI objects, and updates TimeForSearch.
             UserTimeBox.Select(UserTimeBox.Text.Length, 0)
             UserTimeBar.Value = 2 * Math.Round(Math.Min(UserTime, 30))
-            UserTimeBox.Text = "Time For Search: " & UserTime & " seconds."
+            If UserTime = Decimal.MaxValue Then
+                UserTimeBox.Text = "Time For Search: Infinity."
+            Else
+                UserTimeBox.Text = "Time For Search: " & UserTime & " seconds."
+            End If
             TimeForSearch = UserTime
         End If
     End Sub
+
+    'Subroutines that control the Quiescence and Piece Heat Map Boxes.
     Private Sub QuiescenceBox_CheckedChanged() Handles QuiescenceBox.CheckedChanged
         'Toggles Quiescence depending on the state of the box.
         If QuiescenceBox.Checked Then UseQuiescence = True : Else UseQuiescence = False
@@ -1224,6 +1322,10 @@ Public Class Chess 'ew- danny
         Else
             UserTimeBox.BackColor = Color.WhiteSmoke
         End If
+    End Sub
+    Private Sub PieceHeatMapBox_CheckedChanged() Handles PieceHeatMapBox.CheckedChanged
+        'Toggles Piece Heat Maps depending on the state of the box.
+        If PieceHeatMapBox.Checked Then UsePieceHeatMaps = True : Else UsePieceHeatMaps = False
     End Sub
 
     'Subroutine that terminates the AI search, and displays on the board the AI's current move.
@@ -1256,7 +1358,9 @@ Public Class Chess 'ew- danny
                 Counter += 1
             End While
         Catch ex As Exception 'Unable to retrieve leaderboard.
+            Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error when retrieving White's Leaderboard data.")
+            Console.ResetColor()
         End Try
         FileClose(1)
         'Attempts to retrieve Black's leaderboard (similar code).
@@ -1277,7 +1381,9 @@ Public Class Chess 'ew- danny
                 Counter += 1
             End While
         Catch ex As Exception
+            Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error when retrieving Black's Leaderboard data.")
+            Console.ResetColor()
         End Try
         FileClose(2)
 
@@ -1424,7 +1530,7 @@ Public Class Chess 'ew- danny
                     While True
                         NewName = InputBox("Congratulations - you're on the leaderboard!" & vbCrLf & vbCrLf & "To save your score, please enter your name in the below box:", "Coordinate Practice")
                         If Not (NewName = "" OrElse NewName = " ") Then 'The user has entered a name.
-                            If System.Text.RegularExpressions.Regex.IsMatch(NewName, "^[A-Za-z ]+$") Then 'Only accepts letters & spaces.
+                            If Regex.IsMatch(NewName, "[A-Za-z ]+") Then 'Only accepts letters & spaces.
                                 'The move is valid - add the user's score to the leaderboard.
                                 If OrientForWhite Then 'Edits white's leaderboard.
                                     For x = 9 To -1 Step -1
@@ -1554,8 +1660,10 @@ Public Class Chess 'ew- danny
         End While
 
         MainAI.Reconfigure(NewFEN)
+        Console.ForegroundColor = ConsoleColor.Green
         Console.WriteLine("New Position: " & NewFEN)
-        If NoOfRetries > 0 Then Console.WriteLine("Number of Retries: " & NoOfRetries)
+        If NoOfRetries > 0 Then Console.ForegroundColor = ConsoleColor.Red : Console.WriteLine("Number of Retries: " & NoOfRetries)
+        Console.ResetColor()
         Return MovesInPosition
     End Function
 
@@ -1581,7 +1689,7 @@ Public Class Chess 'ew- danny
     'Subroutine that reveals the settings menu to the user.
     Private Sub SettingsBtn_Click() Handles SettingsBtn.Click
         'Creates and reveals the Settings Form.
-        Dim SettingsMenu As New Settings(GameMode <= 3)
+        Dim SettingsMenu As New Settings(GameMode <= 3, GameMode < 3)
         SettingsMenu.Show()
     End Sub
 
@@ -1607,7 +1715,7 @@ Public Class Chess 'ew- danny
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.2)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v7.0)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
 
@@ -1618,29 +1726,37 @@ Public Class Chess 'ew- danny
         If e.Button = Windows.Forms.MouseButtons.Left AndAlso GameRunning AndAlso Not ComputerIsSearching Then
             'If the piece corresponds to the player allowed to move...
             If (sender.name(0) = "W" AndAlso PlayerTurn) OrElse (sender.name(0) = "B" AndAlso (Not PlayerTurn)) Then
-                Me.Cursor = New Cursor(New System.IO.MemoryStream(My.Resources.Cursor16)) 'Can be Cursor32 or Cursor192
-                'Generates the Legal Moves for the piece the user has picked up (using the AI).
-                ResetLMS(False)
-                If OrientForWhite Then
-                    PieceMoving.LegalMoves = MainAI.ReturnPiecesLegalMoves(sender.location.x / 75, sender.location.y / 75)
-                    'Updates LegalMoveSquares array.
-                    For n = 1 To Val(PieceMoving.LegalMoves(0))
-                        LegalMoveSquares(Val(PieceMoving.LegalMoves(n)(0)), Val(PieceMoving.LegalMoves(n)(1))) = True
-                    Next
+                'Checks if the piece is locked by the user. If it is not, then the user is able to proceed.
+                If PieceMoving.LockedPiece = "" OrElse PieceMoving.LockedPiece = (sender.location.x / 75) & (sender.location.y / 75) Then
+                    Me.Cursor = New Cursor(New System.IO.MemoryStream(My.Resources.Cursor16)) 'Can be Cursor32 or Cursor192
+                    'Generates the Legal Moves for the piece the user has picked up (using the AI).
+                    ResetLMS(False)
+                    If OrientForWhite Then
+                        PieceMoving.LegalMoves = MainAI.ReturnPiecesLegalMoves(sender.location.x / 75, sender.location.y / 75)
+                        'Updates LegalMoveSquares array.
+                        For n = 1 To Val(PieceMoving.LegalMoves(0))
+                            LegalMoveSquares(Val(PieceMoving.LegalMoves(n)(0)), Val(PieceMoving.LegalMoves(n)(1))) = True
+                        Next
+                    Else
+                        PieceMoving.LegalMoves = MainAI.ReturnPiecesLegalMoves(7 - (sender.location.x / 75), 7 - (sender.location.y / 75))
+                        'Updates LegalMoveSquares array.
+                        For n = 1 To Val(PieceMoving.LegalMoves(0))
+                            LegalMoveSquares(7 - Val(PieceMoving.LegalMoves(n)(0)), 7 - Val(PieceMoving.LegalMoves(n)(1))) = True
+                        Next
+                    End If
+                    'Creates the PieceMoving values, then redraws the checkerboard (creates LegalMoveSquares).
+                    sender.bringtofront()
+                    PieceMoving.IsMovingPiece = True
+                    'Notes location of the piece for drag & drop mechanics.
+                    PieceMoving.StartPoint = sender.location
+                    PieceMoving.MidPoint = sender.PointToScreen(New Point(e.X, e.Y))
+                    'If the user is using Touch Move, and the piece has >= 1 legal move, lock that piece so that the user cannot move any piece.
+                    If GeneralOptions(4) = "T" AndAlso Val(PieceMoving.LegalMoves(0)) > 0 Then PieceMoving.LockedPiece = (sender.location.x / 75) & (sender.location.y / 75)
+                    Checkerboard.Refresh()
                 Else
-                    PieceMoving.LegalMoves = MainAI.ReturnPiecesLegalMoves(7 - (sender.location.x / 75), 7 - (sender.location.y / 75))
-                    'Updates LegalMoveSquares array.
-                    For n = 1 To Val(PieceMoving.LegalMoves(0))
-                        LegalMoveSquares(7 - Val(PieceMoving.LegalMoves(n)(0)), 7 - Val(PieceMoving.LegalMoves(n)(1))) = True
-                    Next
+                    'Stops the piece from being moved abruptly.
+                    PieceMoving.StartPoint = sender.location
                 End If
-                'Creates the PieceMoving values, then redraws the checkerboard (creates LegalMoveSquares).
-                sender.bringtofront()
-                PieceMoving.IsMovingPiece = True
-                'Notes location of the piece for drag & drop mechanics.
-                PieceMoving.StartPoint = sender.location
-                PieceMoving.MidPoint = sender.PointToScreen(New Point(e.X, e.Y))
-                Checkerboard.Refresh()
             Else
                 'Stops the piece from being moved abruptly.
                 PieceMoving.StartPoint = sender.location
@@ -1690,6 +1806,7 @@ Public Class Chess 'ew- danny
                 Next
 
                 If IsLegalMove AndAlso GameMode <> 6 Then
+                    PieceMoving.LockedPiece = ""
                     'Resets checking rules.
                     If PlayerTurn Then
                         MasterWInCheck.NotInCheck()
@@ -1861,11 +1978,12 @@ Public Class Chess 'ew- danny
                     PreviousFEN = CurrentFEN
                     CurrentFEN = SharedAlgorithms.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, MasterEnPassant, PlayerTurn)
                     MainAI.Reconfigure(CurrentFEN) 'Recalibrates AI before checking for end states.
-                    EnforceEndStates()
-                    If CurrentFEN = PreviousFEN Then Exit Sub 'Stops AI from running if it is the start position.
+                    EnforceEndStates(True)
+                    MainAI.AddBoardHistory(BoardHistory.GetArray)
+                    If CurrentFEN = PreviousFEN AndAlso UserPlayer = PlayerTurn Then Exit Sub 'Stops AI from running if it is the start position (and it is the user's turn).
                     OutputDebugInfo()
                     If GameMode < 3 Then
-                        InputTextBox.Text = CurrentFEN
+                        FENExport_Click()
                         If GameMode = 1 Then InstantiateAIs()
                     End If
 
@@ -1921,7 +2039,7 @@ Public Class Chess 'ew- danny
             End If
         End If
         'Modifies king picture accordingly.
-        If GeneralOptions(4) = "F" Then
+        If GeneralOptions(5) = "F" Then
             If MasterWInCheck.IsInCheck AndAlso GeneralOptions(3) = "T" Then
                 WK1.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WKingCheck.png")
             Else
@@ -2019,61 +2137,46 @@ Public Class Chess 'ew- danny
 
 
 
-    'Algorithm which calculates the Overall Depth the AI will run at. Takes into account the Total Material Count
+    'Algorithm which calculates the Starting Depth the AI will run at. Takes into account the Total Material Count
     'on the board and calculates Depth using the formula y = -m*ln(x-a) + c (the higher the Material Count, the lower
-    'the Depth).
-    Private Sub CalculateAbsoluteDepth()
+    'the Starting Depth).
+    Private Sub CalculateStartingDepth()
         If FixedSearchDepth = 0 Then
             'Counts the material on the board.
-            Dim TotalMaterial As SByte() = SharedAlgorithms.CountMaterial(MasterBoard)
+            Dim MaterialArray As SByte() = SharedAlgorithms.CountMaterial(MasterBoard)
+            Dim TotalMaterial As Byte = MaterialArray(0) + MaterialArray(1)
             'TotalMaterial(0) = White's total material, TotalMaterial(1) = Black's total material.
-            'If the user is using Quiescence, then we knock off 0.5 from the depth (as Quiescence is slightly slower).
-            Dim DepthAlgorithm As Byte = Math.Truncate(-2 * Math.Log(TotalMaterial(0) + TotalMaterial(1) + 1, 4) + 10.5 + Val(UseQuiescence))
-
-
-            'Calculates all the pseudo-legal moves of the opposing player.
-            Dim EnemyLegalMoves(200, 1) As String
-            If PlayerTurn Then
-                EnemyLegalMoves = MainAI.CreateMoves(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle, MasterEnPassant, False, 0)
-            Else
-                EnemyLegalMoves = MainAI.CreateMoves(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterWCanCastle, MasterEnPassant, False, 0)
-            End If
-            Dim TotalMoves As Byte = Val(MainAI.BasePieceMoves(0, 0)) + Val(EnemyLegalMoves(0, 0))
-            Dim TotalCaptureMoves As Byte = Val(MainAI.BasePieceMoves(0, 1)) + Val(EnemyLegalMoves(0, 1))
-
+            Dim DepthAlgorithm As Int16 = Math.Truncate(-2 * Math.Log(TotalMaterial + 2, 2.5) + 10 + (Val(UseQuiescence)) * TotalMaterial / 25)
 
             'If the previous AI search resulted in a forced Checkmate being found, the depth is limited to only the
             'depth that is required to achieve that Checkmate. This saves on a lot of unnecessary processing, as
             'forced Checkmates are unavoidable.
-            If CurrentEvaluation <> "-" AndAlso Math.Abs(Val(CurrentEvaluation)) > 900 Then
-                AbsoluteDepth = CurrentDepth - (Math.Abs(Val(CurrentEvaluation)) - 999)
+            If CurrentEvaluation <> "-" AndAlso Math.Abs(Val(CurrentEvaluation)) >= 500 Then
+                StartingDepth = Math.Min((1000 - Math.Abs(Val(CurrentEvaluation))), CurrentDepth) - 3
             Else
-                AbsoluteDepth = DepthAlgorithm
-
-                'AbsoluteDepth = Math.Truncate(-2 * Math.Log(TotalMoves, 2) + 18)
-                'If UseQuiescence Then AbsoluteDepth -= Math.Truncate(Math.Log(TotalCaptureMoves + 1, 2)) + 0.5
-
+                StartingDepth = DepthAlgorithm
             End If
             'The Math.Max function is used to ensure that any AI's Depth never gets lower than 2. Along with general quality
-            'improvements (as a depth of 2 can be completed instantly), this also prevents the depth from reaching 1, 0, or
+            'improvements (as a depth of 2 can usually be completed instantly), this also prevents the depth from reaching 1, 0, or
             'negative - all of which would cause errors / invalid results when searching.
-            AbsoluteDepth = Math.Max(AbsoluteDepth, 4)
-        Else 'AbsoluteDepth = the depth set by the user
-            AbsoluteDepth = FixedSearchDepth
+            StartingDepth = Math.Max(StartingDepth, 2)
+        Else 'StartingDepth = the depth set by the user
+            StartingDepth = FixedSearchDepth
         End If
-        Console.WriteLine("Absolute Depth = " & AbsoluteDepth)
+        Console.ForegroundColor = ConsoleColor.Blue
+        Console.WriteLine("Starting Depth = " & StartingDepth)
     End Sub
 
     'Function that uses the binary search to find a given FEN in the opening book.
     Private Function FindPositionInBook(ByVal FEN As String) As UInt32
-        Dim LB As UInt32 = 1 'Lower Bound of Binary Search.
-        Dim UB As UInt32 = Val(OpeningBook(0, 0)) 'Upper Bound of Binary Search.
+        Dim LB As Integer = 0 'Lower Bound of Binary Search.
+        Dim UB As Integer = OpeningBook.Count 'Upper Bound of Binary Search.
         Dim MidPoint As UInt32
         While LB <= UB
             MidPoint = (UB + LB) \ 2
-            If FEN = OpeningBook(MidPoint, 0) Then
+            If FEN = OpeningBook(MidPoint).GetFEN Then
                 Return MidPoint
-            ElseIf FEN > OpeningBook(MidPoint, 0) Then
+            ElseIf FEN > OpeningBook(MidPoint).GetFEN Then
                 LB = MidPoint + 1
             Else
                 UB = MidPoint - 1
@@ -2093,28 +2196,18 @@ Public Class Chess 'ew- danny
             If BestMove.EndState = "f" OrElse BestMove.EndState = "o" Then
                 Dim IndexInBook As UInt32
                 If UseBook.Checked Then IndexInBook = FindPositionInBook(CurrentFEN) 'Finds the index of the opening book that the position exists in.
+                Console.WriteLine()
                 If BestMove.EndState = "o" Then
                     'Move was forced - make move instantly without searching.
                     Console.WriteLine(vbCrLf & "Search Aborted - Only 1 Move in Position.")
                     CurrentAIDepth.Text = "Current Depth: 1"
                     CurrentAIMove.Text = "Current Move: " & SharedAlgorithms.MoveConverter(MasterBoard, BestMove, MasterEnPassant) & " (FORCED)."
                 ElseIf IndexInBook > 0 Then 'Position found in book - play move instantly.
-                    Dim PossibleMoves As String = OpeningBook(IndexInBook, 1)
+                    Dim PossibleMoves As String = OpeningBook(IndexInBook).ReturnAllMoves
+                    Console.ForegroundColor = ConsoleColor.DarkYellow
                     Console.WriteLine(vbCrLf & "Search Aborted - Position Found in Opening Book.")
                     Console.WriteLine("Moves Available: " & PossibleMoves & ". Picking random move...")
-                    Dim BookMoves As New List(Of String) 'Creates list containing all the opening moves (constructed from PossibleMoves).
-                    Dim PreviousCommaIndex As Int16 = -1
-                    For n = 1 To PossibleMoves.Length - 1
-                        If PossibleMoves(n) = "," Then
-                            BookMoves.Add(PossibleMoves.Substring(PreviousCommaIndex + 1, n - PreviousCommaIndex - 1))
-                            PreviousCommaIndex = n
-                        ElseIf n = PossibleMoves.Length - 1 Then 'Is the last index - add the final move.
-                            BookMoves.Add(PossibleMoves.Substring(PreviousCommaIndex + 1, PossibleMoves.Length - PreviousCommaIndex - 1))
-                        End If
-                    Next
-                    'Choose random opening move, then convert this move into BestMove.
-                    Dim RND As New Random()
-                    Dim ChosenBookMove As String = BookMoves(Math.Truncate(RND.Next(0, BookMoves.Count)))
+                    Dim ChosenBookMove As String = OpeningBook(IndexInBook).ReturnRndMove
                     If PlayerTurn Then
                         BestMove = SharedAlgorithms.ConvertToMove(ChosenBookMove, MasterBoard, True, MasterWKPos, MasterWhiteTFTable)
                     Else
@@ -2124,49 +2217,47 @@ Public Class Chess 'ew- danny
                     CurrentAIMove.Text = "Current Move: " & ChosenBookMove & " (Book)."
                     CurrentAIEval.Text = "Evaluation: 0"
                 Else 'no forced or book move found - call AI.
-                    'Instantiations of threads (in a List of tasks format).
-                    Dim Tasks As New List(Of Task) With {
-                        .Capacity = 6
-                    }
-                    If FixedSearchDepth = 0 Then Tasks.Add(New Task(AddressOf InitialiseThread1))
-                    If FixedSearchDepth = 0 Then Tasks.Add(New Task(AddressOf InitialiseThread2))
-                    If FixedSearchDepth = 0 Then Tasks.Add(New Task(AddressOf InitialiseThread3))
-                    If FixedSearchDepth = 0 Then Tasks.Add(New Task(AddressOf InitialiseThread4))
-                    Tasks.Add(New Task(AddressOf InitialiseThread5))
-                    If FixedSearchDepth > 0 Then
-                        For i = 0 To 3
-                            AIBestMoves(i).EndState = "a"
-                        Next
+                    'Instantiation of thread.
+                    Dim AIThread As Task
+                    If FixedSearchDepth = 0 Then
+                        AIThread = New Task(AddressOf VariableAISearchHandler)
+                    Else
+                        AIThread = New Task(AddressOf FixedAISearchHandler)
                     End If
 
-                    CalculateAbsoluteDepth()
-                    AIMovedToHigherDepth(0) = False
-                    AIMovedToHigherDepth(1) = False
+                    CalculateStartingDepth()
                     'Resets GUI objects & changes cursor design.
                     Me.Cursor = Cursors.AppStarting
                     ProgressBar.ForeColor = Color.FromArgb(0, 192, 0)
                     ProgressBar.Value = 0
                     UserTimeBar.Enabled = False
                     QuiescenceBox.Enabled = False
+                    PieceHeatMapBox.Enabled = False
                     'Erases the information from the last AI search.
+                    AIBestMove.EndState = "a"
                     CurrentDepth = 2
                     CurrentMove = "-"
                     CurrentEvaluation = "-"
                     TerminateSearch = False
                     AITerminator.Visible = True
-                    AIFinishedSearch = True
+                    AIFinishedSearch = False
 
                     ComputerIsSearching = True
-                    Console.WriteLine(vbCrLf & "The AI is now searching..." & vbCrLf & "Time for Search = " & TimeForSearch & " Seconds. Quiescence Mode: " & UseQuiescence & vbCrLf)
+                    Console.ForegroundColor = ConsoleColor.DarkCyan
+                    If TimeForSearch = Decimal.MaxValue Then
+                        Console.Write(vbCrLf & "The AI is now searching..." & vbCrLf & "Search Time = Infinity. ")
+                    Else
+                        Console.Write(vbCrLf & "The AI is now searching..." & vbCrLf & "Search Time = " & TimeForSearch & " Seconds. ")
+                    End If
+                    Console.WriteLine("Quiescence: " & UseQuiescence & ", Heat Maps: " & UsePieceHeatMaps & "." & vbCrLf)
+                    Console.ResetColor()
                     AIStopwatch.Reset()
                     AIStopwatch.Start()
-                    'Starts all tasks simultaneously.
-                    Tasks.All(Function(t As Task)
-                                  t.Start()
-                                  Return True
-                              End Function)
-                    'While any of the 5 threads are running...
-                    While Tasks.Any(Function(t As Task) Not (t.Status = TaskStatus.Canceled OrElse t.Status = TaskStatus.Faulted OrElse t.Status = TaskStatus.RanToCompletion))
+
+                    'Starts the AI's thread.
+                    AIThread.Start()
+                    'Whilst the AI thread is running...
+                    While Not AIThread.IsCompleted
                         Application.DoEvents() 'Allows the user to interact with the GUI (limited).
                         'Updates progress bar to reflect time.
                         If IsLate Then
@@ -2176,32 +2267,28 @@ Public Class Chess 'ew- danny
                             ProgressBar.Value = Math.Min(((AIStopwatch.ElapsedMilliseconds / 10) / TimeForSearch), 100)
                         End If
 
-                        If AIStopwatch.ElapsedMilliseconds / 1000 > TimeForSearch OrElse TerminateSearch Then 'Time's up!
-                            If Not MainAI.ABORT Then
-                                'Aborts all AIs (apart from AI of lowest depth if it has not finished).
-                                If AIMovedToHigherDepth(0) Then AI2.ABORT = True
-                                AI3.ABORT = True
-                                MainAI.ABORT = True
-                                AI4.ABORT = True
-                                AI5.ABORT = True
+                        If AIStopwatch.ElapsedMilliseconds / 1000 > TimeForSearch OrElse TerminateSearch OrElse Not Me.IsHandleCreated Then 'Time's up!
+                            If AIBestMove.EndState = "a" Then
+                                'Force the AI to finish after its current search.
                                 IsLate = True
                                 ProgressBar.ForeColor = Color.Red 'Red progress bar - visual indication to user that time is up.
+                            Else
+                                MainAI.AbortSearch()
                             End If
-                            If AIStopwatch.ElapsedMilliseconds / 1000 > Math.Min(TimeForSearch * 1.5, TimeForSearch + 10000) OrElse TerminateSearch Then
-                                '1.5 * time (or extra 10s) has expired - terminate all AIs immediately!
-                                If Not AI2.ABORT Then AI2.ABORT = True
-                                If Not AI3.ABORT Then AI3.ABORT = True
-                                If Not MainAI.ABORT Then MainAI.ABORT = True
-                                If Not AI4.ABORT Then AI4.ABORT = True
-                                If Not AI5.ABORT Then AI5.ABORT = True
-                            End If
-                        ElseIf AIFinishedSearch Then 'Updates GUI controls on latest search & redraws checkerboard.
+                            '1.5 * time (or extra 10s) has expired - terminate AI immediately!
+                            If AIStopwatch.ElapsedMilliseconds / 1000 > Math.Min(TimeForSearch * 1.5, TimeForSearch + 10000) OrElse TerminateSearch OrElse Not Me.IsHandleCreated Then MainAI.AbortSearch()
+
+                        ElseIf AIFinishedSearch Then 'A new depth has been searched to - update GUI controls on latest search & redraw checkerboard.
                             Checkerboard.Refresh()
-                            CurrentAIDepth.Text = "Current Depth: " & CurrentDepth
+                            If UseQuiescence Then
+                                CurrentAIDepth.Text = "Current Depth: " & CurrentDepth & " - " & MainAI.GetHighestQuiescenceDepth
+                            Else
+                                CurrentAIDepth.Text = "Current Depth: " & CurrentDepth
+                            End If
                             CurrentAIMove.Text = "Current Move: " & CurrentMove
-                            If CurrentEvaluation <> "-" AndAlso Math.Abs(Val(CurrentEvaluation)) > 900 Then
-                                'Mating pattern has been found.
-                                CurrentAIEval.Text = "Evaluation: Mate in " & (CurrentDepth - (Math.Abs(Val(CurrentEvaluation)) - 1000)) \ 2
+                            If CurrentEvaluation <> "-" AndAlso Math.Abs(Val(CurrentEvaluation)) >= 500 Then
+                                'Mating pattern has been found by AI.
+                                CurrentAIEval.Text = "Evaluation: Mate in " & (1000 - (Math.Abs(Val(CurrentEvaluation)))) \ 2
                             Else
                                 CurrentAIEval.Text = "Evaluation: " & CurrentEvaluation
                             End If
@@ -2210,46 +2297,43 @@ Public Class Chess 'ew- danny
                         Thread.Sleep(5) 'Allows more processing time to be spent on the AIs.
                     End While
                     AIStopwatch.Stop()
-                    If TerminateSearch Then Console.WriteLine("Search Terminated Preemptively (by user).")
+                    If TerminateSearch Then Console.ForegroundColor = ConsoleColor.Red : Console.WriteLine("Search Terminated Preemptively (by user).")
 
                     'Select the best move of the highest depth possible (if that search has not been aborted).
-                    If AIMovedToHigherDepth(1) AndAlso AIBestMoves(6).EndState <> "a" Then
-                        BestMove = AIBestMoves(6)
-                    ElseIf AIMovedToHigherDepth(0) AndAlso AIBestMoves(5).EndState <> "a" Then
-                        BestMove = AIBestMoves(5)
-                    ElseIf AIBestMoves(4).EndState <> "a" Then
-                        BestMove = AIBestMoves(4)
-                    ElseIf AIBestMoves(3).EndState <> "a" Then
-                        BestMove = AIBestMoves(3)
-                    ElseIf AIBestMoves(2).EndState <> "a" Then
-                        BestMove = AIBestMoves(2)
-                    ElseIf AIBestMoves(1).EndState <> "a" Then
-                        BestMove = AIBestMoves(1)
-                    ElseIf AIBestMoves(0).EndState <> "a" Then
-                        BestMove = AIBestMoves(0)
-                    Else 'No AI have completed their search - start a new search at a depth of 2 (without Quiescence).
-                        'Sets the result of this new to be the best move.
-                        BestMove = MainAI.Search(2, False)
+                    If AIBestMove.EndState <> "a" Then
+                        BestMove = AIBestMove
+                    Else 'The AI has not successfully completed a search - start a new search at a depth of 2 (without Quiescence).
+                        'Sets the result of this new move to be the best move.
+                        BestMove = MainAI.Search(2, False, UsePieceHeatMaps)
                         CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, BestMove, MasterEnPassant)
                     End If
-                    Console.WriteLine(vbCr & "Search Complete. Total Time: " & AIStopwatch.Elapsed.TotalMilliseconds & " Milliseconds.")
+                    Console.ForegroundColor = ConsoleColor.DarkCyan
+                    Console.WriteLine(vbCr & "Search Complete. Total Time: " & AIStopwatch.Elapsed.TotalMilliseconds.ToString("N0") & " Milliseconds.")
 
                     'Updates GUI labels (containing info on search).
                     AITerminator.Visible = False
                     TerminateSearch = False
-                    CurrentAIDepth.Text = "Current Depth: " & CurrentDepth
+
+                    If UseQuiescence Then
+                        CurrentAIDepth.Text = "Current Depth: " & CurrentDepth & " - " & MainAI.GetHighestQuiescenceDepth
+                    Else
+                        CurrentAIDepth.Text = "Current Depth: " & CurrentDepth
+                    End If
                     CurrentEvaluation = BestMove.Score
                     CurrentAIMove.Text = "Current Move: " & CurrentMove
-                    If CurrentEvaluation <> "-" AndAlso Math.Abs(Val(CurrentEvaluation)) > 900 Then
+                    If CurrentEvaluation <> "-" AndAlso Math.Abs(Val(CurrentEvaluation)) > 500 Then
                         'Mating pattern has been found - update GUI accordingly
-                        CurrentAIEval.Text = "Evaluation: Mate in " & (CurrentDepth - (Math.Abs(Val(CurrentEvaluation)) - 1000)) \ 2
+                        CurrentAIEval.Text = "Evaluation: Mate in " & (1000 - (Math.Abs(Val(CurrentEvaluation)))) \ 2
                     Else
                         CurrentAIEval.Text = "Evaluation: " & CurrentEvaluation
                     End If
+
+                    'Resets Progress bar.
                     ProgressBar.ForeColor = Color.FromArgb(0, 192, 0)
                     ProgressBar.Value = 0
 
                 End If
+                Console.ResetColor()
 
                 If Me.IsHandleCreated Then 'If form is still open...
                     GameRunning = True
@@ -2294,31 +2378,33 @@ Public Class Chess 'ew- danny
 
                     'Ends the turn, then calculates the new position's FEN.
                     PlayerTurn = Not PlayerTurn
-                    If GameMode = 3 Then
-                        PreviousFEN = CurrentFEN
-                    Else
-                        InputTextBox.Text = SharedAlgorithms.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, MasterEnPassant, PlayerTurn)
-                    End If
+                    If GameMode = 3 Then PreviousFEN = CurrentFEN
                     CurrentFEN = SharedAlgorithms.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, MasterEnPassant, PlayerTurn)
                     MainAI.Reconfigure(CurrentFEN) 'Recalibrates AI.
                     'Checks if the new position is in the opening book. If so then output these moves.
                     If UseBook.Checked AndAlso GameMode = 3 AndAlso IndexInBook > 0 Then
                         IndexInBook = FindPositionInBook(CurrentFEN) 'Finds the index of the opening book that the position exists in.
+                        Console.ForegroundColor = ConsoleColor.DarkYellow
                         If IndexInBook = 0 Then
                             Console.WriteLine("No Longer in Opening Book.")
                         Else
                             'Retrieves all the moves in the opening book.
-                            Dim PossibleMoves As String = OpeningBook(IndexInBook, 1)
+                            Dim PossibleMoves As String = OpeningBook(IndexInBook).ReturnAllMoves
                             Console.WriteLine("Moves In Opening Book (in Current Position): " & PossibleMoves & ".")
                         End If
+                        Console.ResetColor()
                     End If
 
                     'Resets GUI objects & cursor design.
                     Me.Cursor = Cursors.Default
                     UserTimeBar.Enabled = True
                     QuiescenceBox.Enabled = True
+                    PieceHeatMapBox.Enabled = True
                     ComputerIsSearching = False
-                    EnforceEndStates() 'Checks for end states found from the AI's move.
+                    EnforceEndStates(Not GameMode = 1) 'Checks for end states found from the AI's move.
+                    'As two moves are made in one game 'state', we do not copy BoardHistory to its Buffer (so we don't false-trigger 3FR).
+                    MainAI.AddBoardHistory(BoardHistory.GetArray)
+                    If GameMode <> 3 Then FENExport_Click()
                     OutputDebugInfo()
                     'The below lines fix a bug, where the AI wouldn't make a move after the user restarts their game (1P mode only).
                     If AIEndlessMode.Checked OrElse (GameMode = 1 AndAlso CurrentFEN = PreviousFEN AndAlso Not UserPlayer = PlayerTurn) Then
@@ -2332,135 +2418,53 @@ Public Class Chess 'ew- danny
         End If
     End Sub
 
-    'Subroutines controlling each thread / AI of particular depth.
-    Private Sub InitialiseThread1()
-        'Creates and starts the AI.
-        AIBestMoves(0) = AI2.Search(AbsoluteDepth - 2, UseQuiescence)
-        If Not AI2.ABORT Then
-            'Outputs the move if the move has completed successfully.
-            Console.WriteLine("Depth Of " & AbsoluteDepth - 2 & " Completed in: " & AIStopwatch.ElapsedMilliseconds & " Milliseconds." & vbCrLf)
-            AmmendLegalMoveSuares(AIBestMoves(0))
-            AIFinishedSearch = True
-            CurrentDepth = AbsoluteDepth - 2
-            CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMoves(0), MasterEnPassant)
-            CurrentEvaluation = AIBestMoves(0).Score
-            If Math.Abs(AIBestMoves(0).Score) > 900 Then
-                'Checkmating sequence found - terminate all other AIs.
-                AI3.ABORT = True
-                MainAI.ABORT = True
-                AI4.ABORT = True
-                AI5.ABORT = True
-            ElseIf AIStopwatch.ElapsedMilliseconds / 500 < TimeForSearch Then
-                'Starts a new search at a higher depth (if there is >50% left on the timer).
-                AIMovedToHigherDepth(0) = True
-                AIBestMoves(5) = AI2.Search(AbsoluteDepth + 3, UseQuiescence)
-                If Not AI2.ABORT Then
-                    'Outputs the move if the move has completed successfully.
-                    Console.WriteLine("Depth Of " & AbsoluteDepth + 3 & " Completed in: " & AIStopwatch.ElapsedMilliseconds & " Milliseconds." & vbCrLf)
-                    AmmendLegalMoveSuares(AIBestMoves(5))
-                    AIFinishedSearch = True
-                    CurrentDepth = AbsoluteDepth + 3
-                    CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMoves(5), MasterEnPassant)
-                    CurrentEvaluation = AIBestMoves(5).Score
-                    If Math.Abs(AIBestMoves(5).Score) > 900 Then
-                        'Checkmating sequence found - terminate all other AIs.
-                        AI3.ABORT = True
-                        MainAI.ABORT = True
-                        AI4.ABORT = True
-                        AI5.ABORT = True
-                    End If
-                End If
+    'Subroutines controlling the AI thread. Variable Search = the AI starts at a depth of StartingDepth, and increments by one after each search (iterative deepening).
+    'Fixed Search = the AI only performs one search, but at the specified depth that the user provided.
+    Private Sub VariableAISearchHandler()
+        Dim AICurrentMove As New Move
+        Dim CurrentSearchStopwatch As New Stopwatch
+        Dim CurrentAIDepth As Byte = StartingDepth
+        While CurrentAIDepth < 100
+            CurrentSearchStopwatch.Restart()
+            If CurrentAIDepth = StartingDepth OrElse MainAI.HammadMode Then
+                AICurrentMove = MainAI.Search(CurrentAIDepth, UseQuiescence, UsePieceHeatMaps)
+            Else
+                AICurrentMove = MainAI.Search(CurrentAIDepth, UseQuiescence, UsePieceHeatMaps, AIBestMove)
             End If
-        End If
+            CurrentSearchStopwatch.Stop()
+            If AICurrentMove.EndState = "a" Then
+                Exit While
+            Else
+                AIBestMove = AICurrentMove
+                Console.ForegroundColor = ConsoleColor.DarkGreen
+                Console.Write("Depth Of " & CurrentAIDepth)
+                If UseQuiescence Then Console.Write("-" & MainAI.GetHighestQuiescenceDepth())
+                Console.WriteLine(" Completed in: " & AIStopwatch.ElapsedMilliseconds.ToString("N0") & " Milliseconds (" & CurrentSearchStopwatch.ElapsedMilliseconds.ToString("N0") & "ms)" & vbCrLf)
+                Console.ResetColor()
+                AmmendLegalMoveSuares(AIBestMove)
+                CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMove, MasterEnPassant)
+                CurrentEvaluation = AIBestMove.Score
+                CurrentDepth = CurrentAIDepth
+                AIFinishedSearch = True
+                If Math.Abs(AIBestMove.Score) >= 500 Then Exit While
+                CurrentAIDepth += 1
+                If CurrentSearchStopwatch.ElapsedMilliseconds < 10 Then CurrentAIDepth += 1 'Skips a depth if the previous search was (essentially) instant.
+            End If
+        End While
     End Sub
-    'The below 4 subroutines are very similar to the one above - just for different depths.
-    '(also note that, apart from the immediately below subroutine, the below algorithms do
-    'not contain the 'increase to higher depth once completed' mechanism).
-    Private Sub InitialiseThread2()
-        AIBestMoves(1) = AI3.Search(AbsoluteDepth - 1, UseQuiescence)
-        If Not AI3.ABORT Then
-            Console.WriteLine("Depth Of " & AbsoluteDepth - 1 & " Completed in: " & AIStopwatch.ElapsedMilliseconds & " Milliseconds." & vbCrLf)
-            AmmendLegalMoveSuares(AIBestMoves(1))
+    Private Sub FixedAISearchHandler()
+        AIBestMove = MainAI.Search(StartingDepth, UseQuiescence, UsePieceHeatMaps)
+        If AIBestMove.EndState <> "a" Then
+            Console.ForegroundColor = ConsoleColor.DarkGreen
+            Console.Write("Depth Of " & StartingDepth)
+            If UseQuiescence Then Console.Write("-" & MainAI.GetHighestQuiescenceDepth())
+            Console.Write(" Completed in: " & AIStopwatch.ElapsedMilliseconds.ToString("N0") & " Millisecondss." & vbCrLf)
+            Console.ResetColor()
+            AmmendLegalMoveSuares(AIBestMove)
+            CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMove, MasterEnPassant)
+            CurrentEvaluation = AIBestMove.Score
+            CurrentDepth = StartingDepth
             AIFinishedSearch = True
-            CurrentDepth = AbsoluteDepth - 1
-            CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMoves(1), MasterEnPassant)
-            CurrentEvaluation = AIBestMoves(1).Score
-            If Math.Abs(AIBestMoves(1).Score) > 900 Then
-                MainAI.ABORT = True
-                AI4.ABORT = True
-                AI5.ABORT = True
-                AI2.ABORT = True
-            ElseIf AIStopwatch.ElapsedMilliseconds / 500 < TimeForSearch Then
-                AIMovedToHigherDepth(1) = True
-                AIBestMoves(6) = AI3.Search(AbsoluteDepth + 4, UseQuiescence)
-                If Not AI3.ABORT Then
-                    Console.WriteLine("Depth Of " & AbsoluteDepth + 4 & " Completed in: " & AIStopwatch.ElapsedMilliseconds & " Milliseconds." & vbCrLf)
-                    AmmendLegalMoveSuares(AIBestMoves(6))
-                    AIFinishedSearch = True
-                    CurrentDepth = AbsoluteDepth + 4
-                    CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMoves(6), MasterEnPassant)
-                    CurrentEvaluation = AIBestMoves(6).Score
-                    If Math.Abs(AIBestMoves(6).Score) > 900 Then
-                        MainAI.ABORT = True
-                        AI4.ABORT = True
-                        AI5.ABORT = True
-                        AI2.ABORT = True
-                    End If
-                End If
-            End If
-        End If
-    End Sub
-    Private Sub InitialiseThread3()
-        AIBestMoves(2) = MainAI.Search(AbsoluteDepth, UseQuiescence)
-        If Not MainAI.ABORT Then
-            Console.WriteLine("Depth Of " & AbsoluteDepth & " Completed in: " & AIStopwatch.ElapsedMilliseconds & " Milliseconds." & vbCrLf)
-            AmmendLegalMoveSuares(AIBestMoves(2))
-            AIFinishedSearch = True
-            CurrentDepth = AbsoluteDepth
-            CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMoves(2), MasterEnPassant)
-            CurrentEvaluation = AIBestMoves(2).Score
-            If Math.Abs(AIBestMoves(2).Score) > 900 Then
-                AI4.ABORT = True
-                AI5.ABORT = True
-                AI2.ABORT = True
-                AI3.ABORT = True
-            End If
-        End If
-    End Sub
-    Private Sub InitialiseThread4()
-        AIBestMoves(3) = AI4.Search(AbsoluteDepth + 1, UseQuiescence)
-        If Not AI4.ABORT Then
-            Console.WriteLine("Depth Of " & AbsoluteDepth + 1 & " Completed in: " & AIStopwatch.ElapsedMilliseconds & " Milliseconds." & vbCrLf)
-            AmmendLegalMoveSuares(AIBestMoves(3))
-            AIFinishedSearch = True
-            CurrentDepth = AbsoluteDepth + 1
-            CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMoves(3), MasterEnPassant)
-            CurrentEvaluation = AIBestMoves(3).Score
-            If Math.Abs(AIBestMoves(3).Score) > 900 Then
-                AI5.ABORT = True
-                AI2.ABORT = True
-                AI3.ABORT = True
-                MainAI.ABORT = True
-            End If
-        End If
-    End Sub
-    Private Sub InitialiseThread5()
-        Dim i As Byte
-        If FixedSearchDepth = 0 Then i = 2 Else i = 0
-        AIBestMoves(4) = AI5.Search(AbsoluteDepth + i, UseQuiescence)
-        If Not AI5.ABORT Then
-            Console.WriteLine("Depth Of " & AbsoluteDepth + i & " Completed in: " & AIStopwatch.ElapsedMilliseconds & " Milliseconds." & vbCrLf)
-            AmmendLegalMoveSuares(AIBestMoves(4))
-            AIFinishedSearch = True
-            CurrentDepth = AbsoluteDepth + i
-            CurrentMove = SharedAlgorithms.MoveConverter(MasterBoard, AIBestMoves(4), MasterEnPassant)
-            CurrentEvaluation = AIBestMoves(4).Score
-            If Math.Abs(AIBestMoves(4).Score) > 900 Then
-                AI2.ABORT = True
-                AI3.ABORT = True
-                MainAI.ABORT = True
-                AI2.ABORT = True
-            End If
         End If
     End Sub
 
@@ -2480,7 +2484,7 @@ Public Class Chess 'ew- danny
                 If NewCoorY = 0 Then
                     TempPiece = "Q"
                 ElseIf NewCoorX & NewCoorY = EnPassant Then
-                    Board(NewCoorX, NewCoorY + 1) = " "
+                    Board(NewCoorX, 3) = " "
                     If MakeSounds Then Sound_Capture.Play()
                 ElseIf OldCoorY = 6 AndAlso NewCoorY = 4 AndAlso (Board(Math.Max(NewCoorX - 1, 0), 4) = "p" OrElse Board(Math.Min(NewCoorX + 1, 7), 4) = "p") Then
                     'EnPassant Creation.
@@ -2489,10 +2493,10 @@ Public Class Chess 'ew- danny
                 End If
                 'If piece is a Rook, part of Castling is disabled (depending on which Rook has moved).
             ElseIf TempPiece = "R" AndAlso CanCastle.CanICastle Then
-                If OldCoorX = 0 AndAlso OldCoorY = 7 Then
-                    CanCastle.QS = False
-                ElseIf OldCoorX = 7 AndAlso OldCoorY = 7 Then
+                If CanCastle.KS AndAlso OldCoorX = 7 AndAlso OldCoorY = 7 Then
                     CanCastle.KS = False
+                ElseIf CanCastle.QS AndAlso OldCoorX = 0 AndAlso OldCoorY = 7 Then
+                    CanCastle.QS = False
                 End If
             ElseIf TempPiece = "K" Then
                 KPos = NewCoorX & NewCoorY
@@ -2514,7 +2518,7 @@ Public Class Chess 'ew- danny
                 If NewCoorY = 7 Then
                     TempPiece = "q"
                 ElseIf NewCoorX & NewCoorY = EnPassant Then
-                    Board(NewCoorX, NewCoorY - 1) = " "
+                    Board(NewCoorX, 4) = " "
                     If MakeSounds Then Sound_Capture.Play()
                 ElseIf OldCoorY = 1 AndAlso NewCoorY = 3 AndAlso (Board(Math.Max(NewCoorX - 1, 0), 3) = "P" OrElse Board(Math.Min(NewCoorX + 1, 7), 3) = "P") Then
                     'EnPassant Creation.
@@ -2522,10 +2526,10 @@ Public Class Chess 'ew- danny
                     HasEnPassanted = True
                 End If
             ElseIf TempPiece = "r" AndAlso CanCastle.CanICastle Then
-                If OldCoorX = 0 AndAlso OldCoorY = 0 Then
-                    CanCastle.QS = False
-                ElseIf OldCoorX = 7 AndAlso OldCoorY = 0 Then
+                If CanCastle.KS AndAlso OldCoorX = 7 AndAlso OldCoorY = 0 Then
                     CanCastle.KS = False
+                ElseIf CanCastle.QS AndAlso OldCoorX = 0 AndAlso OldCoorY = 0 Then
+                    CanCastle.QS = False
                 End If
             ElseIf TempPiece = "k" Then
                 KPos = NewCoorX & NewCoorY
@@ -2557,13 +2561,14 @@ Public Class Chess 'ew- danny
     'actually has any legal moves (or if there is only 1 forced move), and if they don't, then then the
     'game will end. This algorithm also checks for draws by insufficient material. If the procedure does
     'detect any of these end states, then it stops the game and/or notifies the user (depending on gamemode).
-    Private Sub EnforceEndStates()
+    Private Sub EnforceEndStates(ByVal NormalMove As Boolean)
         Dim TempMove = MainAI.CheckForEndState()
         Select Case TempMove.EndState
             Case "c" 'Position is checkmate.
                 CheckLabel.Text = "Checkmate!"
                 If GeneralOptions(0) = "T" Then Sound_Checkmate.Play()
                 GameRunning = False
+                Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("The Game has Ended. Cause = Checkmate.")
                 If GameMode < 3 Then NotifyGameEnd("c")
                 Exit Sub
@@ -2571,6 +2576,7 @@ Public Class Chess 'ew- danny
                 CheckLabel.Text = " Stalemate! "
                 If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
                 GameRunning = False
+                Console.ForegroundColor = ConsoleColor.Red
                 Console.WriteLine("The Game has Ended. Cause = Stalemate.")
                 If GameMode < 3 Then NotifyGameEnd("d")
                 Exit Sub
@@ -2584,6 +2590,7 @@ Public Class Chess 'ew- danny
             CheckLabel.Text = "     Draw!     "
             If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
             GameRunning = False
+            Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine("The Game has Ended. Cause = Draw by Insufficient Material (K v K).")
             If GameMode < 3 Then NotifyGameEnd("d")
         ElseIf TempMaterialCount(0) + TempMaterialCount(1) = 3 Then 'could be king vs king + knight / bishop.
@@ -2595,7 +2602,8 @@ Public Class Chess 'ew- danny
                         CheckLabel.Text = "     Draw!     "
                         If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
                         GameRunning = False
-                        Console.WriteLine("The Game now Ended. Cause = Draw by Insufficient Material (K v K+B/N).")
+                        Console.ForegroundColor = ConsoleColor.Red
+                        Console.WriteLine("The Game has Ended. Cause = Draw by Insufficient Material (K v K+B/N).")
                         If GameMode < 3 Then NotifyGameEnd("d")
                         Exit Sub
                     End If
@@ -2622,6 +2630,7 @@ Public Class Chess 'ew- danny
                                     CheckLabel.Text = "     Draw!     "
                                     If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
                                     GameRunning = False
+                                    Console.ForegroundColor = ConsoleColor.Red
                                     Console.WriteLine("The Game has now Ended. Cause = Draw by Insufficient Material (K v K+B+B).")
                                     If GameMode < 3 Then NotifyGameEnd("d")
                                 End If
@@ -2634,11 +2643,26 @@ Public Class Chess 'ew- danny
                 Next
             Next
         End If
+
+        'Checks for three-fold repetition.
+        MasterZobristValue = SharedAlgorithms.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, MasterEnPassant)
+        BoardHistory.Push(MasterZobristValue, NormalMove)
+        If BoardHistory.CheckNoOfOccurances(MasterZobristValue) = 3 Then
+            'Position has ocurred three times - end game.
+            CheckLabel.Text = "     Draw!     "
+            If GeneralOptions(0) = "T" Then Sound_Stalemate.Play()
+            GameRunning = False
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("The Game has Ended. Cause = Draw by Three-fold Repetition.")
+            If GameMode < 3 Then NotifyGameEnd("d")
+            Exit Sub
+        End If
     End Sub
 
     'Notifies the user if the game has concluded - giving them an appropriate message and an option to play again.
     'If they deny, then they are sent back to the main menu.
     Private Sub NotifyGameEnd(ByVal EndState As Char)
+        Console.ResetColor()
         Dim Text As String
         If GameMode = 1 Then
             If EndState = "c" Then
