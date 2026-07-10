@@ -172,35 +172,36 @@ Public Class MainMenu
     Private Sub SetupOptions()
         'Sets the location of all the labels and buttons, and makes them invisible.
         Title.Visible = False
-        Title.Location = New Point(221, 160)
+        Title.Location = New Point(104, 160)
         Title.BringToFront()
 
         OnePlayer.Visible = False
-        OnePlayer.Location = New Point(127.5, 233)
+        OnePlayer.Location = New Point(127.5, 232.5)
         OnePlayer.FlatAppearance.BorderSize = 0
         OnePlayer.BringToFront()
 
         TwoPlayer.Visible = False
-        TwoPlayer.Location = New Point(352.5, 233)
+        TwoPlayer.Location = New Point(352.5, 232.5)
         TwoPlayer.FlatAppearance.BorderSize = 0
         TwoPlayer.BringToFront()
 
         Analysis.Visible = False
-        Analysis.Location = New Point(127.5, 308)
+        Analysis.Location = New Point(127.5, 307.5)
         Analysis.FlatAppearance.BorderSize = 0
         Analysis.BringToFront()
 
         ExitBtn.Visible = False
-        ExitBtn.Location = New Point(352.5, 307)
+        ExitBtn.Location = New Point(352.5, 307.5)
         ExitBtn.FlatAppearance.BorderSize = 0
         ExitBtn.BringToFront()
 
         Credits.Visible = False
-        Credits.Location = New Point(191, 404)
+        Credits.Location = New Point(172, 404)
         Credits.BringToFront()
     End Sub
 
     Private Sub StartupAnimation() Handles Me.Activated
+        MyBase.Refresh()
         Dim TempColour As String
         Try
             FileOpen(1, Application.StartupPath & "\ColourPreferences.txt", OpenMode.Input)
@@ -209,10 +210,10 @@ Public Class MainMenu
             If TempColour <> ColourScheme Then
                 ColourScheme = TempColour
                 CreateColourProfile(ColourScheme)
-                MyBase.Refresh()
             End If
         Catch ex As Exception
         End Try
+        MyBase.Refresh()
 
         Dim AlreadyBooted As Boolean
         If WP8.Visible = True Then AlreadyBooted = True
@@ -371,6 +372,11 @@ Public Class MainMenu
     End Sub
     Private Sub ExitBtn_Click() Handles ExitBtn.Click
         Me.Close()
+    End Sub
+
+    'Button that displays the credits information onto the screen (in the form of a pop-up).
+    Private Sub Credits_Click() Handles Credits.Click
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v5.2)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
 End Class

@@ -2,13 +2,12 @@
 'my AI class (either via instavintiation or by inheritance). It will contain the algorithms that will be used by both my Chess
 '& AI classes, such as the ‘PieceLegalMoves’ generator, the ‘TFTable’ Generator, ‘DoesMoveResolveCheck’, and others.
 Public Class CoreMethods
-    Inherits PieceSquaresTable
     'TrueTables are just TrueFalse Tables containing only the letter T. Very useful for resetting TrueFalse Tables
     'and debugging.
     Public MasterTrueTable(7, 7), TrueTable(7, 7) As Char
     Public CannotCastle As New CanCastle
     Public NotInCheck As New InCheck
-    Private PieceValue(9) As Decimal 'Array Containing the Value or Weight of each Piece.
+    Private ReadOnly PieceValue(9) As Decimal 'Array Containing the Value or Weight of each Piece.
     Public Sub New()
         'Sets PieceValues variables using a Hash Function (Upper Case letter --> ASCII, then MOD 11). This
         'creates() a unique index / row in the PieceValue array for each piece and its corresponding weight,
@@ -24,13 +23,9 @@ Public Class CoreMethods
         For x = 0 To 7
             For y = 0 To 7
                 MasterTrueTable(x, y) = "T"
+                TrueTable(x, y) = "T"
             Next
         Next
-        ResetTFTable(TrueTable)
-    End Sub
-    Public Sub ResetTFTable(ByRef TFTable(,) As Char)
-        'As MasterTrueTable is constant, we just copy all the indexes from it to the user's TFTable.
-        Array.Copy(MasterTrueTable, TFTable, 64)
     End Sub
 
 
@@ -149,26 +144,32 @@ Public Class CoreMethods
     'represent which direction it is pinned from (0 = vertical, 1 = btm left to top right diagonal, 2 = horizontal,
     '3 = top left to btm right diagonal). This is useful as a pinned pawn pinned vertically can still move
     'upwardly, but cannot take an enemy piece diagonally (which would expose the king), so I have also implemented
-    'the logic for pieces moving depending on if / where they are pinned from. I am using the System.ValueTuple
-    'Package to return 2 arrays (LegalMoveArray & ...TrueTableResult from each function.
-    Function WhitePieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef WhiteTFTable(,) As Char, ByRef BlackTFTable(,) As Char, ByVal BKPos As String, ByRef BInCheck As InCheck, ByVal WInCheck As InCheck, ByVal WCanCastle As CanCastle, ByVal EnPassant As String) As String()
+    'the logic for pieces moving depending on if / where they are pinned from.
+
+    'Note: to help reduce unnecessary commenting, and due to the fact that much of this code is somewhat similar
+    'for each type of piece, comments will only be included for the first appearance of a particular method / technique.
+    'For more in-depth commenting & info, please see the section on Pseudo-legal Move Generation in my Project Report (Design).
+    Public Function WhitePieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef WhiteTFTable(,) As Char, ByRef BlackTFTable(,) As Char, ByVal BKPos As String, ByRef BInCheck As InCheck, ByVal WInCheck As InCheck, ByVal WCanCastle As CanCastle, ByVal EnPassant As String) As String()
         Dim LegalMoveArray(27) As String
         Dim n As Byte = 1
-        Dim StartY As SByte
-        Dim EndY As SByte
-        Dim StartX As SByte
-        Dim EndX As SByte
+        Dim StartX, EndX, StartY, EndY As SByte 'Pointers for the coordinate bounds.
         Dim CheckingPiece As String = " "
 
         If Board(CoorX, CoorY) = "K" Then 'Legal Moves for the King (along with Castling).
+            'Sets coordinate bounds. Start & End Coords, in this case, represents the 8 squares around the king.
             StartX = Math.Max(CoorX - 1, 0)
             EndX = Math.Min(CoorX + 1, 7)
             StartY = Math.Max(CoorY - 1, 0)
             EndY = Math.Min(CoorY + 1, 7)
             For y = StartY To EndY
                 For x = StartX To EndX
+                    'Sets the appropriate square on the enemy TFTable to 'F'. This prevents the enemy king from moving to that square.
                     BlackTFTable(x, y) = "F"
+                    'Important note: the piece's legal moves does NOT equate to the squares on the enemy TFTable to set to 'F'.
+                    'This Is because, even though the king might Not be legally allowed To move To a certain square, it has the
+                    'potential' to, meaning that it must have an effect on the enemy king's TFTable.
                     If Not Char.IsUpper(Board(x, y)) AndAlso WhiteTFTable(x, y) = "T" Then
+                        'Therefore is a legal move...
                         LegalMoveArray(n) = x & y
                         n += 1
                     End If
@@ -176,13 +177,13 @@ Public Class CoreMethods
             Next
             If WCanCastle.KS AndAlso WInCheck.IsInCheck = False Then
                 If Board(5, 7) = " " AndAlso Board(6, 7) = " " AndAlso Board(7, 7) = "R" AndAlso WhiteTFTable(5, 7) = "T" AndAlso WhiteTFTable(6, 7) = "T" Then
-                    LegalMoveArray(n) = 67
+                    LegalMoveArray(n) = 67 'Square king would go to to castle king-side.
                     n += 1
                 End If
             End If
             If WCanCastle.QS AndAlso WInCheck.IsInCheck = False Then
                 If Board(3, 7) = " " AndAlso Board(2, 7) = " " AndAlso Board(1, 7) = " " AndAlso Board(0, 7) = "R" AndAlso WhiteTFTable(3, 7) = "T" AndAlso WhiteTFTable(2, 7) = "T" Then
-                    LegalMoveArray(n) = 27
+                    LegalMoveArray(n) = 27 'Square king would go to to castle queen-side.
                     n += 1
                 End If
             End If
@@ -190,19 +191,22 @@ Public Class CoreMethods
 
         ElseIf Board(CoorX, CoorY) = "P" Then 'Legal Moves for the Pawn (along with First Moves).
             If WhiteTFTable(CoorX, CoorY) <> "2" Then
+                'If the pawn is not pinned diagonally...
                 If WhiteTFTable(CoorX, CoorY) <> "1" AndAlso WhiteTFTable(CoorX, CoorY) <> "3" Then
                     If Board(CoorX, CoorY - 1) = " " Then
                         LegalMoveArray(n) = CoorX & CoorY - 1
                         n += 1
-                        If CoorY = 6 AndAlso Board(CoorX, 4) = " " Then
+                        If CoorY = 6 AndAlso Board(CoorX, 4) = " " Then 'Pawns can move two squares on their first move.
                             LegalMoveArray(n) = CoorX & 4
                             n += 1
                         End If
                     End If
                 End If
                 If WhiteTFTable(CoorX, CoorY) <> "0" Then
+                    'Code for pawn left captures.
                     If WhiteTFTable(CoorX, CoorY) <> "1" AndAlso CoorX > 0 Then
                         If BlackTFTable(CoorX - 1, CoorY - 1) = "T" Then BlackTFTable(CoorX - 1, CoorY - 1) = "F"
+                        'We do the above IF statement to prevent pinned pieces from being overwridden.
                         If Char.IsLower(Board(CoorX - 1, CoorY - 1)) OrElse (CoorX - 1 & CoorY - 1 = EnPassant AndAlso WhiteTFTable(CoorX, CoorY) <> "4") Then
                             LegalMoveArray(n) = CoorX - 1 & CoorY - 1
                             If Board(CoorX - 1, CoorY - 1) = "k" Then
@@ -212,6 +216,7 @@ Public Class CoreMethods
                             n += 1
                         End If
                     End If
+                    'Code for pawn right captures.
                     If WhiteTFTable(CoorX, CoorY) <> "3" AndAlso CoorX < 7 Then
                         If BlackTFTable(CoorX + 1, CoorY - 1) = "T" Then BlackTFTable(CoorX + 1, CoorY - 1) = "F"
                         If Char.IsLower(Board(CoorX + 1, CoorY - 1)) OrElse (CoorX + 1 & CoorY - 1 = EnPassant AndAlso WhiteTFTable(CoorX, CoorY) <> "4") Then
@@ -298,16 +303,18 @@ Public Class CoreMethods
 
         ElseIf Board(CoorX, CoorY) = "R" OrElse Board(CoorX, CoorY) = "Q" Then 'Legal Moves for the Rook / part of Queen.
             If WhiteTFTable(CoorX, CoorY) <> "1" AndAlso WhiteTFTable(CoorX, CoorY) <> "3" Then
-                If WhiteTFTable(CoorX, CoorY) <> "0" Then
+                If WhiteTFTable(CoorX, CoorY) <> "0" Then 'if rook is not pinned vertically...
                     For x = (CoorX + 1) To 7
                         If BlackTFTable(x, CoorY) = "T" Then BlackTFTable(x, CoorY) = "F"
                         If Char.IsUpper(Board(x, CoorY)) Then
                             If Board(x, CoorY) = "P" AndAlso x & CoorY + 1 = EnPassant AndAlso CInt(CStr(BKPos(0))) > x AndAlso CInt(CStr(BKPos(1))) = CoorY Then
+                                'Initiate pin checks (inc friendly-first EnPassant pins).
                                 For m = x + 2 To 7
                                     If Board(m, CoorY) = "k" Then
                                         BlackTFTable(x + 1, CoorY) = "4"
                                         Exit For
                                     End If
+                                    'There is another piece in the way - cancel the search.
                                     If Board(m, CoorY) <> " " Then Exit For
                                 Next
                             End If
@@ -317,18 +324,23 @@ Public Class CoreMethods
                             If Board(x, CoorY) = "k" Then
                                 BInCheck.IsInCheck = True
                                 CheckingPiece = CoorX & CoorY
+                                'Marks the next square as illegal for the king to move to.
                                 If BlackTFTable(Math.Min(x + 1, 7), CoorY) = "T" Then BlackTFTable(Math.Min(x + 1, 7), CoorY) = "F"
                                 Exit For
                             End If
                             n += 1
                             If Char.IsLower(Board(x, CoorY)) AndAlso CInt(CStr(BKPos(0))) > x AndAlso CInt(CStr(BKPos(1))) = CoorY Then
+                                'Initiate pin checks.
                                 For m = x + 1 To 7
                                     If Board(m, CoorY) = "k" Then
+                                        'Enemy king spotted - mark piece as pinned.
                                         BlackTFTable(x, CoorY) = "2"
                                         Exit For
                                     End If
+                                    'Checks for enemy-first EnPassant pins.
                                     If Board(m, CoorY) <> " " Then
                                         If Board(m, CoorY) = "P" AndAlso m & CoorY + 1 = EnPassant Then
+                                            'Pawn should be stopped from taking En-Passant.
                                             For a = m + 1 To 7
                                                 If Board(a, CoorY) = "k" Then
                                                     BlackTFTable(x, CoorY) = "4"
@@ -453,8 +465,7 @@ Public Class CoreMethods
 
 
         If Board(CoorX, CoorY) = "B" OrElse Board(CoorX, CoorY) = "Q" Then 'Legal Moves for the Biship / Part of Queen.
-            Dim o As SByte
-            Dim p As SByte
+            Dim o, p As SByte 'These represent temporary x and y coordinates, used for pin detection.
             If WhiteTFTable(CoorX, CoorY) <> "0" AndAlso WhiteTFTable(CoorX, CoorY) <> "2" Then
                 If WhiteTFTable(CoorX, CoorY) <> "1" Then
                     StartX = CoorX + 1
@@ -477,7 +488,7 @@ Public Class CoreMethods
                             If Char.IsLower(Board(StartX, StartY)) AndAlso (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) AndAlso CInt(CStr(BKPos(0))) > CoorX Then
                                 o = StartX + 1
                                 p = StartY + 1
-                                Do Until o > 7 OrElse p > 7
+                                Do Until o > 7 OrElse p > 7 'until the end of the board is reached.
                                     If Board(o, p) = "k" Then
                                         BlackTFTable(StartX, StartY) = "3"
                                         Exit Do
@@ -513,7 +524,7 @@ Public Class CoreMethods
                             If Char.IsLower(Board(StartX, StartY)) AndAlso (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) AndAlso CInt(CStr(BKPos(0))) < CoorX Then
                                 o = StartX - 1
                                 p = StartY - 1
-                                Do Until o < 0 OrElse p < 0
+                                Do Until o < 0 OrElse p < 0 
                                     If Board(o, p) = "k" Then
                                         BlackTFTable(StartX, StartY) = "3"
                                         Exit Do
@@ -622,13 +633,11 @@ Public Class CoreMethods
         Return LegalMoveArray
     End Function
 
-    Function BlackPieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef BlackTFTable(,) As Char, ByRef WhiteTFTable(,) As Char, ByVal WKPos As String, ByRef WInCheck As InCheck, ByVal BInCheck As InCheck, ByVal BCanCastle As CanCastle, ByVal EnPassant As String) As String()
+    'As the below subroutine is very similar to its equivilant 'WhitePieceLegalMoves' function, commenting will be limited.
+    Public Function BlackPieceLegalMoves(ByVal Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef BlackTFTable(,) As Char, ByRef WhiteTFTable(,) As Char, ByVal WKPos As String, ByRef WInCheck As InCheck, ByVal BInCheck As InCheck, ByVal BCanCastle As CanCastle, ByVal EnPassant As String) As String()
         Dim LegalMoveArray(27) As String
         Dim n As Byte = 1
-        Dim StartY As SByte
-        Dim EndY As SByte
-        Dim StartX As SByte
-        Dim EndX As SByte
+        Dim StartX, EndX, StartY, EndY As SByte 'Pointers for the coordinate bounds.
         Dim CheckingPiece As String = " "
 
         If Board(CoorX, CoorY) = "k" Then 'Legal Moves for the King (Along with Castling).
@@ -922,8 +931,7 @@ Public Class CoreMethods
 
 
         If Board(CoorX, CoorY) = "b" OrElse Board(CoorX, CoorY) = "q" Then 'Legal Moves for the Bishop / Part of Queen.
-            Dim o As SByte
-            Dim p As SByte
+            Dim o, p As SByte
             If BlackTFTable(CoorX, CoorY) <> "0" AndAlso BlackTFTable(CoorX, CoorY) <> "2" Then
                 If BlackTFTable(CoorX, CoorY) <> "1" Then
                     StartX = CoorX + 1
@@ -1091,13 +1099,13 @@ Public Class CoreMethods
     End Function
 
 
+
     'Subroutine which creates the TrueFalse Table of the selected player (controlled by the Variable FixWhite).
     'This is done by generating all the legal moves of the pieces that could influence the enemy king's motion.
     'This creates a 'field' around the king (stating where its legal moves are), along with creating pinned pieces
     'and checks.
     Public Sub FixTFTables(ByVal Board(,) As Char, ByVal FixWhite As Boolean, ByRef TrueFalseTable(,) As Char, ByRef KPos As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck, ByVal EnPassant As String)
-        Dim dx As SByte
-        Dim dy As SByte
+        Dim dx, dy As SByte
         'Resets TFTables.
         Array.Copy(MasterTrueTable, TrueFalseTable, 64)
         Array.Copy(MasterTrueTable, TrueTable, 64)
@@ -1109,35 +1117,33 @@ Public Class CoreMethods
                         dx = Math.Abs(CStr(KPos(0)) - x)
                         dy = Math.Abs(CStr(KPos(1)) - y)
                         If Board(x, y) = "p" Then
-                            If (CStr(KPos(1)) - y >= 0 AndAlso CStr(KPos(1)) - y <= 2) AndAlso dx <= 2 Then
-                                'Piece could influence king motion - calculate legal moves.
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
-                            End If
-                        ElseIf Board(x, y) = "q" Then
-                            If (dx <= 1 OrElse dy <= 1) OrElse (dx - dy <= 2 AndAlso dy - dx <= 2) Then
-                                'Piece could influence king motion - calculate legal moves.
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
-                            End If
-                        ElseIf Board(x, y) = "r" Then
-                            If dx <= 1 OrElse dy <= 1 Then
-                                'Piece could influence king motion - calculate legal moves.
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
+                            If Math.Max(dx, dy) <= 2 AndAlso CStr(KPos(1)) >= y Then
+                                'Pawn could influence king motion - calculate legal moves.
+                                BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "b" Then
-                            If dx - dy <= 2 AndAlso dy - dx <= 2 Then
+                            If Math.Abs(dx - dy) <= 2 Then
                                 'Piece could influence king motion - calculate legal moves.
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
+                                BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "n" Then
-                            If (dx <= 3 AndAlso dy <= 2) OrElse (dx <= 2 AndAlso dy <= 3) Then
+                            If Math.Max(dx, dy) <= 3 AndAlso dx + dy <= 5 Then
                                 'Piece could influence king motion - calculate legal moves.
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
+                                BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
-                        ElseIf Board(x, y) = "k" Then
-                            If dx <= 2 AndAlso dy <= 2 Then
+                        ElseIf Board(x, y) = "r" Then
+                            If Math.Min(dx, dy) <= 1 Then
                                 'Piece could influence king motion - calculate legal moves.
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
+                                BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
+                        ElseIf Board(x, y) = "q" Then
+                            If Math.Min(dx, dy) <= 1 OrElse Math.Abs(dx - dy) <= 2 Then
+                                'Piece could influence king motion - calculate legal moves.
+                                BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
+                            End If
+                        ElseIf Math.Max(dx, dy) <= 2 Then 'is a king.
+                            'Piece could influence king motion - calculate legal moves.
+                            BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                         End If
                     End If
                 Next
@@ -1149,29 +1155,27 @@ Public Class CoreMethods
                         dx = Math.Abs(CStr(KPos(0)) - x)
                         dy = Math.Abs(CStr(KPos(1)) - y)
                         If Board(x, y) = "P" Then
-                            If (CStr(KPos(1)) - y <= 0 AndAlso CStr(KPos(1)) - y >= -2) AndAlso dx <= 2 Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
-                            End If
-                        ElseIf Board(x, y) = "Q" Then
-                            If (dx <= 1 OrElse dy <= 1) OrElse (dx - dy <= 2 AndAlso dy - dx <= 2) Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
-                            End If
-                        ElseIf Board(x, y) = "R" Then
-                            If dx <= 1 OrElse dy <= 1 Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
+                            If Math.Max(dx, dy) <= 2 AndAlso CStr(KPos(1)) <= y Then
+                                WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "B" Then
-                            If dx - dy <= 2 AndAlso dy - dx <= 2 Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
+                            If Math.Abs(dx - dy) <= 2 Then
+                                WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "N" Then
-                            If (dx <= 3 AndAlso dy <= 2) OrElse (dx <= 2 AndAlso dy <= 3) Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
+                            If Math.Max(dx, dy) <= 3 AndAlso dx + dy <= 5 Then
+                                WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
-                        ElseIf Board(x, y) = "K" Then
-                            If dx <= 2 AndAlso dy <= 2 Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
+                        ElseIf Board(x, y) = "R" Then
+                            If Math.Min(dx, dy) <= 1 Then
+                                WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
+                        ElseIf Board(x, y) = "Q" Then
+                            If Math.Min(dx, dy) <= 1 OrElse Math.Abs(dx - dy) <= 2 Then
+                                WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
+                            End If
+                        ElseIf Math.Max(dx, dy) <= 2 Then 'is a king.
+                            WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                         End If
                     End If
                 Next
@@ -1180,48 +1184,9 @@ Public Class CoreMethods
     End Sub
 
 
-    'Function which receives a game position and a possible move. The function makes this move on the board (using
-    'shortcuts that can only be made on a virtual board), and then generates the possible moves of the attacking
-    'piece(s). If the king is no longer being threatened, then the check as been resolved.
-    Function DoesMoveResolveCheck(ByVal Board(,) As Char, ByVal OldPosX As String, ByVal OldPosY As String, ByVal NewPosX As String, ByVal NewPosY As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck, ByVal EnPassant As String) As Boolean
-        'If the player is in a double check, then only king moves could be legal. Therefore, as this part is done in the
-        'TFTable generation, we skip this here.
-        If WInCheck.IsInCheck AndAlso Not WInCheck.DoubleCheck Then
-            If NewPosX & NewPosY = WInCheck.Piece OrElse (NewPosX & NewPosY = EnPassant AndAlso Board(OldPosX, OldPosY) = "P") Then
-                'Move captures the attacking piece. Therefore we assume it is legal.
-                Return True
-            ElseIf Board(NewPosX, NewPosY) = " " Then
-                WInCheck.IsInCheck = False
-                Board(NewPosX, NewPosY) = "O" 'Move made on temporary board.
-                'Calculate the legal moves of the attacking piece. If the king is still in check, then WInCheck.IsInCheck
-                'will flag from False to True - therefore it is illegal.
-                BlackPieceLegalMoves(Board, CStr(WInCheck.Piece(0)), CStr(WInCheck.Piece(1)), TrueTable, TrueTable, "00", WInCheck, BInCheck, CannotCastle, "-")
-                Board(NewPosX, NewPosY) = " " 'Move unmade on temporary board.
-                If WInCheck.IsInCheck = False Then Return True
-            Else 'Move is a capture move, but not capturing the attacking piece. Therefore, it has to be illegal.
-                Return False
-            End If
-        ElseIf BInCheck.IsInCheck AndAlso Not BInCheck.DoubleCheck Then
-            'Identical code but for the black pieces.
-            If NewPosX & NewPosY = BInCheck.Piece OrElse (NewPosX & NewPosY = EnPassant AndAlso Board(OldPosX, OldPosY) = "p") Then
-                Return True
-            ElseIf Board(NewPosX, NewPosY) = " " Then
-                BInCheck.IsInCheck = False
-                Board(NewPosX, NewPosY) = "o"
-                WhitePieceLegalMoves(Board, CStr(BInCheck.Piece(0)), CStr(BInCheck.Piece(1)), TrueTable, TrueTable, "00", BInCheck, WInCheck, CannotCastle, "-")
-                Board(NewPosX, NewPosY) = " "
-                If BInCheck.IsInCheck = False Then Return True
-            Else
-                Return False
-            End If
-        End If
-        Return False
-    End Function
-
-
 
     'Algorithm that returns the weight / value of a given piece. Links to the array of hashed values PieceValue.
-    Function ReturnPieceValue(ByVal Piece As Char) As Decimal
+    Public Function ReturnPieceValue(ByVal Piece As Char) As Decimal
         Return PieceValue(Asc(UCase(Piece)) Mod 11)
     End Function
 
@@ -1254,6 +1219,15 @@ Public Class CoreMethods
         If MovedPiece <> " " Then
             If MovedPiece = "P" Then
                 MoveConverter = Chr(CStr(TempMove.OldMoveX) + 97)
+                'Code for detecting castling.
+            ElseIf MovedPiece = "K" AndAlso TempMove.OldMoveX = 4 AndAlso (TempMove.NewMoveY = 0 OrElse TempMove.NewMoveY = 7) Then
+                If TempMove.NewMoveX = 6 Then 'Is king-side castling.
+                    Return "O-O" 'Notation for KS castling.
+                ElseIf TempMove.NewMoveX = 2 Then ''Is queen-side castling.
+                    Return "O-O-O" 'Notation for QS castling.
+                Else
+                    MoveConverter = MovedPiece
+                End If
             Else
                 MoveConverter = MovedPiece
             End If

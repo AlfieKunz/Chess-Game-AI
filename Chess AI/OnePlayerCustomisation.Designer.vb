@@ -35,6 +35,7 @@ Partial Class OnePlayerCustomisation
         Me.Panel2 = New System.Windows.Forms.Panel()
         Me.White = New System.Windows.Forms.RadioButton()
         Me.Black = New System.Windows.Forms.RadioButton()
+        Me.InfoBtn = New System.Windows.Forms.Button()
         CType(Me.DifficultySlider, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.Panel1.SuspendLayout()
         Me.Panel2.SuspendLayout()
@@ -167,6 +168,17 @@ Partial Class OnePlayerCustomisation
         Me.Black.Text = "Play as Black"
         Me.Black.UseVisualStyleBackColor = True
         '
+        'InfoBtn
+        '
+        Me.InfoBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.InfoBtn.Location = New System.Drawing.Point(254, 276)
+        Me.InfoBtn.Name = "InfoBtn"
+        Me.InfoBtn.Size = New System.Drawing.Size(18, 23)
+        Me.InfoBtn.TabIndex = 19
+        Me.InfoBtn.Text = "?"
+        Me.InfoBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+        Me.InfoBtn.UseVisualStyleBackColor = True
+        '
         'OnePlayerCustomisation
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -174,6 +186,7 @@ Partial Class OnePlayerCustomisation
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.LightGray
         Me.ClientSize = New System.Drawing.Size(284, 311)
+        Me.Controls.Add(Me.InfoBtn)
         Me.Controls.Add(Me.Panel2)
         Me.Controls.Add(Me.Panel1)
         Me.Controls.Add(Me.AIDiffLabel2)
@@ -208,4 +221,5 @@ Partial Class OnePlayerCustomisation
     Friend WithEvents Panel2 As System.Windows.Forms.Panel
     Friend WithEvents White As System.Windows.Forms.RadioButton
     Friend WithEvents Black As System.Windows.Forms.RadioButton
+    Friend WithEvents InfoBtn As Button
 End Class

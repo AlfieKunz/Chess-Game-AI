@@ -129,7 +129,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="PieceSquaresTable.vb" />
     <Compile Include="SubObjects.vb" />
     <Compile Include="TwoPlayerCustomisation.Designer.vb">
       <DependentUpon>TwoPlayerCustomisation.vb</DependentUpon>
@@ -182,7 +181,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Icon.ico" />
-    <None Include="Resources\CopySymbol.png" />
     <None Include="Resources\Cursor192.cur" />
     <None Include="Resources\Cursor32.cur" />
     <None Include="Resources\Cursor16.cur" />
