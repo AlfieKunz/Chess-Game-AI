@@ -515,9 +515,9 @@ Partial Class Settings
         Me.OpeningBookBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.OpeningBookBtn.Location = New System.Drawing.Point(637, 116)
         Me.OpeningBookBtn.Name = "OpeningBookBtn"
-        Me.OpeningBookBtn.Size = New System.Drawing.Size(189, 20)
+        Me.OpeningBookBtn.Size = New System.Drawing.Size(182, 20)
         Me.OpeningBookBtn.TabIndex = 28
-        Me.OpeningBookBtn.Text = "Use Larger Opening Book?"
+        Me.OpeningBookBtn.Text = "Use Larger Opening Book"
         Me.OpeningBookBtn.UseVisualStyleBackColor = True
         '
         'Settings

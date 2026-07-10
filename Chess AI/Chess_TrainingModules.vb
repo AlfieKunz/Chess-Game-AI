@@ -180,11 +180,11 @@ Partial Public Class Chess
         MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
         'Resets TrueFalse Tables.
         If PlayerTurn Then
-            MasterBInCheck.NotInCheck() 'Player is no longer in check.
-            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterEnPassant)
+            MasterBInCheck = 0 'Player is no longer in check.
+            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
         Else
-            MasterWInCheck.NotInCheck() 'Player is no longer in check.
-            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterBInCheck, MasterEnPassant)
+            MasterWInCheck = 0 'Player is no longer in check.
+            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
         End If
         'Resets location of Previously Used Squares.
         SquareHistory(0, 0) = -1
@@ -220,35 +220,10 @@ Partial Public Class Chess
         NextMove = (PuzzleSampleDatabase(CurrentPuzzleIndex).GetAllMoves())(MoveIndex)
         AnimateMove(NextMove)
 
-        'Calibrates the board after this move.
-        If PlayerTurn Then
-            MasterWInCheck.NotInCheck() 'Player is no longer in check.
-            MakeMove(MasterBoard, NextMove.OldMoveX, NextMove.OldMoveY, NextMove.NewMoveX, NextMove.NewMoveY, MasterWCanCastle, MasterWKPos, MasterEnPassant, GeneralOptions(0) = "T")
-            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterBInCheck, MasterEnPassant)
-        Else
-            MasterBInCheck.NotInCheck() 'Player is no longer in check.
-            MakeMove(MasterBoard, NextMove.OldMoveX, NextMove.OldMoveY, NextMove.NewMoveX, NextMove.NewMoveY, MasterBCanCastle, MasterBKPos, MasterEnPassant, GeneralOptions(0) = "T")
-            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterEnPassant)
-        End If
-        SquareHistory(0, 0) = NextMove.NewMoveX
-        SquareHistory(0, 1) = NextMove.NewMoveY
-        SquareHistory(1, 0) = NextMove.OldMoveX
-        SquareHistory(1, 1) = NextMove.OldMoveY
-        If Not OrientForWhite Then
-            SquareHistory(0, 0) = 7 - SquareHistory(0, 0)
-            SquareHistory(0, 1) = 7 - SquareHistory(0, 1)
-            SquareHistory(1, 0) = 7 - SquareHistory(1, 0)
-            SquareHistory(1, 1) = 7 - SquareHistory(1, 1)
-        End If
-        Checkerboard.Refresh()
-        CheckChecker(False)
-
-        PlayerTurn = Not PlayerTurn
-        'Outputs the new FEN to the MoveInput box.
-        CurrentFEN = SharedAlgorithms.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, MasterEnPassant, PlayerTurn)
-        FENExport_Click()
-
+        CalibrateCoreSystemsForMove(NextMove, False)
         MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates the AI in preparation for the new puzzle.
+
+        FENExport_Click()
         EnforceEndStates(True)
         If OutputToConsole Then OutputDebugInfo() 'The board position will not be outputted if, for example, this subroutine
         'has been called by the user clicking the GiveUp button - causing the user's / the AI's puzzle move to be made for them.
@@ -444,7 +419,7 @@ Partial Public Class Chess
     Private Sub RunAIOnPuzzle()
         Console.WriteLine()
         'Calibrates the AI for the puzzle.
-        MainAI.AddBoardHistory(BoardHistory.GetArray())
+        MainAI.AddBoardHistory(BoardHistory.GetZobristArray())
         CalculateStartingDepth()
 
         'Creates a new thread for the AI to run on, then starts the AI's search process.
@@ -500,7 +475,7 @@ Partial Public Class Chess
         MainAI.ABORTSearch()
         Thread.Sleep(10) 'Gives the AI enough time to ABORT its search.
         'Removes the information about the puzzle from the AI's memory
-        MainAI.RemoveBoardHistory(BoardHistory.GetArray())
+        MainAI.RemoveBoardHistory(BoardHistory.GetZobristArray())
         MainAI.OutputStatsToFile()
         UpdateAIPuzzleInfoLabel(False)
     End Sub
@@ -742,20 +717,22 @@ Partial Public Class Chess
                 NewFEN = System.IO.File.ReadAllLines(Application.StartupPath & "\Assets\RandomFENs.txt")(Math.Truncate(Rnd() * FENsInFile))
                 'Applies that FEN to Masterboard and calibrates board info.
                 MasterBoard = SharedAlgorithms.FENConverter(NewFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-                MasterWInCheck.NotInCheck()
-                SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterEnPassant)
-                'If White is not in check, generate all the legal moves in the position.
-                MainAI.Reconfigure(NewFEN, True)
-                If Not MasterWInCheck.IsInCheck Then
-                    MovesInPosition = MainAI.GetLegalMoves()
-                    If MovesInPosition.GetUpperBound(0) >= MovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
+                If PlayerTurn Then
+                    MasterWInCheck = 0
+                    SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+                    'If White is not in check, generate all the legal moves in the position.
+                    MainAI.Reconfigure(NewFEN, True)
+                    If MasterWInCheck < 128 Then
+                        MovesInPosition = MainAI.GetLegalMoves()
+                        If MovesInPosition.GetUpperBound(0) >= MovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
+                    End If
                 End If
                 NoOfRetries += 1
                 If NoOfRetries = 20 Then Throw New Exception("Too many attempts.")
             End While
         Catch ex As Exception
             Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("Unable to find a valid Training Position in the databse.")
+            Console.WriteLine("Unable to find a valid Training Position in the database.")
             Console.ResetColor()
             MsgBox("Error: Unable to retrieve a valid position from the database." & vbCrLf & "Returning to the Main Menu...", vbCritical + vbOKOnly + vbApplicationModal)
             ExitBtn_Click()
@@ -779,7 +756,7 @@ Partial Public Class Chess
             TempMove.NewMoveX = MovesInPosition(RndIndex, 1)(0)
             TempMove.NewMoveY = MovesInPosition(RndIndex, 1)(1)
             'Converts this Move to standard chess notation. If this is different to the current move then accept & return it.
-            GenerateNewTrainingMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, MasterEnPassant)
+            GenerateNewTrainingMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
             If MoveDisplayer.Text <> GenerateNewTrainingMove Then Return GenerateNewTrainingMove
         End While
     End Function

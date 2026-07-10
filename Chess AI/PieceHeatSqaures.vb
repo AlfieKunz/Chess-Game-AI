@@ -75,7 +75,7 @@ Public Class PieceHeatSqaures
                 BishopHeatSquares(x, y) *= 2
                 KnightHeatSquares(x, y) *= 1
                 PawnHeatSquares(x, y) *= 1.4
-                QueenHeatSquares(x, y) *= 2.8
+                QueenHeatSquares(x, y) *= 2.4
                 RookHeatSquares(x, y) *= 2
                 KingHeatSquares(x, y) *= 1.6
 

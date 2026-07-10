@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.Runtime
 Imports System.Text
 Imports System.Threading
 
@@ -238,7 +239,7 @@ Public Class MainMenu
     Private Sub StartupAnimation() Handles Me.Activated
         MyBase.Refresh()
         Me.BringToFront()
-        Console.Clear()
+        If PlayAnimation Then Console.Clear()
 
         Dim TempColour As String
         'Resets the user's colour profile (as it may have changed in the Settings form, and hence must be updated).
@@ -363,6 +364,8 @@ Public Class MainMenu
             BookPath = "\Assets\SmallOpeningBook.txt"
         End If
         Try
+            GCSettings.LatencyMode = GCLatencyMode.LowLatency 'Relaxes garbage collection during the forming of the Opening Book,
+            'so that it can be loaded into memory quicker.
             Timer.Start()
             'Opens opening book from file using StreamReader.
             Using SR As New StreamReader(Application.StartupPath & BookPath, Encoding.UTF8, True, 16384)
@@ -374,11 +377,13 @@ Public Class MainMenu
             Timer.Stop()
             Console.ForegroundColor = ConsoleColor.Green
             Console.WriteLine("Opening Book Successfully Retrieved in: " & Math.Round(Timer.Elapsed.TotalMilliseconds, 1) & "ms.")
-        Catch ex As Exception 'Could not successfully retrieve book - make a note on OpeningBook.
+        Catch ex As Exception 'Could not successfully retrieve book.
             Timer.Stop()
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error when retrieving opening book.")
+            OpeningBook = Nothing
         End Try
+        GCSettings.LatencyMode = GCLatencyMode.Interactive
         Console.ResetColor()
     End Sub
 
@@ -486,7 +491,7 @@ Public Class MainMenu
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v8.1)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v8.2)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
 End Class

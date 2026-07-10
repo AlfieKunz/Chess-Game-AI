@@ -1,6 +1,8 @@
 ﻿Imports System.IO
+Imports System.Runtime
 Imports System.Text
 Imports System.Threading
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 
 'Class that holds all the methods referring to GUI controls in the Chess form (ie: buttons, text boxes, sliders, etc).
 Partial Public Class Chess
@@ -19,8 +21,8 @@ Partial Public Class Chess
                 ElseIf FENErrorDetection(InputTextBox.Text, True, "") Then 'Is a Valid FEN.
                     If UndoFENChange.Visible = True Then UndoFENChange.Visible = False
                     'Resets Check and Castling Properties.
-                    MasterWInCheck.NotInCheck()
-                    MasterBInCheck.NotInCheck()
+                    MasterWInCheck = 0
+                    MasterBInCheck = 0
                     Dim TempFEN As String = PreviousFEN
                     'Try displaying the FEN on the board graphically. If this fails, then the FEN is invalid.
                     'In this case, the board is reset to the previous position.
@@ -58,9 +60,9 @@ Partial Public Class Chess
                         GameRunning = True
                         'Resets TrueFalse Tables, then checks for Checks.
                         If PlayerTurn Then
-                            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterEnPassant)
+                            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
                         Else
-                            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterBInCheck, MasterEnPassant)
+                            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
                         End If
                         CheckChecker(False)
                         'Final logical detection of invalid board positions.
@@ -97,8 +99,8 @@ Partial Public Class Chess
             PreviousFEN = CurrentFEN
             CurrentFEN = StartingFEN
             'Resets Check Properties.
-            MasterWInCheck.NotInCheck()
-            MasterBInCheck.NotInCheck()
+            MasterWInCheck = 0
+            MasterBInCheck = 0
             'Can assume that the StartingFEN is valid, so we display it graphically.
             MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
             'Edits location of Previously Used Squares.
@@ -113,9 +115,9 @@ Partial Public Class Chess
             Checkerboard.Refresh()
             'Resets TrueFalse Table, then check for Checks.
             If PlayerTurn Then
-                SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterEnPassant)
+                SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
             Else
-                SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterBInCheck, MasterEnPassant)
+                SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
             End If
             DisplayPieces()
             CheckChecker(False)
@@ -144,19 +146,34 @@ Partial Public Class Chess
         End If
     End Sub
 
-    'Outputs the current FEN into the FEN textbox.
+    'Outputs the current FEN into the input textbox.
     Private Sub FENExport_Click() Handles FENExport.Click
-        Dim TempFEN As String = CurrentFEN
-        'Trims TempFEN to remove its fullmove number, then appends the size of the BoardHistory array
-        '(representing how many moves have been made in the position).
-        For n = TempFEN.Length - 2 To 0 Step -1
-            If TempFEN(n) = " " Then
-                TempFEN = TempFEN.Substring(0, n + 1)
-                Exit For
-            End If
-        Next
-        TempFEN &= (BoardHistory.GetSize() + 1) \ 2
-        InputTextBox.Text = TempFEN
+        If CurrentFEN <> "" Then
+            Dim TempFEN As String = CurrentFEN
+            'Trims TempFEN to remove its fullmove number, then appends the size of the BoardHistory array
+            '(representing how many moves have been made in the position).
+            For n = TempFEN.Length - 2 To 0 Step -1
+                If TempFEN(n) = " " Then
+                    TempFEN = TempFEN.Substring(0, n + 1)
+                    Exit For
+                End If
+            Next
+            TempFEN &= (BoardHistory.GetSize() + 1) \ 2
+            InputTextBox.Text = TempFEN
+        End If
+    End Sub
+
+    'Outputs the current PGN into the input textbox.
+    Private Sub PGNExport_Click() Handles PGNExport.Click
+        Dim PGN As String = BoardHistory.GetFormattedPGNString(Not GameRunning)
+        If PGN <> "" Then
+            'Some moves exist - output to the input box.
+            InputTextBox.Text = PGN
+            'Selects the last character in the PGN, then scrolls to that character (so that the last moves
+            'can always be seen by the user).
+            InputTextBox.SelectionStart = (InputTextBox.Text).Length
+            InputTextBox.ScrollToCaret()
+        End If
     End Sub
 
     'Converts the board to the previous FEN Position.
@@ -169,8 +186,8 @@ Partial Public Class Chess
             Dim TempFEN As String = CurrentFEN
             CurrentFEN = PreviousFEN
             PreviousFEN = TempFEN
-            MasterWInCheck.NotInCheck()
-            MasterBInCheck.NotInCheck()
+            MasterWInCheck = 0
+            MasterBInCheck = 0
             'Converts the FEN to a board position, and displays it.
             MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
             DisplayPieces()
@@ -193,16 +210,18 @@ Partial Public Class Chess
             GameRunning = True
             'Resets TrueFalse Tables, then checks for Checks.
             If PlayerTurn Then
-                SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterEnPassant)
+                SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
             Else
-                SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterBInCheck, MasterEnPassant)
+                SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, SharedAlgorithms.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
             End If
             If GeneralOptions(0) = "T" Then Sound_Move.Play()
             CheckChecker(False)
             'Final logical detection of invalid board positions.
             If Not CheckForInvalidGameStates() AndAlso GeneralOptions(0) = "T" Then Sound_Move.Play()
 
-            If GameMode < 3 Then FENExport_Click()
+            If GameMode < 3 Then
+                If PGNAutoOutputter.Checked Then PGNExport_Click() Else FENExport_Click()
+            End If
             'Recalibrates AI, then checks for end positions.
             If AIIsSearchingOnUsersTurn Then Thread.Sleep(5) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
             MainAI.Reconfigure(CurrentFEN, False)
@@ -350,24 +369,73 @@ Partial Public Class Chess
     End Sub
 
 
+    Private Sub AutoOutputter_CheckedChanged() Handles PGNAutoOutputter.CheckedChanged, FENAutoOutputter.CheckedChanged
+        If PGNAutoOutputter.Checked Then
+            PGNExport_Click()
+        Else
+            FENExport_Click()
+        End If
+    End Sub
+
+
+
+    'Subroutines which handle the Node Test GUI buttons.
+    Private Sub NodeTestBtn_Click() Handles NodeTestBtn.Click
+        If GameRunning AndAlso Not ComputerIsSearching Then
+            'Creates a new thread for the Node Test to run on, then starts the search.
+            ComputerIsSearching = True
+            Dim NodeTestThread As New Task(AddressOf InstantiateNodeTest)
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency 'Relaxes garbage collection during the NegaMax search.
+            NodeTestThread.Start()
+            NodeTestStopBtn.Visible = True
+        End If
+    End Sub
+    'Subroutine which handles the Node Test Thread (enables multithreading).
+    Private Sub InstantiateNodeTest()
+        For n = 1 To 99
+            MainAI.PerformNodeTestOnPosition(n, True)
+            If MainAI.GetABORTState() Then Exit For 'Stops future depths from running if there is an error.
+        Next
+    End Sub
+    Private Sub NodeTestStopBtn_Click() Handles NodeTestStopBtn.Click
+        NodeTestStopBtn.Visible = False
+        'Stops the Node Test, then displays an appropriate message.
+        MainAI.ABORTSearch()
+        ComputerIsSearching = False
+        GCSettings.LatencyMode = GCLatencyMode.Interactive 'Resets garbage collection mode.
+        Console.ForegroundColor = ConsoleColor.Red
+        Console.WriteLine(("Node Test Terminated (by user).").PadRight(48) & vbCrLf)
+    End Sub
+
+
 
 
     'Subroutine that reveals the settings menu to the user.
     Private Sub SettingsBtn_Click() Handles SettingsBtn.Click
         'Creates and reveals the Settings Form.
-        Dim SettingsMenu As New Settings(GameMode <= 3, GameMode < 3, GameMode > 1 AndAlso GameMode <= 3)
-        SettingsMenu.Show()
+        Dim CurrentSettings As Form = CType(Application.OpenForms("Settings"), Settings)
+        If CurrentSettings Is Nothing Then 'If there are no other Settings forms open.
+            Dim SettingsMenu As New Settings(GameMode <= 3, GameMode < 3, GameMode > 1 AndAlso GameMode <= 3)
+            SettingsMenu.Show()
+        End If
     End Sub
 
     'Button that returns the user back to the Main Menu. 
     Private Sub ExitBtn_Click() Handles ExitBtn.Click
         If MainAI IsNot Nothing Then AICanSearchOnUsersTurn = False : MainAI.ABORTSearch()
-        If GameMode = 4 Then PuzzleSampleDatabase = Nothing : GC.Collect() 'Clears the puzzle database to save memory.
+        If GameMode = 4 Then PuzzleSampleDatabase = Nothing 'Clears the puzzle database to save memory.
+
         'Locates MainMenu Form and shows it.
         Dim Menu As Form = CType(Application.OpenForms("MainMenu"), MainMenu)
         'Closes the settings form, if it exists.
         Dim Settings As Form = CType(Application.OpenForms("Settings"), Settings)
         If Settings IsNot Nothing Then Settings.Close()
+
+        'Removes the TranspositionTable, then calls a full garbage collection on the system, in order to
+        'properly reset the system for the next game of chess.
+        If MainAI IsNot Nothing Then Thread.Sleep(5) : MainAI.DisposeTranspositionTable()
+        GC.Collect()
+
         Me.Close() 'Closes the current form.
         Menu.Show()
     End Sub
@@ -391,7 +459,7 @@ Partial Public Class Chess
             Console.ResetColor()
         End Try
 
-        Dim CreditsMessage As String = Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v8.1)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)"
+        Dim CreditsMessage As String = Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v8.2)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)"
         If CanRetrieveStats Then
             MsgBox(CreditsMessage & vbCrLf & vbCrLf & vbCrLf & "Lifetime AI Statistics:" & vbCrLf & "Positions Searched: " & LifetimePositions.ToString("N0") & vbCrLf & "Transpositions Found: " & LifetimeTranspositions.ToString("N0") & vbCrLf & "Checkmates Made: " & LifetimeCheckmates.ToString("N0"), vbInformation + vbApplicationModal, "Credits")
         Else
