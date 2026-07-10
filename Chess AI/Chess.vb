@@ -27,7 +27,7 @@ Public Class Chess 'ew- danny
 
     'FEN = Standard Chess notation that displays where all the pieces on the board are supposed to go.
     Private StartingFEN As String = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    Private CurrentFEN, PreviousFEN, InvalidFEN As String
+    Private CurrentFEN, PreviousFEN, InvalidInput As String
     Private PlayerTurn As Boolean = True 'True = Is White's Turn, False = Is Black's Turn
     Private UserPlayer As Boolean = True 'Represents what colour the user is playing with.
     Private MasterWKPos, MasterBKPos As String 'Loaction of Kings.
@@ -77,7 +77,7 @@ Public Class Chess 'ew- danny
     Private TrainingTimerTicks As UInt16
     Private Const MovesPerPosition As Byte = 3
     Private TrainingMovesCompleted As Byte
-    Private MovesInPosition(200, 2) As String
+    Private MovesInPosition(200, 1) As String
 
     'Leaderboard info for training games: 0 = Index, 1 = Name, 2 = Score, 3 = Date Achieved.
     Dim WLeaderBoard(9, 2), BLeaderBoard(9, 2) As String
@@ -135,7 +135,7 @@ Public Class Chess 'ew- danny
         AIMoveBtn.Visible = False
         FENTextBox.ReadOnly = True
         Reset_Btn.Visible = False
-        FENButton.Visible = False
+        InputButton.Visible = False
         FENExport.Visible = False
         UndoMove.Top -= 80
         CheckLabel.Location = New Point(89, 128)
@@ -158,30 +158,25 @@ Public Class Chess 'ew- danny
             CurrentAIEval.Location = New Point(CurrentAIDepth.Location.X, CurrentAIDepth.Location.Y + 60)
             UserPlayer = PlayAsWhite
             'Difficulty generator.
+            If InputBook(0, 0) <> "ERROR" Then UseBook.Checked = True
             If Difficulty = 1 Then
                 TimeForSearch = 1
                 UseQuiescence = False
-                UseBook.Checked = False
             ElseIf Difficulty = 2 Then
                 TimeForSearch = 3
                 UseQuiescence = False
-                UseBook.Checked = True
             ElseIf Difficulty = 3 Then
                 TimeForSearch = 5
                 UseQuiescence = False
-                UseBook.Checked = True
             ElseIf Difficulty = 4 Then
                 TimeForSearch = 5
                 UseQuiescence = True
-                UseBook.Checked = True
             ElseIf Difficulty = 5 Then
                 TimeForSearch = 10
                 UseQuiescence = True
-                UseBook.Checked = True
             Else
                 TimeForSearch = 30
                 UseQuiescence = True
-                UseBook.Checked = True
             End If
             'Creates opening book.
             If UseBook.Checked Then
@@ -420,6 +415,7 @@ Public Class Chess 'ew- danny
                 CheckLabel.Text = " Stalemate! "
                 Sound_Stalemate.Play()
             Else
+                Console.Clear()
                 Console.WriteLine("The Game has Begun.")
             End If
 
@@ -672,7 +668,7 @@ Public Class Chess 'ew- danny
             'Displays appropriate error messages.
             If Not (WKingCount = 1 AndAlso BKingCount = 1) Then
                 If OutputToBox Then
-                    InvalidFEN = FEN
+                    InvalidInput = FEN
                     FENTextBox.Text = "Position Rejected - Invalid number of Kings. Please Input a Genuinine FEN and try again."
                     UndoFENChange.Visible = True
                 Else 'Returns message as string.
@@ -681,7 +677,7 @@ Public Class Chess 'ew- danny
                 Return False
             ElseIf MaxWQueens > 9 OrElse MaxBQueens > 9 Then
                 If OutputToBox Then
-                    InvalidFEN = FEN
+                    InvalidInput = FEN
                     FENTextBox.Text = "Position Rejected - Too many Pawns / Queens. Please Input a Genuinine FEN and try again."
                     UndoFENChange.Visible = True
                 Else
@@ -693,7 +689,7 @@ Public Class Chess 'ew- danny
             Return True
         Else
             If OutputToBox Then
-                InvalidFEN = FEN
+                InvalidInput = FEN
                 FENTextBox.Text = "Position Rejected - Invalid FEN Length. Please Input a Genuinine FEN and try again."
                 UndoFENChange.Visible = True
             Else
@@ -703,82 +699,232 @@ Public Class Chess 'ew- danny
         End If
     End Function
 
+    Private Sub EnterMovesIntoSystem(ByVal Moves As String, ByVal OutputToTextBox As Boolean)
+        'Formats moves.
+        Dim FormattedPGN As String
+        Try
+            For n = 0 To Moves.Length - 1
+                Select Case Moves(n)
+                    Case "0" To "9"
+                        If n = Moves.Length - 1 OrElse Not (Moves(n + 1) = "." OrElse Moves(n + 1) = "-" OrElse Moves(n + 1) = "/" OrElse (Moves(n + 1) >= "0" AndAlso Moves(n + 1) <= "9")) Then FormattedPGN &= Moves(n)
+                    Case "#", "-", "/"
+                        If Moves(n) = "-" Then
+                            If Moves(n + 1) = "O" Then
+                                FormattedPGN &= Moves(n)
+                                Exit Select
+                            End If
+                        End If
+                        Exit For
+                    Case "."
+                        If n = Moves.Length - 1 Then FormattedPGN = FormattedPGN.TrimEnd(" ")
+                    Case " "
+                        If Moves(n - 1) <> "." Then FormattedPGN &= Moves(n)
+                    Case Else
+                        FormattedPGN &= Moves(n)
+                End Select
+            Next
+        Catch ex As Exception
+            If OutputToTextBox Then
+                InvalidInput = FENTextBox.Text
+                UndoFENChange.Visible = True
+                FENTextBox.Text = "Move Unable to be Formatted. Please Input a valid set of Moves and try again."
+            Else
+                Console.WriteLine("Move Unable to be Formatted.")
+            End If
+            Exit Sub
+        End Try
+        FormattedPGN = FormattedPGN.TrimEnd(" ")
+        If OutputToTextBox Then FENTextBox.Text = FormattedPGN
+        FormattedPGN &= " "
+        Dim TempPGNMove As String
+        Dim TempMove As New Move
+        Dim FirstMove As Boolean = True
+        Dim IsLegalMove As Boolean
+
+        Do
+            If Not FirstMove Then Thread.Sleep(25) 'Allows the user to appreciate the moves being made.
+            For n = 0 To FormattedPGN.Length - 1
+                If FormattedPGN(n) = " " Then
+                    TempPGNMove = FormattedPGN.Substring(0, n)
+                    FormattedPGN = FormattedPGN.Substring(n + 1, FormattedPGN.Length - n - 1)
+                    Try
+                        If PlayerTurn Then
+                            TempMove = SharedAlgorithms.ConvertToMove(TempPGNMove, MasterBoard, True, MasterWKPos, MasterWhiteTFTable)
+                            If TempMove.EndState = "a" Then Throw New Exception("Invalid Move.")
+                            PieceMoving.LegalMoves = MainAI.ReturnPiecesLegalMoves(TempMove.OldMoveX, TempMove.OldMoveY)
+                            IsLegalMove = False
+                            For m = 1 To Val(PieceMoving.LegalMoves(0))
+                                If TempMove.NewMoveX & TempMove.NewMoveY = PieceMoving.LegalMoves(m) Then
+                                    IsLegalMove = True
+                                    Exit For
+                                End If
+                            Next
+                            If Not IsLegalMove Then Throw New Exception("Illegal Move.")
+                            AnimateMove(TempMove)
+                            MakeMove(MasterBoard, TempMove.OldMoveX, TempMove.OldMoveY, TempMove.NewMoveX, TempMove.NewMoveY, MasterWCanCastle, MasterWKPos, MasterEnPassant, True)
+                        Else
+                            TempMove = SharedAlgorithms.ConvertToMove(TempPGNMove, MasterBoard, False, MasterBKPos, MasterBlackTFTable)
+                            If TempMove.EndState = "a" Then Throw New Exception("Invalid Move.")
+                            PieceMoving.LegalMoves = MainAI.ReturnPiecesLegalMoves(TempMove.OldMoveX, TempMove.OldMoveY)
+                            IsLegalMove = False
+                            For m = 1 To Val(PieceMoving.LegalMoves(0))
+                                If TempMove.NewMoveX & TempMove.NewMoveY = PieceMoving.LegalMoves(m) Then
+                                    IsLegalMove = True
+                                    Exit For
+                                End If
+                            Next
+                            If Not IsLegalMove Then Throw New Exception("Illegal Move.")
+                            AnimateMove(TempMove)
+                            MakeMove(MasterBoard, TempMove.OldMoveX, TempMove.OldMoveY, TempMove.NewMoveX, TempMove.NewMoveY, MasterBCanCastle, MasterBKPos, MasterEnPassant, True)
+                        End If
+                    Catch ex As Exception
+                        MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                        DisplayPieces()
+                        If Not FirstMove Then OutputDebugInfo()
+                        Dim OutputResponce As String
+                        If TempMove.EndState = "a" Then OutputResponce = "Invalid" Else OutputResponce = "Illegal"
+                        If OutputToTextBox Then
+                            InvalidInput = FENTextBox.Text
+                            UndoFENChange.Visible = True
+                            FENTextBox.Text = "Move (" & TempPGNMove & ") is " & OutputResponce & ". Please Input a valid set of Moves and try again."
+                        Else
+                            Console.WriteLine("Move (" & TempPGNMove & ") is " & OutputResponce & ". Please Input a valid set of Moves and try again.")
+                        End If
+                        Exit Sub
+                    End Try
+
+                    If Not UndoFENChange.Visible Then 'Move is valid.
+                        'Updates TFTable for appropriate player.
+                        If PlayerTurn Then
+                            MasterWInCheck.NotInCheck() 'Player is no longer in check.
+                            SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+                        Else
+                            MasterBInCheck.NotInCheck() 'Player is no longer in check.
+                            SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+                        End If
+
+                        'Update Previously Used Squares, then flips the board if necessary.
+                        If GameMode = 3 AndAlso FirstMove Then
+                            SquareHistory(2, 0) = SquareHistory(0, 0)
+                            SquareHistory(2, 1) = SquareHistory(0, 1)
+                            SquareHistory(3, 0) = SquareHistory(1, 0)
+                            SquareHistory(3, 1) = SquareHistory(1, 1)
+                        End If
+                        SquareHistory(0, 0) = TempMove.NewMoveX
+                        SquareHistory(0, 1) = TempMove.NewMoveY
+                        SquareHistory(1, 0) = TempMove.OldMoveX
+                        SquareHistory(1, 1) = TempMove.OldMoveY
+                        If Not OrientForWhite Then
+                            SquareHistory(0, 0) = 7 - SquareHistory(0, 0)
+                            SquareHistory(0, 1) = 7 - SquareHistory(0, 1)
+                            SquareHistory(1, 0) = 7 - SquareHistory(1, 0)
+                            SquareHistory(1, 1) = 7 - SquareHistory(1, 1)
+                        End If
+                        'Resets LegalMoveSquares.
+                        ResetLMS(False)
+                        Checkerboard.Refresh()
+                        CheckChecker()
+
+                        'Ends the turn, then calculates the new position's FEN.
+                        PlayerTurn = Not PlayerTurn
+                        If FirstMove Then PreviousFEN = CurrentFEN : FirstMove = False
+                        CurrentFEN = SharedAlgorithms.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, MasterEnPassant, PlayerTurn)
+                        MainAI.Reconfigure(CurrentFEN) 'Recalibrates AI.
+                        EnforceEndStates()
+
+                        Exit For
+                    End If
+                End If
+
+            Next
+
+        Loop While Len(FormattedPGN) > 0 AndAlso GameRunning
+        OutputDebugInfo()
+    End Sub
+
     'Sends the FEN a user types in to be converted & displayed.
-    Private Sub FENButton_Click() Handles FENButton.Click
+    Private Sub InputButton_Click() Handles InputButton.Click
+        FENTextBox.Text = FENTextBox.Text.Trim(" ")
         If FENTextBox.Text <> "" AndAlso FENTextBox.Text <> CurrentFEN AndAlso Not ComputerIsSearching Then
             'Checks for first form of validation (if the 2nd letter is "o", then that usually implies that 
             'the TextBox contains an error message.
-            If FENTextBox.Text(1) <> "o" AndAlso FENErrorDetection(FENTextBox.Text, True, "") Then
-                If UndoFENChange.Visible = True Then UndoFENChange.Visible = False
-                'Resets Check and Castling Properties.
-                MasterWInCheck.NotInCheck()
-                MasterBInCheck.NotInCheck()
-                Dim TempFEN As String = PreviousFEN
-                'Try displaying the FEN on the board graphically. If this fails, then the FEN is invalid.
-                'In this case, the board is reset to the previous position.
-                Try
-                    PreviousFEN = CurrentFEN
-                    CurrentFEN = FENTextBox.Text
-                    MasterBoard = SharedAlgorithms.FENConverter(FENTextBox.Text, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-                    DisplayPieces()
-                Catch ex As Exception
-                    InvalidFEN = FENTextBox.Text
-                    CurrentFEN = PreviousFEN
-                    PreviousFEN = TempFEN
-                    MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-                    DisplayPieces()
-                    UndoFENChange.Visible = True
-                    FENTextBox.Text = "Position Rejected - Invalid FEN Code. Please Input a Genuinine FEN and try again."
-                End Try
+            If FENTextBox.Text(1) <> "o" Then
+                'Performs tests on the input to determine whether the user is inputting a FEN or a series of PGN moves.
+                If GameRunning AndAlso (FENTextBox.Text.IndexOf("/") = -1 OrElse (FENTextBox.Text.IndexOf(".") > -1 OrElse (FENTextBox.Text.IndexOf(" ") > 1 AndAlso FENTextBox.Text.IndexOf(" ") < 10))) Then
+                    'Can assume that input is a move / moves.
+                    EnterMovesIntoSystem(FENTextBox.Text, True)
+                ElseIf FENErrorDetection(FENTextBox.Text, True, "") Then 'Is a Valid FEN.
+                    If UndoFENChange.Visible = True Then UndoFENChange.Visible = False
+                    'Resets Check and Castling Properties.
+                    MasterWInCheck.NotInCheck()
+                    MasterBInCheck.NotInCheck()
+                    Dim TempFEN As String = PreviousFEN
+                    'Try displaying the FEN on the board graphically. If this fails, then the FEN is invalid.
+                    'In this case, the board is reset to the previous position.
+                    Try
+                        PreviousFEN = CurrentFEN
+                        CurrentFEN = FENTextBox.Text
+                        MasterBoard = SharedAlgorithms.FENConverter(FENTextBox.Text, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                        DisplayPieces()
+                    Catch ex As Exception
+                        InvalidInput = FENTextBox.Text
+                        CurrentFEN = PreviousFEN
+                        PreviousFEN = TempFEN
+                        MasterBoard = SharedAlgorithms.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
+                        DisplayPieces()
+                        UndoFENChange.Visible = True
+                        FENTextBox.Text = "Position Rejected - Invalid FEN Code. Please Input a Genuinine FEN and try again."
+                    End Try
 
-                If UndoFENChange.Visible = False Then 'Therefore FEN is valid.
-                    Console.Clear()
-                    'Edits location of Previously Used Squares.
-                    SquareHistory(2, 0) = SquareHistory(0, 0)
-                    SquareHistory(2, 1) = SquareHistory(0, 1)
-                    SquareHistory(3, 0) = SquareHistory(1, 0)
-                    SquareHistory(3, 1) = SquareHistory(1, 1)
-                    SquareHistory(0, 0) = -1
-                    SquareHistory(0, 1) = -1
-                    SquareHistory(1, 0) = -1
-                    SquareHistory(1, 1) = -1
-                    If PlayerTurn Xor OrientForWhite Then
-                        FlipBoard()
-                    Else
-                        Checkerboard.Refresh()
+                    If UndoFENChange.Visible = False Then 'Therefore FEN is valid.
+                        Console.Clear()
+                        'Edits location of Previously Used Squares.
+                        SquareHistory(2, 0) = SquareHistory(0, 0)
+                        SquareHistory(2, 1) = SquareHistory(0, 1)
+                        SquareHistory(3, 0) = SquareHistory(1, 0)
+                        SquareHistory(3, 1) = SquareHistory(1, 1)
+                        SquareHistory(0, 0) = -1
+                        SquareHistory(0, 1) = -1
+                        SquareHistory(1, 0) = -1
+                        SquareHistory(1, 1) = -1
+                        If PlayerTurn Xor OrientForWhite Then
+                            FlipBoard()
+                        Else
+                            Checkerboard.Refresh()
+                        End If
+                        GameRunning = True
+                        'Resets TrueFalse Tables, then checks for Checks.
+                        SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+                        SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+                        Sound_Move.Play()
+                        CheckChecker()
+
+                        If MasterWInCheck.IsInCheck AndAlso Not PlayerTurn Then
+                            'If White is in check, and it is black to move, then black can take white's king. This is illegal.
+                            GameRunning = False
+                            Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
+                        ElseIf MasterBInCheck.IsInCheck AndAlso PlayerTurn Then
+                            'If Black is in check, and it is white to move, then white can take black's king. This is illegal.
+                            Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
+                            GameRunning = False
+                        ElseIf Math.Abs(Val(MasterWKPos(0)) - Val(MasterBKPos(0))) <= 1 AndAlso Math.Abs(Val(MasterWKPos(1)) - Val(MasterBKPos(1))) <= 1 Then
+                            'Kings are too close together.
+                            GameRunning = False
+                            Console.WriteLine("The Game has Ended. Cause = Invalid King Positions.")
+                            CheckLabel.Text = " Stalemate! "
+                            Sound_Stalemate.Play()
+                        End If
+
+                        'Recalibrates AI and resets AI move info.
+                        MainAI.Reconfigure(CurrentFEN)
+                        CurrentDepth = 2
+                        CurrentMove = "-"
+                        CurrentEvaluation = "-"
+                        CurrentAIDepth.Text = "Current Depth: -"
+                        CurrentAIMove.Text = "Current Move: -"
+                        CurrentAIEval.Text = "Evaluation: -"
+                        EnforceEndStates()
                     End If
-                    GameRunning = True
-                    'Resets TrueFalse Tables, then checks for Checks.
-                    SharedAlgorithms.FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
-                    SharedAlgorithms.FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
-                    Sound_Move.Play()
-                    CheckChecker()
-
-                    If MasterWInCheck.IsInCheck AndAlso Not PlayerTurn Then
-                        'If White is in check, and it is black to move, then black can take white's king. This is illegal.
-                        GameRunning = False
-                        Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
-                    ElseIf MasterBInCheck.IsInCheck AndAlso PlayerTurn Then
-                        'If Black is in check, and it is white to move, then white can take black's king. This is illegal.
-                        Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
-                        GameRunning = False
-                    ElseIf Math.Abs(Val(MasterWKPos(0)) - Val(MasterBKPos(0))) <= 1 AndAlso Math.Abs(Val(MasterWKPos(1)) - Val(MasterBKPos(1))) <= 1 Then
-                        'Kings are too close together.
-                        GameRunning = False
-                        Console.WriteLine("The Game has Ended. Cause = Invalid King Positions.")
-                        CheckLabel.Text = " Stalemate! "
-                        Sound_Stalemate.Play()
-                    End If
-
-                    'Recalibrates AI and resets AI move info.
-                    MainAI.Reconfigure(CurrentFEN)
-                    CurrentDepth = 2
-                    CurrentMove = "-"
-                    CurrentEvaluation = "-"
-                    CurrentAIDepth.Text = "Current Depth: -"
-                    CurrentAIMove.Text = "Current Move: -"
-                    CurrentAIEval.Text = "Evaluation: -"
-                    EnforceEndStates()
                 End If
             End If
         End If
@@ -786,7 +932,7 @@ Public Class Chess 'ew- danny
 
     'Button which resets the FEN in the FENTextBox, in case it is invalid.
     Private Sub UndoFENChange_Click(sender As Object, e As EventArgs) Handles UndoFENChange.Click
-        FENTextBox.Text = InvalidFEN
+        FENTextBox.Text = InvalidInput
         sender.Visible = False
     End Sub
 
@@ -1432,10 +1578,10 @@ Public Class Chess 'ew- danny
         While True
             'Retrieves random move from MovesInPosition, then contructs TempMove using this data.
             Dim RndIndex As Byte = Math.Truncate(Rnd() * (MovesInPosition(0, 0) - 1)) + 1
-            TempMove.OldMoveX = MovesInPosition(RndIndex, 0)
-            TempMove.OldMoveY = MovesInPosition(RndIndex, 1)
-            TempMove.NewMoveX = MovesInPosition(RndIndex, 2)(0)
-            TempMove.NewMoveY = MovesInPosition(RndIndex, 2)(1)
+            TempMove.OldMoveX = MovesInPosition(RndIndex, 0)(0)
+            TempMove.OldMoveY = MovesInPosition(RndIndex, 0)(1)
+            TempMove.NewMoveX = MovesInPosition(RndIndex, 1)(0)
+            TempMove.NewMoveY = MovesInPosition(RndIndex, 1)(1)
             'Converts this Move to standard chess notation. If this is different to the current move then accept & return it.
             GenerateNewTrainingMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, MasterEnPassant)
             If MoveDisplayer.Text <> GenerateNewTrainingMove Then Return GenerateNewTrainingMove
@@ -1463,7 +1609,7 @@ Public Class Chess 'ew- danny
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.0)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v6.1)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
 
@@ -1895,7 +2041,6 @@ Public Class Chess 'ew- danny
         AbsoluteDepth = Math.Max(AbsoluteDepth, 4)
         Console.WriteLine("Absolute Depth = " & AbsoluteDepth)
     End Sub
-
 
     'Function that uses the binary search to find a given FEN in the opening book.
     Private Function FindPositionInBook(ByVal FEN As String) As UInt16

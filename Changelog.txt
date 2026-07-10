@@ -1,4 +1,3 @@
-Val() Perfomance improvements
-Piece Animations
-Opening Book
-Training Modes (Coordinate & Move Practice)
+Improved Opening Book
+LegalMove Redesign
+PGN addition to FEN inputter.

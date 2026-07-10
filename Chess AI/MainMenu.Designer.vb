@@ -703,6 +703,7 @@ Partial Class MainMenu
         Me.Controls.Add(Me.RowHider2)
         Me.Controls.Add(Me.RowHider1)
         Me.ForeColor = System.Drawing.Color.Black
+        Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximizeBox = False
         Me.Name = "MainMenu"

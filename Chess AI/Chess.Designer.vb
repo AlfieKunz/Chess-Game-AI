@@ -25,7 +25,7 @@ Partial Class Chess
         Me.components = New System.ComponentModel.Container()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Chess))
         Me.FENTextBox = New System.Windows.Forms.TextBox()
-        Me.FENButton = New System.Windows.Forms.Button()
+        Me.InputButton = New System.Windows.Forms.Button()
         Me.AIMoveBtn = New System.Windows.Forms.Button()
         Me.Reset_Btn = New System.Windows.Forms.Button()
         Me.FENExport = New System.Windows.Forms.Button()
@@ -184,14 +184,14 @@ Partial Class Chess
         Me.FENTextBox.Size = New System.Drawing.Size(282, 35)
         Me.FENTextBox.TabIndex = 2
         '
-        'FENButton
+        'InputButton
         '
-        Me.FENButton.Location = New System.Drawing.Point(95, 53)
-        Me.FENButton.Name = "FENButton"
-        Me.FENButton.Size = New System.Drawing.Size(113, 23)
-        Me.FENButton.TabIndex = 3
-        Me.FENButton.Text = "Click to Set FEN:"
-        Me.FENButton.UseVisualStyleBackColor = True
+        Me.InputButton.Location = New System.Drawing.Point(66, 53)
+        Me.InputButton.Name = "InputButton"
+        Me.InputButton.Size = New System.Drawing.Size(171, 23)
+        Me.InputButton.TabIndex = 3
+        Me.InputButton.Text = "Click to Submit FEN / Move(s):"
+        Me.InputButton.UseVisualStyleBackColor = True
         '
         'AIMoveBtn
         '
@@ -240,7 +240,7 @@ Partial Class Chess
         Me.CurrentAIEval.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CurrentAIEval.Location = New System.Drawing.Point(955, 280)
         Me.CurrentAIEval.Name = "CurrentAIEval"
-        Me.CurrentAIEval.Size = New System.Drawing.Size(94, 16)
+        Me.CurrentAIEval.Size = New System.Drawing.Size(93, 16)
         Me.CurrentAIEval.TabIndex = 9
         Me.CurrentAIEval.Text = "Evaluation: -"
         '
@@ -262,14 +262,14 @@ Partial Class Chess
         Me.Credits.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
         Me.Credits.Location = New System.Drawing.Point(1035, 575)
         Me.Credits.Name = "Credits"
-        Me.Credits.Size = New System.Drawing.Size(155, 16)
+        Me.Credits.Size = New System.Drawing.Size(154, 16)
         Me.Credits.TabIndex = 10
         Me.Credits.Text = "Created by Alfie Kunz"
         '
         'UndoFENChange
         '
         Me.UndoFENChange.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.UndoFENChange.Location = New System.Drawing.Point(213, 53)
+        Me.UndoFENChange.Location = New System.Drawing.Point(245, 53)
         Me.UndoFENChange.Name = "UndoFENChange"
         Me.UndoFENChange.Size = New System.Drawing.Size(23, 23)
         Me.UndoFENChange.TabIndex = 11
@@ -944,7 +944,7 @@ Partial Class Chess
         Me.CurrentAIMove.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CurrentAIMove.Location = New System.Drawing.Point(955, 250)
         Me.CurrentAIMove.Name = "CurrentAIMove"
-        Me.CurrentAIMove.Size = New System.Drawing.Size(112, 16)
+        Me.CurrentAIMove.Size = New System.Drawing.Size(111, 16)
         Me.CurrentAIMove.TabIndex = 9
         Me.CurrentAIMove.Text = "Current Move: -"
         '
@@ -954,7 +954,7 @@ Partial Class Chess
         Me.CurrentAIDepth.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CurrentAIDepth.Location = New System.Drawing.Point(955, 220)
         Me.CurrentAIDepth.Name = "CurrentAIDepth"
-        Me.CurrentAIDepth.Size = New System.Drawing.Size(115, 16)
+        Me.CurrentAIDepth.Size = New System.Drawing.Size(114, 16)
         Me.CurrentAIDepth.TabIndex = 9
         Me.CurrentAIDepth.Text = "Current Depth: -"
         '
@@ -1211,7 +1211,7 @@ Partial Class Chess
         Me.Controls.Add(Me.FENExport)
         Me.Controls.Add(Me.Reset_Btn)
         Me.Controls.Add(Me.AIMoveBtn)
-        Me.Controls.Add(Me.FENButton)
+        Me.Controls.Add(Me.InputButton)
         Me.Controls.Add(Me.FENTextBox)
         Me.Controls.Add(Me.WP8)
         Me.Controls.Add(Me.WP7)
@@ -1359,7 +1359,7 @@ Partial Class Chess
     Friend WithEvents BP8 As System.Windows.Forms.PictureBox
     Friend WithEvents Checkerboard As System.Windows.Forms.PictureBox
     Friend WithEvents FENTextBox As TextBox
-    Friend WithEvents FENButton As Button
+    Friend WithEvents InputButton As Button
     Friend WithEvents WQ2 As System.Windows.Forms.PictureBox
     Friend WithEvents WQ3 As System.Windows.Forms.PictureBox
     Friend WithEvents WQ4 As System.Windows.Forms.PictureBox
