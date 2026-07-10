@@ -35,7 +35,6 @@ Partial Class Chess
         Me.WhiteAIMove = New System.Windows.Forms.Button()
         Me.Credits = New System.Windows.Forms.Label()
         Me.UndoFENChange = New System.Windows.Forms.Button()
-        Me.Label1 = New System.Windows.Forms.Label()
         Me.ProgressBar = New System.Windows.Forms.ProgressBar()
         Me.ColourChanger = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.Def = New System.Windows.Forms.ToolStripMenuItem()
@@ -95,8 +94,6 @@ Partial Class Chess
         Me.WQ1 = New System.Windows.Forms.PictureBox()
         Me.WK1 = New System.Windows.Forms.PictureBox()
         Me.Checkerboard = New System.Windows.Forms.PictureBox()
-        Me.RadioButton1 = New System.Windows.Forms.RadioButton()
-        Me.RadioButton2 = New System.Windows.Forms.RadioButton()
         Me.FlipperButton = New System.Windows.Forms.Button()
         Me.AutoFlipper = New System.Windows.Forms.CheckBox()
         Me.ExitBtn = New System.Windows.Forms.Button()
@@ -258,15 +255,6 @@ Partial Class Chess
         Me.UndoFENChange.TabIndex = 11
         Me.UndoFENChange.Text = "↺"
         Me.UndoFENChange.UseVisualStyleBackColor = True
-        '
-        'Label1
-        '
-        Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(1028, 243)
-        Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(39, 13)
-        Me.Label1.TabIndex = 12
-        Me.Label1.Text = "Label1"
         '
         'ProgressBar
         '
@@ -873,28 +861,6 @@ Partial Class Chess
         Me.Checkerboard.TabIndex = 1
         Me.Checkerboard.TabStop = False
         '
-        'RadioButton1
-        '
-        Me.RadioButton1.AutoSize = True
-        Me.RadioButton1.Location = New System.Drawing.Point(107, 288)
-        Me.RadioButton1.Name = "RadioButton1"
-        Me.RadioButton1.Size = New System.Drawing.Size(90, 17)
-        Me.RadioButton1.TabIndex = 16
-        Me.RadioButton1.TabStop = True
-        Me.RadioButton1.Text = "RadioButton1"
-        Me.RadioButton1.UseVisualStyleBackColor = True
-        '
-        'RadioButton2
-        '
-        Me.RadioButton2.AutoSize = True
-        Me.RadioButton2.Location = New System.Drawing.Point(107, 312)
-        Me.RadioButton2.Name = "RadioButton2"
-        Me.RadioButton2.Size = New System.Drawing.Size(90, 17)
-        Me.RadioButton2.TabIndex = 17
-        Me.RadioButton2.TabStop = True
-        Me.RadioButton2.Text = "RadioButton2"
-        Me.RadioButton2.UseVisualStyleBackColor = True
-        '
         'FlipperButton
         '
         Me.FlipperButton.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
@@ -920,7 +886,7 @@ Partial Class Chess
         Me.ExitBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.ExitBtn.Location = New System.Drawing.Point(1009, 505)
         Me.ExitBtn.Name = "ExitBtn"
-        Me.ExitBtn.Size = New System.Drawing.Size(78, 39)
+        Me.ExitBtn.Size = New System.Drawing.Size(78, 40)
         Me.ExitBtn.TabIndex = 22
         Me.ExitBtn.Text = "Exit to Main Menu"
         Me.ExitBtn.UseVisualStyleBackColor = True
@@ -930,16 +896,13 @@ Partial Class Chess
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
-        Me.BackColor = System.Drawing.Color.DarkGray
+        Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(1184, 600)
         Me.Controls.Add(Me.ExitBtn)
         Me.Controls.Add(Me.AutoFlipper)
         Me.Controls.Add(Me.FlipperButton)
-        Me.Controls.Add(Me.RadioButton2)
-        Me.Controls.Add(Me.RadioButton1)
         Me.Controls.Add(Me.ColourChangerButton)
         Me.Controls.Add(Me.ProgressBar)
-        Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.UndoFENChange)
         Me.Controls.Add(Me.Credits)
         Me.Controls.Add(Me.CurrentEval)
@@ -1002,7 +965,7 @@ Partial Class Chess
         Me.Controls.Add(Me.Checkerboard)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximizeBox = False
-        Me.MinimumSize = New System.Drawing.Size(1200, 639)
+        Me.MaximumSize = New System.Drawing.Size(1200, 639)
         Me.Name = "Chess"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Chess"
@@ -1118,7 +1081,6 @@ Partial Class Chess
     Friend WithEvents WhiteAIMove As Button
     Friend WithEvents Credits As Label
     Friend WithEvents UndoFENChange As System.Windows.Forms.Button
-    Friend WithEvents Label1 As Label
     Friend WithEvents ProgressBar As ProgressBar
     Friend WithEvents WQ9 As System.Windows.Forms.PictureBox
     Friend WithEvents BQ9 As System.Windows.Forms.PictureBox
@@ -1131,8 +1093,6 @@ Partial Class Chess
     Friend WithEvents Grn As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents Ppl As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents Mon As System.Windows.Forms.ToolStripMenuItem
-    Friend WithEvents RadioButton1 As System.Windows.Forms.RadioButton
-    Friend WithEvents RadioButton2 As System.Windows.Forms.RadioButton
     Friend WithEvents FlipperButton As System.Windows.Forms.Button
     Friend WithEvents AutoFlipper As System.Windows.Forms.CheckBox
     Friend WithEvents ExitBtn As Button
