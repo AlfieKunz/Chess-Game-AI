@@ -1,28 +1,30 @@
 ~~~~~~~~  New Features  ~~~~~~~~
-- 'king dead' text for Hammad Mode Checkmate.
-- Toggle to disable non-essential GUI elements when the AI is searching (improves low TimeForSearch situations).
-- More Compact & Refined Debug Info Console Output.
-- Added AI Method to calculate the length of the TranspositionTable Entry (List), which contains the most entries (used to determine how 'full' the TranspositionTable is).
-- Option for the AI to search on the position on the user's turn (which fills the TranspositionTable in preparation for the AI's move) - 1-Player Mode only.
-- TT data is retained upon ABORTing a search, meaning that some positions can be accessed quicker.
-- Restructuring of how BasePieceMoves is generated (contains only legal moves vs pseudo-legal moves).
-- Restructuring of how the main Chess.vb form interacts with pieces (due to restructuring of BasePieceMoves).
-- Option to output the details of the Current Move the AI is searching on (OutputMoveDebugInfo in SearchSettings) - toggles when the searching process becomes lengthy.
-- Added 'VFast' Animation Speed Option (and set default speed to 'Fast').
-- General Code Condensing :).
+- AI Moves updated to BitMoves (2x Performance Increase) :D.
+- Added PGNs to GameHistory.
+- Added AutoPGN outputter to One & Two Player Modes.
+- Checks are now added to the PGN exporter.
+- Re-implementation of MouseUp() subroutine.
+- InCheck, KPos, and EnPassant updated to BitMoves.
+- Added 'Node Test' feature to Analysis Mode.
+- Restructured TranspositionTable to improve memory usage (stored as a static array, instead of a list of nodes). Implemented using the 'Deep' Replacement scheme (strict replacement).
+- Added TimeToLive attribute to TranspositionTable nodes, to improve the long-term efficiency of the 'Deep' Replacement scheme.
+- Ensures that the nodes involved in the AI's best line are kept alive in the TranspositionTable (using TimeToLive).
+- Updated main AI FOR loops to include the variable type of the incrementing variable.
+- Added constraint information to PGN move generator.
+- Refined Memory Management Tools.
+- Improved Hammad Mode Base Level Algorithm.
+- Reduced Opening Book load times (using GC Settings).
+- General code condensing & Refactoring :).
+- Tweaked PieceHeatMaps.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 ~~~~~~~~~  Bug Fixes  ~~~~~~~~~
-- (pretty much) NO INSTABILITY IN THE TRANSPOSITION TABLE WOOOOOOOOOOOO LET'S GOOOOOO, HELLL YEAHHHHHH :DDDDDDDDDDDDDD - FINALLY!!
-- Fixed PictureBox Transparency Issue (with PictureBoxes not overlapping correctly) - finally!!
-- Smoother PictureBox movement on the GUI - no stuttering or flickering :))).
-- Bug fixes for a single search not having enough time to complete.
-- Fixed hidden MainMenu bug.
-- Fixed 'Sound Off' Toggle so that it works with Puzzle Mode.
-- Board Debug Info now flips in black's favour.
-- Fixed bug where checkmate scores are incorrectly retrieved from the Transposition Table.
-- Memory Management tools to help prevent the system from crashing during long searches.
-- Error handling for 'Move Practice' Training Mode not being able to find a valid position.
+- Fixed bug with MakeMove not working correctly with black castling.
+- Fixed bug with black not being able to checkmate correctly.
+- Transposition Table now resets if the core AI settings have been changed mid-game (ie: Quiescence, PieceHeatMaps, Hammad Mode, ...).
+- Only one Settings Form can be opened at a time.
+- Fixed Bug with OpeningBook not working correctly for Upper Bound.
+- Added Cancel button to GameOver screen, so that the user is able to copy the final PGN / FEN.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

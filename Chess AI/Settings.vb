@@ -670,6 +670,10 @@ Public Class Settings
         End If
     End Sub
 
+    Private Sub OpeningBookBtn_CheckedChanged(sender As Object, e As EventArgs) Handles OpeningBookBtn.CheckedChanged
+
+    End Sub
+
     'Button that closes the settings menu.
     Private Sub BackBtn_Click() Handles BackBtn.Click
         Me.Close()

@@ -138,6 +138,12 @@ Partial Class Chess
         Me.HumanModeBtn = New System.Windows.Forms.RadioButton()
         Me.AIModeBtn = New System.Windows.Forms.RadioButton()
         Me.ResetRatingsBtn = New System.Windows.Forms.Button()
+        Me.PGNExport = New System.Windows.Forms.Button()
+        Me.AutoOutputterPanel = New System.Windows.Forms.Panel()
+        Me.PGNAutoOutputter = New System.Windows.Forms.RadioButton()
+        Me.FENAutoOutputter = New System.Windows.Forms.RadioButton()
+        Me.NodeTestBtn = New System.Windows.Forms.Button()
+        Me.NodeTestStopBtn = New System.Windows.Forms.Button()
         Me.ColourChanger.SuspendLayout()
         CType(Me.WP8, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WP7, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -192,6 +198,7 @@ Partial Class Chess
         CType(Me.WLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.AutoAdvanceBar, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.AutoOutputterPanel.SuspendLayout()
         Me.SuspendLayout()
         '
         'InputTextBox
@@ -236,9 +243,9 @@ Partial Class Chess
         Me.FENExport.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.FENExport.Location = New System.Drawing.Point(150, 85)
         Me.FENExport.Name = "FENExport"
-        Me.FENExport.Size = New System.Drawing.Size(141, 43)
+        Me.FENExport.Size = New System.Drawing.Size(70, 43)
         Me.FENExport.TabIndex = 7
-        Me.FENExport.Text = "Export to FEN"
+        Me.FENExport.Text = "Export FEN"
         Me.FENExport.UseVisualStyleBackColor = True
         '
         'CheckLabel
@@ -362,7 +369,7 @@ Partial Class Chess
         '
         Me.SettingsBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.SettingsBtn.ImageAlign = System.Drawing.ContentAlignment.MiddleRight
-        Me.SettingsBtn.Location = New System.Drawing.Point(95, 300)
+        Me.SettingsBtn.Location = New System.Drawing.Point(95, 353)
         Me.SettingsBtn.Name = "SettingsBtn"
         Me.SettingsBtn.Size = New System.Drawing.Size(113, 40)
         Me.SettingsBtn.TabIndex = 15
@@ -1168,9 +1175,6 @@ Partial Class Chess
         Me.TrainingScore.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         Me.TrainingScore.Visible = False
         '
-        'TrainingTimer
-        '
-        '
         'InfoBtn
         '
         Me.InfoBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
@@ -1367,7 +1371,7 @@ Partial Class Chess
         '
         Me.HumanModeBtn.AutoSize = True
         Me.HumanModeBtn.Checked = True
-        Me.HumanModeBtn.Location = New System.Drawing.Point(18, 390)
+        Me.HumanModeBtn.Location = New System.Drawing.Point(22, 390)
         Me.HumanModeBtn.Name = "HumanModeBtn"
         Me.HumanModeBtn.Size = New System.Drawing.Size(123, 17)
         Me.HumanModeBtn.TabIndex = 32
@@ -1379,7 +1383,7 @@ Partial Class Chess
         'AIModeBtn
         '
         Me.AIModeBtn.AutoSize = True
-        Me.AIModeBtn.Location = New System.Drawing.Point(162, 390)
+        Me.AIModeBtn.Location = New System.Drawing.Point(166, 390)
         Me.AIModeBtn.Name = "AIModeBtn"
         Me.AIModeBtn.Size = New System.Drawing.Size(99, 17)
         Me.AIModeBtn.TabIndex = 33
@@ -1398,6 +1402,71 @@ Partial Class Chess
         Me.ResetRatingsBtn.UseVisualStyleBackColor = True
         Me.ResetRatingsBtn.Visible = False
         '
+        'PGNExport
+        '
+        Me.PGNExport.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.PGNExport.Location = New System.Drawing.Point(221, 85)
+        Me.PGNExport.Name = "PGNExport"
+        Me.PGNExport.Size = New System.Drawing.Size(70, 43)
+        Me.PGNExport.TabIndex = 7
+        Me.PGNExport.Text = "Export PGN"
+        Me.PGNExport.UseVisualStyleBackColor = True
+        '
+        'AutoOutputterPanel
+        '
+        Me.AutoOutputterPanel.Controls.Add(Me.PGNAutoOutputter)
+        Me.AutoOutputterPanel.Controls.Add(Me.FENAutoOutputter)
+        Me.AutoOutputterPanel.Location = New System.Drawing.Point(45, 51)
+        Me.AutoOutputterPanel.Name = "AutoOutputterPanel"
+        Me.AutoOutputterPanel.Size = New System.Drawing.Size(214, 24)
+        Me.AutoOutputterPanel.TabIndex = 35
+        Me.AutoOutputterPanel.Visible = False
+        '
+        'PGNAutoOutputter
+        '
+        Me.PGNAutoOutputter.AutoSize = True
+        Me.PGNAutoOutputter.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.PGNAutoOutputter.Location = New System.Drawing.Point(124, 0)
+        Me.PGNAutoOutputter.Name = "PGNAutoOutputter"
+        Me.PGNAutoOutputter.Size = New System.Drawing.Size(90, 19)
+        Me.PGNAutoOutputter.TabIndex = 1
+        Me.PGNAutoOutputter.Text = "Output PGN"
+        Me.PGNAutoOutputter.UseVisualStyleBackColor = True
+        '
+        'FENAutoOutputter
+        '
+        Me.FENAutoOutputter.AutoSize = True
+        Me.FENAutoOutputter.Checked = True
+        Me.FENAutoOutputter.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.FENAutoOutputter.Location = New System.Drawing.Point(3, 0)
+        Me.FENAutoOutputter.Name = "FENAutoOutputter"
+        Me.FENAutoOutputter.Size = New System.Drawing.Size(88, 19)
+        Me.FENAutoOutputter.TabIndex = 0
+        Me.FENAutoOutputter.TabStop = True
+        Me.FENAutoOutputter.Text = "Output FEN"
+        Me.FENAutoOutputter.UseVisualStyleBackColor = True
+        '
+        'NodeTestBtn
+        '
+        Me.NodeTestBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.NodeTestBtn.Location = New System.Drawing.Point(62, 237)
+        Me.NodeTestBtn.Name = "NodeTestBtn"
+        Me.NodeTestBtn.Size = New System.Drawing.Size(175, 49)
+        Me.NodeTestBtn.TabIndex = 27
+        Me.NodeTestBtn.Text = "Perform Node Test:"
+        Me.NodeTestBtn.UseVisualStyleBackColor = True
+        '
+        'NodeTestStopBtn
+        '
+        Me.NodeTestStopBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.NodeTestStopBtn.Location = New System.Drawing.Point(62, 237)
+        Me.NodeTestStopBtn.Name = "NodeTestStopBtn"
+        Me.NodeTestStopBtn.Size = New System.Drawing.Size(175, 49)
+        Me.NodeTestStopBtn.TabIndex = 27
+        Me.NodeTestStopBtn.Text = "Terminate Node Test:"
+        Me.NodeTestStopBtn.UseVisualStyleBackColor = True
+        Me.NodeTestStopBtn.Visible = False
+        '
         'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -1405,11 +1474,14 @@ Partial Class Chess
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.AutoOutputterPanel)
         Me.Controls.Add(Me.ResetRatingsBtn)
         Me.Controls.Add(Me.AIModeBtn)
         Me.Controls.Add(Me.HumanModeBtn)
         Me.Controls.Add(Me.InfoBtn)
         Me.Controls.Add(Me.TrainingScore)
+        Me.Controls.Add(Me.NodeTestStopBtn)
+        Me.Controls.Add(Me.NodeTestBtn)
         Me.Controls.Add(Me.AITerminator)
         Me.Controls.Add(Me.UseBook)
         Me.Controls.Add(Me.AIEndlessMode)
@@ -1443,6 +1515,7 @@ Partial Class Chess
         Me.Controls.Add(Me.TrainingStart)
         Me.Controls.Add(Me.UndoMove)
         Me.Controls.Add(Me.GiveUpBtn)
+        Me.Controls.Add(Me.PGNExport)
         Me.Controls.Add(Me.FENExport)
         Me.Controls.Add(Me.HintBtn)
         Me.Controls.Add(Me.Reset_Btn)
@@ -1561,6 +1634,8 @@ Partial Class Chess
         CType(Me.WLeaderBoardGrid, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.BLeaderBoardGrid, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.AutoAdvanceBar, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.AutoOutputterPanel.ResumeLayout(False)
+        Me.AutoOutputterPanel.PerformLayout()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -1679,4 +1754,10 @@ Partial Class Chess
     Friend WithEvents HumanModeBtn As RadioButton
     Friend WithEvents AIModeBtn As RadioButton
     Friend WithEvents ResetRatingsBtn As Button
+    Friend WithEvents PGNExport As Button
+    Friend WithEvents AutoOutputterPanel As Panel
+    Friend WithEvents PGNAutoOutputter As RadioButton
+    Friend WithEvents FENAutoOutputter As RadioButton
+    Friend WithEvents NodeTestBtn As Button
+    Friend WithEvents NodeTestStopBtn As Button
 End Class

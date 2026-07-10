@@ -10,27 +10,6 @@ End Class
 
 
 
-'Below are the subobjects containing information about castling & checking rules,
-'along with some getter (used mainly to reset privileges) & setter functions.
-Public Class InCheck
-    Public IsInCheck As Boolean
-    Public Piece As String
-    Public DoubleCheck As Boolean
-    Public Sub New()
-        Piece = " "
-    End Sub
-    Public Sub NotInCheck() 'Resets all rules.
-        IsInCheck = False
-        Piece = " "
-        DoubleCheck = False
-    End Sub
-    Public Sub CopyFrom(ByVal Copier As InCheck) 'Copies all the data from the parameter class.
-        IsInCheck = Copier.IsInCheck
-        Piece = Copier.Piece
-        DoubleCheck = Copier.DoubleCheck
-    End Sub
-End Class
-
 
 Public Class CanCastle
     Public KS As Boolean
@@ -98,15 +77,19 @@ Public Class AISearchSettings
         UpdateLifetimeStats = True
     End Sub
 
-    Public Sub CopyFrom(ByVal Copier As AISearchSettings)
-        UseQuiescence = Copier.UseQuiescence
-        UsePieceHeatMaps = Copier.UsePieceHeatMaps
+    'Function that copies a user's Search Settings to this class. If the core AI settings have changed (ie: Quiescence, PieceHeatMaps, StableSearch),
+    'then the function outputs True.
+    Public Function CopyFrom(ByRef Copier As AISearchSettings)
+        Dim CoreAISettingsChanged As Boolean
+        If UseQuiescence <> Copier.UseQuiescence Then CoreAISettingsChanged = True : UseQuiescence = Copier.UseQuiescence
+        If UsePieceHeatMaps <> Copier.UsePieceHeatMaps Then CoreAISettingsChanged = True : UsePieceHeatMaps = Copier.UsePieceHeatMaps
         OutputToConsole = Copier.OutputToConsole
         OutputPath = Copier.OutputPath
         OutputMoveDebugInfo = Copier.OutputMoveDebugInfo
-        StableSearch = Copier.StableSearch
-        ReturnBestMove = Copier.ReturnBestMove
+        If StableSearch <> Copier.StableSearch Then CoreAISettingsChanged = True : StableSearch = Copier.StableSearch
+        If ReturnBestMove <> Copier.ReturnBestMove Then CoreAISettingsChanged = True : ReturnBestMove = Copier.ReturnBestMove
         UpdateLifetimeStats = Copier.UpdateLifetimeStats
-    End Sub
+        Return CoreAISettingsChanged
+    End Function
 
 End Class
