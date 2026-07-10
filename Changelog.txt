@@ -1,1 +1,2 @@
-Addition of Row Multithreading.
+UI Overhaul
+AI Improvements

@@ -82,6 +82,7 @@ Partial Class Chess
         Me.Credits = New System.Windows.Forms.Label()
         Me.UndoFENChange = New System.Windows.Forms.Button()
         Me.Label1 = New System.Windows.Forms.Label()
+        Me.ProgressBar = New System.Windows.Forms.ProgressBar()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WB1, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -706,7 +707,7 @@ Partial Class Chess
         'CurrentEval
         '
         Me.CurrentEval.AutoSize = True
-        Me.CurrentEval.Location = New System.Drawing.Point(1042, 177)
+        Me.CurrentEval.Location = New System.Drawing.Point(1042, 187)
         Me.CurrentEval.Name = "CurrentEval"
         Me.CurrentEval.Size = New System.Drawing.Size(13, 13)
         Me.CurrentEval.TabIndex = 9
@@ -762,12 +763,23 @@ Partial Class Chess
         Me.Label1.TabIndex = 12
         Me.Label1.Text = "Label1"
         '
+        'ProgressBar
+        '
+        Me.ProgressBar.ForeColor = System.Drawing.Color.FromArgb(CType(CType(0, Byte), Integer), CType(CType(192, Byte), Integer), CType(CType(0, Byte), Integer))
+        Me.ProgressBar.Location = New System.Drawing.Point(945, 150)
+        Me.ProgressBar.Maximum = 8
+        Me.ProgressBar.Name = "ProgressBar"
+        Me.ProgressBar.Size = New System.Drawing.Size(209, 25)
+        Me.ProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous
+        Me.ProgressBar.TabIndex = 13
+        '
         'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.DarkGray
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.ProgressBar)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.UndoFENChange)
         Me.Controls.Add(Me.Credits)
@@ -939,4 +951,5 @@ Partial Class Chess
     Friend WithEvents Credits As Label
     Friend WithEvents UndoFENChange As System.Windows.Forms.Button
     Friend WithEvents Label1 As Label
+    Friend WithEvents ProgressBar As ProgressBar
 End Class
