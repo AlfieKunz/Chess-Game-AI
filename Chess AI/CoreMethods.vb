@@ -146,7 +146,7 @@ Public Class CoreMethods
         Dim dx, dy As SByte
         'Resets TFTables.
         Array.Copy(MasterTrueTable, TrueFalseTable, 64)
-        Array.Copy(MasterTrueTable, TrueTable, 64)
+        'Array.Copy(MasterTrueTable, TrueTable, 64)
         If FixWhite Then
             For y = 0 To 7
                 For x = 0 To 7

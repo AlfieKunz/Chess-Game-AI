@@ -3,12 +3,12 @@
 Public Class OnePlayerCustomisation
 
     'Creates opening book (as received from Main Menu).
-    Private ReadOnly OpeningBook(50000, 1) As String
+    Private ReadOnly OpeningBook(100000, 1) As String
     Public Sub New(ByRef InputBook(,) As String)
         InitializeComponent() ' This call is required by the designer.
         OpeningBook(0, 0) = InputBook(0, 0)
         If OpeningBook(0, 0) <> "ERROR" Then
-            Dim BookLength As UInt16 = 2 * (Val(InputBook(0, 0)) + 1)
+            Dim BookLength As UInt32 = 2 * (Val(InputBook(0, 0)) + 1)
             Array.Copy(InputBook, OpeningBook, BookLength)
         End If
     End Sub
@@ -96,4 +96,5 @@ Public Class OnePlayerCustomisation
             AIDiffLabel2.ForeColor = Color.Black
         End If
     End Sub
+
 End Class
