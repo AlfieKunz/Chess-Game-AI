@@ -1872,8 +1872,8 @@
         Dim CurrentScore As Decimal
         Dim BestScore As Decimal = Integer.MinValue
         Dim BestMove(3) As String
-        TotalPositionsSearched = 0
         If GameRunning And (PlayerTurn Or AbsoluteDepth = 0) Then
+            TotalPositionsSearched = 0
             Stopwatch.Reset()
             Stopwatch.Start()
             For y = 0 To 7
@@ -1914,7 +1914,7 @@
                                     TempWCanCastle.QS = MasterWCanCastle.QS
                                     TempEnPassant = MasterEnPassant 'do i need this?
                                     MakeMove(TempBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempWCanCastle, TempWKPos, TempMaterialCount, TempEnPassant, False)
-                                    CurrentScore = MiniMax(TempBoard, AbsoluteDepth - 1, False, TempWCanCastle, MasterBCanCastle, TempWKPos, MasterBKPos, TempEnPassant, TempMaterialCount)
+                                    CurrentScore = MiniMax(TempBoard, AbsoluteDepth - 1, False, TempWCanCastle, MasterBCanCastle, TempWKPos, MasterBKPos, TempEnPassant, TempMaterialCount, Integer.MinValue, Integer.MaxValue)
                                     If CurrentScore > BestScore Then
                                         BestScore = CurrentScore
                                         BestMove(0) = x
@@ -1930,63 +1930,63 @@
             Next
             Stopwatch.Stop()
             Console.WriteLine(vbCrLf & "Search Result: " & Stopwatch.Elapsed.TotalMilliseconds & " Milliseconds.")
-            Console.WriteLine(TotalPositionsSearched & " positions searched.")
+            Console.WriteLine(TotalPositionsSearched & " Positions Searched.")
 
-            If BestScore = Integer.MinValue Then
-                If MasterWInCheck.IsInCheck Then
-                    CheckLabel.Text = "Checkmate!"
-                    Sound_Checkmate.Play()
-                Else
-                    CheckLabel.Text = " Stalemate! "
-                    Sound_Stalemate.Play()
-                End If
-                GameRunning = False
-            Else
-                If AbsoluteDepth <> 0 Then
+            If AbsoluteDepth = 0 Then
+                If BestScore = Integer.MinValue Then
                     If MasterWInCheck.IsInCheck Then
-                        MasterWInCheck.IsInCheck = False
-                        MasterWInCheck.Piece1 = " "
-                        MasterWInCheck.Piece2 = " "
+                        CheckLabel.Text = "Checkmate!"
+                        Sound_Checkmate.Play()
+                    Else
+                        CheckLabel.Text = " Stalemate! "
+                        Sound_Stalemate.Play()
                     End If
-                    MakeMove(MasterBoard, BestMove(0), BestMove(1), BestMove(2), BestMove(3), MasterWCanCastle, MasterWKPos, MasterMaterialCount, MasterEnPassant, True)
+                    GameRunning = False
+                End If
+            Else
+                If MasterWInCheck.IsInCheck Then
+                    MasterWInCheck.IsInCheck = False
+                    MasterWInCheck.Piece1 = " "
+                    MasterWInCheck.Piece2 = " "
+                End If
+                MakeMove(MasterBoard, BestMove(0), BestMove(1), BestMove(2), BestMove(3), MasterWCanCastle, MasterWKPos, MasterMaterialCount, MasterEnPassant, True)
 
-                    DisplayPieces()
-                    FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
-                    CheckChecker()
-                    If MasterBInCheck.IsInCheck Then Sound_Check.Play()
-                    MasterMaterialCount = CountMaterial(MasterBoard)
-                    CurrentEval.Text = MasterMaterialCount
-                    PlayerTurn = False
-                    PreviousFEN = CurrentFEN
-                    ConvertToFEN()
-                    AbsoluteDepth = 0
-                    BlackAIMove_Click()
-                    CalculateAbsoluteDepth()
-                    CurrentEval.Text = BestScore
+                DisplayPieces()
+                FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+                CheckChecker()
+                If MasterBInCheck.IsInCheck Then Sound_Check.Play()
+                MasterMaterialCount = CountMaterial(MasterBoard)
+                CurrentEval.Text = MasterMaterialCount
+                PlayerTurn = False
+                PreviousFEN = CurrentFEN
+                ConvertToFEN()
+                AbsoluteDepth = 0
+                BlackAIMove_Click()
+                CalculateAbsoluteDepth()
+                CurrentEval.Text = BestScore
 
-                    Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
-                    For y = 0 To 7
-                        For x = 0 To 7
-                            Console.Write(MasterBoard(x, y))
-                        Next
-                        Console.WriteLine()
+                Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
+                For y = 0 To 7
+                    For x = 0 To 7
+                        Console.Write(MasterBoard(x, y))
                     Next
                     Console.WriteLine()
-                    Console.WriteLine("WhiteTFTable:")
-                    For y = 0 To 7
-                        For x = 0 To 7
-                            Console.Write(MasterWhiteTFTable(x, y))
-                        Next
-                        Console.WriteLine()
+                Next
+                Console.WriteLine()
+                Console.WriteLine("WhiteTFTable:")
+                For y = 0 To 7
+                    For x = 0 To 7
+                        Console.Write(MasterWhiteTFTable(x, y))
                     Next
-                    Console.WriteLine("BlackTFTable:")
-                    For y = 0 To 7
-                        For x = 0 To 7
-                            Console.Write(MasterBlackTFTable(x, y))
-                        Next
-                        Console.WriteLine()
+                    Console.WriteLine()
+                Next
+                Console.WriteLine("BlackTFTable:")
+                For y = 0 To 7
+                    For x = 0 To 7
+                        Console.Write(MasterBlackTFTable(x, y))
                     Next
-                End If
+                    Console.WriteLine()
+                Next
             End If
         End If
     End Sub
@@ -2038,7 +2038,7 @@
                                     TempBCanCastle.QS = MasterBCanCastle.QS
                                     TempEnPassant = MasterEnPassant 'do i need this?
                                     MakeMove(TempBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempBCanCastle, TempBKPos, TempMaterialCount, TempEnPassant, False)
-                                    CurrentScore = MiniMax(TempBoard, AbsoluteDepth - 1, True, MasterWCanCastle, TempBCanCastle, MasterWKPos, TempBKPos, TempEnPassant, TempMaterialCount)
+                                    CurrentScore = MiniMax(TempBoard, AbsoluteDepth - 1, True, MasterWCanCastle, TempBCanCastle, MasterWKPos, TempBKPos, TempEnPassant, TempMaterialCount, Integer.MinValue, Integer.MaxValue)
                                     If CurrentScore < BestScore Then
                                         BestScore = CurrentScore
                                         BestMove(0) = x
@@ -2054,63 +2054,63 @@
             Next
             Stopwatch.Stop()
             Console.WriteLine(vbCrLf & "Search Result: " & Stopwatch.Elapsed.TotalMilliseconds & " Milliseconds.")
-            Console.WriteLine(TotalPositionsSearched & " positions searched.")
+            Console.WriteLine(TotalPositionsSearched & " Positions Searched.")
 
-            If BestScore = Integer.MaxValue Then
-                If MasterBInCheck.IsInCheck Then
-                    CheckLabel.Text = "Checkmate!"
-                    Sound_Checkmate.Play()
-                Else
-                    CheckLabel.Text = "Stalemate!"
-                    Sound_Stalemate.Play()
-                End If
-                GameRunning = False
-            Else
-                If AbsoluteDepth <> 0 Then
+            If AbsoluteDepth = 0 Then
+                If BestScore = Integer.MaxValue Then
                     If MasterBInCheck.IsInCheck Then
-                        MasterBInCheck.IsInCheck = False
-                        MasterBInCheck.Piece1 = " "
-                        MasterBInCheck.Piece2 = " "
+                        CheckLabel.Text = "Checkmate!"
+                        Sound_Checkmate.Play()
+                    Else
+                        CheckLabel.Text = "Stalemate!"
+                        Sound_Stalemate.Play()
                     End If
-                    MakeMove(MasterBoard, BestMove(0), BestMove(1), BestMove(2), BestMove(3), MasterBCanCastle, MasterBKPos, MasterMaterialCount, MasterEnPassant, True)
+                    GameRunning = False
+                End If
+            Else
+                If MasterBInCheck.IsInCheck Then
+                    MasterBInCheck.IsInCheck = False
+                    MasterBInCheck.Piece1 = " "
+                    MasterBInCheck.Piece2 = " "
+                End If
+                MakeMove(MasterBoard, BestMove(0), BestMove(1), BestMove(2), BestMove(3), MasterBCanCastle, MasterBKPos, MasterMaterialCount, MasterEnPassant, True)
 
-                    DisplayPieces()
-                    FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
-                    CheckChecker()
-                    If MasterWInCheck.IsInCheck Then Sound_Check.Play()
-                    MasterMaterialCount = CountMaterial(MasterBoard)
-                    CurrentEval.Text = MasterMaterialCount
-                    PlayerTurn = True
-                    PreviousFEN = CurrentFEN
-                    ConvertToFEN()
-                    AbsoluteDepth = 0
-                    WhiteAIMove_Click()
-                    CalculateAbsoluteDepth()
-                    CurrentEval.Text = BestScore
+                DisplayPieces()
+                FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+                CheckChecker()
+                If MasterWInCheck.IsInCheck Then Sound_Check.Play()
+                MasterMaterialCount = CountMaterial(MasterBoard)
+                CurrentEval.Text = MasterMaterialCount
+                PlayerTurn = True
+                PreviousFEN = CurrentFEN
+                ConvertToFEN()
+                AbsoluteDepth = 0
+                WhiteAIMove_Click()
+                CalculateAbsoluteDepth()
+                CurrentEval.Text = BestScore
 
-                    Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
-                    For y = 0 To 7
-                        For x = 0 To 7
-                            Console.Write(MasterBoard(x, y))
-                        Next
-                        Console.WriteLine()
+                Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
+                For y = 0 To 7
+                    For x = 0 To 7
+                        Console.Write(MasterBoard(x, y))
                     Next
                     Console.WriteLine()
-                    Console.WriteLine("WhiteTFTable:")
-                    For y = 0 To 7
-                        For x = 0 To 7
-                            Console.Write(MasterWhiteTFTable(x, y))
-                        Next
-                        Console.WriteLine()
+                Next
+                Console.WriteLine()
+                Console.WriteLine("WhiteTFTable:")
+                For y = 0 To 7
+                    For x = 0 To 7
+                        Console.Write(MasterWhiteTFTable(x, y))
                     Next
-                    Console.WriteLine("BlackTFTable:")
-                    For y = 0 To 7
-                        For x = 0 To 7
-                            Console.Write(MasterBlackTFTable(x, y))
-                        Next
-                        Console.WriteLine()
+                    Console.WriteLine()
+                Next
+                Console.WriteLine("BlackTFTable:")
+                For y = 0 To 7
+                    For x = 0 To 7
+                        Console.Write(MasterBlackTFTable(x, y))
                     Next
-                End If
+                    Console.WriteLine()
+                Next
             End If
         End If
     End Sub
@@ -2242,13 +2242,12 @@
 
 
     Private Sub CalculateAbsoluteDepth()
-        AbsoluteDepth = 3
+        AbsoluteDepth = 5
     End Sub
 
-    Public Function MiniMax(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As String, ByVal BKPos As String, ByVal EnPassant As String, ByVal MaterialCount As Int16) As Decimal
+    Public Function MiniMax(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As String, ByVal BKPos As String, ByVal EnPassant As String, ByVal MaterialCount As Int16, ByVal Alpha As Decimal, ByVal Beta As Decimal) As Decimal
         TotalPositionsSearched += 1
-        Dim CurrentScore As Decimal = Evaluate(Board, MaterialCount)
-        'Console.WriteLine(depth)
+        Dim CurrentScore As Decimal
         If depth > 0 Then
             Dim BestScore As Decimal
             Dim BestMove(3) As String
@@ -2300,13 +2299,18 @@
                                         TempWCanCastle.QS = WCanCastle.QS
                                         TempEnPassant = EnPassant 'do i need this?
                                         MakeMove(TempBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempWCanCastle, TempWKPos, TempMaterialCount, TempEnPassant, False)
-                                        CurrentScore = MiniMax(TempBoard, depth - 1, False, TempWCanCastle, BCanCastle, TempWKPos, BKPos, TempEnPassant, TempMaterialCount)
+                                        CurrentScore = MiniMax(TempBoard, depth - 1, False, TempWCanCastle, BCanCastle, TempWKPos, BKPos, TempEnPassant, TempMaterialCount, Alpha, Beta)
                                         If CurrentScore > BestScore Then
                                             BestScore = CurrentScore
                                             BestMove(0) = x
                                             BestMove(1) = y
                                             BestMove(2) = PieceMoves(n)(0)
                                             BestMove(3) = PieceMoves(n)(1)
+                                        End If
+                                        Alpha = Math.Max(Alpha, CurrentScore)
+                                        If Beta <= Alpha Then
+                                            Return BestScore
+                                            Exit Function
                                         End If
                                     End If
                                 Next
@@ -2353,13 +2357,18 @@
                                         TempBCanCastle.QS = BCanCastle.QS
                                         TempEnPassant = EnPassant
                                         MakeMove(TempBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempBCanCastle, TempBKPos, TempMaterialCount, TempEnPassant, False)
-                                        CurrentScore = MiniMax(TempBoard, depth - 1, True, WCanCastle, TempBCanCastle, WKPos, TempBKPos, TempEnPassant, TempMaterialCount)
+                                        CurrentScore = MiniMax(TempBoard, depth - 1, True, WCanCastle, TempBCanCastle, WKPos, TempBKPos, TempEnPassant, TempMaterialCount, Alpha, Beta)
                                         If CurrentScore < BestScore Then
                                             BestScore = CurrentScore
                                             BestMove(0) = x
                                             BestMove(1) = y
                                             BestMove(2) = PieceMoves(n)(0)
                                             BestMove(3) = PieceMoves(n)(1)
+                                        End If
+                                        Beta = Math.Min(Beta, CurrentScore)
+                                        If Beta <= Alpha Then
+                                            Return BestScore
+                                            Exit Function
                                         End If
                                     End If
                                 Next
@@ -2370,17 +2379,21 @@
             End If
 
             If BestScore = Integer.MinValue Then
-                If Not WInCheck.IsInCheck Then
-                    CurrentScore = 0
+                If WInCheck.IsInCheck Then
+                    BestScore = -(1000 + depth)
+                Else
+                    BestScore = 0
                 End If
             ElseIf BestScore = Integer.MaxValue Then
-                If Not BInCheck.IsInCheck Then
-                    CurrentScore = 0
+                If BInCheck.IsInCheck Then
+                    BestScore = (1000 + depth)
+                Else
+                    BestScore = 0
                 End If
             End If
-
             Return BestScore
         Else
+            Currentscore = Evaluate(Board, MaterialCount)
             Return CurrentScore
         End If
         '#Enable Warning BC42108 ' Variable is passed by reference before it has been assigned a value
