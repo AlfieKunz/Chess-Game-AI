@@ -1,5 +1,5 @@
 ﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
-Partial Class Form1
+Partial Class Chess
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.
@@ -22,7 +22,7 @@ Partial Class Form1
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Form1))
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Chess))
         Me.WK1 = New System.Windows.Forms.PictureBox()
         Me.WQ1 = New System.Windows.Forms.PictureBox()
         Me.WB1 = New System.Windows.Forms.PictureBox()
@@ -72,10 +72,11 @@ Partial Class Form1
         Me.BQ5 = New System.Windows.Forms.PictureBox()
         Me.BQ8 = New System.Windows.Forms.PictureBox()
         Me.BQ6 = New System.Windows.Forms.PictureBox()
-        Me.Button1 = New System.Windows.Forms.Button()
+        Me.BlackAIMove = New System.Windows.Forms.Button()
         Me.Reset_Btn = New System.Windows.Forms.Button()
-        Me.CheckBox = New System.Windows.Forms.TextBox()
         Me.FENExport = New System.Windows.Forms.Button()
+        Me.CheckLabel = New System.Windows.Forms.Label()
+        Me.CurrentEval = New System.Windows.Forms.Label()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WB1, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -657,14 +658,14 @@ Partial Class Form1
         Me.BQ6.TabIndex = 0
         Me.BQ6.TabStop = False
         '
-        'Button1
+        'BlackAIMove
         '
-        Me.Button1.Location = New System.Drawing.Point(111, 213)
-        Me.Button1.Name = "Button1"
-        Me.Button1.Size = New System.Drawing.Size(75, 57)
-        Me.Button1.TabIndex = 4
-        Me.Button1.Text = "Button1"
-        Me.Button1.UseVisualStyleBackColor = True
+        Me.BlackAIMove.Location = New System.Drawing.Point(111, 213)
+        Me.BlackAIMove.Name = "BlackAIMove"
+        Me.BlackAIMove.Size = New System.Drawing.Size(97, 57)
+        Me.BlackAIMove.TabIndex = 4
+        Me.BlackAIMove.Text = "Make Computer Move: (Black)"
+        Me.BlackAIMove.UseVisualStyleBackColor = True
         '
         'Reset_Btn
         '
@@ -675,15 +676,6 @@ Partial Class Form1
         Me.Reset_Btn.Text = "Reset Board"
         Me.Reset_Btn.UseVisualStyleBackColor = True
         '
-        'CheckBox
-        '
-        Me.CheckBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CheckBox.Location = New System.Drawing.Point(1000, 16)
-        Me.CheckBox.Name = "CheckBox"
-        Me.CheckBox.Size = New System.Drawing.Size(100, 31)
-        Me.CheckBox.TabIndex = 6
-        Me.CheckBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
-        '
         'FENExport
         '
         Me.FENExport.Location = New System.Drawing.Point(150, 85)
@@ -693,16 +685,37 @@ Partial Class Form1
         Me.FENExport.Text = "Export to FEN"
         Me.FENExport.UseVisualStyleBackColor = True
         '
-        'Form1
+        'CheckLabel
+        '
+        Me.CheckLabel.AutoSize = True
+        Me.CheckLabel.BackColor = System.Drawing.Color.White
+        Me.CheckLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.CheckLabel.Location = New System.Drawing.Point(106, 149)
+        Me.CheckLabel.Name = "CheckLabel"
+        Me.CheckLabel.Size = New System.Drawing.Size(126, 25)
+        Me.CheckLabel.TabIndex = 8
+        Me.CheckLabel.Text = "Checkmate!"
+        '
+        'CurrentEval
+        '
+        Me.CurrentEval.AutoSize = True
+        Me.CurrentEval.Location = New System.Drawing.Point(147, 311)
+        Me.CurrentEval.Name = "CurrentEval"
+        Me.CurrentEval.Size = New System.Drawing.Size(13, 13)
+        Me.CurrentEval.TabIndex = 9
+        Me.CurrentEval.Text = "0"
+        '
+        'Chess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.DarkGray
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.CurrentEval)
+        Me.Controls.Add(Me.CheckLabel)
         Me.Controls.Add(Me.FENExport)
-        Me.Controls.Add(Me.CheckBox)
         Me.Controls.Add(Me.Reset_Btn)
-        Me.Controls.Add(Me.Button1)
+        Me.Controls.Add(Me.BlackAIMove)
         Me.Controls.Add(Me.FENButton)
         Me.Controls.Add(Me.FENTextBox)
         Me.Controls.Add(Me.WP8)
@@ -752,7 +765,7 @@ Partial Class Form1
         Me.Controls.Add(Me.WQ1)
         Me.Controls.Add(Me.WK1)
         Me.Controls.Add(Me.Checkerboard)
-        Me.Name = "Form1"
+        Me.Name = "Chess"
         Me.Text = "Form1"
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).EndInit()
@@ -854,8 +867,9 @@ Partial Class Form1
     Friend WithEvents BQ5 As System.Windows.Forms.PictureBox
     Friend WithEvents BQ8 As System.Windows.Forms.PictureBox
     Friend WithEvents BQ6 As System.Windows.Forms.PictureBox
-    Friend WithEvents Button1 As Button
+    Friend WithEvents BlackAIMove As Button
     Friend WithEvents Reset_Btn As Button
-    Friend WithEvents CheckBox As TextBox
     Friend WithEvents FENExport As Button
+    Friend WithEvents CheckLabel As Label
+    Friend WithEvents CurrentEval As Label
 End Class
