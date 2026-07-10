@@ -1,9 +1,9 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
+﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class OnePlayerCustomisation
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.
-    <System.Diagnostics.DebuggerNonUserCode()> _
+    <System.Diagnostics.DebuggerNonUserCode()>
     Protected Overrides Sub Dispose(ByVal disposing As Boolean)
         Try
             If disposing AndAlso components IsNot Nothing Then
@@ -20,7 +20,7 @@ Partial Class OnePlayerCustomisation
     'NOTE: The following procedure is required by the Windows Form Designer
     'It can be modified using the Windows Form Designer.  
     'Do not modify it using the code editor.
-    <System.Diagnostics.DebuggerStepThrough()> _
+    <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(OnePlayerCustomisation))
         Me.StartBtn = New System.Windows.Forms.Button()
@@ -37,9 +37,15 @@ Partial Class OnePlayerCustomisation
         Me.Black = New System.Windows.Forms.RadioButton()
         Me.InfoBtn = New System.Windows.Forms.Button()
         Me.UseBook = New System.Windows.Forms.CheckBox()
+        Me.PieceHeatMapBox = New System.Windows.Forms.CheckBox()
+        Me.QuiescenceBox = New System.Windows.Forms.CheckBox()
+        Me.UserTimeBar = New System.Windows.Forms.TrackBar()
+        Me.UserTimeBox = New System.Windows.Forms.TextBox()
+        Me.RNDSide = New System.Windows.Forms.RadioButton()
         CType(Me.DifficultySlider, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.Panel1.SuspendLayout()
         Me.Panel2.SuspendLayout()
+        CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'StartBtn
@@ -99,13 +105,13 @@ Partial Class OnePlayerCustomisation
         '
         Me.DifficultySlider.LargeChange = 1
         Me.DifficultySlider.Location = New System.Drawing.Point(15, 151)
-        Me.DifficultySlider.Maximum = 6
+        Me.DifficultySlider.Maximum = 7
         Me.DifficultySlider.Minimum = 1
         Me.DifficultySlider.Name = "DifficultySlider"
         Me.DifficultySlider.Size = New System.Drawing.Size(250, 45)
         Me.DifficultySlider.TabIndex = 13
         Me.DifficultySlider.TickStyle = System.Windows.Forms.TickStyle.TopLeft
-        Me.DifficultySlider.Value = 1
+        Me.DifficultySlider.Value = 2
         '
         'AIDiffLabel1
         '
@@ -141,28 +147,27 @@ Partial Class OnePlayerCustomisation
         'Panel2
         '
         Me.Panel2.Controls.Add(Me.White)
+        Me.Panel2.Controls.Add(Me.RNDSide)
         Me.Panel2.Controls.Add(Me.Black)
-        Me.Panel2.Location = New System.Drawing.Point(31, 199)
+        Me.Panel2.Location = New System.Drawing.Point(3, 199)
         Me.Panel2.Name = "Panel2"
-        Me.Panel2.Size = New System.Drawing.Size(214, 26)
+        Me.Panel2.Size = New System.Drawing.Size(279, 26)
         Me.Panel2.TabIndex = 18
         '
         'White
         '
         Me.White.AutoSize = True
-        Me.White.Checked = True
         Me.White.Location = New System.Drawing.Point(3, 3)
         Me.White.Name = "White"
         Me.White.Size = New System.Drawing.Size(90, 17)
         Me.White.TabIndex = 16
-        Me.White.TabStop = True
         Me.White.Text = "Play as White"
         Me.White.UseVisualStyleBackColor = True
         '
         'Black
         '
         Me.Black.AutoSize = True
-        Me.Black.Location = New System.Drawing.Point(125, 3)
+        Me.Black.Location = New System.Drawing.Point(98, 3)
         Me.Black.Name = "Black"
         Me.Black.Size = New System.Drawing.Size(89, 17)
         Me.Black.TabIndex = 16
@@ -194,6 +199,72 @@ Partial Class OnePlayerCustomisation
         Me.UseBook.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         Me.UseBook.UseVisualStyleBackColor = True
         '
+        'PieceHeatMapBox
+        '
+        Me.PieceHeatMapBox.AutoSize = True
+        Me.PieceHeatMapBox.Checked = True
+        Me.PieceHeatMapBox.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.PieceHeatMapBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.PieceHeatMapBox.Location = New System.Drawing.Point(68, 292)
+        Me.PieceHeatMapBox.Name = "PieceHeatMapBox"
+        Me.PieceHeatMapBox.Size = New System.Drawing.Size(152, 19)
+        Me.PieceHeatMapBox.TabIndex = 30
+        Me.PieceHeatMapBox.Text = "Use Piece Heat Maps?"
+        Me.PieceHeatMapBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.PieceHeatMapBox.UseVisualStyleBackColor = True
+        Me.PieceHeatMapBox.Visible = False
+        '
+        'QuiescenceBox
+        '
+        Me.QuiescenceBox.AutoSize = True
+        Me.QuiescenceBox.Checked = True
+        Me.QuiescenceBox.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.QuiescenceBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.QuiescenceBox.Location = New System.Drawing.Point(81, 267)
+        Me.QuiescenceBox.Name = "QuiescenceBox"
+        Me.QuiescenceBox.Size = New System.Drawing.Size(123, 19)
+        Me.QuiescenceBox.TabIndex = 31
+        Me.QuiescenceBox.Text = "Use Quiescence?"
+        Me.QuiescenceBox.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.QuiescenceBox.UseVisualStyleBackColor = True
+        Me.QuiescenceBox.Visible = False
+        '
+        'UserTimeBar
+        '
+        Me.UserTimeBar.LargeChange = 10
+        Me.UserTimeBar.Location = New System.Drawing.Point(60, 226)
+        Me.UserTimeBar.Maximum = 60
+        Me.UserTimeBar.Name = "UserTimeBar"
+        Me.UserTimeBar.Size = New System.Drawing.Size(164, 45)
+        Me.UserTimeBar.TabIndex = 29
+        Me.UserTimeBar.Value = 20
+        Me.UserTimeBar.Visible = False
+        '
+        'UserTimeBox
+        '
+        Me.UserTimeBox.BackColor = System.Drawing.Color.WhiteSmoke
+        Me.UserTimeBox.Cursor = System.Windows.Forms.Cursors.Default
+        Me.UserTimeBox.Location = New System.Drawing.Point(60, 202)
+        Me.UserTimeBox.Name = "UserTimeBox"
+        Me.UserTimeBox.ReadOnly = True
+        Me.UserTimeBox.Size = New System.Drawing.Size(164, 20)
+        Me.UserTimeBox.TabIndex = 28
+        Me.UserTimeBox.Text = "Time For Search: 10 Seconds"
+        Me.UserTimeBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
+        Me.UserTimeBox.Visible = False
+        '
+        'RNDSide
+        '
+        Me.RNDSide.AutoSize = True
+        Me.RNDSide.Checked = True
+        Me.RNDSide.Location = New System.Drawing.Point(193, 3)
+        Me.RNDSide.Name = "RNDSide"
+        Me.RNDSide.Size = New System.Drawing.Size(86, 17)
+        Me.RNDSide.TabIndex = 16
+        Me.RNDSide.TabStop = True
+        Me.RNDSide.Text = "Play as RND"
+        Me.RNDSide.UseVisualStyleBackColor = True
+        '
         'OnePlayerCustomisation
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -201,6 +272,10 @@ Partial Class OnePlayerCustomisation
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.LightGray
         Me.ClientSize = New System.Drawing.Size(284, 331)
+        Me.Controls.Add(Me.PieceHeatMapBox)
+        Me.Controls.Add(Me.QuiescenceBox)
+        Me.Controls.Add(Me.UserTimeBar)
+        Me.Controls.Add(Me.UserTimeBox)
         Me.Controls.Add(Me.UseBook)
         Me.Controls.Add(Me.InfoBtn)
         Me.Controls.Add(Me.Panel2)
@@ -221,6 +296,7 @@ Partial Class OnePlayerCustomisation
         Me.Panel1.PerformLayout()
         Me.Panel2.ResumeLayout(False)
         Me.Panel2.PerformLayout()
+        CType(Me.UserTimeBar, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -238,5 +314,10 @@ Partial Class OnePlayerCustomisation
     Friend WithEvents White As System.Windows.Forms.RadioButton
     Friend WithEvents Black As System.Windows.Forms.RadioButton
     Friend WithEvents InfoBtn As Button
-    Friend WithEvents UseBook As System.Windows.Forms.CheckBox
+    Friend WithEvents UseBook As CheckBox
+    Friend WithEvents PieceHeatMapBox As CheckBox
+    Friend WithEvents QuiescenceBox As CheckBox
+    Friend WithEvents UserTimeBar As TrackBar
+    Friend WithEvents UserTimeBox As TextBox
+    Friend WithEvents RNDSide As RadioButton
 End Class

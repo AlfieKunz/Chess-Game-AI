@@ -6,7 +6,8 @@ Imports System.Threading
 'Will be the first section of code that the user sees, and provides the starting 
 'point for instantiating all theother classes & forms in my program.
 Public Class MainMenu
-    Private PlayAnimation, PlaySounds As Boolean
+    Private PlayAnimation, PlaySounds, UseLargeOpeningBook As Boolean 'Represents the user's settings (in User Profile)
+    'that affect the MainMenu form.
     Private PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
     Private SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
     Private ColourScheme As String 'Colour code from the text file.
@@ -23,13 +24,17 @@ Public Class MainMenu
             ColourScheme = LineInput(1)
             LineInput(1)
             Dim GeneralSettings As String = LineInput(1)
-            Dim temp As String = GeneralSettings(5) 'Tests that the General Options are the correct length.
+            Dim temp As String = GeneralSettings(7) 'Tests that the General Options are the correct length.
+            'Calibrates attributes based on settings.
             If GeneralSettings(0) = "T" Then PlaySounds = True
             If GeneralSettings(1) = "T" Then PlayAnimation = True
+            If GeneralSettings(2) = "T" Then UseLargeOpeningBook = True
         Catch ex As Exception
+            'Unable to retrieve - set all settings to their default value.
             ColourScheme = "def"
             PlayAnimation = True
             PlaySounds = True
+            UseLargeOpeningBook = False
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
             Console.ResetColor()
@@ -42,6 +47,7 @@ Public Class MainMenu
         If Not (PlayAnimation OrElse WP8.Visible) Then RetrieveOpeningBook()
     End Sub
 
+    'Subroutine which calubrates the correct Primary & Secondary colours, based on the user's preference.
     Private Sub CreateColourProfile(ByVal Code As String)
         If LCase(Code) = "blu" Then
             PrimaryColour = Color.LightSteelBlue
@@ -93,6 +99,7 @@ Public Class MainMenu
         Next
     End Sub
 
+    'Subroutine which sets up all the pieces on the board, so they can be animated.
     Private Sub SetupPieces()
         Dim Pieces(31) As PictureBox
         Pieces(0) = WK1
@@ -131,6 +138,7 @@ Public Class MainMenu
             Pieces(x).Visible = False
         Next
 
+        'Gives all pieces their appropriate images.
         Dim Colour As String = "W"
         For x = 0 To 16 Step 16
             Pieces(x).Image = Image.FromFile(Application.StartupPath & "\Images\Default\" & Colour & "King.png")
@@ -187,8 +195,8 @@ Public Class MainMenu
         BP8.Location = New Point(300, 75)
     End Sub
 
+    'Subroutine which sets the location of all the labels and buttons, and makes them invisible.
     Private Sub SetupOptions()
-        'Sets the location of all the labels and buttons, and makes them invisible.
         Title.Visible = False
         Title.Location = New Point(104, 160)
         Title.BringToFront()
@@ -225,9 +233,12 @@ Public Class MainMenu
         Credits.BringToFront()
     End Sub
 
+    'Subroutine which handles the animation of the pieces on boot-up, the retrieval of the Opening Book, and the
+    'appearance of the form's objects.
     Private Sub StartupAnimation() Handles Me.Activated
         MyBase.Refresh()
         Dim TempColour As String
+        'Resets the user's colour profile (as it may have changed in the Settings form, and hence must be updated).
         Try
             FileOpen(1, Application.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
             TempColour = LineInput(1)
@@ -240,8 +251,10 @@ Public Class MainMenu
         End Try
         MyBase.Refresh()
 
-        Dim AlreadyBooted As Boolean
-        If WP8.Visible Then AlreadyBooted = True
+        'To prevent the opening animation from triggering when the user exits back to the main menu, we test
+        'if the final piece of the animation is visible to the user. If it is, then the program must have already
+        'been booted up at a previous point in time.
+        Dim AlreadyBooted As Boolean = WP8.Visible
         If PlayAnimation Then
             If Not AlreadyBooted Then
                 'Uses multithreading to simultaneously retrieve the opening book, and play the opening animation.
@@ -266,50 +279,51 @@ Public Class MainMenu
             Next
             Thread.Sleep(50)
         Else
+            'Makes all the RowHider objects invisible.
             For n = 1 To 8
                 Me.Controls.Find("RowHider" & n, True).Single().Visible = False
             Next
         End If
         'Slowly makes the pieces on the board visible (in a spiral pattern).
-        WK1.Visible = True
-        WQ1.Visible = True
-        BK1.Visible = True
-        BQ1.Visible = True
+        AnimatePiece(WK1)
+        AnimatePiece(WQ1)
+        AnimatePiece(BK1)
+        AnimatePiece(BQ1)
         Wait()
-        WB1.Visible = True
-        WB2.Visible = True
-        BB1.Visible = True
-        BB2.Visible = True
+        AnimatePiece(WB1)
+        AnimatePiece(WB2)
+        AnimatePiece(BB1)
+        AnimatePiece(BB2)
         Wait()
-        WN1.Visible = True
-        WN2.Visible = True
-        BN1.Visible = True
-        BN2.Visible = True
+        AnimatePiece(WN1)
+        AnimatePiece(WN2)
+        AnimatePiece(BN1)
+        AnimatePiece(BN2)
         Wait()
-        WR1.Visible = True
-        WR2.Visible = True
-        BR1.Visible = True
-        BR2.Visible = True
+        AnimatePiece(WR1)
+        AnimatePiece(WR2)
+        AnimatePiece(BR1)
+        AnimatePiece(BR2)
         Wait()
-        WP1.Visible = True
-        WP2.Visible = True
-        BP1.Visible = True
-        BP2.Visible = True
+        AnimatePiece(WP1)
+        AnimatePiece(WP2)
+        AnimatePiece(BP1)
+        AnimatePiece(BP2)
         Wait()
-        WP3.Visible = True
-        WP4.Visible = True
-        BP3.Visible = True
-        BP4.Visible = True
+        AnimatePiece(WP3)
+        AnimatePiece(WP4)
+        AnimatePiece(BP3)
+        AnimatePiece(BP4)
         Wait()
-        WP5.Visible = True
-        WP6.Visible = True
-        BP5.Visible = True
-        BP6.Visible = True
+        AnimatePiece(WP5)
+        AnimatePiece(WP6)
+        AnimatePiece(BP5)
+        AnimatePiece(BP6)
         Wait()
-        WP7.Visible = True
-        WP8.Visible = True
-        BP7.Visible = True
-        BP8.Visible = True
+        AnimatePiece(WP7)
+        AnimatePiece(WP8)
+        AnimatePiece(BP7)
+        AnimatePiece(BP8)
         Wait()
 
         'Makes the labels & buttons visible, then audibly notifies the user that they can choose a menu option.
@@ -321,6 +335,12 @@ Public Class MainMenu
         Credits.Visible = True
         If Not AlreadyBooted AndAlso PlaySounds Then Sound_Startup.Play()
     End Sub
+    Private Sub AnimatePiece(ByVal Piece As PictureBox)
+        Piece.Visible = True
+    End Sub
+
+
+    'Subroutine that temporarily stalls the program every time a piece appears in the opening animation.
     Private Sub Wait()
         If PlayAnimation Then
             Application.DoEvents()
@@ -328,32 +348,40 @@ Public Class MainMenu
         End If
     End Sub
 
-    'Subroutine that stores the chess opening book into the 2D array 'Opening Book'
+    'Subroutine that retrives, and loads into memory, the opening book.
     Private Sub RetrieveOpeningBook()
         Dim Timer As New Stopwatch
         Dim TempEntry As OpeningBookEntry
-        'Try
-        Timer.Start()
-        'Opens opening book from file using StreamReader.
-        Using SR As New StreamReader(Application.StartupPath & "\Assets\SmallOpeningBook.txt", Encoding.UTF8, True, 16384)
-            While Not SR.EndOfStream
-                TempEntry = New OpeningBookEntry(SR.ReadLine())
-                OpeningBook.Add(TempEntry)
-            End While
-        End Using
-        Timer.Stop()
+        Dim BookPath As String
+        'Determines the specific book to load.
+        If UseLargeOpeningBook Then
+            BookPath = "\Assets\LargeOpeningBook.txt"
+        Else
+            BookPath = "\Assets\SmallOpeningBook.txt"
+        End If
+        Try
+            Timer.Start()
+            'Opens opening book from file using StreamReader.
+            Using SR As New StreamReader(Application.StartupPath & BookPath, Encoding.UTF8, True, 16384)
+                While Not SR.EndOfStream
+                    TempEntry = New OpeningBookEntry(SR.ReadLine())
+                    OpeningBook.Add(TempEntry)
+                End While
+            End Using
+            Timer.Stop()
             Console.ForegroundColor = ConsoleColor.Green
             Console.WriteLine("Opening Book Successfully Retrieved in: " & Math.Round(Timer.Elapsed.TotalMilliseconds, 1) & "ms.")
-        'Catch ex As Exception 'Could not successfully retrieve book - make a note on OpeningBook.
-        '    Timer.Stop()
-        '    Console.ForegroundColor = ConsoleColor.DarkRed
-        '    Console.WriteLine("Error when retrieving opening book.")
-        'End Try
+        Catch ex As Exception 'Could not successfully retrieve book - make a note on OpeningBook.
+            Timer.Stop()
+            Console.ForegroundColor = ConsoleColor.DarkRed
+            Console.WriteLine("Error when retrieving opening book.")
+        End Try
         Console.ResetColor()
     End Sub
 
 
-    'Controls for the buttons.
+    'Controls for the buttons The PlayBtn object holds both the OnePlayer & TwoPlayer objects, and will appear &
+    'dissapear when the mouse enters & leaves the object.
     Private Sub PlayBtn_MouseEnter() Handles PlayBtn.MouseEnter
         PlayBtn.Visible = False
         PlayOptions.Visible = True
@@ -365,11 +393,13 @@ Public Class MainMenu
 
     Private Sub OnePlayer_MouseLeave() Handles OnePlayer.MouseLeave
         If Not TwoPlayer.ClientRectangle.Contains(TwoPlayer.PointToClient(MousePosition)) Then
+            'The user's mouse has left the confines of PlayBtn - make the object visible again.
             PlayOptions.Visible = False
             PlayBtn.Visible = True
         End If
     End Sub
     Private Sub OnePlayer_Click() Handles OnePlayer.Click
+        'Instantiates a new version of the OnePlayerCustomisation form.
         Dim Customisation = New OnePlayerCustomisation(OpeningBook)
         Customisation.Show()
         Me.Hide()
@@ -382,6 +412,7 @@ Public Class MainMenu
         End If
     End Sub
     Private Sub TwoPlayer_Click() Handles TwoPlayer.Click
+        'Instantiates a new version of the TwoPlayerCustomisation form.
         Dim Customisation As New TwoPlayerCustomisation
         Customisation.Show()
         Me.Hide()
@@ -403,6 +434,7 @@ Public Class MainMenu
         Training.Font = New Font("Microsoft Sans Serif", 18, FontStyle.Bold)
     End Sub
     Private Sub Training_Click() Handles Training.Click
+        'Instantiates a new version of the TrainingCustomisation form.
         Dim Customisation As New TrainingCustomisation
         Customisation.Show()
         Me.Hide()
@@ -413,7 +445,7 @@ Public Class MainMenu
         'Grows the Button.
         Analysis.Size = New Size(150, 75)
         Analysis.Left -= 15
-        Analysis.Top -= 7.5
+        Analysis.Top -= 7
         Analysis.Font = New Font("Microsoft Sans Serif", 24, FontStyle.Bold)
     End Sub
     Private Sub Analysis_MouseLeave() Handles Analysis.MouseLeave
@@ -451,7 +483,7 @@ Public Class MainMenu
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v7.0)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v8.0)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
     End Sub
 
 End Class

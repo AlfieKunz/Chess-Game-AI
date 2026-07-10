@@ -96,7 +96,7 @@ Partial Class TrainingCustomisation
         Me.MaximizeBox = False
         Me.Name = "TrainingCustomisation"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Choose A Training Option!"
+        Me.Text = "Training Options"
         Me.ResumeLayout(False)
 
     End Sub

@@ -61,6 +61,7 @@ Partial Class Settings
         Me.FixedSearchBtn = New System.Windows.Forms.CheckBox()
         Me.FixedSearchBox = New System.Windows.Forms.TextBox()
         Me.TouchMoveBtn = New System.Windows.Forms.CheckBox()
+        Me.OpeningBookBtn = New System.Windows.Forms.CheckBox()
         CType(Me.Checkerboard, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.SpeedSetter, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WP3, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -79,20 +80,18 @@ Partial Class Settings
         'Checkerboard
         '
         Me.Checkerboard.BackColor = System.Drawing.Color.Transparent
-        Me.Checkerboard.Location = New System.Drawing.Point(514, 89)
-        Me.Checkerboard.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Checkerboard.Location = New System.Drawing.Point(343, 58)
         Me.Checkerboard.Name = "Checkerboard"
-        Me.Checkerboard.Size = New System.Drawing.Size(338, 346)
+        Me.Checkerboard.Size = New System.Drawing.Size(225, 225)
         Me.Checkerboard.TabIndex = 2
         Me.Checkerboard.TabStop = False
         '
         'AnimationTester
         '
         Me.AnimationTester.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationTester.Location = New System.Drawing.Point(597, 532)
-        Me.AnimationTester.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.AnimationTester.Location = New System.Drawing.Point(398, 350)
         Me.AnimationTester.Name = "AnimationTester"
-        Me.AnimationTester.Size = New System.Drawing.Size(172, 65)
+        Me.AnimationTester.Size = New System.Drawing.Size(115, 42)
         Me.AnimationTester.TabIndex = 4
         Me.AnimationTester.Text = "Test Animation:"
         Me.AnimationTester.UseVisualStyleBackColor = True
@@ -100,11 +99,10 @@ Partial Class Settings
         'SpeedSetter
         '
         Me.SpeedSetter.LargeChange = 1
-        Me.SpeedSetter.Location = New System.Drawing.Point(514, 446)
-        Me.SpeedSetter.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.SpeedSetter.Location = New System.Drawing.Point(343, 290)
         Me.SpeedSetter.Maximum = 3
         Me.SpeedSetter.Name = "SpeedSetter"
-        Me.SpeedSetter.Size = New System.Drawing.Size(336, 69)
+        Me.SpeedSetter.Size = New System.Drawing.Size(224, 45)
         Me.SpeedSetter.TabIndex = 1
         '
         'WP3
@@ -112,10 +110,9 @@ Partial Class Settings
         Me.WP3.BackColor = System.Drawing.Color.Transparent
         Me.WP3.Image = CType(resources.GetObject("WP3.Image"), System.Drawing.Image)
         Me.WP3.InitialImage = Nothing
-        Me.WP3.Location = New System.Drawing.Point(738, 82)
-        Me.WP3.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.WP3.Location = New System.Drawing.Point(492, 53)
         Me.WP3.Name = "WP3"
-        Me.WP3.Size = New System.Drawing.Size(112, 115)
+        Me.WP3.Size = New System.Drawing.Size(75, 75)
         Me.WP3.TabIndex = 5
         Me.WP3.TabStop = False
         '
@@ -124,10 +121,9 @@ Partial Class Settings
         Me.WP2.BackColor = System.Drawing.Color.Transparent
         Me.WP2.Image = CType(resources.GetObject("WP2.Image"), System.Drawing.Image)
         Me.WP2.InitialImage = Nothing
-        Me.WP2.Location = New System.Drawing.Point(627, 82)
-        Me.WP2.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.WP2.Location = New System.Drawing.Point(418, 53)
         Me.WP2.Name = "WP2"
-        Me.WP2.Size = New System.Drawing.Size(112, 115)
+        Me.WP2.Size = New System.Drawing.Size(75, 75)
         Me.WP2.TabIndex = 6
         Me.WP2.TabStop = False
         '
@@ -136,10 +132,9 @@ Partial Class Settings
         Me.WP1.BackColor = System.Drawing.Color.Transparent
         Me.WP1.Image = CType(resources.GetObject("WP1.Image"), System.Drawing.Image)
         Me.WP1.InitialImage = Nothing
-        Me.WP1.Location = New System.Drawing.Point(514, 82)
-        Me.WP1.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.WP1.Location = New System.Drawing.Point(343, 53)
         Me.WP1.Name = "WP1"
-        Me.WP1.Size = New System.Drawing.Size(112, 115)
+        Me.WP1.Size = New System.Drawing.Size(75, 75)
         Me.WP1.TabIndex = 7
         Me.WP1.TabStop = False
         '
@@ -148,10 +143,9 @@ Partial Class Settings
         Me.WN1.BackColor = System.Drawing.Color.Transparent
         Me.WN1.Image = CType(resources.GetObject("WN1.Image"), System.Drawing.Image)
         Me.WN1.InitialImage = Nothing
-        Me.WN1.Location = New System.Drawing.Point(627, 197)
-        Me.WN1.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.WN1.Location = New System.Drawing.Point(418, 128)
         Me.WN1.Name = "WN1"
-        Me.WN1.Size = New System.Drawing.Size(112, 115)
+        Me.WN1.Size = New System.Drawing.Size(75, 75)
         Me.WN1.TabIndex = 8
         Me.WN1.TabStop = False
         '
@@ -160,10 +154,9 @@ Partial Class Settings
         Me.WB1.BackColor = System.Drawing.Color.Transparent
         Me.WB1.Image = CType(resources.GetObject("WB1.Image"), System.Drawing.Image)
         Me.WB1.InitialImage = Nothing
-        Me.WB1.Location = New System.Drawing.Point(738, 197)
-        Me.WB1.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.WB1.Location = New System.Drawing.Point(492, 128)
         Me.WB1.Name = "WB1"
-        Me.WB1.Size = New System.Drawing.Size(112, 115)
+        Me.WB1.Size = New System.Drawing.Size(75, 75)
         Me.WB1.TabIndex = 9
         Me.WB1.TabStop = False
         '
@@ -172,10 +165,9 @@ Partial Class Settings
         Me.WR1.BackColor = System.Drawing.Color.Transparent
         Me.WR1.Image = CType(resources.GetObject("WR1.Image"), System.Drawing.Image)
         Me.WR1.InitialImage = Nothing
-        Me.WR1.Location = New System.Drawing.Point(514, 195)
-        Me.WR1.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.WR1.Location = New System.Drawing.Point(343, 127)
         Me.WR1.Name = "WR1"
-        Me.WR1.Size = New System.Drawing.Size(112, 115)
+        Me.WR1.Size = New System.Drawing.Size(75, 75)
         Me.WR1.TabIndex = 10
         Me.WR1.TabStop = False
         '
@@ -183,10 +175,9 @@ Partial Class Settings
         '
         Me.ColourLabel.AutoSize = True
         Me.ColourLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Underline), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.ColourLabel.Location = New System.Drawing.Point(48, 14)
-        Me.ColourLabel.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.ColourLabel.Location = New System.Drawing.Point(32, 9)
         Me.ColourLabel.Name = "ColourLabel"
-        Me.ColourLabel.Size = New System.Drawing.Size(361, 37)
+        Me.ColourLabel.Size = New System.Drawing.Size(248, 25)
         Me.ColourLabel.TabIndex = 16
         Me.ColourLabel.Text = "Board Colour Scheme:"
         '
@@ -194,10 +185,9 @@ Partial Class Settings
         '
         Me.Label3.AutoSize = True
         Me.Label3.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Underline), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label3.Location = New System.Drawing.Point(496, 14)
-        Me.Label3.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.Label3.Location = New System.Drawing.Point(331, 9)
         Me.Label3.Name = "Label3"
-        Me.Label3.Size = New System.Drawing.Size(379, 37)
+        Me.Label3.Size = New System.Drawing.Size(263, 25)
         Me.Label3.TabIndex = 16
         Me.Label3.Text = "Piece Animation Speed:"
         '
@@ -205,20 +195,18 @@ Partial Class Settings
         '
         Me.Label4.AutoSize = True
         Me.Label4.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Underline), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label4.Location = New System.Drawing.Point(978, 14)
-        Me.Label4.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.Label4.Location = New System.Drawing.Point(652, 9)
         Me.Label4.Name = "Label4"
-        Me.Label4.Size = New System.Drawing.Size(280, 37)
+        Me.Label4.Size = New System.Drawing.Size(195, 25)
         Me.Label4.TabIndex = 17
         Me.Label4.Text = "General Settings:"
         '
         'ResetBtn
         '
         Me.ResetBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.ResetBtn.Location = New System.Drawing.Point(1044, 532)
-        Me.ResetBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.ResetBtn.Location = New System.Drawing.Point(696, 353)
         Me.ResetBtn.Name = "ResetBtn"
-        Me.ResetBtn.Size = New System.Drawing.Size(171, 54)
+        Me.ResetBtn.Size = New System.Drawing.Size(114, 36)
         Me.ResetBtn.TabIndex = 11
         Me.ResetBtn.Text = "Reset Program"
         Me.ResetBtn.UseVisualStyleBackColor = True
@@ -226,10 +214,9 @@ Partial Class Settings
         'BackBtn
         '
         Me.BackBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BackBtn.Location = New System.Drawing.Point(1274, 578)
-        Me.BackBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.BackBtn.Location = New System.Drawing.Point(849, 376)
         Me.BackBtn.Name = "BackBtn"
-        Me.BackBtn.Size = New System.Drawing.Size(34, 35)
+        Me.BackBtn.Size = New System.Drawing.Size(23, 23)
         Me.BackBtn.TabIndex = 18
         Me.BackBtn.Text = "↺"
         Me.BackBtn.UseVisualStyleBackColor = True
@@ -238,30 +225,27 @@ Partial Class Settings
         '
         Me.AnimationInfo.AutoSize = True
         Me.AnimationInfo.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationInfo.Location = New System.Drawing.Point(518, 495)
-        Me.AnimationInfo.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.AnimationInfo.Location = New System.Drawing.Point(345, 322)
         Me.AnimationInfo.Name = "AnimationInfo"
-        Me.AnimationInfo.Size = New System.Drawing.Size(349, 25)
+        Me.AnimationInfo.Size = New System.Drawing.Size(222, 16)
         Me.AnimationInfo.TabIndex = 19
         Me.AnimationInfo.Text = "Off              Fast         Medium         Slow"
         '
         'PictureBox3
         '
         Me.PictureBox3.BackColor = System.Drawing.Color.FromArgb(CType(CType(50, Byte), Integer), CType(CType(50, Byte), Integer), CType(CType(50, Byte), Integer))
-        Me.PictureBox3.Location = New System.Drawing.Point(450, -6)
-        Me.PictureBox3.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.PictureBox3.Location = New System.Drawing.Point(300, -4)
         Me.PictureBox3.Name = "PictureBox3"
-        Me.PictureBox3.Size = New System.Drawing.Size(15, 646)
+        Me.PictureBox3.Size = New System.Drawing.Size(10, 420)
         Me.PictureBox3.TabIndex = 23
         Me.PictureBox3.TabStop = False
         '
         'PictureBox4
         '
         Me.PictureBox4.BackColor = System.Drawing.Color.FromArgb(CType(CType(50, Byte), Integer), CType(CType(50, Byte), Integer), CType(CType(50, Byte), Integer))
-        Me.PictureBox4.Location = New System.Drawing.Point(906, -6)
-        Me.PictureBox4.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.PictureBox4.Location = New System.Drawing.Point(604, -4)
         Me.PictureBox4.Name = "PictureBox4"
-        Me.PictureBox4.Size = New System.Drawing.Size(15, 646)
+        Me.PictureBox4.Size = New System.Drawing.Size(10, 420)
         Me.PictureBox4.TabIndex = 24
         Me.PictureBox4.TabStop = False
         '
@@ -272,10 +256,9 @@ Partial Class Settings
         Me.Def.Checked = True
         Me.Def.FlatStyle = System.Windows.Forms.FlatStyle.Popup
         Me.Def.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Def.Location = New System.Drawing.Point(6, 6)
-        Me.Def.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Def.Location = New System.Drawing.Point(4, 4)
         Me.Def.Name = "Def"
-        Me.Def.Size = New System.Drawing.Size(90, 26)
+        Me.Def.Size = New System.Drawing.Size(63, 19)
         Me.Def.TabIndex = 15
         Me.Def.TabStop = True
         Me.Def.Text = "Default"
@@ -286,10 +269,9 @@ Partial Class Settings
         Me.ColourSelectorL.BackColor = System.Drawing.Color.Transparent
         Me.ColourSelectorL.BackgroundImage = CType(resources.GetObject("ColourSelectorL.BackgroundImage"), System.Drawing.Image)
         Me.ColourSelectorL.InitialImage = Nothing
-        Me.ColourSelectorL.Location = New System.Drawing.Point(0, 108)
-        Me.ColourSelectorL.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.ColourSelectorL.Location = New System.Drawing.Point(0, 70)
         Me.ColourSelectorL.Name = "ColourSelectorL"
-        Me.ColourSelectorL.Size = New System.Drawing.Size(165, 108)
+        Me.ColourSelectorL.Size = New System.Drawing.Size(110, 70)
         Me.ColourSelectorL.TabIndex = 25
         Me.ColourSelectorL.TabStop = False
         '
@@ -299,10 +281,9 @@ Partial Class Settings
         Me.Blu.CheckAlign = System.Drawing.ContentAlignment.TopLeft
         Me.Blu.FlatStyle = System.Windows.Forms.FlatStyle.Popup
         Me.Blu.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Blu.Location = New System.Drawing.Point(6, 45)
-        Me.Blu.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Blu.Location = New System.Drawing.Point(4, 29)
         Me.Blu.Name = "Blu"
-        Me.Blu.Size = New System.Drawing.Size(96, 26)
+        Me.Blu.Size = New System.Drawing.Size(67, 19)
         Me.Blu.TabIndex = 15
         Me.Blu.TabStop = True
         Me.Blu.Text = "Blue (L)"
@@ -314,10 +295,9 @@ Partial Class Settings
         Me.Bl2.CheckAlign = System.Drawing.ContentAlignment.TopLeft
         Me.Bl2.FlatStyle = System.Windows.Forms.FlatStyle.Popup
         Me.Bl2.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Bl2.Location = New System.Drawing.Point(6, 83)
-        Me.Bl2.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Bl2.Location = New System.Drawing.Point(4, 54)
         Me.Bl2.Name = "Bl2"
-        Me.Bl2.Size = New System.Drawing.Size(99, 26)
+        Me.Bl2.Size = New System.Drawing.Size(69, 19)
         Me.Bl2.TabIndex = 15
         Me.Bl2.TabStop = True
         Me.Bl2.Text = "Blue (D)"
@@ -329,10 +309,9 @@ Partial Class Settings
         Me.Gld.CheckAlign = System.Drawing.ContentAlignment.TopLeft
         Me.Gld.FlatStyle = System.Windows.Forms.FlatStyle.Popup
         Me.Gld.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Gld.Location = New System.Drawing.Point(6, 122)
-        Me.Gld.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Gld.Location = New System.Drawing.Point(4, 79)
         Me.Gld.Name = "Gld"
-        Me.Gld.Size = New System.Drawing.Size(71, 26)
+        Me.Gld.Size = New System.Drawing.Size(50, 19)
         Me.Gld.TabIndex = 15
         Me.Gld.TabStop = True
         Me.Gld.Text = "Gold"
@@ -344,10 +323,9 @@ Partial Class Settings
         Me.Grn.CheckAlign = System.Drawing.ContentAlignment.TopLeft
         Me.Grn.FlatStyle = System.Windows.Forms.FlatStyle.Popup
         Me.Grn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Grn.Location = New System.Drawing.Point(6, 160)
-        Me.Grn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Grn.Location = New System.Drawing.Point(4, 104)
         Me.Grn.Name = "Grn"
-        Me.Grn.Size = New System.Drawing.Size(83, 26)
+        Me.Grn.Size = New System.Drawing.Size(58, 19)
         Me.Grn.TabIndex = 15
         Me.Grn.TabStop = True
         Me.Grn.Text = "Green"
@@ -359,10 +337,9 @@ Partial Class Settings
         Me.Red.CheckAlign = System.Drawing.ContentAlignment.TopLeft
         Me.Red.FlatStyle = System.Windows.Forms.FlatStyle.Popup
         Me.Red.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Red.Location = New System.Drawing.Point(6, 198)
-        Me.Red.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Red.Location = New System.Drawing.Point(4, 129)
         Me.Red.Name = "Red"
-        Me.Red.Size = New System.Drawing.Size(66, 26)
+        Me.Red.Size = New System.Drawing.Size(47, 19)
         Me.Red.TabIndex = 15
         Me.Red.TabStop = True
         Me.Red.Text = "Red"
@@ -374,10 +351,9 @@ Partial Class Settings
         Me.Ppl.CheckAlign = System.Drawing.ContentAlignment.TopLeft
         Me.Ppl.FlatStyle = System.Windows.Forms.FlatStyle.Popup
         Me.Ppl.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Ppl.Location = New System.Drawing.Point(6, 237)
-        Me.Ppl.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Ppl.Location = New System.Drawing.Point(4, 154)
         Me.Ppl.Name = "Ppl"
-        Me.Ppl.Size = New System.Drawing.Size(85, 26)
+        Me.Ppl.Size = New System.Drawing.Size(60, 19)
         Me.Ppl.TabIndex = 15
         Me.Ppl.TabStop = True
         Me.Ppl.Text = "Purple"
@@ -389,10 +365,9 @@ Partial Class Settings
         Me.Mon.CheckAlign = System.Drawing.ContentAlignment.TopLeft
         Me.Mon.FlatStyle = System.Windows.Forms.FlatStyle.Popup
         Me.Mon.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Mon.Location = New System.Drawing.Point(6, 275)
-        Me.Mon.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.Mon.Location = New System.Drawing.Point(4, 179)
         Me.Mon.Name = "Mon"
-        Me.Mon.Size = New System.Drawing.Size(72, 26)
+        Me.Mon.Size = New System.Drawing.Size(49, 19)
         Me.Mon.TabIndex = 15
         Me.Mon.Text = "Gray"
         Me.Mon.UseVisualStyleBackColor = True
@@ -408,10 +383,9 @@ Partial Class Settings
         Me.ColourPanel.Controls.Add(Me.Ppl)
         Me.ColourPanel.Controls.Add(Me.Mon)
         Me.ColourPanel.Controls.Add(Me.Bl2)
-        Me.ColourPanel.Location = New System.Drawing.Point(170, 138)
-        Me.ColourPanel.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.ColourPanel.Location = New System.Drawing.Point(113, 90)
         Me.ColourPanel.Name = "ColourPanel"
-        Me.ColourPanel.Size = New System.Drawing.Size(114, 311)
+        Me.ColourPanel.Size = New System.Drawing.Size(76, 202)
         Me.ColourPanel.TabIndex = 26
         '
         'ColourSelectorR
@@ -419,10 +393,9 @@ Partial Class Settings
         Me.ColourSelectorR.BackColor = System.Drawing.Color.Transparent
         Me.ColourSelectorR.BackgroundImage = CType(resources.GetObject("ColourSelectorR.BackgroundImage"), System.Drawing.Image)
         Me.ColourSelectorR.InitialImage = Nothing
-        Me.ColourSelectorR.Location = New System.Drawing.Point(285, 108)
-        Me.ColourSelectorR.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.ColourSelectorR.Location = New System.Drawing.Point(190, 70)
         Me.ColourSelectorR.Name = "ColourSelectorR"
-        Me.ColourSelectorR.Size = New System.Drawing.Size(165, 108)
+        Me.ColourSelectorR.Size = New System.Drawing.Size(110, 70)
         Me.ColourSelectorR.TabIndex = 27
         Me.ColourSelectorR.TabStop = False
         '
@@ -430,10 +403,9 @@ Partial Class Settings
         '
         Me.SoundBtn.AutoSize = True
         Me.SoundBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.SoundBtn.Location = New System.Drawing.Point(956, 92)
-        Me.SoundBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.SoundBtn.Location = New System.Drawing.Point(637, 48)
         Me.SoundBtn.Name = "SoundBtn"
-        Me.SoundBtn.Size = New System.Drawing.Size(226, 29)
+        Me.SoundBtn.Size = New System.Drawing.Size(154, 20)
         Me.SoundBtn.TabIndex = 28
         Me.SoundBtn.Text = "Enable Sound Effects"
         Me.SoundBtn.UseVisualStyleBackColor = True
@@ -442,10 +414,9 @@ Partial Class Settings
         '
         Me.AnimationBtn.AutoSize = True
         Me.AnimationBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationBtn.Location = New System.Drawing.Point(956, 145)
-        Me.AnimationBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.AnimationBtn.Location = New System.Drawing.Point(637, 82)
         Me.AnimationBtn.Name = "AnimationBtn"
-        Me.AnimationBtn.Size = New System.Drawing.Size(259, 29)
+        Me.AnimationBtn.Size = New System.Drawing.Size(176, 20)
         Me.AnimationBtn.TabIndex = 28
         Me.AnimationBtn.Text = "Play Opening Animation?"
         Me.AnimationBtn.UseVisualStyleBackColor = True
@@ -454,10 +425,9 @@ Partial Class Settings
         '
         Me.BoardBtn.AutoSize = True
         Me.BoardBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BoardBtn.Location = New System.Drawing.Point(956, 197)
-        Me.BoardBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.BoardBtn.Location = New System.Drawing.Point(637, 150)
         Me.BoardBtn.Name = "BoardBtn"
-        Me.BoardBtn.Size = New System.Drawing.Size(249, 29)
+        Me.BoardBtn.Size = New System.Drawing.Size(174, 20)
         Me.BoardBtn.TabIndex = 28
         Me.BoardBtn.Text = "Display Board Highlights"
         Me.BoardBtn.UseVisualStyleBackColor = True
@@ -466,10 +436,9 @@ Partial Class Settings
         '
         Me.PieceBtn.AutoSize = True
         Me.PieceBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PieceBtn.Location = New System.Drawing.Point(956, 249)
-        Me.PieceBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.PieceBtn.Location = New System.Drawing.Point(637, 184)
         Me.PieceBtn.Name = "PieceBtn"
-        Me.PieceBtn.Size = New System.Drawing.Size(246, 29)
+        Me.PieceBtn.Size = New System.Drawing.Size(172, 20)
         Me.PieceBtn.TabIndex = 28
         Me.PieceBtn.Text = "Display Piece Highlights"
         Me.PieceBtn.UseVisualStyleBackColor = True
@@ -478,10 +447,9 @@ Partial Class Settings
         '
         Me.InvisBtn.AutoSize = True
         Me.InvisBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.InvisBtn.Location = New System.Drawing.Point(956, 354)
-        Me.InvisBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.InvisBtn.Location = New System.Drawing.Point(637, 252)
         Me.InvisBtn.Name = "InvisBtn"
-        Me.InvisBtn.Size = New System.Drawing.Size(183, 29)
+        Me.InvisBtn.Size = New System.Drawing.Size(127, 20)
         Me.InvisBtn.TabIndex = 28
         Me.InvisBtn.Text = "Invisible Pieces?"
         Me.InvisBtn.UseVisualStyleBackColor = True
@@ -490,10 +458,9 @@ Partial Class Settings
         '
         Me.AnimationPieceInfo.AutoSize = True
         Me.AnimationPieceInfo.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.AnimationPieceInfo.Location = New System.Drawing.Point(554, 58)
-        Me.AnimationPieceInfo.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.AnimationPieceInfo.Location = New System.Drawing.Point(369, 38)
         Me.AnimationPieceInfo.Name = "AnimationPieceInfo"
-        Me.AnimationPieceInfo.Size = New System.Drawing.Size(271, 20)
+        Me.AnimationPieceInfo.Size = New System.Drawing.Size(170, 13)
         Me.AnimationPieceInfo.TabIndex = 16
         Me.AnimationPieceInfo.Text = "Click a Piece to Test its Animation!"
         '
@@ -501,10 +468,9 @@ Partial Class Settings
         '
         Me.HammadBtn.AutoSize = True
         Me.HammadBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.HammadBtn.Location = New System.Drawing.Point(956, 458)
-        Me.HammadBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.HammadBtn.Location = New System.Drawing.Point(637, 320)
         Me.HammadBtn.Name = "HammadBtn"
-        Me.HammadBtn.Size = New System.Drawing.Size(268, 29)
+        Me.HammadBtn.Size = New System.Drawing.Size(185, 20)
         Me.HammadBtn.TabIndex = 28
         Me.HammadBtn.Text = "Hammad Mode (Unstable)"
         Me.HammadBtn.UseVisualStyleBackColor = True
@@ -513,10 +479,9 @@ Partial Class Settings
         '
         Me.FixedSearchBtn.AutoSize = True
         Me.FixedSearchBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.FixedSearchBtn.Location = New System.Drawing.Point(956, 406)
-        Me.FixedSearchBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.FixedSearchBtn.Location = New System.Drawing.Point(637, 286)
         Me.FixedSearchBtn.Name = "FixedSearchBtn"
-        Me.FixedSearchBtn.Size = New System.Drawing.Size(297, 29)
+        Me.FixedSearchBtn.Size = New System.Drawing.Size(196, 20)
         Me.FixedSearchBtn.TabIndex = 28
         Me.FixedSearchBtn.Text = "Fixed AI Search?          Depth:"
         Me.FixedSearchBtn.UseVisualStyleBackColor = True
@@ -525,11 +490,10 @@ Partial Class Settings
         '
         Me.FixedSearchBox.Enabled = False
         Me.FixedSearchBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.FixedSearchBox.Location = New System.Drawing.Point(1242, 404)
-        Me.FixedSearchBox.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.FixedSearchBox.Location = New System.Drawing.Point(828, 285)
         Me.FixedSearchBox.Name = "FixedSearchBox"
         Me.FixedSearchBox.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.FixedSearchBox.Size = New System.Drawing.Size(50, 30)
+        Me.FixedSearchBox.Size = New System.Drawing.Size(35, 22)
         Me.FixedSearchBox.TabIndex = 29
         Me.FixedSearchBox.Text = "0"
         Me.FixedSearchBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
@@ -538,21 +502,31 @@ Partial Class Settings
         '
         Me.TouchMoveBtn.AutoSize = True
         Me.TouchMoveBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.TouchMoveBtn.Location = New System.Drawing.Point(956, 302)
-        Me.TouchMoveBtn.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
+        Me.TouchMoveBtn.Location = New System.Drawing.Point(637, 218)
         Me.TouchMoveBtn.Name = "TouchMoveBtn"
-        Me.TouchMoveBtn.Size = New System.Drawing.Size(159, 29)
+        Me.TouchMoveBtn.Size = New System.Drawing.Size(108, 20)
         Me.TouchMoveBtn.TabIndex = 28
         Me.TouchMoveBtn.Text = "Touch Move?"
         Me.TouchMoveBtn.UseVisualStyleBackColor = True
         '
+        'OpeningBookBtn
+        '
+        Me.OpeningBookBtn.AutoSize = True
+        Me.OpeningBookBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.OpeningBookBtn.Location = New System.Drawing.Point(637, 116)
+        Me.OpeningBookBtn.Name = "OpeningBookBtn"
+        Me.OpeningBookBtn.Size = New System.Drawing.Size(189, 20)
+        Me.OpeningBookBtn.TabIndex = 28
+        Me.OpeningBookBtn.Text = "Use Larger Opening Book?"
+        Me.OpeningBookBtn.UseVisualStyleBackColor = True
+        '
         'Settings
         '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(9.0!, 20.0!)
+        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer), CType(CType(155, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(1326, 632)
+        Me.ClientSize = New System.Drawing.Size(884, 411)
         Me.Controls.Add(Me.FixedSearchBox)
         Me.Controls.Add(Me.FixedSearchBtn)
         Me.Controls.Add(Me.HammadBtn)
@@ -560,6 +534,7 @@ Partial Class Settings
         Me.Controls.Add(Me.InvisBtn)
         Me.Controls.Add(Me.PieceBtn)
         Me.Controls.Add(Me.BoardBtn)
+        Me.Controls.Add(Me.OpeningBookBtn)
         Me.Controls.Add(Me.AnimationBtn)
         Me.Controls.Add(Me.SoundBtn)
         Me.Controls.Add(Me.ColourSelectorR)
@@ -584,7 +559,6 @@ Partial Class Settings
         Me.Controls.Add(Me.Checkerboard)
         Me.Controls.Add(Me.ColourSelectorL)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
         Me.MaximizeBox = False
         Me.Name = "Settings"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
@@ -645,4 +619,5 @@ Partial Class Settings
     Friend WithEvents FixedSearchBtn As System.Windows.Forms.CheckBox
     Friend WithEvents FixedSearchBox As System.Windows.Forms.TextBox
     Friend WithEvents TouchMoveBtn As CheckBox
+    Friend WithEvents OpeningBookBtn As CheckBox
 End Class

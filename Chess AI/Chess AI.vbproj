@@ -97,7 +97,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AI.vb" />
+    <Compile Include="Chess_GUIObjects.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Chess_TrainingModules.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="CoreMethods.vb" />
+    <Compile Include="GameHistory.vb" />
+    <Compile Include="OpeningAndPuzzleEntry.vb" />
     <Compile Include="OnePlayerCustomisation.Designer.vb">
       <DependentUpon>OnePlayerCustomisation.vb</DependentUpon>
     </Compile>
