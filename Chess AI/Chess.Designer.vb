@@ -77,6 +77,10 @@ Partial Class Chess
         Me.FENExport = New System.Windows.Forms.Button()
         Me.CheckLabel = New System.Windows.Forms.Label()
         Me.CurrentEval = New System.Windows.Forms.Label()
+        Me.UndoMove = New System.Windows.Forms.Button()
+        Me.WhiteAIMove = New System.Windows.Forms.Button()
+        Me.Credits = New System.Windows.Forms.Label()
+        Me.UndoFENChange = New System.Windows.Forms.Button()
         CType(Me.WK1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WQ1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.WB1, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -131,7 +135,7 @@ Partial Class Chess
         Me.WK1.BackColor = System.Drawing.Color.Transparent
         Me.WK1.Image = CType(resources.GetObject("WK1.Image"), System.Drawing.Image)
         Me.WK1.InitialImage = Nothing
-        Me.WK1.Location = New System.Drawing.Point(414, 33)
+        Me.WK1.Location = New System.Drawing.Point(297, 0)
         Me.WK1.Name = "WK1"
         Me.WK1.Size = New System.Drawing.Size(75, 75)
         Me.WK1.TabIndex = 0
@@ -142,7 +146,7 @@ Partial Class Chess
         Me.WQ1.BackColor = System.Drawing.Color.Transparent
         Me.WQ1.Image = CType(resources.GetObject("WQ1.Image"), System.Drawing.Image)
         Me.WQ1.InitialImage = Nothing
-        Me.WQ1.Location = New System.Drawing.Point(495, 33)
+        Me.WQ1.Location = New System.Drawing.Point(378, 0)
         Me.WQ1.Name = "WQ1"
         Me.WQ1.Size = New System.Drawing.Size(75, 75)
         Me.WQ1.TabIndex = 0
@@ -153,7 +157,7 @@ Partial Class Chess
         Me.WB1.BackColor = System.Drawing.Color.Transparent
         Me.WB1.Image = CType(resources.GetObject("WB1.Image"), System.Drawing.Image)
         Me.WB1.InitialImage = Nothing
-        Me.WB1.Location = New System.Drawing.Point(576, 33)
+        Me.WB1.Location = New System.Drawing.Point(459, 0)
         Me.WB1.Name = "WB1"
         Me.WB1.Size = New System.Drawing.Size(75, 75)
         Me.WB1.TabIndex = 0
@@ -164,7 +168,7 @@ Partial Class Chess
         Me.WB2.BackColor = System.Drawing.Color.Transparent
         Me.WB2.Image = CType(resources.GetObject("WB2.Image"), System.Drawing.Image)
         Me.WB2.InitialImage = Nothing
-        Me.WB2.Location = New System.Drawing.Point(657, 33)
+        Me.WB2.Location = New System.Drawing.Point(540, 0)
         Me.WB2.Name = "WB2"
         Me.WB2.Size = New System.Drawing.Size(75, 75)
         Me.WB2.TabIndex = 0
@@ -175,7 +179,7 @@ Partial Class Chess
         Me.WN1.BackColor = System.Drawing.Color.Transparent
         Me.WN1.Image = CType(resources.GetObject("WN1.Image"), System.Drawing.Image)
         Me.WN1.InitialImage = Nothing
-        Me.WN1.Location = New System.Drawing.Point(738, 33)
+        Me.WN1.Location = New System.Drawing.Point(621, 0)
         Me.WN1.Name = "WN1"
         Me.WN1.Size = New System.Drawing.Size(75, 75)
         Me.WN1.TabIndex = 0
@@ -186,7 +190,7 @@ Partial Class Chess
         Me.WN2.BackColor = System.Drawing.Color.Transparent
         Me.WN2.Image = CType(resources.GetObject("WN2.Image"), System.Drawing.Image)
         Me.WN2.InitialImage = Nothing
-        Me.WN2.Location = New System.Drawing.Point(819, 33)
+        Me.WN2.Location = New System.Drawing.Point(702, 0)
         Me.WN2.Name = "WN2"
         Me.WN2.Size = New System.Drawing.Size(75, 75)
         Me.WN2.TabIndex = 0
@@ -197,7 +201,7 @@ Partial Class Chess
         Me.WR1.BackColor = System.Drawing.Color.Transparent
         Me.WR1.Image = CType(resources.GetObject("WR1.Image"), System.Drawing.Image)
         Me.WR1.InitialImage = Nothing
-        Me.WR1.Location = New System.Drawing.Point(900, 33)
+        Me.WR1.Location = New System.Drawing.Point(783, 0)
         Me.WR1.Name = "WR1"
         Me.WR1.Size = New System.Drawing.Size(75, 75)
         Me.WR1.TabIndex = 0
@@ -208,7 +212,7 @@ Partial Class Chess
         Me.WR2.BackColor = System.Drawing.Color.Transparent
         Me.WR2.Image = CType(resources.GetObject("WR2.Image"), System.Drawing.Image)
         Me.WR2.InitialImage = Nothing
-        Me.WR2.Location = New System.Drawing.Point(981, 33)
+        Me.WR2.Location = New System.Drawing.Point(864, 0)
         Me.WR2.Name = "WR2"
         Me.WR2.Size = New System.Drawing.Size(75, 75)
         Me.WR2.TabIndex = 0
@@ -219,7 +223,7 @@ Partial Class Chess
         Me.WP1.BackColor = System.Drawing.Color.Transparent
         Me.WP1.Image = CType(resources.GetObject("WP1.Image"), System.Drawing.Image)
         Me.WP1.InitialImage = Nothing
-        Me.WP1.Location = New System.Drawing.Point(414, 114)
+        Me.WP1.Location = New System.Drawing.Point(297, 81)
         Me.WP1.Name = "WP1"
         Me.WP1.Size = New System.Drawing.Size(75, 75)
         Me.WP1.TabIndex = 0
@@ -230,7 +234,7 @@ Partial Class Chess
         Me.WP2.BackColor = System.Drawing.Color.Transparent
         Me.WP2.Image = CType(resources.GetObject("WP2.Image"), System.Drawing.Image)
         Me.WP2.InitialImage = Nothing
-        Me.WP2.Location = New System.Drawing.Point(495, 114)
+        Me.WP2.Location = New System.Drawing.Point(378, 81)
         Me.WP2.Name = "WP2"
         Me.WP2.Size = New System.Drawing.Size(75, 75)
         Me.WP2.TabIndex = 0
@@ -241,7 +245,7 @@ Partial Class Chess
         Me.WP3.BackColor = System.Drawing.Color.Transparent
         Me.WP3.Image = CType(resources.GetObject("WP3.Image"), System.Drawing.Image)
         Me.WP3.InitialImage = Nothing
-        Me.WP3.Location = New System.Drawing.Point(576, 114)
+        Me.WP3.Location = New System.Drawing.Point(459, 81)
         Me.WP3.Name = "WP3"
         Me.WP3.Size = New System.Drawing.Size(75, 75)
         Me.WP3.TabIndex = 0
@@ -252,7 +256,7 @@ Partial Class Chess
         Me.WP4.BackColor = System.Drawing.Color.Transparent
         Me.WP4.Image = CType(resources.GetObject("WP4.Image"), System.Drawing.Image)
         Me.WP4.InitialImage = Nothing
-        Me.WP4.Location = New System.Drawing.Point(657, 114)
+        Me.WP4.Location = New System.Drawing.Point(540, 81)
         Me.WP4.Name = "WP4"
         Me.WP4.Size = New System.Drawing.Size(75, 75)
         Me.WP4.TabIndex = 0
@@ -263,7 +267,7 @@ Partial Class Chess
         Me.WP5.BackColor = System.Drawing.Color.Transparent
         Me.WP5.Image = CType(resources.GetObject("WP5.Image"), System.Drawing.Image)
         Me.WP5.InitialImage = Nothing
-        Me.WP5.Location = New System.Drawing.Point(738, 114)
+        Me.WP5.Location = New System.Drawing.Point(621, 81)
         Me.WP5.Name = "WP5"
         Me.WP5.Size = New System.Drawing.Size(75, 75)
         Me.WP5.TabIndex = 0
@@ -274,7 +278,7 @@ Partial Class Chess
         Me.WP6.BackColor = System.Drawing.Color.Transparent
         Me.WP6.Image = CType(resources.GetObject("WP6.Image"), System.Drawing.Image)
         Me.WP6.InitialImage = Nothing
-        Me.WP6.Location = New System.Drawing.Point(819, 114)
+        Me.WP6.Location = New System.Drawing.Point(702, 81)
         Me.WP6.Name = "WP6"
         Me.WP6.Size = New System.Drawing.Size(75, 75)
         Me.WP6.TabIndex = 0
@@ -285,7 +289,7 @@ Partial Class Chess
         Me.WP7.BackColor = System.Drawing.Color.Transparent
         Me.WP7.Image = CType(resources.GetObject("WP7.Image"), System.Drawing.Image)
         Me.WP7.InitialImage = Nothing
-        Me.WP7.Location = New System.Drawing.Point(900, 114)
+        Me.WP7.Location = New System.Drawing.Point(783, 81)
         Me.WP7.Name = "WP7"
         Me.WP7.Size = New System.Drawing.Size(75, 75)
         Me.WP7.TabIndex = 0
@@ -296,7 +300,7 @@ Partial Class Chess
         Me.WP8.BackColor = System.Drawing.Color.Transparent
         Me.WP8.Image = CType(resources.GetObject("WP8.Image"), System.Drawing.Image)
         Me.WP8.InitialImage = Nothing
-        Me.WP8.Location = New System.Drawing.Point(981, 114)
+        Me.WP8.Location = New System.Drawing.Point(864, 81)
         Me.WP8.Name = "WP8"
         Me.WP8.Size = New System.Drawing.Size(75, 75)
         Me.WP8.TabIndex = 0
@@ -307,7 +311,7 @@ Partial Class Chess
         Me.BK1.BackColor = System.Drawing.Color.Transparent
         Me.BK1.Image = CType(resources.GetObject("BK1.Image"), System.Drawing.Image)
         Me.BK1.InitialImage = Nothing
-        Me.BK1.Location = New System.Drawing.Point(414, 195)
+        Me.BK1.Location = New System.Drawing.Point(297, 162)
         Me.BK1.Name = "BK1"
         Me.BK1.Size = New System.Drawing.Size(75, 75)
         Me.BK1.TabIndex = 0
@@ -318,7 +322,7 @@ Partial Class Chess
         Me.BQ1.BackColor = System.Drawing.Color.Transparent
         Me.BQ1.Image = CType(resources.GetObject("BQ1.Image"), System.Drawing.Image)
         Me.BQ1.InitialImage = Nothing
-        Me.BQ1.Location = New System.Drawing.Point(495, 195)
+        Me.BQ1.Location = New System.Drawing.Point(378, 162)
         Me.BQ1.Name = "BQ1"
         Me.BQ1.Size = New System.Drawing.Size(75, 75)
         Me.BQ1.TabIndex = 0
@@ -329,7 +333,7 @@ Partial Class Chess
         Me.BB1.BackColor = System.Drawing.Color.Transparent
         Me.BB1.Image = CType(resources.GetObject("BB1.Image"), System.Drawing.Image)
         Me.BB1.InitialImage = Nothing
-        Me.BB1.Location = New System.Drawing.Point(576, 195)
+        Me.BB1.Location = New System.Drawing.Point(459, 162)
         Me.BB1.Name = "BB1"
         Me.BB1.Size = New System.Drawing.Size(75, 75)
         Me.BB1.TabIndex = 0
@@ -340,7 +344,7 @@ Partial Class Chess
         Me.BN1.BackColor = System.Drawing.Color.Transparent
         Me.BN1.Image = CType(resources.GetObject("BN1.Image"), System.Drawing.Image)
         Me.BN1.InitialImage = Nothing
-        Me.BN1.Location = New System.Drawing.Point(738, 195)
+        Me.BN1.Location = New System.Drawing.Point(621, 162)
         Me.BN1.Name = "BN1"
         Me.BN1.Size = New System.Drawing.Size(75, 75)
         Me.BN1.TabIndex = 0
@@ -351,7 +355,7 @@ Partial Class Chess
         Me.BR1.BackColor = System.Drawing.Color.Transparent
         Me.BR1.Image = CType(resources.GetObject("BR1.Image"), System.Drawing.Image)
         Me.BR1.InitialImage = Nothing
-        Me.BR1.Location = New System.Drawing.Point(900, 195)
+        Me.BR1.Location = New System.Drawing.Point(783, 162)
         Me.BR1.Name = "BR1"
         Me.BR1.Size = New System.Drawing.Size(75, 75)
         Me.BR1.TabIndex = 0
@@ -362,7 +366,7 @@ Partial Class Chess
         Me.BB2.BackColor = System.Drawing.Color.Transparent
         Me.BB2.Image = CType(resources.GetObject("BB2.Image"), System.Drawing.Image)
         Me.BB2.InitialImage = Nothing
-        Me.BB2.Location = New System.Drawing.Point(657, 195)
+        Me.BB2.Location = New System.Drawing.Point(540, 162)
         Me.BB2.Name = "BB2"
         Me.BB2.Size = New System.Drawing.Size(75, 75)
         Me.BB2.TabIndex = 0
@@ -373,7 +377,7 @@ Partial Class Chess
         Me.BN2.BackColor = System.Drawing.Color.Transparent
         Me.BN2.Image = CType(resources.GetObject("BN2.Image"), System.Drawing.Image)
         Me.BN2.InitialImage = Nothing
-        Me.BN2.Location = New System.Drawing.Point(819, 195)
+        Me.BN2.Location = New System.Drawing.Point(702, 162)
         Me.BN2.Name = "BN2"
         Me.BN2.Size = New System.Drawing.Size(75, 75)
         Me.BN2.TabIndex = 0
@@ -384,7 +388,7 @@ Partial Class Chess
         Me.BR2.BackColor = System.Drawing.Color.Transparent
         Me.BR2.Image = CType(resources.GetObject("BR2.Image"), System.Drawing.Image)
         Me.BR2.InitialImage = Nothing
-        Me.BR2.Location = New System.Drawing.Point(981, 195)
+        Me.BR2.Location = New System.Drawing.Point(864, 162)
         Me.BR2.Name = "BR2"
         Me.BR2.Size = New System.Drawing.Size(75, 75)
         Me.BR2.TabIndex = 0
@@ -395,7 +399,7 @@ Partial Class Chess
         Me.BP1.BackColor = System.Drawing.Color.Transparent
         Me.BP1.Image = CType(resources.GetObject("BP1.Image"), System.Drawing.Image)
         Me.BP1.InitialImage = Nothing
-        Me.BP1.Location = New System.Drawing.Point(414, 276)
+        Me.BP1.Location = New System.Drawing.Point(297, 243)
         Me.BP1.Name = "BP1"
         Me.BP1.Size = New System.Drawing.Size(75, 75)
         Me.BP1.TabIndex = 0
@@ -406,7 +410,7 @@ Partial Class Chess
         Me.BP2.BackColor = System.Drawing.Color.Transparent
         Me.BP2.Image = CType(resources.GetObject("BP2.Image"), System.Drawing.Image)
         Me.BP2.InitialImage = Nothing
-        Me.BP2.Location = New System.Drawing.Point(495, 276)
+        Me.BP2.Location = New System.Drawing.Point(378, 243)
         Me.BP2.Name = "BP2"
         Me.BP2.Size = New System.Drawing.Size(75, 75)
         Me.BP2.TabIndex = 0
@@ -417,7 +421,7 @@ Partial Class Chess
         Me.BP3.BackColor = System.Drawing.Color.Transparent
         Me.BP3.Image = CType(resources.GetObject("BP3.Image"), System.Drawing.Image)
         Me.BP3.InitialImage = Nothing
-        Me.BP3.Location = New System.Drawing.Point(576, 276)
+        Me.BP3.Location = New System.Drawing.Point(459, 243)
         Me.BP3.Name = "BP3"
         Me.BP3.Size = New System.Drawing.Size(75, 75)
         Me.BP3.TabIndex = 0
@@ -428,7 +432,7 @@ Partial Class Chess
         Me.BP4.BackColor = System.Drawing.Color.Transparent
         Me.BP4.Image = CType(resources.GetObject("BP4.Image"), System.Drawing.Image)
         Me.BP4.InitialImage = Nothing
-        Me.BP4.Location = New System.Drawing.Point(657, 276)
+        Me.BP4.Location = New System.Drawing.Point(540, 243)
         Me.BP4.Name = "BP4"
         Me.BP4.Size = New System.Drawing.Size(75, 75)
         Me.BP4.TabIndex = 0
@@ -439,7 +443,7 @@ Partial Class Chess
         Me.BP5.BackColor = System.Drawing.Color.Transparent
         Me.BP5.Image = CType(resources.GetObject("BP5.Image"), System.Drawing.Image)
         Me.BP5.InitialImage = Nothing
-        Me.BP5.Location = New System.Drawing.Point(738, 276)
+        Me.BP5.Location = New System.Drawing.Point(621, 243)
         Me.BP5.Name = "BP5"
         Me.BP5.Size = New System.Drawing.Size(75, 75)
         Me.BP5.TabIndex = 0
@@ -450,7 +454,7 @@ Partial Class Chess
         Me.BP6.BackColor = System.Drawing.Color.Transparent
         Me.BP6.Image = CType(resources.GetObject("BP6.Image"), System.Drawing.Image)
         Me.BP6.InitialImage = Nothing
-        Me.BP6.Location = New System.Drawing.Point(819, 276)
+        Me.BP6.Location = New System.Drawing.Point(702, 243)
         Me.BP6.Name = "BP6"
         Me.BP6.Size = New System.Drawing.Size(75, 75)
         Me.BP6.TabIndex = 0
@@ -461,7 +465,7 @@ Partial Class Chess
         Me.BP7.BackColor = System.Drawing.Color.Transparent
         Me.BP7.Image = CType(resources.GetObject("BP7.Image"), System.Drawing.Image)
         Me.BP7.InitialImage = Nothing
-        Me.BP7.Location = New System.Drawing.Point(900, 276)
+        Me.BP7.Location = New System.Drawing.Point(783, 243)
         Me.BP7.Name = "BP7"
         Me.BP7.Size = New System.Drawing.Size(75, 75)
         Me.BP7.TabIndex = 0
@@ -472,7 +476,7 @@ Partial Class Chess
         Me.BP8.BackColor = System.Drawing.Color.Transparent
         Me.BP8.Image = CType(resources.GetObject("BP8.Image"), System.Drawing.Image)
         Me.BP8.InitialImage = Nothing
-        Me.BP8.Location = New System.Drawing.Point(981, 276)
+        Me.BP8.Location = New System.Drawing.Point(864, 243)
         Me.BP8.Name = "BP8"
         Me.BP8.Size = New System.Drawing.Size(75, 75)
         Me.BP8.TabIndex = 0
@@ -509,7 +513,7 @@ Partial Class Chess
         Me.WQ2.BackColor = System.Drawing.Color.Transparent
         Me.WQ2.Image = CType(resources.GetObject("WQ2.Image"), System.Drawing.Image)
         Me.WQ2.InitialImage = Nothing
-        Me.WQ2.Location = New System.Drawing.Point(495, 357)
+        Me.WQ2.Location = New System.Drawing.Point(378, 324)
         Me.WQ2.Name = "WQ2"
         Me.WQ2.Size = New System.Drawing.Size(75, 75)
         Me.WQ2.TabIndex = 0
@@ -520,7 +524,7 @@ Partial Class Chess
         Me.WQ3.BackColor = System.Drawing.Color.Transparent
         Me.WQ3.Image = CType(resources.GetObject("WQ3.Image"), System.Drawing.Image)
         Me.WQ3.InitialImage = Nothing
-        Me.WQ3.Location = New System.Drawing.Point(576, 357)
+        Me.WQ3.Location = New System.Drawing.Point(459, 324)
         Me.WQ3.Name = "WQ3"
         Me.WQ3.Size = New System.Drawing.Size(75, 75)
         Me.WQ3.TabIndex = 0
@@ -531,7 +535,7 @@ Partial Class Chess
         Me.WQ4.BackColor = System.Drawing.Color.Transparent
         Me.WQ4.Image = CType(resources.GetObject("WQ4.Image"), System.Drawing.Image)
         Me.WQ4.InitialImage = Nothing
-        Me.WQ4.Location = New System.Drawing.Point(657, 357)
+        Me.WQ4.Location = New System.Drawing.Point(540, 324)
         Me.WQ4.Name = "WQ4"
         Me.WQ4.Size = New System.Drawing.Size(75, 75)
         Me.WQ4.TabIndex = 0
@@ -542,7 +546,7 @@ Partial Class Chess
         Me.WQ5.BackColor = System.Drawing.Color.Transparent
         Me.WQ5.Image = CType(resources.GetObject("WQ5.Image"), System.Drawing.Image)
         Me.WQ5.InitialImage = Nothing
-        Me.WQ5.Location = New System.Drawing.Point(738, 357)
+        Me.WQ5.Location = New System.Drawing.Point(621, 324)
         Me.WQ5.Name = "WQ5"
         Me.WQ5.Size = New System.Drawing.Size(75, 75)
         Me.WQ5.TabIndex = 0
@@ -553,7 +557,7 @@ Partial Class Chess
         Me.WQ6.BackColor = System.Drawing.Color.Transparent
         Me.WQ6.Image = CType(resources.GetObject("WQ6.Image"), System.Drawing.Image)
         Me.WQ6.InitialImage = Nothing
-        Me.WQ6.Location = New System.Drawing.Point(819, 357)
+        Me.WQ6.Location = New System.Drawing.Point(702, 324)
         Me.WQ6.Name = "WQ6"
         Me.WQ6.Size = New System.Drawing.Size(75, 75)
         Me.WQ6.TabIndex = 0
@@ -564,7 +568,7 @@ Partial Class Chess
         Me.WQ7.BackColor = System.Drawing.Color.Transparent
         Me.WQ7.Image = CType(resources.GetObject("WQ7.Image"), System.Drawing.Image)
         Me.WQ7.InitialImage = Nothing
-        Me.WQ7.Location = New System.Drawing.Point(900, 357)
+        Me.WQ7.Location = New System.Drawing.Point(783, 324)
         Me.WQ7.Name = "WQ7"
         Me.WQ7.Size = New System.Drawing.Size(75, 75)
         Me.WQ7.TabIndex = 0
@@ -575,7 +579,7 @@ Partial Class Chess
         Me.WQ8.BackColor = System.Drawing.Color.Transparent
         Me.WQ8.Image = CType(resources.GetObject("WQ8.Image"), System.Drawing.Image)
         Me.WQ8.InitialImage = Nothing
-        Me.WQ8.Location = New System.Drawing.Point(981, 357)
+        Me.WQ8.Location = New System.Drawing.Point(864, 324)
         Me.WQ8.Name = "WQ8"
         Me.WQ8.Size = New System.Drawing.Size(75, 75)
         Me.WQ8.TabIndex = 0
@@ -586,7 +590,7 @@ Partial Class Chess
         Me.BQ3.BackColor = System.Drawing.Color.Transparent
         Me.BQ3.Image = CType(resources.GetObject("BQ3.Image"), System.Drawing.Image)
         Me.BQ3.InitialImage = Nothing
-        Me.BQ3.Location = New System.Drawing.Point(576, 438)
+        Me.BQ3.Location = New System.Drawing.Point(459, 405)
         Me.BQ3.Name = "BQ3"
         Me.BQ3.Size = New System.Drawing.Size(75, 75)
         Me.BQ3.TabIndex = 0
@@ -597,7 +601,7 @@ Partial Class Chess
         Me.BQ4.BackColor = System.Drawing.Color.Transparent
         Me.BQ4.Image = CType(resources.GetObject("BQ4.Image"), System.Drawing.Image)
         Me.BQ4.InitialImage = Nothing
-        Me.BQ4.Location = New System.Drawing.Point(657, 438)
+        Me.BQ4.Location = New System.Drawing.Point(540, 405)
         Me.BQ4.Name = "BQ4"
         Me.BQ4.Size = New System.Drawing.Size(75, 75)
         Me.BQ4.TabIndex = 0
@@ -608,7 +612,7 @@ Partial Class Chess
         Me.BQ2.BackColor = System.Drawing.Color.Transparent
         Me.BQ2.Image = CType(resources.GetObject("BQ2.Image"), System.Drawing.Image)
         Me.BQ2.InitialImage = Nothing
-        Me.BQ2.Location = New System.Drawing.Point(495, 438)
+        Me.BQ2.Location = New System.Drawing.Point(378, 405)
         Me.BQ2.Name = "BQ2"
         Me.BQ2.Size = New System.Drawing.Size(75, 75)
         Me.BQ2.TabIndex = 0
@@ -619,7 +623,7 @@ Partial Class Chess
         Me.BQ7.BackColor = System.Drawing.Color.Transparent
         Me.BQ7.Image = CType(resources.GetObject("BQ7.Image"), System.Drawing.Image)
         Me.BQ7.InitialImage = Nothing
-        Me.BQ7.Location = New System.Drawing.Point(900, 438)
+        Me.BQ7.Location = New System.Drawing.Point(783, 405)
         Me.BQ7.Name = "BQ7"
         Me.BQ7.Size = New System.Drawing.Size(75, 75)
         Me.BQ7.TabIndex = 0
@@ -630,7 +634,7 @@ Partial Class Chess
         Me.BQ5.BackColor = System.Drawing.Color.Transparent
         Me.BQ5.Image = CType(resources.GetObject("BQ5.Image"), System.Drawing.Image)
         Me.BQ5.InitialImage = Nothing
-        Me.BQ5.Location = New System.Drawing.Point(738, 438)
+        Me.BQ5.Location = New System.Drawing.Point(621, 405)
         Me.BQ5.Name = "BQ5"
         Me.BQ5.Size = New System.Drawing.Size(75, 75)
         Me.BQ5.TabIndex = 0
@@ -641,7 +645,7 @@ Partial Class Chess
         Me.BQ8.BackColor = System.Drawing.Color.Transparent
         Me.BQ8.Image = CType(resources.GetObject("BQ8.Image"), System.Drawing.Image)
         Me.BQ8.InitialImage = Nothing
-        Me.BQ8.Location = New System.Drawing.Point(981, 438)
+        Me.BQ8.Location = New System.Drawing.Point(864, 405)
         Me.BQ8.Name = "BQ8"
         Me.BQ8.Size = New System.Drawing.Size(75, 75)
         Me.BQ8.TabIndex = 0
@@ -652,7 +656,7 @@ Partial Class Chess
         Me.BQ6.BackColor = System.Drawing.Color.Transparent
         Me.BQ6.Image = CType(resources.GetObject("BQ6.Image"), System.Drawing.Image)
         Me.BQ6.InitialImage = Nothing
-        Me.BQ6.Location = New System.Drawing.Point(819, 438)
+        Me.BQ6.Location = New System.Drawing.Point(702, 405)
         Me.BQ6.Name = "BQ6"
         Me.BQ6.Size = New System.Drawing.Size(75, 75)
         Me.BQ6.TabIndex = 0
@@ -660,15 +664,16 @@ Partial Class Chess
         '
         'BlackAIMove
         '
-        Me.BlackAIMove.Location = New System.Drawing.Point(111, 213)
+        Me.BlackAIMove.Location = New System.Drawing.Point(1054, 85)
         Me.BlackAIMove.Name = "BlackAIMove"
-        Me.BlackAIMove.Size = New System.Drawing.Size(97, 57)
+        Me.BlackAIMove.Size = New System.Drawing.Size(100, 57)
         Me.BlackAIMove.TabIndex = 4
         Me.BlackAIMove.Text = "Make Computer Move: (Black)"
         Me.BlackAIMove.UseVisualStyleBackColor = True
         '
         'Reset_Btn
         '
+        Me.Reset_Btn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Reset_Btn.Location = New System.Drawing.Point(9, 85)
         Me.Reset_Btn.Name = "Reset_Btn"
         Me.Reset_Btn.Size = New System.Drawing.Size(133, 43)
@@ -678,6 +683,7 @@ Partial Class Chess
         '
         'FENExport
         '
+        Me.FENExport.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.FENExport.Location = New System.Drawing.Point(150, 85)
         Me.FENExport.Name = "FENExport"
         Me.FENExport.Size = New System.Drawing.Size(141, 43)
@@ -690,7 +696,7 @@ Partial Class Chess
         Me.CheckLabel.AutoSize = True
         Me.CheckLabel.BackColor = System.Drawing.Color.White
         Me.CheckLabel.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CheckLabel.Location = New System.Drawing.Point(106, 149)
+        Me.CheckLabel.Location = New System.Drawing.Point(987, 12)
         Me.CheckLabel.Name = "CheckLabel"
         Me.CheckLabel.Size = New System.Drawing.Size(126, 25)
         Me.CheckLabel.TabIndex = 8
@@ -699,11 +705,52 @@ Partial Class Chess
         'CurrentEval
         '
         Me.CurrentEval.AutoSize = True
-        Me.CurrentEval.Location = New System.Drawing.Point(147, 311)
+        Me.CurrentEval.Location = New System.Drawing.Point(1042, 177)
         Me.CurrentEval.Name = "CurrentEval"
         Me.CurrentEval.Size = New System.Drawing.Size(13, 13)
         Me.CurrentEval.TabIndex = 9
         Me.CurrentEval.Text = "0"
+        '
+        'UndoMove
+        '
+        Me.UndoMove.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.UndoMove.Location = New System.Drawing.Point(9, 146)
+        Me.UndoMove.Name = "UndoMove"
+        Me.UndoMove.Size = New System.Drawing.Size(282, 43)
+        Me.UndoMove.TabIndex = 7
+        Me.UndoMove.Text = "Undo Last Action"
+        Me.UndoMove.UseVisualStyleBackColor = True
+        '
+        'WhiteAIMove
+        '
+        Me.WhiteAIMove.Location = New System.Drawing.Point(945, 85)
+        Me.WhiteAIMove.Name = "WhiteAIMove"
+        Me.WhiteAIMove.Size = New System.Drawing.Size(100, 57)
+        Me.WhiteAIMove.TabIndex = 4
+        Me.WhiteAIMove.Text = "Make Computer Move: (White)"
+        Me.WhiteAIMove.UseVisualStyleBackColor = True
+        '
+        'Credits
+        '
+        Me.Credits.AutoSize = True
+        Me.Credits.BackColor = System.Drawing.Color.Transparent
+        Me.Credits.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Credits.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
+        Me.Credits.Location = New System.Drawing.Point(978, 575)
+        Me.Credits.Name = "Credits"
+        Me.Credits.Size = New System.Drawing.Size(217, 16)
+        Me.Credits.TabIndex = 10
+        Me.Credits.Text = "Created by: Alfie Kunz - 2021/2"
+        '
+        'UndoFENChange
+        '
+        Me.UndoFENChange.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.UndoFENChange.Location = New System.Drawing.Point(213, 53)
+        Me.UndoFENChange.Name = "UndoFENChange"
+        Me.UndoFENChange.Size = New System.Drawing.Size(23, 23)
+        Me.UndoFENChange.TabIndex = 11
+        Me.UndoFENChange.Text = "↺"
+        Me.UndoFENChange.UseVisualStyleBackColor = True
         '
         'Chess
         '
@@ -711,10 +758,14 @@ Partial Class Chess
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.DarkGray
         Me.ClientSize = New System.Drawing.Size(1184, 600)
+        Me.Controls.Add(Me.UndoFENChange)
+        Me.Controls.Add(Me.Credits)
         Me.Controls.Add(Me.CurrentEval)
         Me.Controls.Add(Me.CheckLabel)
+        Me.Controls.Add(Me.UndoMove)
         Me.Controls.Add(Me.FENExport)
         Me.Controls.Add(Me.Reset_Btn)
+        Me.Controls.Add(Me.WhiteAIMove)
         Me.Controls.Add(Me.BlackAIMove)
         Me.Controls.Add(Me.FENButton)
         Me.Controls.Add(Me.FENTextBox)
@@ -872,4 +923,8 @@ Partial Class Chess
     Friend WithEvents FENExport As Button
     Friend WithEvents CheckLabel As Label
     Friend WithEvents CurrentEval As Label
+    Friend WithEvents UndoMove As System.Windows.Forms.Button
+    Friend WithEvents WhiteAIMove As Button
+    Friend WithEvents Credits As Label
+    Friend WithEvents UndoFENChange As System.Windows.Forms.Button
 End Class

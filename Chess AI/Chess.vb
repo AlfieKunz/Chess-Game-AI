@@ -18,11 +18,16 @@
     ReadOnly PieceArray(45) As PictureBox
     'Standard Chess notation that displays where all the pieces on the board are supposed to go.
     ReadOnly StartingFEN As String = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    Public PlayerTurn As Boolean = True
+    Public CurrentFEN As String = StartingFEN
+    Public PreviousFEN As String = StartingFEN
+    Public InvalidFEN As String
+    Public PlayerTurn As Boolean
+    Public MasterEnPassant As String
     Public MasterWKPos As String
     Public MasterBKPos As String
     Public MasterMaterialCount As Int16
-    Public AbsoluteDepth As Byte
+    Public AbsoluteDepth As SByte
+    Public TotalPositionsSearched As Integer
 
 
     Public Enum PieceValue 'Structure Containing the Value or Weight of each Piece.
@@ -41,6 +46,7 @@
     End Structure
     Public MasterWCanCastle As CanCastle
     Public MasterBCanCastle As CanCastle
+    Public CannotCastle As CanCastle
     Structure InCheck
         Dim IsInCheck As Boolean
         Dim Piece1 As String
@@ -48,31 +54,32 @@
     End Structure
     Public MasterWInCheck As InCheck
     Public MasterBInCheck As InCheck
+    Public NotInCheck As InCheck
 
     'Sets up sound effects.
-    Dim Sound_Startup As New System.Media.SoundPlayer With {
+    ReadOnly Sound_Startup As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Chess_Startup.wav"
     }
-    Dim Sound_Move As New System.Media.SoundPlayer With {
+    ReadOnly Sound_Move As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Chess_Move.wav"
     }
-    Dim Sound_Capture As New System.Media.SoundPlayer With {
+    ReadOnly Sound_Capture As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Chess_Capture.wav"
     }
-    Dim Sound_Check As New System.Media.SoundPlayer With {
+    ReadOnly Sound_Check As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Chess_Check.wav"
     }
-    Dim Sound_Castle As New System.Media.SoundPlayer With {
+    ReadOnly Sound_Castle As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Chess_Castle.wav"
     }
-    Dim Sound_Checkmate As New System.Media.SoundPlayer With {
+    ReadOnly Sound_Checkmate As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Chess_Checkmate.wav"
     }
-    Dim Sound_Stalemate As New System.Media.SoundPlayer With {
+    ReadOnly Sound_Stalemate As New Media.SoundPlayer With {
         .SoundLocation = Application.StartupPath & "\Chess_Stalemate.wav"
     }
 
-    Dim Stopwatch As New Stopwatch
+    Public Stopwatch As New Stopwatch
 
 
 
@@ -132,12 +139,14 @@
         For x = 0 To 45
             Checkerboard.Controls.Add(PieceArray(x))
         Next
+        UndoFENChange.Visible = False
         'Sends the starting FEN to be converted and displayed on the screen, then resets check / castling properties.
         MasterBoard = FENConverter(StartingFEN)
-        MasterWCanCastle.KS = True
-        MasterWCanCastle.KS = True
-        MasterWCanCastle.KS = True
-        MasterWCanCastle.KS = True
+        CannotCastle.KS = False
+        CannotCastle.QS = False
+        NotInCheck.IsInCheck = False
+        NotInCheck.Piece1 = " "
+        NotInCheck.Piece2 = " "
         MasterWInCheck.Piece1 = " "
         MasterWInCheck.Piece2 = " "
         MasterBInCheck.Piece1 = " "
@@ -149,11 +158,12 @@
             Next
         Next
         Array.Copy(MasterTrueTable, TrueTable, 64)
-        FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterBKPos)
+        FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
         Array.Copy(TrueTable, MasterBlackTFTable, 64)
 
         ''Runs the AI on a low-depth, meaning that its first official search will be much more efficient.
-        'AbsoluteDepth = 1
+        AbsoluteDepth = 1
+        CalculateAbsoluteDepth()
         'BlackAIMove_Click()
         'Console.Clear()
         'MasterBoard = FENConverter(StartingFEN)
@@ -163,7 +173,7 @@
 
         MasterMaterialCount = CountMaterial(MasterBoard)
         CurrentEval.Text = MasterMaterialCount
-        CheckLabel.Text = "            "
+        CheckLabel.Text = "                    "
         DisplayPieces()
         Sound_Startup.Play()
 
@@ -258,9 +268,9 @@
                 n += 1
             End While
         End If
-#Disable Warning BC42104 'Variable is used before it has been assigned a value
+        '#Disable Warning BC42104 'Variable is used before it has been assigned a value
         Return TempPiece
-#Enable Warning BC42104 'Variable is used before it has been assigned a value
+        '#Enable Warning BC42104 'Variable is used before it has been assigned a value
     End Function
 
 
@@ -270,6 +280,7 @@
         MasterWCanCastle.QS = False
         MasterBCanCastle.KS = False
         MasterBCanCastle.QS = False
+        MasterEnPassant = "-"
         Dim x As Byte = 0
         Dim y As Byte = 0
         Dim tempArray(7, 7) As Char
@@ -311,9 +322,10 @@
                                 MasterBCanCastle.KS = True
                             Case "q"
                                 MasterBCanCastle.QS = True
+                            Case "a" To "h"
+                                MasterEnPassant = Asc(FEN(m)) - 97 & 8 - CStr(FEN(m + 1))
                         End Select
                     Next
-                    'To do: En Passant & 50 Move Stalemate.
                     Exit For
             End Select
         Next
@@ -322,38 +334,87 @@
 
 
     'Function which converts the current board position into its FEN counterpart.
-    Private Sub FENExport_Click(sender As Object, e As EventArgs) Handles FENExport.Click
-        Dim FEN As String = ""
+    Private Sub ConvertToFEN()
         Dim Counter As Byte = 0
+        CurrentFEN = ""
         For y = 0 To 7
             For x = 0 To 7
                 If MasterBoard(x, y) = " " Then
                     Counter += 1
                 Else
                     If Counter > 0 Then
-                        FEN &= Counter
+                        CurrentFEN &= Counter
                         Counter = 0
                     End If
-                    FEN &= MasterBoard(x, y)
+                    CurrentFEN &= MasterBoard(x, y)
                 End If
             Next
-            If Counter > 0 Then FEN &= Counter
-            FEN &= "/"
+            If Counter > 0 Then CurrentFEN &= Counter
+            CurrentFEN &= "/"
             Counter = 0
         Next
-        FEN = FEN.TrimEnd("/")
+        CurrentFEN = CurrentFEN.TrimEnd("/")
         If PlayerTurn Then
-            FEN &= " w "
+            CurrentFEN &= " w "
         Else
-            FEN &= " b "
+            CurrentFEN &= " b "
         End If
-        If MasterWCanCastle.KS Then FEN &= "K"
-        If MasterWCanCastle.QS Then FEN &= "Q"
-        If MasterBCanCastle.KS Then FEN &= "k"
-        If MasterBCanCastle.QS Then FEN &= "q"
-        FEN &= " - 0 1"
-        FENTextBox.Text = FEN
+        If MasterWCanCastle.KS Then CurrentFEN &= "K "
+        If MasterWCanCastle.QS Then CurrentFEN &= "Q "
+        If MasterBCanCastle.KS Then CurrentFEN &= "k "
+        If MasterBCanCastle.QS Then CurrentFEN &= "q "
+        If MasterEnPassant <> "-" Then
+            CurrentFEN &= Chr(CStr(MasterEnPassant(0)) + 97) & 8 - CStr(MasterEnPassant(1)) & " 0 1"
+        Else
+            CurrentFEN &= "- 0 1"
+        End If
     End Sub
+
+    'Outputs the current FEN into the FEN textbox.
+    Private Sub FENExport_Click() Handles FENExport.Click
+        FENTextBox.Text = CurrentFEN
+    End Sub
+
+    'Converts the board to the previous FEN Position.
+    Private Sub UndoMove_Click() Handles UndoMove.Click
+        Dim TempFEN As String
+        TempFEN = CurrentFEN
+        CurrentFEN = PreviousFEN
+        PreviousFEN = TempFEN
+        MasterWInCheck.IsInCheck = False
+        MasterWInCheck.Piece1 = " "
+        MasterWInCheck.Piece2 = " "
+        MasterBInCheck.IsInCheck = False
+        MasterBInCheck.Piece1 = " "
+        MasterBInCheck.Piece2 = " "
+        MasterBoard = FENConverter(CurrentFEN)
+        DisplayPieces()
+        'Resets TrueFalse Tables, then checks for Checks.
+        If PlayerTurn Then
+            FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+        Else
+            FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+        End If
+        Sound_Move.Play()
+        CheckChecker()
+        If MasterWInCheck.IsInCheck Or MasterBInCheck.IsInCheck Then
+            Sound_Check.Play()
+        Else
+            Sound_Move.Play()
+        End If
+        MasterMaterialCount = CountMaterial(MasterBoard)
+        CurrentEval.Text = MasterMaterialCount
+        GameRunning = True
+
+        AbsoluteDepth = 0
+        If PlayerTurn Then
+            WhiteAIMove_Click()
+        Else
+            BlackAIMove_Click()
+        End If
+        CalculateAbsoluteDepth()
+    End Sub
+
 
 
     'Function which counts up all the material (and their values) on the board and subtracts black's total from
@@ -365,7 +426,7 @@
             For x = 0 To 7
                 If Board(x, y) <> " " And UCase(Board(x, y)) <> "K" Then
                     TempPiece = Board(x, y)
-                    If UCase(Board(x, y)) = Board(x, y) Then
+                    If Char.IsUpper(Board(x, y)) Then
                         If TempPiece = "Q" Then CountMaterial += PieceValue.Q
                         If TempPiece = "R" Then CountMaterial += PieceValue.R
                         If TempPiece = "B" Then CountMaterial += PieceValue.B
@@ -385,32 +446,54 @@
 
 
     'Sends the FEN a user types in to be converted & displayed.
-    Private Sub FENButton_Click(sender As Object, e As EventArgs) Handles FENButton.Click
+    Private Sub FENButton_Click() Handles FENButton.Click
+        If UndoFENChange.Visible = True Then UndoFENChange.Visible = False
         'Resets Check and Castling Properties.
         If FENTextBox.Text <> "" Then
+            Console.Clear()
             MasterWInCheck.IsInCheck = False
             MasterWInCheck.Piece1 = " "
             MasterWInCheck.Piece2 = " "
             MasterBInCheck.IsInCheck = False
             MasterBInCheck.Piece1 = " "
             MasterBInCheck.Piece2 = " "
-            MasterBoard = FENConverter(FENTextBox.Text)
-            DisplayPieces()
+            Dim TempFEN As String = PreviousFEN
+            'If the FEN is invalid, then the board is reset to the previous position.
+            Try
+                PreviousFEN = CurrentFEN
+                CurrentFEN = FENTextBox.Text
+                MasterBoard = FENConverter(FENTextBox.Text)
+                DisplayPieces()
+            Catch
+                CurrentFEN = PreviousFEN
+                PreviousFEN = TempFEN
+                MasterBoard = FENConverter(CurrentFEN)
+                DisplayPieces()
+                If FENTextBox.Text <> "Position Rejected - Invalid FEN Code. Please Input a Genuinine FEN and try again." Then InvalidFEN = FENTextBox.Text
+                UndoFENChange.Visible = True
+                FENTextBox.Text = "Position Rejected - Invalid FEN Code. Please Input a Genuinine FEN and try again."
+            End Try
+            GameRunning = True
             'Resets TrueFalse Tables, then checks for Checks.
-            If PlayerTurn Then
-                FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterBKPos)
-            Else
-                FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterWKPos, MasterBKPos)
-            End If
+            FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+            FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
             CheckChecker()
+            If MasterWInCheck.IsInCheck Then
+                If Not PlayerTurn Then GameRunning = False
+                Sound_Check.Play()
+            ElseIf MasterBInCheck.IsInCheck Then
+                If PlayerTurn Then GameRunning = False
+                Sound_Check.Play()
+            Else
+                Sound_Move.Play()
+            End If
             MasterMaterialCount = CountMaterial(MasterBoard)
             CurrentEval.Text = MasterMaterialCount
-            GameRunning = True
-            'Sound_Move.Play()
+
 
             AbsoluteDepth = 0
             If PlayerTurn Then
-                'RUN WHITE AI.
+                WhiteAIMove_Click()
             Else
                 BlackAIMove_Click()
             End If
@@ -418,8 +501,16 @@
         End If
     End Sub
 
+    'Button which resets the FEN in case it is invalid.
+    Private Sub UndoFENChange_Click(sender As Object, e As EventArgs) Handles UndoFENChange.Click
+        FENTextBox.Text = InvalidFEN
+        sender.Visible = False
+    End Sub
+
     'Resets the board to the starting position and sets white to move.
     Private Sub Reset_Btn_Click(sender As Object, e As EventArgs) Handles Reset_Btn.Click
+        PreviousFEN = CurrentFEN
+        CurrentFEN = StartingFEN
         'Resets Check Properties.
         MasterWInCheck.IsInCheck = False
         MasterWInCheck.Piece1 = " "
@@ -427,15 +518,16 @@
         MasterBInCheck.IsInCheck = False
         MasterBInCheck.Piece1 = " "
         MasterBInCheck.Piece2 = " "
-        MasterBoard = FENConverter("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        MasterBoard = FENConverter(CurrentFEN)
         DisplayPieces()
         'Resets TrueFalse Table, then check for Checks.
-        FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterBKPos)
+        FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
         CheckChecker()
         MasterMaterialCount = 0
         CurrentEval.Text = MasterMaterialCount
         GameRunning = True
-        'Sound_Move.Play()
+        Console.Clear()
+        Sound_Move.Play()
     End Sub
 
 
@@ -451,7 +543,7 @@
     'upwardly, but cannot take an enemy piece diagonally (which would expose the king), so I have also implemented
     'the logic for pieces moving depending on if / where they are pinned from. I am using the System.ValueTuple
     'Package to return 2 arrays (LegalMoveArray & ...TrueTableResult from each function.
-    Function WhitePieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As Byte, ByVal CoorY As Byte, ByRef WhiteTFTable(,) As Char, ByRef BlackTFTable(,) As Char, ByRef BKPos As String, ByRef BInCheck As InCheck, ByRef WInCheck As InCheck, ByRef WCanCastle As CanCastle) As String()
+    Function WhitePieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef WhiteTFTable(,) As Char, ByRef BlackTFTable(,) As Char, ByRef BKPos As String, ByRef BInCheck As InCheck, ByRef WInCheck As InCheck, ByRef WCanCastle As CanCastle, ByRef EnPassant As String) As String()
         Dim LegalMoveArray(27) As String
         Dim n As Byte = 1
         Dim StartY As SByte
@@ -474,7 +566,7 @@
             For y = StartY To EndY
                 For x = StartX To EndX
                     BlackTFTable(x, y) = "F"
-                    If (Board(x, y) = " " Or (Board(x, y) >= "b" And Board(x, y) <= "r")) And WhiteTFTable(x, y) = "T" Then
+                    If Not Char.IsUpper(Board(x, y)) And WhiteTFTable(x, y) = "T" Then
                         LegalMoveArray(n) = (x) & (y)
                         n += 1
                     End If
@@ -506,38 +598,40 @@
                         End If
                     End If
                 End If
-                If WhiteTFTable(CoorX, CoorY) <> "0" And WhiteTFTable(CoorX, CoorY) <> "1" And CoorX > 0 Then
-                    If BlackTFTable(CoorX - 1, CoorY - 1) = "T" Then BlackTFTable(CoorX - 1, CoorY - 1) = "F"
-                    If (Board(CoorX - 1, CoorY - 1) >= "b" And Board(CoorX - 1, CoorY - 1) <= "r") Then
-                        LegalMoveArray(n) = CoorX - 1 & CoorY - 1
-                        If Board(CoorX - 1, CoorY - 1) = "k" Then
-                            BInCheck.IsInCheck = True
-                            CheckingPiece = CoorX & CoorY
+                If WhiteTFTable(CoorX, CoorY) <> "0" Then
+                    If WhiteTFTable(CoorX, CoorY) <> "1" And CoorX > 0 Then
+                        If BlackTFTable(CoorX - 1, CoorY - 1) = "T" Then BlackTFTable(CoorX - 1, CoorY - 1) = "F"
+                        If Char.IsLower(Board(CoorX - 1, CoorY - 1)) Or (CoorX - 1 & CoorY - 1 = EnPassant And WhiteTFTable(CoorX, CoorY) <> "4") Then
+                            LegalMoveArray(n) = CoorX - 1 & CoorY - 1
+                            If Board(CoorX - 1, CoorY - 1) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
+                            n += 1
                         End If
-                        n += 1
                     End If
-                End If
-                If WhiteTFTable(CoorX, CoorY) <> "0" And WhiteTFTable(CoorX, CoorY) <> "3" And CoorX < 7 Then
-                    If BlackTFTable(CoorX + 1, CoorY - 1) = "T" Then BlackTFTable(CoorX + 1, CoorY - 1) = "F"
-                    If (Board(CoorX + 1, CoorY - 1) >= "b" And Board(CoorX + 1, CoorY - 1) <= "r") Then
-                        LegalMoveArray(n) = CoorX + 1 & CoorY - 1
-                        If Board(CoorX + 1, CoorY - 1) = "k" Then
-                            BInCheck.IsInCheck = True
-                            CheckingPiece = CoorX & CoorY
+                    If WhiteTFTable(CoorX, CoorY) <> "3" And CoorX < 7 Then
+                        If BlackTFTable(CoorX + 1, CoorY - 1) = "T" Then BlackTFTable(CoorX + 1, CoorY - 1) = "F"
+                        If Char.IsLower(Board(CoorX + 1, CoorY - 1)) Or (CoorX + 1 & CoorY - 1 = EnPassant And WhiteTFTable(CoorX, CoorY) <> "4") Then
+                            LegalMoveArray(n) = CoorX + 1 & CoorY - 1
+                            If Board(CoorX + 1, CoorY - 1) = "k" Then
+                                BInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
+                            n += 1
                         End If
-                        n += 1
                     End If
                 End If
             End If
 
 
         ElseIf Board(CoorX, CoorY) = "N" Then 'Legal Moves for the Knight. (If pinned, then it cannot move at all.)
-            If WhiteTFTable(CoorX, CoorY) >= "4" Then
+            If WhiteTFTable(CoorX, CoorY) >= "5" Then
                 If CoorX >= 2 Then
                     For x = -1 To 1 Step 2
                         If (CoorY + x) >= 0 And (CoorY + x) <= 7 Then
                             If BlackTFTable(CoorX - 2, CoorY + x) = "T" Then BlackTFTable(CoorX - 2, CoorY + x) = "F"
-                            If Board(CoorX - 2, CoorY + x) = " " Or (Board(CoorX - 2, CoorY + x) >= "b" And Board(CoorX - 2, CoorY + x) <= "r") Then
+                            If Not Char.IsUpper(Board(CoorX - 2, CoorY + x)) Then
                                 LegalMoveArray(n) = (CoorX - 2) & (CoorY + x)
                                 If Board(CoorX - 2, CoorY + x) = "k" Then
                                     BInCheck.IsInCheck = True
@@ -553,7 +647,7 @@
                     For x = -1 To 1 Step 2
                         If (CoorY + x) >= 0 And (CoorY + x) <= 7 Then
                             If BlackTFTable(CoorX + 2, CoorY + x) = "T" Then BlackTFTable(CoorX + 2, CoorY + x) = "F"
-                            If Board(CoorX + 2, CoorY + x) = " " Or (Board(CoorX + 2, CoorY + x) >= "b" And Board(CoorX + 2, CoorY + x) <= "r") Then
+                            If Not Char.IsUpper(Board(CoorX + 2, CoorY + x)) Then
                                 LegalMoveArray(n) = (CoorX + 2) & (CoorY + x)
                                 If Board(CoorX + 2, CoorY + x) = "k" Then
                                     BInCheck.IsInCheck = True
@@ -569,7 +663,7 @@
                     For x = -1 To 1 Step 2
                         If (CoorX + x) >= 0 And (CoorX + x) <= 7 Then
                             If BlackTFTable(CoorX + x, CoorY - 2) = "T" Then BlackTFTable(CoorX + x, CoorY - 2) = "F"
-                            If Board(CoorX + x, CoorY - 2) = " " Or (Board(CoorX + x, CoorY - 2) >= "b" And Board(CoorX + x, CoorY - 2) <= "r") Then
+                            If Not Char.IsUpper(Board(CoorX + x, CoorY - 2)) Then
                                 LegalMoveArray(n) = (CoorX + x) & (CoorY - 2)
                                 If Board(CoorX + x, CoorY - 2) = "k" Then
                                     BInCheck.IsInCheck = True
@@ -585,7 +679,7 @@
                     For x = -1 To 1 Step 2
                         If (CoorX + x) >= 0 And (CoorX + x) <= 7 Then
                             If BlackTFTable(CoorX + x, CoorY + 2) = "T" Then BlackTFTable(CoorX + x, CoorY + 2) = "F"
-                            If Board(CoorX + x, CoorY + 2) = " " Or (Board(CoorX + x, CoorY + 2) >= "b" And Board(CoorX + x, CoorY + 2) <= "r") Then
+                            If Not Char.IsUpper(Board(CoorX + x, CoorY + 2)) Then
                                 LegalMoveArray(n) = (CoorX + x) & (CoorY + 2)
                                 If Board(CoorX + x, CoorY + 2) = "k" Then
                                     BInCheck.IsInCheck = True
@@ -605,8 +699,18 @@
                 If WhiteTFTable(CoorX, CoorY) <> "0" Then
                     For x = (CoorX + 1) To 7
                         If BlackTFTable(x, CoorY) = "T" Then BlackTFTable(x, CoorY) = "F"
-                        If Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R" Then Exit For
-                        If Board(x, CoorY) = " " Or (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") Then
+                        If Char.IsUpper(Board(x, CoorY)) Then
+                            If Board(x, CoorY) = "P" And x & CoorY + 1 = EnPassant Then
+                                For m = x + 2 To 7
+                                    If Board(m, CoorY) = "k" Then
+                                        BlackTFTable(x + 1, CoorY) = "4"
+                                        Exit For
+                                    End If
+                                    If Board(m, CoorY) <> " " Then Exit For
+                                Next
+                            End If
+                            Exit For
+                        Else
                             LegalMoveArray(n) = (x) & (CoorY)
                             If Board(x, CoorY) = "k" Then
                                 BInCheck.IsInCheck = True
@@ -614,13 +718,24 @@
                                 Exit For
                             End If
                             n += 1
-                            If (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") And CInt(CStr(BKPos(0))) > x And CInt(CStr(BKPos(1))) = CoorY Then
+                            If Char.IsLower(Board(x, CoorY)) And CInt(CStr(BKPos(0))) > x And CInt(CStr(BKPos(1))) = CoorY Then
                                 For m = x + 1 To 7
                                     If Board(m, CoorY) = "k" Then
                                         BlackTFTable(x, CoorY) = "2"
                                         Exit For
                                     End If
-                                    If Board(m, CoorY) <> " " Then Exit For
+                                    If Board(m, CoorY) <> " " Then
+                                        If Board(m, CoorY) = "P" And m & CoorY + 1 = EnPassant Then
+                                            For a = m + 1 To 7
+                                                If Board(a, CoorY) = "k" Then
+                                                    BlackTFTable(x, CoorY) = "4"
+                                                    Exit For
+                                                End If
+                                                If Board(a, CoorY) <> " " Then Exit For
+                                            Next
+                                        End If
+                                        Exit For
+                                    End If
                                 Next
                             End If
 
@@ -630,8 +745,18 @@
 
                     For x = (CoorX - 1) To 0 Step -1
                         If BlackTFTable(x, CoorY) = "T" Then BlackTFTable(x, CoorY) = "F"
-                        If Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R" Then Exit For
-                        If Board(x, CoorY) = " " Or (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") Then
+                        If Char.IsUpper(Board(x, CoorY)) Then
+                            If Board(x, CoorY) = "P" And x & CoorY + 1 = EnPassant Then
+                                For m = x - 2 To 0 Step -1
+                                    If Board(m, CoorY) = "k" Then
+                                        BlackTFTable(x - 1, CoorY) = "4"
+                                        Exit For
+                                    End If
+                                    If Board(m, CoorY) <> " " Then Exit For
+                                Next
+                            End If
+                            Exit For
+                        Else
                             LegalMoveArray(n) = (x) & (CoorY)
                             If Board(x, CoorY) = "k" Then
                                 BInCheck.IsInCheck = True
@@ -639,13 +764,24 @@
                                 Exit For
                             End If
                             n += 1
-                            If (Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r") And CInt(CStr(BKPos(0))) < x And CInt(CStr(BKPos(1))) = CoorY Then
+                            If Char.IsLower(Board(x, CoorY)) And CInt(CStr(BKPos(0))) < x And CInt(CStr(BKPos(1))) = CoorY Then
                                 For m = x - 1 To 0 Step -1
                                     If Board(m, CoorY) = "k" Then
                                         BlackTFTable(x, CoorY) = "2"
                                         Exit For
                                     End If
-                                    If Board(m, CoorY) <> " " Then Exit For
+                                    If Board(m, CoorY) <> " " Then
+                                        If Board(m, CoorY) = "P" And m & CoorY + 1 = EnPassant Then
+                                            For a = m - 1 To 0 Step -1
+                                                If Board(a, CoorY) = "k" Then
+                                                    BlackTFTable(x, CoorY) = "4"
+                                                    Exit For
+                                                End If
+                                                If Board(a, CoorY) <> " " Then Exit For
+                                            Next
+                                        End If
+                                        Exit For
+                                    End If
                                 Next
                             End If
 
@@ -657,8 +793,9 @@
                 If WhiteTFTable(CoorX, CoorY) <> "2" Then
                     For y = (CoorY + 1) To 7
                         If BlackTFTable(CoorX, y) = "T" Then BlackTFTable(CoorX, y) = "F"
-                        If Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R" Then Exit For
-                        If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") Then
+                        If Char.IsUpper(Board(CoorX, y)) Then
+                            Exit For
+                        Else
                             LegalMoveArray(n) = (CoorX) & (y)
                             If Board(CoorX, y) = "k" Then
                                 BInCheck.IsInCheck = True
@@ -666,7 +803,7 @@
                                 Exit For
                             End If
                             n += 1
-                            If (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") And CInt(CStr(BKPos(0))) = CoorX And CInt(CStr(BKPos(1))) > y Then
+                            If Char.IsLower(Board(CoorX, y)) And CInt(CStr(BKPos(0))) = CoorX And CInt(CStr(BKPos(1))) > y Then
                                 For m = y + 1 To 7
                                     If Board(CoorX, m) = "k" Then
                                         BlackTFTable(CoorX, y) = "0"
@@ -681,8 +818,9 @@
 
                     For y = (CoorY - 1) To 0 Step -1
                         If BlackTFTable(CoorX, y) = "T" Then BlackTFTable(CoorX, y) = "F"
-                        If Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R" Then Exit For
-                        If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") Then
+                        If Char.IsUpper(Board(CoorX, y)) Then
+                            Exit For
+                        Else
                             LegalMoveArray(n) = (CoorX) & (y)
                             If Board(CoorX, y) = "k" Then
                                 BInCheck.IsInCheck = True
@@ -690,7 +828,7 @@
                                 Exit For
                             End If
                             n += 1
-                            If (Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r") And CInt(CStr(BKPos(0))) = CoorX And CInt(CStr(BKPos(1))) < y Then
+                            If Char.IsLower(Board(CoorX, y)) And CInt(CStr(BKPos(0))) = CoorX And CInt(CStr(BKPos(1))) < y Then
                                 For m = y - 1 To 0 Step -1
                                     If Board(CoorX, m) = "k" Then
                                         BlackTFTable(CoorX, y) = "0"
@@ -717,8 +855,9 @@
                     StartY = CoorY + 1
                     Do Until StartX > 7 Or StartY > 7
                         If BlackTFTable(StartX, StartY) = "T" Then BlackTFTable(StartX, StartY) = "F"
-                        If Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R" Then Exit Do
-                        If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") Then
+                        If Char.IsUpper(Board(StartX, StartY)) Then
+                            Exit Do
+                        Else
                             LegalMoveArray(n) = StartX & StartY
                             If Board(StartX, StartY) = "k" Then
                                 BInCheck.IsInCheck = True
@@ -726,7 +865,7 @@
                                 Exit Do
                             End If
                             n += 1
-                            If (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") And (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) And CInt(CStr(BKPos(0))) > CoorX Then
+                            If Char.IsLower(Board(StartX, StartY)) And (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) And CInt(CStr(BKPos(0))) > CoorX Then
                                 o = StartX + 1
                                 p = StartY + 1
                                 Do Until o > 7 Or p > 7
@@ -749,8 +888,9 @@
                     StartY = CoorY - 1
                     Do Until StartX < 0 Or StartY < 0
                         If BlackTFTable(StartX, StartY) = "T" Then BlackTFTable(StartX, StartY) = "F"
-                        If Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R" Then Exit Do
-                        If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") Then
+                        If Char.IsUpper(Board(StartX, StartY)) Then
+                            Exit Do
+                        Else
                             LegalMoveArray(n) = StartX & StartY
                             If Board(StartX, StartY) = "k" Then
                                 BInCheck.IsInCheck = True
@@ -758,7 +898,7 @@
                                 Exit Do
                             End If
                             n += 1
-                            If (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") And (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) And CInt(CStr(BKPos(0))) < CoorX Then
+                            If Char.IsLower(Board(StartX, StartY)) And (CInt(CStr(BKPos(0))) - CoorX = CInt(CStr(BKPos(1))) - CoorY) And CInt(CStr(BKPos(0))) < CoorX Then
                                 o = StartX - 1
                                 p = StartY - 1
                                 Do Until o < 0 Or p < 0
@@ -783,8 +923,9 @@
                     StartY = CoorY - 1
                     Do Until StartX > 7 Or StartY < 0
                         If BlackTFTable(StartX, StartY) = "T" Then BlackTFTable(StartX, StartY) = "F"
-                        If Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R" Then Exit Do
-                        If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") Then
+                        If Char.IsUpper(Board(StartX, StartY)) Then
+                            Exit Do
+                        Else
                             LegalMoveArray(n) = StartX & StartY
                             If Board(StartX, StartY) = "k" Then
                                 BInCheck.IsInCheck = True
@@ -792,7 +933,7 @@
                                 Exit Do
                             End If
                             n += 1
-                            If (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") And (CInt(CStr(BKPos(0))) - CoorX = CoorY - CInt(CStr(BKPos(1)))) And CInt(CStr(BKPos(0))) > CoorX Then
+                            If Char.IsLower(Board(StartX, StartY)) And (CInt(CStr(BKPos(0))) - CoorX = CoorY - CInt(CStr(BKPos(1)))) And CInt(CStr(BKPos(0))) > CoorX Then
                                 o = StartX + 1
                                 p = StartY - 1
                                 Do Until o > 7 Or p < 0
@@ -816,8 +957,9 @@
                     StartY = CoorY + 1
                     Do Until StartX < 0 Or StartY > 7
                         If BlackTFTable(StartX, StartY) = "T" Then BlackTFTable(StartX, StartY) = "F"
-                        If Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R" Then Exit Do
-                        If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") Then
+                        If Char.IsUpper(Board(StartX, StartY)) Then
+                            Exit Do
+                        Else
                             LegalMoveArray(n) = StartX & StartY
                             If Board(StartX, StartY) = "k" Then
                                 BInCheck.IsInCheck = True
@@ -825,7 +967,7 @@
                                 Exit Do
                             End If
                             n += 1
-                            If (Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r") And (CInt(CStr(BKPos(0))) - CoorX = CoorY - CInt(CStr(BKPos(1)))) And CInt(CStr(BKPos(0))) < CoorX Then
+                            If Char.IsLower(Board(StartX, StartY)) And (CInt(CStr(BKPos(0))) - CoorX = CoorY - CInt(CStr(BKPos(1)))) And CInt(CStr(BKPos(0))) < CoorX Then
                                 o = StartX - 1
                                 p = StartY + 1
                                 Do Until o < 0 Or p > 7
@@ -861,7 +1003,7 @@
     End Function
 
 
-    Function BlackPieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As Byte, ByVal CoorY As Byte, ByRef BlackTFTable(,) As Char, ByRef WhiteTFTable(,) As Char, ByRef WKPos As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck, ByRef BCanCastle As CanCastle) As String()
+    Function BlackPieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As SByte, ByVal CoorY As SByte, ByRef BlackTFTable(,) As Char, ByRef WhiteTFTable(,) As Char, ByRef WKPos As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck, ByRef BCanCastle As CanCastle, ByRef EnPassant As String) As String()
         Dim LegalMoveArray(27) As String
         Dim n As Byte = 1
         Dim StartY As SByte
@@ -884,7 +1026,7 @@
             For y = StartY To EndY
                 For x = StartX To EndX
                     If WhiteTFTable(x, y) = "T" Then WhiteTFTable(x, y) = "F"
-                    If (Board(x, y) = " " Or (Board(x, y) >= "B" And Board(x, y) <= "R")) And BlackTFTable(x, y) = "T" Then
+                    If Not Char.IsLower(Board(x, y)) And BlackTFTable(x, y) = "T" Then
                         LegalMoveArray(n) = (x) & (y)
                         n += 1
                     End If
@@ -916,38 +1058,40 @@
                         End If
                     End If
                 End If
-                If BlackTFTable(CoorX, CoorY) <> "0" And BlackTFTable(CoorX, CoorY) <> "3" And CoorX > 0 Then
-                    If WhiteTFTable(CoorX - 1, CoorY + 1) = "T" Then WhiteTFTable(CoorX - 1, CoorY + 1) = "F"
-                    If (Board(CoorX - 1, CoorY + 1) >= "B" And Board(CoorX - 1, CoorY + 1) <= "R") Then
-                        LegalMoveArray(n) = CoorX - 1 & CoorY + 1
-                        If Board(CoorX - 1, CoorY + 1) = "K" Then
-                            WInCheck.IsInCheck = True
-                            CheckingPiece = CoorX & CoorY
+                If BlackTFTable(CoorX, CoorY) <> "0" Then
+                    If BlackTFTable(CoorX, CoorY) <> "3" And CoorX > 0 Then
+                        If WhiteTFTable(CoorX - 1, CoorY + 1) = "T" Then WhiteTFTable(CoorX - 1, CoorY + 1) = "F"
+                        If Char.IsUpper(Board(CoorX - 1, CoorY + 1)) Or (CoorX - 1 & CoorY + 1 = EnPassant And BlackTFTable(CoorX, CoorY) <> "4") Then
+                            LegalMoveArray(n) = CoorX - 1 & CoorY + 1
+                            If Board(CoorX - 1, CoorY + 1) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
+                            n += 1
                         End If
-                        n += 1
                     End If
-                End If
-                If BlackTFTable(CoorX, CoorY) <> "0" And BlackTFTable(CoorX, CoorY) <> "1" And CoorX < 7 Then
-                    If WhiteTFTable(CoorX + 1, CoorY + 1) = "T" Then WhiteTFTable(CoorX + 1, CoorY + 1) = "F"
-                    If (Board(CoorX + 1, CoorY + 1) >= "B" And Board(CoorX + 1, CoorY + 1) <= "R") Then
-                        LegalMoveArray(n) = CoorX + 1 & CoorY + 1
-                        If Board(CoorX + 1, CoorY + 1) = "K" Then
-                            WInCheck.IsInCheck = True
-                            CheckingPiece = CoorX & CoorY
+                    If BlackTFTable(CoorX, CoorY) <> "1" And CoorX < 7 Then
+                        If WhiteTFTable(CoorX + 1, CoorY + 1) = "T" Then WhiteTFTable(CoorX + 1, CoorY + 1) = "F"
+                        If Char.IsUpper(Board(CoorX + 1, CoorY + 1)) Or (CoorX + 1 & CoorY + 1 = EnPassant And BlackTFTable(CoorX, CoorY) <> "4") Then
+                            LegalMoveArray(n) = CoorX + 1 & CoorY + 1
+                            If Board(CoorX + 1, CoorY + 1) = "K" Then
+                                WInCheck.IsInCheck = True
+                                CheckingPiece = CoorX & CoorY
+                            End If
+                            n += 1
                         End If
-                        n += 1
                     End If
                 End If
             End If
 
 
         ElseIf Board(CoorX, CoorY) = "n" Then 'Legal Moves for the Knight. (If pinned, then it cannot move at all.)
-            If BlackTFTable(CoorX, CoorY) >= "4" Then
+            If BlackTFTable(CoorX, CoorY) >= "5" Then
                 If CoorX >= 2 Then
                     For x = -1 To 1 Step 2
                         If (CoorY + x) >= 0 And (CoorY + x) <= 7 Then
                             If WhiteTFTable(CoorX - 2, CoorY + x) = "T" Then WhiteTFTable(CoorX - 2, CoorY + x) = "F"
-                            If Board(CoorX - 2, CoorY + x) = " " Or (Board(CoorX - 2, CoorY + x) >= "B" And Board(CoorX - 2, CoorY + x) <= "R") Then
+                            If Not Char.IsLower(Board(CoorX - 2, CoorY + x)) Then
                                 LegalMoveArray(n) = (CoorX - 2) & (CoorY + x)
                                 If Board(CoorX - 2, CoorY + x) = "K" Then
                                     WInCheck.IsInCheck = True
@@ -963,7 +1107,7 @@
                     For x = -1 To 1 Step 2
                         If (CoorY + x) >= 0 And (CoorY + x) <= 7 Then
                             If WhiteTFTable(CoorX + 2, CoorY + x) = "T" Then WhiteTFTable(CoorX + 2, CoorY + x) = "F"
-                            If Board(CoorX + 2, CoorY + x) = " " Or (Board(CoorX + 2, CoorY + x) >= "B" And Board(CoorX + 2, CoorY + x) <= "R") Then
+                            If Not Char.IsLower(Board(CoorX + 2, CoorY + x)) Then
                                 LegalMoveArray(n) = (CoorX + 2) & (CoorY + x)
                                 If Board(CoorX + 2, CoorY + x) = "K" Then
                                     WInCheck.IsInCheck = True
@@ -979,7 +1123,7 @@
                     For x = -1 To 1 Step 2
                         If (CoorX + x) >= 0 And (CoorX + x) <= 7 Then
                             If WhiteTFTable(CoorX + x, CoorY - 2) = "T" Then WhiteTFTable(CoorX + x, CoorY - 2) = "F"
-                            If Board(CoorX + x, CoorY - 2) = " " Or (Board(CoorX + x, CoorY - 2) >= "B" And Board(CoorX + x, CoorY - 2) <= "R") Then
+                            If Not Char.IsLower(Board(CoorX + x, CoorY - 2)) Then
                                 LegalMoveArray(n) = (CoorX + x) & (CoorY - 2)
                                 If Board(CoorX + x, CoorY - 2) = "K" Then
                                     WInCheck.IsInCheck = True
@@ -995,7 +1139,7 @@
                     For x = -1 To 1 Step 2
                         If (CoorX + x) >= 0 And (CoorX + x) <= 7 Then
                             If WhiteTFTable(CoorX + x, CoorY + 2) = "T" Then WhiteTFTable(CoorX + x, CoorY + 2) = "F"
-                            If Board(CoorX + x, CoorY + 2) = " " Or (Board(CoorX + x, CoorY + 2) >= "B" And Board(CoorX + x, CoorY + 2) <= "R") Then
+                            If Not Char.IsLower(Board(CoorX + x, CoorY + 2)) Then
                                 LegalMoveArray(n) = (CoorX + x) & (CoorY + 2)
                                 If Board(CoorX + x, CoorY + 2) = "K" Then
                                     WInCheck.IsInCheck = True
@@ -1015,8 +1159,19 @@
                 If BlackTFTable(CoorX, CoorY) <> "0" Then
                     For x = (CoorX + 1) To 7
                         If WhiteTFTable(x, CoorY) = "T" Then WhiteTFTable(x, CoorY) = "F"
-                        If Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r" Then Exit For
-                        If Board(x, CoorY) = " " Or (Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R") Then
+                        If Char.IsLower(Board(x, CoorY)) Then
+                            If Board(x, CoorY) = "p" And x & CoorY - 1 = EnPassant Then
+                                For m = x + 2 To 7
+                                    If Board(m, CoorY) = "K" Then
+                                        BlackTFTable(x + 1, CoorY) = "4"
+                                        Exit For
+                                    End If
+                                    If Board(m, CoorY) <> " " Then Exit For
+                                Next
+                            End If
+
+                            Exit For
+                        Else
                             LegalMoveArray(n) = (x) & (CoorY)
                             If Board(x, CoorY) = "K" Then
                                 WInCheck.IsInCheck = True
@@ -1024,13 +1179,24 @@
                                 Exit For
                             End If
                             n += 1
-                            If (Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R") And CInt(CStr(WKPos(0))) > x And CInt(CStr(WKPos(1))) = CoorY Then
+                            If Char.IsUpper(Board(x, CoorY)) And CInt(CStr(WKPos(0))) > x And CInt(CStr(WKPos(1))) = CoorY Then
                                 For m = x + 1 To 7
                                     If Board(m, CoorY) = "K" Then
                                         WhiteTFTable(x, CoorY) = "2"
                                         Exit For
                                     End If
-                                    If Board(m, CoorY) <> " " Then Exit For
+                                    If Board(m, CoorY) <> " " Then
+                                        If Board(m, CoorY) = "p" And m & CoorY - 1 = EnPassant Then
+                                            For a = m + 1 To 7
+                                                If Board(a, CoorY) = "K" Then
+                                                    BlackTFTable(x, CoorY) = "4"
+                                                    Exit For
+                                                End If
+                                                If Board(a, CoorY) <> " " Then Exit For
+                                            Next
+                                        End If
+                                        Exit For
+                                    End If
                                 Next
                             End If
                             If Board(x, CoorY) <> " " Then Exit For
@@ -1039,8 +1205,18 @@
 
                     For x = (CoorX - 1) To 0 Step -1
                         If WhiteTFTable(x, CoorY) = "T" Then WhiteTFTable(x, CoorY) = "F"
-                        If Board(x, CoorY) >= "b" And Board(x, CoorY) <= "r" Then Exit For
-                        If Board(x, CoorY) = " " Or (Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R") Then
+                        If Char.IsLower(Board(x, CoorY)) Then
+                            If Board(x, CoorY) = "p" And x & CoorY - 1 = EnPassant Then
+                                For m = x - 2 To 0 Step -1
+                                    If Board(m, CoorY) = "K" Then
+                                        BlackTFTable(x - 1, CoorY) = "4"
+                                        Exit For
+                                    End If
+                                    If Board(m, CoorY) <> " " Then Exit For
+                                Next
+                            End If
+                            Exit For
+                        Else
                             LegalMoveArray(n) = (x) & (CoorY)
                             If Board(x, CoorY) = "K" Then
                                 WInCheck.IsInCheck = True
@@ -1048,13 +1224,24 @@
                                 Exit For
                             End If
                             n += 1
-                            If (Board(x, CoorY) >= "B" And Board(x, CoorY) <= "R") And CInt(CStr(WKPos(0))) < x And CInt(CStr(WKPos(1))) = CoorY Then
+                            If Char.IsUpper(Board(x, CoorY)) And CInt(CStr(WKPos(0))) < x And CInt(CStr(WKPos(1))) = CoorY Then
                                 For m = x - 1 To 0 Step -1
                                     If Board(m, CoorY) = "K" Then
                                         WhiteTFTable(x, CoorY) = "2"
                                         Exit For
                                     End If
-                                    If Board(m, CoorY) <> " " Then Exit For
+                                    If Board(m, CoorY) <> " " Then
+                                        If Board(m, CoorY) = "p" And m & CoorY - 1 = EnPassant Then
+                                            For a = m - 1 To 0 Step -1
+                                                If Board(a, CoorY) = "K" Then
+                                                    BlackTFTable(x, CoorY) = "4"
+                                                    Exit For
+                                                End If
+                                                If Board(a, CoorY) <> " " Then Exit For
+                                            Next
+                                        End If
+                                        Exit For
+                                    End If
                                 Next
                             End If
                             If Board(x, CoorY) <> " " Then Exit For
@@ -1065,8 +1252,9 @@
                 If BlackTFTable(CoorX, CoorY) <> "2" Then
                     For y = (CoorY + 1) To 7
                         If WhiteTFTable(CoorX, y) = "T" Then WhiteTFTable(CoorX, y) = "F"
-                        If Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r" Then Exit For
-                        If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") Then
+                        If Char.IsLower(Board(CoorX, y)) Then
+                            Exit For
+                        Else
                             LegalMoveArray(n) = (CoorX) & (y)
                             If Board(CoorX, y) = "K" Then
                                 WInCheck.IsInCheck = True
@@ -1074,7 +1262,7 @@
                                 Exit For
                             End If
                             n += 1
-                            If (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") And CInt(CStr(WKPos(0))) = CoorX And CInt(CStr(WKPos(1))) > y Then
+                            If Char.IsUpper(Board(CoorX, y)) And CInt(CStr(WKPos(0))) = CoorX And CInt(CStr(WKPos(1))) > y Then
                                 For m = y + 1 To 7
                                     If Board(CoorX, m) = "K" Then
                                         WhiteTFTable(CoorX, y) = "0"
@@ -1089,8 +1277,9 @@
 
                     For y = (CoorY - 1) To 0 Step -1
                         If WhiteTFTable(CoorX, y) = "T" Then WhiteTFTable(CoorX, y) = "F"
-                        If Board(CoorX, y) >= "b" And Board(CoorX, y) <= "r" Then Exit For
-                        If Board(CoorX, y) = " " Or (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") Then
+                        If Char.IsLower(Board(CoorX, y)) Then
+                            Exit For
+                        Else
                             LegalMoveArray(n) = (CoorX) & (y)
                             If Board(CoorX, y) = "K" Then
                                 WInCheck.IsInCheck = True
@@ -1098,7 +1287,7 @@
                                 Exit For
                             End If
                             n += 1
-                            If (Board(CoorX, y) >= "B" And Board(CoorX, y) <= "R") And CInt(CStr(WKPos(0))) = CoorX And CInt(CStr(WKPos(1))) < y Then
+                            If Char.IsUpper(Board(CoorX, y)) And CInt(CStr(WKPos(0))) = CoorX And CInt(CStr(WKPos(1))) < y Then
                                 For m = y - 1 To 0 Step -1
                                     If Board(CoorX, m) = "K" Then
                                         WhiteTFTable(CoorX, y) = "0"
@@ -1124,8 +1313,9 @@
                     StartY = CoorY + 1
                     Do Until StartX > 7 Or StartY > 7
                         If WhiteTFTable(StartX, StartY) = "T" Then WhiteTFTable(StartX, StartY) = "F"
-                        If Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r" Then Exit Do
-                        If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") Then
+                        If Char.IsLower(Board(StartX, StartY)) Then
+                            Exit Do
+                        Else
                             LegalMoveArray(n) = StartX & StartY
                             If Board(StartX, StartY) = "K" Then
                                 WInCheck.IsInCheck = True
@@ -1133,7 +1323,7 @@
                                 Exit Do
                             End If
                             n += 1
-                            If (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") And (CInt(CStr(WKPos(0))) - CoorX = CInt(CStr(WKPos(1))) - CoorY) And CInt(CStr(WKPos(0))) > CoorX Then
+                            If Char.IsUpper(Board(StartX, StartY)) And (CInt(CStr(WKPos(0))) - CoorX = CInt(CStr(WKPos(1))) - CoorY) And CInt(CStr(WKPos(0))) > CoorX Then
                                 o = StartX + 1
                                 p = StartY + 1
                                 Do Until o > 7 Or p > 7
@@ -1156,8 +1346,9 @@
                     StartY = CoorY - 1
                     Do Until StartX < 0 Or StartY < 0
                         If WhiteTFTable(StartX, StartY) = "T" Then WhiteTFTable(StartX, StartY) = "F"
-                        If Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r" Then Exit Do
-                        If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") Then
+                        If Char.IsLower(Board(StartX, StartY)) Then
+                            Exit Do
+                        Else
                             LegalMoveArray(n) = StartX & StartY
                             If Board(StartX, StartY) = "K" Then
                                 WInCheck.IsInCheck = True
@@ -1165,7 +1356,7 @@
                                 Exit Do
                             End If
                             n += 1
-                            If (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") And (CInt(CStr(WKPos(0))) - CoorX = CInt(CStr(WKPos(1))) - CoorY) And CInt(CStr(WKPos(0))) < CoorX Then
+                            If Char.IsUpper(Board(StartX, StartY)) And (CInt(CStr(WKPos(0))) - CoorX = CInt(CStr(WKPos(1))) - CoorY) And CInt(CStr(WKPos(0))) < CoorX Then
                                 o = StartX - 1
                                 p = StartY - 1
                                 Do Until o < 0 Or p < 0
@@ -1190,8 +1381,9 @@
                     StartY = CoorY - 1
                     Do Until StartX > 7 Or StartY < 0
                         If WhiteTFTable(StartX, StartY) = "T" Then WhiteTFTable(StartX, StartY) = "F"
-                        If Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r" Then Exit Do
-                        If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") Then
+                        If Char.IsLower(Board(StartX, StartY)) Then
+                            Exit Do
+                        Else
                             LegalMoveArray(n) = StartX & StartY
                             If Board(StartX, StartY) = "K" Then
                                 WInCheck.IsInCheck = True
@@ -1199,7 +1391,7 @@
                                 Exit Do
                             End If
                             n += 1
-                            If (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") And (CInt(CStr(WKPos(0))) - CoorX = CoorY - CInt(CStr(WKPos(1)))) And CInt(CStr(WKPos(0))) > CoorX Then
+                            If Char.IsUpper(Board(StartX, StartY)) And (CInt(CStr(WKPos(0))) - CoorX = CoorY - CInt(CStr(WKPos(1)))) And CInt(CStr(WKPos(0))) > CoorX Then
                                 o = StartX + 1
                                 p = StartY - 1
                                 Do Until o > 7 Or p < 0
@@ -1222,8 +1414,9 @@
                     StartY = CoorY + 1
                     Do Until StartX < 0 Or StartY > 7
                         If WhiteTFTable(StartX, StartY) = "T" Then WhiteTFTable(StartX, StartY) = "F"
-                        If Board(StartX, StartY) >= "b" And Board(StartX, StartY) <= "r" Then Exit Do
-                        If Board(StartX, StartY) = " " Or (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") Then
+                        If Char.IsLower(Board(StartX, StartY)) Then
+                            Exit Do
+                        Else
                             LegalMoveArray(n) = StartX & StartY
                             If Board(StartX, StartY) = "K" Then
                                 WInCheck.IsInCheck = True
@@ -1231,7 +1424,7 @@
                                 Exit Do
                             End If
                             n += 1
-                            If (Board(StartX, StartY) >= "B" And Board(StartX, StartY) <= "R") And (CInt(CStr(WKPos(0))) - CoorX = CoorY - CInt(CStr(WKPos(1)))) And CInt(CStr(WKPos(0))) < CoorX Then
+                            If Char.IsUpper(Board(StartX, StartY)) And (CInt(CStr(WKPos(0))) - CoorX = CoorY - CInt(CStr(WKPos(1)))) And CInt(CStr(WKPos(0))) < CoorX Then
                                 o = StartX - 1
                                 p = StartY + 1
                                 Do Until o < 0 Or p > 7
@@ -1280,10 +1473,10 @@
             'Generates the Legal Moves for the piece the user has picked up.
             If GameRunning Then
                 If CStr(sender.name)(0) = "W" And PlayerTurn Then
-                    LegalMoves = WhitePieceLegalMoves(MasterBoard, sender.location.x / 75, sender.location.y / 75, MasterWhiteTFTable, MasterBlackTFTable, MasterBKPos, MasterBInCheck, MasterWInCheck, MasterWCanCastle)
+                    LegalMoves = WhitePieceLegalMoves(MasterBoard, sender.location.x / 75, sender.location.y / 75, MasterWhiteTFTable, MasterBlackTFTable, MasterBKPos, MasterBInCheck, MasterWInCheck, MasterWCanCastle, MasterEnPassant)
                     MovingPiece = True
                 ElseIf CStr(sender.name)(0) = "B" And (Not PlayerTurn) Then
-                    LegalMoves = BlackPieceLegalMoves(MasterBoard, sender.location.x / 75, sender.location.y / 75, MasterBlackTFTable, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle)
+                    LegalMoves = BlackPieceLegalMoves(MasterBoard, sender.location.x / 75, sender.location.y / 75, MasterBlackTFTable, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle, MasterEnPassant)
                     MovingPiece = True
                 End If
             End If
@@ -1291,13 +1484,13 @@
             StartPoint = sender.location
             MidPoint = sender.PointToScreen(New Point(e.X, e.Y))
             'Console.WriteLine()
-            'Console.WriteLine("here are moves")
+            'Console.WriteLine("Legal Moves:")
             'If LegalMoves(0) IsNot Nothing Then
-            '    For x = 0 To LegalMoves.Length - 1
+            '    For x = 1 To LegalMoves(0) - 1
             '        If LegalMoves(x) IsNot Nothing Then Console.WriteLine(LegalMoves(x))
             '    Next
             'End If
-            'Console.WriteLine("end of moves")
+            'Console.WriteLine("Done.")
         End If
     End Sub
 
@@ -1327,7 +1520,7 @@
                     If CStr(sender.location.x / 75 & sender.location.y / 75) = LegalMoves(n) Then
                         'If the player is in check, the ResolveCheck Function is called to determine whether the player would still be in check after the move is made.
                         If MasterWInCheck.IsInCheck Or MasterBInCheck.IsInCheck Then
-                            If DoesMoveResolveCheck(MasterBoard, (StartPoint.X / 75) & (StartPoint.Y / 75), (sender.location.X / 75) & (sender.location.Y / 75), MasterWInCheck, MasterBInCheck) Then
+                            If DoesMoveResolveCheck(MasterBoard, StartPoint.X / 75, StartPoint.Y / 75, sender.location.X / 75, sender.location.Y / 75, MasterWInCheck, MasterBInCheck, MasterEnPassant) Then
                                 MasterWInCheck.Piece1 = " "
                                 MasterWInCheck.Piece2 = " "
                                 MasterBInCheck.Piece1 = " "
@@ -1387,22 +1580,30 @@
                     MasterBoard(StartPoint.X / 75, StartPoint.Y / 75) = " "
 
                     If CStr(sender.name)(0) = "W" Then
+                        MasterBoard(sender.location.X / 75, sender.location.Y / 75) = UCase((CStr(sender.name))(1))
                         'If a pawn has made it to the end of the board, it is promoted to a Queen.
-                        If sender.name(1) = "P" And sender.location.y / 75 = 0 Then
-                            For n = 1 To 8
-                                ReplacedPiece = Me.Controls.Find("WQ" & n.ToString, True).Single()
-                                If ReplacedPiece.Visible = False Then Exit For
-                            Next
-#Disable Warning BC42104 'Variable is used before it has been assigned a value
-                            ReplacedPiece.Location = New Point(sender.location.X, sender.location.Y)
-#Enable Warning BC42104 'Variable is used before it has been assigned a value
-                            ReplacedPiece.Visible = True
-                            ReplacedPiece.BringToFront()
-                            MasterBoard(sender.location.X / 75, sender.location.Y / 75) = "Q"
-                            sender.Visible = False
-                            sender.Location = New Point(-100, -100)
-                        Else
-                            MasterBoard(sender.location.X / 75, sender.location.Y / 75) = UCase((CStr(sender.name))(1))
+                        If sender.name(1) = "P" Then
+                            If sender.location.y / 75 = 0 Then
+                                For n = 1 To 8
+                                    ReplacedPiece = Me.Controls.Find("WQ" & n.ToString, True).Single()
+                                    If ReplacedPiece.Visible = False Then Exit For
+                                Next
+                                '#Disabl Warning BC42104 'Variable is used before it has been assigned a value
+                                ReplacedPiece.Location = New Point(sender.location.X, sender.location.Y)
+                                '#Enabl Warning BC42104 'Variable is used before it has been assigned a value
+                                ReplacedPiece.Visible = True
+                                ReplacedPiece.BringToFront()
+                                MasterBoard(sender.location.X / 75, sender.location.Y / 75) = "Q"
+                                sender.Visible = False
+                                sender.Location = New Point(-100, -100)
+                            ElseIf sender.location.X / 75 & sender.location.Y / 75 = MasterEnPassant Then
+                                'Rules for En Passant - removes the piece behind it.
+                                Sound_Capture.Play()
+                                ReplacedPiece = MarrToPieceConv(sender.location.X, sender.location.Y + 75, CStr(sender.name)(0))
+                                ReplacedPiece.Visible = False
+                                ReplacedPiece.Location = New Point(-100, -100)
+                                MasterBoard(sender.location.X / 75, (sender.location.Y / 75) + 1) = " "
+                            End If
                         End If
                         'If the rook has moved, then part of castling is disabled.
                         If sender.name(1) = "R" Then
@@ -1412,22 +1613,37 @@
                                 MasterWCanCastle.KS = False
                             End If
                         End If
-                        'The TrueFalse Table is generated for the Black Pieces.
-                        FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterWKPos, MasterBKPos)
-                    Else
-                        'Identical Code as above but for the black pieces.
-                        If sender.name(1) = "P" And sender.location.y / 75 = 7 Then
-                            For n = 1 To 8
-                                ReplacedPiece = Me.Controls.Find("BQ" & n.ToString, True).Single()
-                                If ReplacedPiece.Visible = False Then Exit For
-                            Next
-                            ReplacedPiece.Location = New Point(sender.location.X, sender.location.Y)
-                            ReplacedPiece.Visible = True
-                            MasterBoard(sender.location.X / 75, sender.location.Y / 75) = "q"
-                            sender.Visible = False
-                            sender.Location = New Point(-100, -100)
+                        'En Passant & The TrueFalse Table is generated for the Black Pieces.
+                        If sender.location.Y - StartPoint.Y = -150 And sender.name(1) = "P" Then
+                            If MasterBoard(Math.Max((sender.location.x / 75) - 1, 0), sender.location.Y / 75) = "p" Or MasterBoard(Math.Min((sender.location.x / 75) + 1, 7), sender.location.Y / 75) = "p" Then
+                                MasterEnPassant = sender.location.x / 75 & 5
+                            End If
                         Else
-                            MasterBoard(sender.location.X / 75, sender.location.Y / 75) = LCase((CStr(sender.name))(1))
+                            MasterEnPassant = "-"
+                        End If
+                        FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, NotInCheck, MasterBInCheck, MasterEnPassant)
+                    Else
+                        MasterBoard(sender.location.X / 75, sender.location.Y / 75) = LCase((CStr(sender.name))(1))
+                        'Identical Code as above but for the black pieces.
+                        If sender.name(1) = "P" Then
+                            If sender.location.y / 75 = 7 Then
+                                For n = 1 To 8
+                                    ReplacedPiece = Me.Controls.Find("BQ" & n.ToString, True).Single()
+                                    If ReplacedPiece.Visible = False Then Exit For
+                                Next
+                                ReplacedPiece.Location = New Point(sender.location.X, sender.location.Y)
+                                ReplacedPiece.Visible = True
+                                MasterBoard(sender.location.X / 75, sender.location.Y / 75) = "q"
+                                sender.Visible = False
+                                sender.Location = New Point(-100, -100)
+                            ElseIf sender.location.X / 75 & sender.location.Y / 75 = MasterEnPassant Then
+                                'Rules for En Passant - removes the piece behind it.
+                                Sound_Capture.Play()
+                                ReplacedPiece = MarrToPieceConv(sender.location.X, sender.location.Y - 75, CStr(sender.name)(0))
+                                ReplacedPiece.Visible = False
+                                ReplacedPiece.Location = New Point(-100, -100)
+                                MasterBoard(sender.location.X / 75, (sender.location.Y / 75) - 1) = " "
+                            End If
                         End If
                         If sender.name(1) = "R" Then
                             If sender.name(2) = "1" Then
@@ -1436,8 +1652,15 @@
                                 MasterBCanCastle.KS = False
                             End If
                         End If
-                        'The TrueFalse Table is generated for the White Pieces.
-                        FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterBKPos)
+                        'En Passant & The TrueFalse Table is generated for the White Pieces.
+                        If sender.location.Y - StartPoint.Y = 150 And sender.name(1) = "P" Then
+                            If MasterBoard(Math.Max((sender.location.x / 75) - 1, 0), sender.location.Y / 75) = "P" Or MasterBoard(Math.Min((sender.location.x / 75) + 1, 7), sender.location.Y / 75) = "P" Then
+                                MasterEnPassant = sender.location.x / 75 & 2
+                            End If
+                        Else
+                            MasterEnPassant = "-"
+                        End If
+                        FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, NotInCheck, MasterEnPassant)
                     End If
 
                     'Checks if any player is in check, and if so notifies the player with audio and visuals.
@@ -1445,9 +1668,11 @@
                     If MasterWInCheck.IsInCheck Or MasterBInCheck.IsInCheck Then
                         Sound_Check.Play()
                     End If
+
                     MasterMaterialCount = CountMaterial(MasterBoard)
                     CurrentEval.Text = MasterMaterialCount
-                    Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
+
+                    Console.WriteLine(vbCrLf & "WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
                     For y = 0 To 7
                         For x = 0 To 7
                             Console.Write(MasterBoard(x, y))
@@ -1462,12 +1687,28 @@
                     If PlayerTurn Then
                         BlackAIMove_Click()
                     Else
-                        'RUN WHITE AI.
+                        WhiteAIMove_Click()
                     End If
                     'Absolute depth is then restored, and the next turn begins.
                     CalculateAbsoluteDepth()
                     PlayerTurn = Not PlayerTurn
-
+                    PreviousFEN = CurrentFEN
+                    ConvertToFEN()
+                    Console.WriteLine()
+                    Console.WriteLine("WhiteTFTable:")
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            Console.Write(MasterWhiteTFTable(x, y))
+                        Next
+                        Console.WriteLine()
+                    Next
+                    Console.WriteLine("BlackTFTable:")
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            Console.Write(MasterBlackTFTable(x, y))
+                        Next
+                        Console.WriteLine()
+                    Next
                 Else 'Resets piece to previous position
                     sender.location = StartPoint
                 End If
@@ -1480,7 +1721,7 @@
     'the selected player (controlled by the Variable FixWhite). Can be programmed to have an Exception Piece,
     'meaning that a specific piece can be left out of the subrouting (useful for making Move Generation more
     'efficient).
-    Private Sub FixTFTables(ByRef Board(,) As Char, ByRef FixWhite As Boolean, ByRef TrueFalseTable(,) As Char, ByRef WKpos As String, ByRef BKPos As String)
+    Private Sub FixTFTables(ByRef Board(,) As Char, ByRef FixWhite As Boolean, ByRef TrueFalseTable(,) As Char, ByRef KPos As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck, ByRef EnPassant As String)
         'Stopwatch.Reset()
         'Stopwatch.Start()
         Dim dx As SByte
@@ -1489,30 +1730,30 @@
         If FixWhite Then
             For y = 0 To 7
                 For x = 0 To 7
-                    If Board(x, y) <> " " Then
-                        dx = Math.Abs(CStr(WKpos(0)) - x)
-                        dy = Math.Abs(CStr(WKpos(1)) - y)
+                    If Char.IsLower(Board(x, y)) Then
+                        dx = Math.Abs(CStr(KPos(0)) - x)
+                        dy = Math.Abs(CStr(KPos(1)) - y)
                         If Board(x, y) = "p" Then
-                            If (CStr(WKpos(1)) - y >= 0 And CStr(WKpos(1)) - y <= 2) And dx <= 2 Then
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle)
+                            If (CStr(KPos(1)) - y >= 0 And CStr(KPos(1)) - y <= 2) And dx <= 2 Then
+                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "r" Or Board(x, y) = "q" Then
                             If dx <= 1 Or dy <= 1 Then
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle)
+                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "n" Then
                             If (dx <= 3 And dy <= 2) Or (dx <= 2 And dy <= 3) Then
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle)
+                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "k" Then
                             If dx <= 2 And dy <= 2 Then
-                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle)
+                                Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                             End If
                         End If
                     End If
                     If Board(x, y) = "b" Or Board(x, y) = "q" Then
                         If dx - dy <= 2 And dy - dx <= 2 Then
-                            Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle)
+                            Dim LegalMovesResult = BlackPieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, WInCheck, BInCheck, CannotCastle, EnPassant)
                         End If
                     End If
                 Next
@@ -1520,30 +1761,30 @@
         Else
             For y = 0 To 7
                 For x = 0 To 7
-                    If Board(x, y) <> " " Then
-                        dx = Math.Abs(CStr(BKPos(0)) - x)
-                        dy = Math.Abs(CStr(BKPos(1)) - y)
+                    If Char.IsUpper(Board(x, y)) Then
+                        dx = Math.Abs(CStr(KPos(0)) - x)
+                        dy = Math.Abs(CStr(KPos(1)) - y)
                         If Board(x, y) = "P" Then
-                            If (CStr(BKPos(1)) - y >= 0 And CStr(BKPos(1)) - y <= 2) And dx <= 2 Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterBKPos, MasterBInCheck, MasterWInCheck, MasterWCanCastle)
+                            If (CStr(KPos(1)) - y <= 0 And CStr(KPos(1)) - y >= -2) And dx <= 2 Then
+                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "R" Or Board(x, y) = "Q" Then
                             If dx <= 1 Or dy <= 1 Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterBKPos, MasterBInCheck, MasterWInCheck, MasterWCanCastle)
+                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "N" Then
                             If (dx <= 3 And dy <= 2) Or (dx <= 2 And dy <= 3) Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterBKPos, MasterBInCheck, MasterWInCheck, MasterWCanCastle)
+                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
                         ElseIf Board(x, y) = "K" Then
                             If dx <= 2 And dy <= 2 Then
-                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterBKPos, MasterBInCheck, MasterWInCheck, MasterWCanCastle)
+                                Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                             End If
                         End If
                     End If
                     If Board(x, y) = "B" Or Board(x, y) = "Q" Then
                         If dx - dy <= 2 And dy - dx <= 2 Then
-                            Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, MasterBKPos, MasterBInCheck, MasterWInCheck, MasterWCanCastle)
+                            Dim LegalMovesResult = WhitePieceLegalMoves(Board, x, y, TrueTable, TrueFalseTable, KPos, BInCheck, WInCheck, CannotCastle, EnPassant)
                         End If
                     End If
                 Next
@@ -1573,9 +1814,9 @@
     'Subroutine which updates the Sprites / Gamestate Textbox depending on whether a player is in check (or not).
     Private Sub CheckChecker()
         If MasterWInCheck.IsInCheck Or MasterBInCheck.IsInCheck Then
-            CheckLabel.Text = "Check!"
+            CheckLabel.Text = "    Check!    "
         Else
-            CheckLabel.Text = "            "
+            CheckLabel.Text = "                    "
         End If
         If MasterWInCheck.IsInCheck Then
             WK1.Image = Image.FromFile(Application.StartupPath & "\WKingCheck.png")
@@ -1592,28 +1833,30 @@
     'Function which receives a game state and a possible move. The function makes this move on the board (using
     'shortcuts that can only be made on a virtual board), and then generates the possible moves of the attacking
     'piece(s). If the king is no longer being threatened, then the check as been resolved.
-    Function DoesMoveResolveCheck(ByRef Board(,) As Char, ByRef OldPos As String, ByRef NewPos As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck) As Boolean
+    Function DoesMoveResolveCheck(ByRef Board(,) As Char, ByRef OldPosX As String, ByRef OldPosY As String, ByRef NewPosX As String, ByRef NewPosY As String, ByRef WInCheck As InCheck, ByRef BInCheck As InCheck, ByRef EnPassant As String) As Boolean
         Dim CheckBoard(7, 7) As Char
         DoesMoveResolveCheck = False
         If WInCheck.IsInCheck Then
             WInCheck.IsInCheck = False
             Array.Copy(Board, CheckBoard, 64)
-            CheckBoard(CStr(NewPos(0)), CStr(NewPos(1))) = CheckBoard(CStr(OldPos(0)), CStr(OldPos(1)))
-            If CheckBoard(CStr(OldPos(0)), CStr(OldPos(1))) = "K" Then CheckBoard(CStr(OldPos(0)), CStr(OldPos(1))) = " "
+            CheckBoard(NewPosX, NewPosY) = CheckBoard(OldPosX, OldPosY)
+            If CheckBoard(OldPosX, OldPosY) = "K" Then CheckBoard(OldPosX, OldPosY) = " "
+            If NewPosX & NewPosY = EnPassant And CheckBoard(OldPosX, OldPosY) = "P" Then CheckBoard(NewPosX, NewPosY + 1) = " " 'CHECKKKKKKKKKKKKKKKK
             Array.Copy(MasterTrueTable, TrueTable, 64)
-            BlackPieceLegalMoves(CheckBoard, CStr(WInCheck.Piece1(0)), CStr(WInCheck.Piece1(1)), TrueTable, TrueTable, "00", WInCheck, BInCheck, MasterBCanCastle)
-            If WInCheck.Piece2 <> " " Then BlackPieceLegalMoves(CheckBoard, CStr(WInCheck.Piece2(0)), CStr(WInCheck.Piece2(1)), TrueTable, TrueTable, "00", WInCheck, BInCheck, MasterBCanCastle)
+            BlackPieceLegalMoves(CheckBoard, CStr(WInCheck.Piece1(0)), CStr(WInCheck.Piece1(1)), TrueTable, TrueTable, "00", WInCheck, BInCheck, MasterBCanCastle, "-")
+            If WInCheck.Piece2 <> " " Then BlackPieceLegalMoves(CheckBoard, CStr(WInCheck.Piece2(0)), CStr(WInCheck.Piece2(1)), TrueTable, TrueTable, "00", WInCheck, BInCheck, MasterBCanCastle, "-")
             If WInCheck.IsInCheck = False Then
                 DoesMoveResolveCheck = True
             End If
         ElseIf BInCheck.IsInCheck Then
             BInCheck.IsInCheck = False
             Array.Copy(Board, CheckBoard, 64)
-            CheckBoard(CStr(NewPos(0)), CStr(NewPos(1))) = CheckBoard(CStr(OldPos(0)), CStr(OldPos(1)))
-            If CheckBoard(CStr(OldPos(0)), CStr(OldPos(1))) = "k" Then CheckBoard(CStr(OldPos(0)), CStr(OldPos(1))) = " "
+            CheckBoard(NewPosX, NewPosY) = CheckBoard(OldPosX, OldPosY)
+            If NewPosX & NewPosY = EnPassant And CheckBoard(OldPosX, OldPosY) = "p" Then CheckBoard(NewPosX, NewPosY - 1) = " " 'CHECKKKKKKKKKKKKKKKK
+            If CheckBoard(OldPosX, OldPosY) = "k" Then CheckBoard(OldPosX, OldPosY) = " "
             Array.Copy(MasterTrueTable, TrueTable, 64)
-            WhitePieceLegalMoves(CheckBoard, CStr(BInCheck.Piece1(0)), CStr(BInCheck.Piece1(1)), TrueTable, TrueTable, "00", BInCheck, WInCheck, MasterWCanCastle)
-            If BInCheck.Piece2 <> " " Then WhitePieceLegalMoves(CheckBoard, CStr(BInCheck.Piece2(0)), CStr(BInCheck.Piece2(1)), TrueTable, TrueTable, "00", BInCheck, WInCheck, MasterWCanCastle)
+            WhitePieceLegalMoves(CheckBoard, CStr(BInCheck.Piece1(0)), CStr(BInCheck.Piece1(1)), TrueTable, TrueTable, "00", BInCheck, WInCheck, MasterWCanCastle, "-")
+            If BInCheck.Piece2 <> " " Then WhitePieceLegalMoves(CheckBoard, CStr(BInCheck.Piece2(0)), CStr(BInCheck.Piece2(1)), TrueTable, TrueTable, "00", BInCheck, WInCheck, MasterWCanCastle, "-")
             If BInCheck.IsInCheck = False Then
                 DoesMoveResolveCheck = True
             End If
@@ -1624,60 +1867,60 @@
 
 
 
-    Private Sub CalculateAbsoluteDepth()
-        AbsoluteDepth = 1
-    End Sub
 
-
-    Private Sub BlackAIMove_Click() Handles BlackAIMove.Click
+    Private Sub WhiteAIMove_Click() Handles WhiteAIMove.Click
         Dim CurrentScore As Decimal
-        Dim BestScore As Decimal = Integer.MaxValue
-        Dim BestMove(2) As String
-        If GameRunning Then
+        Dim BestScore As Decimal = Integer.MinValue
+        Dim BestMove(3) As String
+        TotalPositionsSearched = 0
+        If GameRunning And (PlayerTurn Or AbsoluteDepth = 0) Then
             Stopwatch.Reset()
             Stopwatch.Start()
             For y = 0 To 7
                 For x = 0 To 7
-                    If MasterBoard(x, y) >= "b" And MasterBoard(x, y) <= "r" Then
+                    If Char.IsUpper(MasterBoard(x, y)) Then
                         Array.Copy(MasterTrueTable, TrueTable, 64)
-                        Dim PieceMoves = BlackPieceLegalMoves(MasterBoard, x, y, MasterBlackTFTable, TrueTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle)
+                        Dim PieceMoves = WhitePieceLegalMoves(MasterBoard, x, y, MasterWhiteTFTable, TrueTable, MasterBKPos, MasterBInCheck, MasterWInCheck, MasterWCanCastle, MasterEnPassant)
                         If PieceMoves(0) IsNot Nothing Then
-                            Console.WriteLine("Piece: " & MasterBoard(x, y) & ". Location: [" & x & "," & y & "]. Moves:")
                             Dim TempBoard(7, 7) As Char
-                            Dim TempWhiteTFTable(7, 7) As Char
                             Dim TempMaterialCount As Int16
-                            Dim TempBKPos As String
-                            Dim TempBCanCastle As CanCastle
-                            Dim TempBInCheck As InCheck
+                            Dim TempWKPos As String
+                            Dim TempWCanCastle As CanCastle
+                            Dim TempWInCheck As InCheck
+                            Dim TempEnPassant As String
                             For n = 1 To CInt(PieceMoves(0)) - 1
-                                Console.WriteLine(PieceMoves(n))
-                                If MasterBInCheck.IsInCheck Then
-                                    TempBInCheck.IsInCheck = True
-                                    TempBInCheck.Piece1 = MasterBInCheck.Piece1
-                                    TempBInCheck.Piece2 = MasterBInCheck.Piece2
+                                If MasterWInCheck.IsInCheck Then
+                                    TempWInCheck.IsInCheck = True
+                                    TempWInCheck.Piece1 = MasterWInCheck.Piece1
+                                    TempWInCheck.Piece2 = MasterWInCheck.Piece2
                                     '#Disable Warning BC42104 'Variable is used before it has been assigned a value
-                                    If DoesMoveResolveCheck(MasterBoard, x & y, PieceMoves(n)(0) & PieceMoves(n)(1), MasterWInCheck, TempBInCheck) Then
-                                        TempBInCheck.Piece1 = " "
-                                        TempBInCheck.Piece2 = " "
+                                    If DoesMoveResolveCheck(MasterBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempWInCheck, MasterBInCheck, MasterEnPassant) Then
+                                        TempWInCheck.Piece1 = " "
+                                        TempWInCheck.Piece2 = " "
                                     End If
                                     '#Enable Warning BC42104 'Variable is used before it has been assigned a value
                                 Else
-                                    TempBInCheck.IsInCheck = False
+                                    TempWInCheck.IsInCheck = False
                                 End If
-                                If Not TempBInCheck.IsInCheck Then
+                                If Not TempWInCheck.IsInCheck Then
+                                    If AbsoluteDepth = 0 Then
+                                        BestScore = 0
+                                        Exit For
+                                    End If
                                     Array.Copy(MasterBoard, TempBoard, 64)
-                                    Array.Copy(MasterWhiteTFTable, TempWhiteTFTable, 64)
-                                    TempMaterialCount = MasterMaterialCount
-                                    TempBKPos = MasterBKPos
-                                    TempBCanCastle.KS = MasterBCanCastle.KS
-                                    TempBCanCastle.QS = MasterBCanCastle.QS
-                                    MakeMove(TempBoard, x & y, PieceMoves(n)(0), PieceMoves(n)(1), MasterWCanCastle, TempBCanCastle, MasterWKPos, TempBKPos, TempMaterialCount, False)
-                                    CurrentScore = MiniMax(TempBoard, AbsoluteDepth, True, MasterWCanCastle, TempBCanCastle, MasterWKPos, TempBKPos, TempMaterialCount)
-                                    If CurrentScore < BestScore Then
+                                    TempMaterialCount = MasterMaterialCount 'do i need these either?
+                                    TempWKPos = MasterWKPos
+                                    TempWCanCastle.KS = MasterWCanCastle.KS
+                                    TempWCanCastle.QS = MasterWCanCastle.QS
+                                    TempEnPassant = MasterEnPassant 'do i need this?
+                                    MakeMove(TempBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempWCanCastle, TempWKPos, TempMaterialCount, TempEnPassant, False)
+                                    CurrentScore = MiniMax(TempBoard, AbsoluteDepth - 1, False, TempWCanCastle, MasterBCanCastle, TempWKPos, MasterBKPos, TempEnPassant, TempMaterialCount)
+                                    If CurrentScore > BestScore Then
                                         BestScore = CurrentScore
-                                        BestMove(0) = x & y
-                                        BestMove(1) = PieceMoves(n)(0)
-                                        BestMove(2) = PieceMoves(n)(1)
+                                        BestMove(0) = x
+                                        BestMove(1) = y
+                                        BestMove(2) = PieceMoves(n)(0)
+                                        BestMove(3) = PieceMoves(n)(1)
                                     End If
                                 End If
                             Next
@@ -1687,6 +1930,131 @@
             Next
             Stopwatch.Stop()
             Console.WriteLine(vbCrLf & "Search Result: " & Stopwatch.Elapsed.TotalMilliseconds & " Milliseconds.")
+            Console.WriteLine(TotalPositionsSearched & " positions searched.")
+
+            If BestScore = Integer.MinValue Then
+                If MasterWInCheck.IsInCheck Then
+                    CheckLabel.Text = "Checkmate!"
+                    Sound_Checkmate.Play()
+                Else
+                    CheckLabel.Text = " Stalemate! "
+                    Sound_Stalemate.Play()
+                End If
+                GameRunning = False
+            Else
+                If AbsoluteDepth <> 0 Then
+                    If MasterWInCheck.IsInCheck Then
+                        MasterWInCheck.IsInCheck = False
+                        MasterWInCheck.Piece1 = " "
+                        MasterWInCheck.Piece2 = " "
+                    End If
+                    MakeMove(MasterBoard, BestMove(0), BestMove(1), BestMove(2), BestMove(3), MasterWCanCastle, MasterWKPos, MasterMaterialCount, MasterEnPassant, True)
+
+                    DisplayPieces()
+                    FixTFTables(MasterBoard, False, MasterBlackTFTable, MasterBKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
+                    CheckChecker()
+                    If MasterBInCheck.IsInCheck Then Sound_Check.Play()
+                    MasterMaterialCount = CountMaterial(MasterBoard)
+                    CurrentEval.Text = MasterMaterialCount
+                    PlayerTurn = False
+                    PreviousFEN = CurrentFEN
+                    ConvertToFEN()
+                    AbsoluteDepth = 0
+                    BlackAIMove_Click()
+                    CalculateAbsoluteDepth()
+                    CurrentEval.Text = BestScore
+
+                    Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            Console.Write(MasterBoard(x, y))
+                        Next
+                        Console.WriteLine()
+                    Next
+                    Console.WriteLine()
+                    Console.WriteLine("WhiteTFTable:")
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            Console.Write(MasterWhiteTFTable(x, y))
+                        Next
+                        Console.WriteLine()
+                    Next
+                    Console.WriteLine("BlackTFTable:")
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            Console.Write(MasterBlackTFTable(x, y))
+                        Next
+                        Console.WriteLine()
+                    Next
+                End If
+            End If
+        End If
+    End Sub
+
+
+    Private Sub BlackAIMove_Click() Handles BlackAIMove.Click
+        Dim CurrentScore As Decimal
+        Dim BestScore As Decimal = Integer.MaxValue
+        Dim BestMove(3) As String
+        If GameRunning And (Not PlayerTurn Or AbsoluteDepth = 0) Then
+            TotalPositionsSearched = 0
+            Stopwatch.Reset()
+            Stopwatch.Start()
+            For y = 0 To 7
+                For x = 0 To 7
+                    If Char.IsLower(MasterBoard(x, y)) Then
+                        Array.Copy(MasterTrueTable, TrueTable, 64)
+                        Dim PieceMoves = BlackPieceLegalMoves(MasterBoard, x, y, MasterBlackTFTable, TrueTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterBCanCastle, MasterEnPassant)
+                        If PieceMoves(0) IsNot Nothing Then
+                            Dim TempBoard(7, 7) As Char
+                            Dim TempMaterialCount As Int16
+                            Dim TempBKPos As String
+                            Dim TempBCanCastle As CanCastle
+                            Dim TempBInCheck As InCheck
+                            Dim TempEnPassant As String
+                            For n = 1 To CInt(PieceMoves(0)) - 1
+                                If MasterBInCheck.IsInCheck Then
+                                    TempBInCheck.IsInCheck = True
+                                    TempBInCheck.Piece1 = MasterBInCheck.Piece1
+                                    TempBInCheck.Piece2 = MasterBInCheck.Piece2
+                                    '#Disable Warning BC42104 'Variable is used before it has been assigned a value
+                                    If DoesMoveResolveCheck(MasterBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), MasterWInCheck, TempBInCheck, MasterEnPassant) Then
+                                        TempBInCheck.Piece1 = " "
+                                        TempBInCheck.Piece2 = " "
+                                    End If
+                                    '#Enable Warning BC42104 'Variable is used before it has been assigned a value
+                                Else
+                                    TempBInCheck.IsInCheck = False
+                                End If
+                                If Not TempBInCheck.IsInCheck Then
+                                    If AbsoluteDepth = 0 Then
+                                        BestScore = 0
+                                        Exit For
+                                    End If
+                                    Array.Copy(MasterBoard, TempBoard, 64)
+                                    TempMaterialCount = MasterMaterialCount
+                                    TempBKPos = MasterBKPos
+                                    TempBCanCastle.KS = MasterBCanCastle.KS
+                                    TempBCanCastle.QS = MasterBCanCastle.QS
+                                    TempEnPassant = MasterEnPassant 'do i need this?
+                                    MakeMove(TempBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempBCanCastle, TempBKPos, TempMaterialCount, TempEnPassant, False)
+                                    CurrentScore = MiniMax(TempBoard, AbsoluteDepth - 1, True, MasterWCanCastle, TempBCanCastle, MasterWKPos, TempBKPos, TempEnPassant, TempMaterialCount)
+                                    If CurrentScore < BestScore Then
+                                        BestScore = CurrentScore
+                                        BestMove(0) = x
+                                        BestMove(1) = y
+                                        BestMove(2) = PieceMoves(n)(0)
+                                        BestMove(3) = PieceMoves(n)(1)
+                                    End If
+                                End If
+                            Next
+                        End If
+                    End If
+                Next
+            Next
+            Stopwatch.Stop()
+            Console.WriteLine(vbCrLf & "Search Result: " & Stopwatch.Elapsed.TotalMilliseconds & " Milliseconds.")
+            Console.WriteLine(TotalPositionsSearched & " positions searched.")
 
             If BestScore = Integer.MaxValue Then
                 If MasterBInCheck.IsInCheck Then
@@ -1704,102 +2072,136 @@
                         MasterBInCheck.Piece1 = " "
                         MasterBInCheck.Piece2 = " "
                     End If
-                    MakeMove(MasterBoard, BestMove(0), BestMove(1), BestMove(2), MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterMaterialCount, True)
+                    MakeMove(MasterBoard, BestMove(0), BestMove(1), BestMove(2), BestMove(3), MasterBCanCastle, MasterBKPos, MasterMaterialCount, MasterEnPassant, True)
 
                     DisplayPieces()
-                    FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterBKPos)
+                    FixTFTables(MasterBoard, True, MasterWhiteTFTable, MasterWKPos, MasterWInCheck, MasterBInCheck, MasterEnPassant)
                     CheckChecker()
-                    If MasterWInCheck.IsInCheck Or MasterBInCheck.IsInCheck Then
-                        Sound_Check.Play()
-                    End If
+                    If MasterWInCheck.IsInCheck Then Sound_Check.Play()
                     MasterMaterialCount = CountMaterial(MasterBoard)
                     CurrentEval.Text = MasterMaterialCount
                     PlayerTurn = True
+                    PreviousFEN = CurrentFEN
+                    ConvertToFEN()
+                    AbsoluteDepth = 0
+                    WhiteAIMove_Click()
+                    CalculateAbsoluteDepth()
+                    CurrentEval.Text = BestScore
+
+                    Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            Console.Write(MasterBoard(x, y))
+                        Next
+                        Console.WriteLine()
+                    Next
+                    Console.WriteLine()
+                    Console.WriteLine("WhiteTFTable:")
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            Console.Write(MasterWhiteTFTable(x, y))
+                        Next
+                        Console.WriteLine()
+                    Next
+                    Console.WriteLine("BlackTFTable:")
+                    For y = 0 To 7
+                        For x = 0 To 7
+                            Console.Write(MasterBlackTFTable(x, y))
+                        Next
+                        Console.WriteLine()
+                    Next
                 End If
             End If
-
-            Console.WriteLine("WKPos: " & MasterWKPos & ". BKPos: " & MasterBKPos)
-            For y = 0 To 7
-                For x = 0 To 7
-                    Console.Write(MasterBoard(x, y))
-                Next
-                Console.WriteLine()
-            Next
-            Console.WriteLine()
-            Console.WriteLine("WhiteTFTable:")
-            For y = 0 To 7
-                For x = 0 To 7
-                    Console.Write(MasterWhiteTFTable(x, y))
-                Next
-                Console.WriteLine()
-            Next
-            Console.WriteLine("BlackTFTable:")
-            For y = 0 To 7
-                For x = 0 To 7
-                    Console.Write(MasterBlackTFTable(x, y))
-                Next
-                Console.WriteLine()
-            Next
         End If
     End Sub
 
 
 
-
     'Subroutine that makes a move on the board, given coordinates. Includes castling (& rights) and pawn promotion.
-    Sub MakeMove(ByRef Board(,) As Char, ByRef OldCoor As String, ByRef NewCoorX As String, ByRef NewCoorY As String, ByRef WCanCastle As CanCastle, ByRef BCanCastle As CanCastle, ByRef WKPos As String, ByRef BKPos As String, ByRef MaterialCount As Int16, ByRef MakeSounds As Boolean)
-        Dim TempPiece As Char = Board(CStr(OldCoor(0)), CStr(OldCoor(1)))
+    Sub MakeMove(ByRef Board(,) As Char, ByRef OldCoorX As String, ByRef OldCoorY As String, ByRef NewCoorX As String, ByRef NewCoorY As String, ByRef CanCastle As CanCastle, ByRef KPos As String, ByRef MaterialCount As Int16, ByRef EnPassant As String, ByRef MakeSounds As Boolean)
+        Dim TempPiece As Char = Board(OldCoorX, OldCoorY)
         If MakeSounds Then Sound_Move.Play()
-        If TempPiece = "K" Then
-            WCanCastle.KS = False
-            WCanCastle.QS = False
-            WKPos = NewCoorX & NewCoorY
-            'Code for Castling.
-            If WCanCastle.KS And NewCoorX = "6" And NewCoorY = "7" Then
-                Board(5, 7) = "R"
-                Board(7, 7) = " "
-                If MakeSounds Then Sound_Castle.Play()
-            ElseIf WCanCastle.QS And NewCoorX = "2" And NewCoorY = "7" Then
-                Board(0, 7) = " "
-                Board(3, 7) = "R"
-                If MakeSounds Then Sound_Castle.Play()
+        If Char.IsUpper(TempPiece) Then
+            If TempPiece = "P" Then
+                'Code for Promoting Pawns and En Passant. Also increments the material count.
+                If NewCoorY = 0 Then
+                    TempPiece = "Q"
+                    MaterialCount += 8 '+ 9 for a new queen, - 1 for losing the pawn in the process.
+                ElseIf NewCoorX & NewCoorY = EnPassant Then
+                    Board(NewCoorX, NewCoorY + 1) = " "
+                    MaterialCount += PieceValue.P
+                    If MakeSounds Then Sound_Capture.Play()
+                End If
+                'If piece is a Rook, part of Castling is disabled (depending on which Rook has moved).
+            ElseIf TempPiece = "R" And (CanCastle.KS Or CanCastle.QS) Then
+                If OldCoorX = 0 And OldCoorY = 7 Then
+                    CanCastle.QS = False
+                ElseIf OldCoorX = 7 And OldCoorY = 7 Then
+                    CanCastle.KS = False
+                End If
+            ElseIf TempPiece = "K" Then
+                CanCastle.KS = False
+                CanCastle.QS = False
+                KPos = NewCoorX & NewCoorY
+                'Code for Castling.
+                If CanCastle.KS And NewCoorX = "6" And NewCoorY = "7" Then
+                    Board(5, 7) = "R"
+                    Board(7, 7) = " "
+                    If MakeSounds Then Sound_Castle.Play()
+                ElseIf CanCastle.QS And NewCoorX = "2" And NewCoorY = "7" Then
+                    Board(0, 7) = " "
+                    Board(3, 7) = "R"
+                    If MakeSounds Then Sound_Castle.Play()
+                End If
             End If
-        ElseIf TempPiece = "k" Then
-            BCanCastle.KS = False
-            BCanCastle.QS = False
-            BKPos = NewCoorX & NewCoorY
-            'Code for Castling.
-            If BCanCastle.KS And NewCoorX = "6" And NewCoorY = "0" Then
-                Board(5, 0) = "r"
-                Board(7, 0) = " "
-                If MakeSounds Then Sound_Castle.Play()
-            ElseIf BCanCastle.QS And NewCoorX = "2" And NewCoorY = "0" Then
-                Board(0, 0) = " "
-                Board(3, 0) = "r"
-                If MakeSounds Then Sound_Castle.Play()
-            End If
-            'If piece is a Rook, part of Castling is disabled (depending on which Rook has moved).
-        ElseIf TempPiece = "R" And (WCanCastle.KS Or WCanCastle.QS) Then
-            If Board(0, 7) <> "R" Then WCanCastle.QS = False
-            If Board(7, 7) <> "R" Then WCanCastle.KS = False
-        ElseIf TempPiece = "r" And (BCanCastle.KS Or BCanCastle.QS) Then
-            If Board(0, 0) <> "r" Then BCanCastle.QS = False
-            If Board(7, 0) <> "r" Then BCanCastle.KS = False
-        ElseIf UCase(TempPiece) = "P" Then
-            'Code for Promoting Pawns. Also increments the material count.
-            If NewCoorY = 0 Then
-                TempPiece = "Q"
-                MaterialCount += 8 '+ 9 for a new queen, - 1 for losing the pawn in the process.
-            ElseIf NewCoorY = 7 Then
-                TempPiece = "q"
-                MaterialCount -= 8
+        Else
+            'Identical Code for the Black Pieces.
+            If TempPiece = "p" Then
+                If NewCoorY = 7 Then
+                    TempPiece = "q"
+                    MaterialCount -= 8
+                ElseIf NewCoorX & NewCoorY = EnPassant Then
+                    Board(NewCoorX, NewCoorY - 1) = " "
+                    MaterialCount -= PieceValue.P
+                    If MakeSounds Then Sound_Capture.Play()
+                End If
+            ElseIf TempPiece = "r" And (CanCastle.KS Or CanCastle.QS) Then
+                If OldCoorX = 0 And OldCoorY = 0 Then
+                    CanCastle.QS = False
+                ElseIf OldCoorX = 7 And OldCoorY = 0 Then
+                    CanCastle.KS = False
+                End If
+            ElseIf TempPiece = "k" Then
+                CanCastle.KS = False
+                CanCastle.QS = False
+                KPos = NewCoorX & NewCoorY
+                If CanCastle.KS And NewCoorX = "6" And NewCoorY = "0" Then
+                    Board(5, 0) = "r"
+                    Board(7, 0) = " "
+                    If MakeSounds Then Sound_Castle.Play()
+                ElseIf CanCastle.QS And NewCoorX = "2" And NewCoorY = "0" Then
+                    Board(0, 0) = " "
+                    Board(3, 0) = "r"
+                    If MakeSounds Then Sound_Castle.Play()
+                End If
             End If
         End If
+        'En Passant Creation.
+        If EnPassant <> "-" And UCase(TempPiece) = "P" Then
+            If OldCoorY = 1 And NewCoorY = 3 Then
+                If Board(Math.Max(NewCoorX - 1, 0), 3) = "P" Or Board(Math.Min(NewCoorX + 1, 7), 3) = "P" Then EnPassant = NewCoorX & 2
+            ElseIf OldCoorY = 6 And NewCoorY = 4 Then
+                If Board(Math.Max(NewCoorX - 1, 0), 4) = "p" Or Board(Math.Min(NewCoorX + 1, 7), 4) = "p" Then EnPassant = NewCoorX & 5
+            End If
+        Else
+            EnPassant = "-"
+        End If
+
         'At the end of the subroutine, the Piece is placed at the new coordinates, and the old position is cleared.
         'If the new position contains a piece, then the material count is updated for only that piece.
         If Board(NewCoorX, NewCoorY) <> " " Then
             Dim LostPiece As Char = Board(NewCoorX, NewCoorY)
-            If UCase(LostPiece) = LostPiece Then
+            If Char.IsUpper(LostPiece) Then
                 If MakeSounds Then Sound_Capture.Play()
                 If LostPiece = "P" Then
                     MaterialCount -= PieceValue.P
@@ -1813,6 +2215,7 @@
                     MaterialCount -= PieceValue.Q
                 End If
             Else
+                If MakeSounds Then Sound_Capture.Play()
                 If LostPiece = "p" Then
                     MaterialCount += PieceValue.P
                 ElseIf LostPiece = "n" Then
@@ -1827,23 +2230,160 @@
             End If
         End If
         Board(NewCoorX, NewCoorY) = TempPiece
-        Board(CStr(OldCoor(0)), CStr(OldCoor(1))) = " "
+        Board(OldCoorX, OldCoorY) = " "
     End Sub
 
 
     'Function that evaluates a Current Board Position. Takes into account material, 
-    Function Evaluate(ByRef Board(,) As Char, ByRef WhiteTFTable(,) As Char, ByRef BlackTFTable(,) As Char, ByRef MaterialCount As Int16) As Decimal
+    Function Evaluate(ByRef Board(,) As Char, ByRef MaterialCount As Int16) As Decimal ', ByRef WhiteTFTable(,) As Char, ByRef BlackTFTable(,) As Char, 
         Evaluate = MaterialCount
     End Function
 
 
 
-    Public Function MiniMax(ByRef Board(,) As Char, depth As SByte, ByRef isWhite As Boolean, ByRef WCanCastle As CanCastle, ByRef BCanCastle As CanCastle, ByRef WKPos As String, ByRef BKPos As String, ByRef MaterialCount As Int16) As Decimal
-        Return CountMaterial(Board)
-        'FixTFTables(Board, True, MasterWhiteTFTable, MasterWKPos, MasterBKPos)
-        'set check function
-        'generate moves
-        'checkmate / stalemate
+    Private Sub CalculateAbsoluteDepth()
+        AbsoluteDepth = 3
+    End Sub
+
+    Public Function MiniMax(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As String, ByVal BKPos As String, ByVal EnPassant As String, ByVal MaterialCount As Int16) As Decimal
+        TotalPositionsSearched += 1
+        Dim CurrentScore As Decimal = Evaluate(Board, MaterialCount)
+        'Console.WriteLine(depth)
+        If depth > 0 Then
+            Dim BestScore As Decimal
+            Dim BestMove(3) As String
+            Dim WInCheck As InCheck
+            WInCheck.IsInCheck = False 'WHERE DO I PUT THESE????
+            WInCheck.Piece1 = " "
+            WInCheck.Piece2 = " "
+            Dim BInCheck As InCheck
+            BInCheck.IsInCheck = False
+            BInCheck.Piece1 = " "
+            BInCheck.Piece2 = " "
+            '#Disable Warning BC42108 ' Variable is passed by reference before it has been assigned a value
+            If isWhite Then
+                BestScore = Integer.MinValue
+                Dim WhiteTFTable(7, 7) As Char
+                'TempWInCheck.IsInCheck = False
+                FixTFTables(Board, True, WhiteTFTable, WKPos, WInCheck, NotInCheck, EnPassant)
+                For y = 0 To 7
+                    For x = 0 To 7
+                        If Char.IsUpper(Board(x, y)) Then
+                            Array.Copy(MasterTrueTable, TrueTable, 64)
+                            Dim PieceMoves = WhitePieceLegalMoves(Board, x, y, WhiteTFTable, TrueTable, BKPos, BInCheck, WInCheck, WCanCastle, EnPassant)
+                            If PieceMoves(0) IsNot Nothing Then
+                                Dim TempBoard(7, 7) As Char
+                                Dim TempMaterialCount As Int16
+                                Dim TempWKPos As String
+                                Dim TempWCanCastle As CanCastle
+                                Dim TempWInCheck As InCheck
+                                Dim TempEnPassant As String
+                                For n = 1 To CInt(PieceMoves(0)) - 1
+                                    If WInCheck.IsInCheck Then
+                                        TempWInCheck.IsInCheck = True
+                                        TempWInCheck.Piece1 = WInCheck.Piece1
+                                        TempWInCheck.Piece2 = WInCheck.Piece2
+                                        '#Disable Warning BC42104 'Variable is used before it has been assigned a value
+                                        If DoesMoveResolveCheck(Board, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempWInCheck, MasterBInCheck, MasterEnPassant) Then
+                                            TempWInCheck.Piece1 = " "
+                                            TempWInCheck.Piece2 = " "
+                                        End If
+                                        '#Enable Warning BC42104 'Variable is used before it has been assigned a value
+                                    Else
+                                        TempWInCheck.IsInCheck = False
+                                    End If
+                                    If Not TempWInCheck.IsInCheck Then
+                                        Array.Copy(MasterBoard, TempBoard, 64)
+                                        TempMaterialCount = MaterialCount 'do i need these either?
+                                        TempWKPos = WKPos
+                                        TempWCanCastle.KS = WCanCastle.KS
+                                        TempWCanCastle.QS = WCanCastle.QS
+                                        TempEnPassant = EnPassant 'do i need this?
+                                        MakeMove(TempBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempWCanCastle, TempWKPos, TempMaterialCount, TempEnPassant, False)
+                                        CurrentScore = MiniMax(TempBoard, depth - 1, False, TempWCanCastle, BCanCastle, TempWKPos, BKPos, TempEnPassant, TempMaterialCount)
+                                        If CurrentScore > BestScore Then
+                                            BestScore = CurrentScore
+                                            BestMove(0) = x
+                                            BestMove(1) = y
+                                            BestMove(2) = PieceMoves(n)(0)
+                                            BestMove(3) = PieceMoves(n)(1)
+                                        End If
+                                    End If
+                                Next
+                            End If
+                        End If
+                    Next
+                Next
+            Else
+                BestScore = Integer.MaxValue
+                Dim BlackTFTable(7, 7) As Char
+                'TempBInCheck.IsInCheck = False
+                FixTFTables(Board, False, BlackTFTable, BKPos, NotInCheck, BInCheck, EnPassant)
+                For y = 0 To 7
+                    For x = 0 To 7
+                        If Char.IsLower(Board(x, y)) Then
+                            Array.Copy(MasterTrueTable, TrueTable, 64)
+                            Dim PieceMoves = BlackPieceLegalMoves(Board, x, y, BlackTFTable, TrueTable, WKPos, WInCheck, BInCheck, BCanCastle, EnPassant)
+                            If PieceMoves(0) IsNot Nothing Then
+                                Dim TempBoard(7, 7) As Char
+                                Dim TempMaterialCount As Int16
+                                Dim TempBKPos As String
+                                Dim TempBCanCastle As CanCastle
+                                Dim TempBInCheck As InCheck
+                                Dim TempEnPassant As String
+                                For n = 1 To CInt(PieceMoves(0)) - 1
+                                    If BInCheck.IsInCheck Then
+                                        TempBInCheck.IsInCheck = True
+                                        TempBInCheck.Piece1 = BInCheck.Piece1
+                                        TempBInCheck.Piece2 = BInCheck.Piece2
+                                        '#Disable Warning BC42104 'Variable is used before it has been assigned a value
+                                        If DoesMoveResolveCheck(Board, x, y, PieceMoves(n)(0), PieceMoves(n)(1), WInCheck, TempBInCheck, EnPassant) Then
+                                            TempBInCheck.Piece1 = " "
+                                            TempBInCheck.Piece2 = " "
+                                        End If
+                                        '#Enable Warning BC42104 'Variable is used before it has been assigned a value
+                                    Else
+                                        TempBInCheck.IsInCheck = False
+                                    End If
+                                    If Not TempBInCheck.IsInCheck Then
+                                        Array.Copy(Board, TempBoard, 64)
+                                        TempMaterialCount = MaterialCount
+                                        TempBKPos = BKPos
+                                        TempBCanCastle.KS = BCanCastle.KS
+                                        TempBCanCastle.QS = BCanCastle.QS
+                                        TempEnPassant = EnPassant
+                                        MakeMove(TempBoard, x, y, PieceMoves(n)(0), PieceMoves(n)(1), TempBCanCastle, TempBKPos, TempMaterialCount, TempEnPassant, False)
+                                        CurrentScore = MiniMax(TempBoard, depth - 1, True, WCanCastle, TempBCanCastle, WKPos, TempBKPos, TempEnPassant, TempMaterialCount)
+                                        If CurrentScore < BestScore Then
+                                            BestScore = CurrentScore
+                                            BestMove(0) = x
+                                            BestMove(1) = y
+                                            BestMove(2) = PieceMoves(n)(0)
+                                            BestMove(3) = PieceMoves(n)(1)
+                                        End If
+                                    End If
+                                Next
+                            End If
+                        End If
+                    Next
+                Next
+            End If
+
+            If BestScore = Integer.MinValue Then
+                If Not WInCheck.IsInCheck Then
+                    CurrentScore = 0
+                End If
+            ElseIf BestScore = Integer.MaxValue Then
+                If Not BInCheck.IsInCheck Then
+                    CurrentScore = 0
+                End If
+            End If
+
+            Return BestScore
+        Else
+            Return CurrentScore
+        End If
+        '#Enable Warning BC42108 ' Variable is passed by reference before it has been assigned a value
     End Function
 
 End Class
@@ -1853,6 +2393,7 @@ End Class
 'En passant
 'Drawing rules
 'Threefold repetition
+'50 move stalemate
 'Ai vs ai For title screen Of chess ai
 'En passant
 'Transposition table

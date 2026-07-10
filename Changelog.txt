@@ -1,2 +1,1 @@
-AI with MiniMax implementation (black side only)
-Depth of 1 Search.
+Variable Depth
