@@ -129,6 +129,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="PieceSquaresTable.vb" />
     <Compile Include="SubObjects.vb" />
     <Compile Include="TwoPlayerCustomisation.Designer.vb">
       <DependentUpon>TwoPlayerCustomisation.vb</DependentUpon>

@@ -2,7 +2,7 @@
 'Quiescence (optional), along with the ability to check for end states. This class is modular from my Chess class - being
 'constructed only from the FEN position, and only returning a Move (see the structure below). Some other interacting is done,
 'however, such as allowing the AI to be remotely aborted.
-Public Class AI 'i call thy Bryson because you are very bad.
+Public Class AI 'i call thy Alphafish (bit optimistic, I know).
     Inherits CoreMethods
     Private HasBeenInstantiated As Boolean 'The AI will not perform methods if it has not been fully instantiated with a FEN.
     'Below are the details that the AI requires for a search. Please see their counterparts in the Chess form for their info.
@@ -11,7 +11,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
     Private PrimaryMeInCheck As New InCheck
     Private PrimaryMeKPos, PrimaryEnemyKPos As String
     Private PrimaryEnPassant As String
-    Private PrimaryMaterialCount As Int16
+    Private PrimaryMaterialCount(1) As SByte
     Private PlayerTurn As Boolean
 
     Private UseQuiescence As Boolean 'Set by the user.
@@ -53,7 +53,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
             KingSymbol = "k"
         End If
         'Finds the material count of the board.
-        PrimaryMaterialCount = CountMaterial(PrimaryBoard, False)
+        PrimaryMaterialCount = CountMaterial(PrimaryBoard)
         HasBeenInstantiated = True
     End Sub
     'Subroutine that copies all the data from another AI to this one. Used as a faster alternative to reconfiguring
@@ -95,7 +95,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
             If PieceMoves(0, 0) > 0 Then 'If any move exists...
                 'Creates temp variables.
                 Dim TempBoard(7, 7) As Char
-                Dim TempMaterialCount As Int16
+                Dim TempMaterialCount(1) As SByte
                 Dim TempMeKPos As String
                 Dim TempMeCanCastle As New CanCastle
                 Dim TempMeInCheck As New InCheck
@@ -120,7 +120,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
                     If Not TempMeInCheck.IsInCheck Then 'Therefore, is a legal move.
                         'Copies board info to temp variables.
                         Array.Copy(PrimaryBoard, TempBoard, 64)
-                        TempMaterialCount = PrimaryMaterialCount
+                        Array.Copy(PrimaryMaterialCount, TempMaterialCount, 2)
                         TempMeKPos = PrimaryMeKPos
                         TempMeCanCastle.CopyFrom(PrimaryMeCanCastle)
                         TempEnPassant = PrimaryEnPassant
@@ -278,7 +278,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
         Dim BadMoves(49, 2) As String
         Dim TerribleMoves(24, 2) As String
 
-        Dim ACMLen As UInt16 = 1
+        Dim ACMLen As Byte = 1
         Dim CMLen As Byte
         Dim OCMLen As Byte
         Dim PPMLen As Byte
@@ -446,7 +446,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
     End Function
 
     'Subroutine that makes a move on the board, given coordinates. Includes castling (& rights) and pawn promotion.
-    Private Sub MakeMove(ByVal Board(,) As Char, ByVal OldCoorX As String, ByVal OldCoorY As String, ByVal NewCoorX As String, ByVal NewCoorY As String, ByRef CanCastle As CanCastle, ByRef KPos As String, ByRef MaterialCount As Int16, ByRef EnPassant As String)
+    Private Sub MakeMove(ByVal Board(,) As Char, ByVal OldCoorX As String, ByVal OldCoorY As String, ByVal NewCoorX As String, ByVal NewCoorY As String, ByRef CanCastle As CanCastle, ByRef KPos As String, ByRef MaterialCount() As SByte, ByRef EnPassant As String)
         Dim TempPiece As Char = Board(OldCoorX, OldCoorY)
         Dim HasEnPassanted As Boolean
         If Char.IsUpper(TempPiece) Then
@@ -454,10 +454,10 @@ Public Class AI 'i call thy Bryson because you are very bad.
                 'Code for Promoting Pawns and En Passant. Also increments the material count.
                 If NewCoorY = 0 Then
                     TempPiece = "Q"
-                    MaterialCount += ReturnPieceValue("Q") - ReturnPieceValue("P") '+ 9 for a new queen, - 1 for losing the pawn in the process.
+                    MaterialCount(0) += ReturnPieceValue("Q") - ReturnPieceValue("P") '+ 9 for a new queen, - 1 for losing the pawn in the process.
                 ElseIf NewCoorX & NewCoorY = EnPassant Then
                     Board(NewCoorX, NewCoorY + 1) = " "
-                    MaterialCount += ReturnPieceValue("P")
+                    MaterialCount(1) -= ReturnPieceValue("P")
                 ElseIf OldCoorY = 6 AndAlso NewCoorY = 4 AndAlso (Board(Math.Max(NewCoorX - 1, 0), 4) = "p" OrElse Board(Math.Min(NewCoorX + 1, 7), 4) = "p") Then
                     'EnPassant creation.
                     EnPassant = NewCoorX & 5
@@ -487,12 +487,11 @@ Public Class AI 'i call thy Bryson because you are very bad.
             If TempPiece = "p" Then
                 If NewCoorY = 7 Then
                     TempPiece = "q"
-                    MaterialCount -= ReturnPieceValue("Q") - ReturnPieceValue("P")
+                    MaterialCount(1) += ReturnPieceValue("Q") - ReturnPieceValue("P")
                 ElseIf NewCoorX & NewCoorY = EnPassant Then
                     Board(NewCoorX, NewCoorY - 1) = " "
-                    MaterialCount -= ReturnPieceValue("P")
+                    MaterialCount(0) -= ReturnPieceValue("P")
                 ElseIf OldCoorY = 1 AndAlso NewCoorY = 3 AndAlso (Board(Math.Max(NewCoorX - 1, 0), 3) = "P" OrElse Board(Math.Min(NewCoorX + 1, 7), 3) = "P") Then
-                    'EnPassant creation.
                     EnPassant = NewCoorX & 2
                     HasEnPassanted = True
                 End If
@@ -520,9 +519,9 @@ Public Class AI 'i call thy Bryson because you are very bad.
         'If the new position contains a piece, then the material count is updated for only that piece.
         If Board(NewCoorX, NewCoorY) <> " " Then
             If Char.IsUpper(Board(NewCoorX, NewCoorY)) Then
-                MaterialCount -= ReturnPieceValue(Board(NewCoorX, NewCoorY))
+                MaterialCount(0) -= ReturnPieceValue(Board(NewCoorX, NewCoorY))
             Else
-                MaterialCount += ReturnPieceValue(Board(NewCoorX, NewCoorY))
+                MaterialCount(1) -= ReturnPieceValue(Board(NewCoorX, NewCoorY))
             End If
         End If
         Board(NewCoorX, NewCoorY) = TempPiece
@@ -531,7 +530,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
 
 
     'This function contains my MiniMax algorithm using Alpha-Beta Pruning and Quiescence (optional).
-    Public Function MiniMax(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As String, ByVal BKPos As String, ByVal EnPassant As String, ByVal MaterialCount As Int16, ByVal Alpha As Decimal, ByVal Beta As Decimal) As Decimal
+    Public Function MiniMax(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As String, ByVal BKPos As String, ByVal EnPassant As String, ByVal MaterialCount() As SByte, ByVal Alpha As Decimal, ByVal Beta As Decimal) As Decimal
         If ABORT Then Return 0
         TotalPositionsSearched += 1
         'Creates moves & checking rules.
@@ -542,25 +541,25 @@ Public Class AI 'i call thy Bryson because you are very bad.
 
         If isWhite Then
 
-            'Creates and forms the TFTable for the player to move.
-            Dim WhiteTFTable(7, 7) As Char
-            FixTFTables(Board, True, WhiteTFTable, WKPos, WInCheck, NotInCheck, EnPassant)
-            If Not (depth > 0 OrElse WInCheck.IsInCheck) Then 'Quiescence mode activated.
+            BestMove = Integer.MinValue
+            If depth <= 0 Then 'Quiescence mode activated.
                 'Evaluation of board is the current move to beat.
-                BestMove = MaterialCount
+                BestMove = Evaluate(Board, MaterialCount, WKPos, BKPos)
                 Alpha = Math.Max(Alpha, BestMove)
                 If Beta <= Alpha Then 'ABP.
                     Return BestMove
                 End If
-            Else
-                BestMove = Integer.MinValue
             End If
+
+            'Creates and forms the TFTable for the player to move.
+            Dim WhiteTFTable(7, 7) As Char
+            FixTFTables(Board, True, WhiteTFTable, WKPos, WInCheck, NotInCheck, EnPassant)
             'Creates the pseudo-legal moves for the chosen player.
-            PieceMoves = CreateMoves(Board, True, WhiteTFTable, BKPos, WInCheck, BInCheck, WCanCastle, EnPassant, Not (depth > 0 OrElse WInCheck.IsInCheck)) 'If depth <=0 then use capture moves only.
+            PieceMoves = CreateMoves(Board, True, WhiteTFTable, BKPos, WInCheck, BInCheck, WCanCastle, EnPassant, depth <= 0) 'If depth <=0 then use capture moves only.
             If PieceMoves(0, 0) > 0 Then 'If any move exists...
                 'Creates temp variables.
                 Dim TempBoard(7, 7) As Char
-                Dim TempMaterialCount As Int16
+                Dim TempMaterialCount(1) As SByte
                 Dim TempWKPos As String
                 Dim TempWCanCastle As New CanCastle
                 Dim TempWInCheck As New InCheck
@@ -581,7 +580,8 @@ Public Class AI 'i call thy Bryson because you are very bad.
                     If Not TempWInCheck.IsInCheck Then 'Therefore, is a legal move.
                         'Copies board info to temp variables.
                         Array.Copy(Board, TempBoard, 64)
-                        TempMaterialCount = MaterialCount
+                        TempMaterialCount(0) = MaterialCount(0)
+                        TempMaterialCount(1) = MaterialCount(1)
                         TempWKPos = WKPos
                         TempWCanCastle.CopyFrom(WCanCastle)
                         TempEnPassant = EnPassant
@@ -590,7 +590,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
                         If Not UseQuiescence AndAlso depth = 1 Then
                             'We have reached a leaf position - return the evaluation for this position.
                             TotalPositionsSearched += 1
-                            CurrentMove = TempMaterialCount 'MaterialCount = evaluation.
+                            CurrentMove = Evaluate(Board, MaterialCount, WKPos, BKPos) 'Evaluate position for opponent.
                         Else 'No leaf node (or are using Quiescence) - put position through MiniMax recursively.
                             CurrentMove = MiniMax(TempBoard, depth - 1, False, TempWCanCastle, BCanCastle, TempWKPos, BKPos, TempEnPassant, TempMaterialCount, Alpha, Beta)
                         End If
@@ -604,20 +604,22 @@ Public Class AI 'i call thy Bryson because you are very bad.
                 Next
             End If
         Else 'Near-identical code for the black side.
-            Dim BlackTFTable(7, 7) As Char
-            FixTFTables(Board, False, BlackTFTable, BKPos, NotInCheck, BInCheck, EnPassant)
+
             BestMove = Integer.MaxValue
-            If Not (depth > 0 OrElse BInCheck.IsInCheck) Then
-                BestMove = MaterialCount
+            If depth <= 0 Then
+                BestMove = Evaluate(Board, MaterialCount, WKPos, BKPos)
                 Beta = Math.Min(Beta, BestMove)
                 If Beta <= Alpha Then
                     Return BestMove
                 End If
             End If
-            PieceMoves = CreateMoves(Board, False, BlackTFTable, WKPos, WInCheck, BInCheck, BCanCastle, EnPassant, Not (depth > 0 OrElse BInCheck.IsInCheck))
+
+            Dim BlackTFTable(7, 7) As Char
+            FixTFTables(Board, False, BlackTFTable, BKPos, NotInCheck, BInCheck, EnPassant)
+            PieceMoves = CreateMoves(Board, False, BlackTFTable, WKPos, WInCheck, BInCheck, BCanCastle, EnPassant, depth <= 0)
             If PieceMoves(0, 0) > 0 Then
                 Dim TempBoard(7, 7) As Char
-                Dim TempMaterialCount As Int16
+                Dim TempMaterialCount(1) As SByte
                 Dim TempBKPos As String
                 Dim TempBCanCastle As New CanCastle
                 Dim TempBInCheck As New InCheck
@@ -633,14 +635,15 @@ Public Class AI 'i call thy Bryson because you are very bad.
                     End If
                     If Not TempBInCheck.IsInCheck Then
                         Array.Copy(Board, TempBoard, 64)
-                        TempMaterialCount = MaterialCount
+                        TempMaterialCount(0) = MaterialCount(0)
+                        TempMaterialCount(1) = MaterialCount(1)
                         TempBKPos = BKPos
                         TempBCanCastle.CopyFrom(BCanCastle)
                         TempEnPassant = EnPassant
                         MakeMove(TempBoard, PieceMoves(n, 0), PieceMoves(n, 1), PieceMoves(n, 2)(0), PieceMoves(n, 2)(1), TempBCanCastle, TempBKPos, TempMaterialCount, TempEnPassant)
                         If Not UseQuiescence AndAlso depth = 1 Then
                             TotalPositionsSearched += 1
-                            CurrentMove = TempMaterialCount
+                            CurrentMove = Evaluate(Board, MaterialCount, WKPos, BKPos)
                         Else
                             CurrentMove = MiniMax(TempBoard, depth - 1, True, WCanCastle, TempBCanCastle, WKPos, TempBKPos, TempEnPassant, TempMaterialCount, Alpha, Beta)
                         End If
@@ -657,7 +660,7 @@ Public Class AI 'i call thy Bryson because you are very bad.
         If BestMove = Integer.MinValue OrElse BestMove = Integer.MaxValue Then
             'No legal move found for the player.
             If depth <= 0 Then
-                Return MaterialCount '= evaluation of position.
+                Return Evaluate(Board, MaterialCount, WKPos, BKPos) '= evaluation of position.
             ElseIf WInCheck.IsInCheck Then
                 'Checkmate for white: return -(1000 + depth) so that the quickest path to checkmate is chosen by the AI.
                 Return -(1000 + depth)
@@ -670,6 +673,68 @@ Public Class AI 'i call thy Bryson because you are very bad.
         End If
         'Otherwise, return the best move's score found this iteration.
         Return BestMove
+    End Function
+
+
+    'This algorithm is used to condense a board position into an evaluation score, used to determine best moves.
+    'We take into account the difference in material between the two sides, along with a heuristic to help
+    'the AI find checkmated in simple endgame positions.
+    Private Function Evaluate(ByVal Board(,) As Char, ByVal MaterialCount() As SByte, ByVal WKPos As String, ByVal BKPos As String) As Decimal
+        'Finds difference in material between both sides.
+        Dim Score As Decimal = MaterialCount(0) - MaterialCount(1)
+        'If the opponent has little material left, we try to find positions where the opponent king is close to
+        'the edge / corner of the board, and where the kings are closer together. This can help find a checkmate.
+        If MaterialCount(0) < 10 OrElse MaterialCount(1) < 10 Then
+            'Finds distances between kings.
+            Dim KingDistance As Byte = Math.Max(Math.Abs(CStr(WKPos(0)) - CStr(BKPos(0))), Math.Abs(CStr(WKPos(1)) - CStr(BKPos(1))))
+            If MaterialCount(1) < 10 Then
+                'Finds distance from opponent's king to the centre of the board.
+                Dim KingCentreDistance As Byte = Math.Max(CStr(BKPos(0)) - 4, 3 - CStr(BKPos(0))) + Math.Max(CStr(BKPos(1)) - 4, 3 - CStr(BKPos(1)))
+                'Heuristic becomes more prevelant as the opponent has fewer and fewer pieces (exponential curve).
+                Score += ((KingCentreDistance * 1.5 + (7 - KingDistance)) * 0.02) * 1.15 ^ (9 - MaterialCount(1))
+            End If
+            If MaterialCount(0) < 10 Then 'Similar code for the white pieces.
+                Dim KingCentreDistance As Byte = Math.Max(CStr(WKPos(0)) - 4, 3 - CStr(WKPos(0))) + Math.Max(CStr(WKPos(1)) - 4, 3 - CStr(WKPos(1)))
+                Score -= ((KingCentreDistance * 1.5 + (7 - KingDistance)) * 0.02) * 1.15 ^ (9 - MaterialCount(0))
+            End If
+        Else
+            For y = 0 To 7
+                For x = 0 To 7
+                    If Board(x, y) <> " " Then
+                        If Char.IsUpper(Board(x, y)) Then
+                            If Board(x, y) = "P" Then
+                                Score += 0.001 * PawnSquares(x, 7 - y)
+                            ElseIf Board(x, y) = "K" Then
+                                Score += 0.001 * KnightSquares(x, 7 - y)
+                            ElseIf Board(x, y) = "B" Then
+                                Score += 0.001 * BishopSquares(x, 7 - y)
+                            ElseIf Board(x, y) = "R" Then
+                                Score += 0.001 * RookSquares(x, 7 - y)
+                            ElseIf Board(x, y) = "Q" Then
+                                Score += 0.001 * QueenSquares(x, 7 - y)
+                            Else
+                                Score += 0.001 * KingSquares(x, 7 - y)
+                            End If
+                        Else
+                            If Board(x, y) = "p" Then
+                                Score -= 0.001 * PawnSquares(7 - x, y)
+                            ElseIf Board(x, y) = "k" Then
+                                Score -= 0.001 * KnightSquares(7 - x, y)
+                            ElseIf Board(x, y) = "b" Then
+                                Score -= 0.001 * BishopSquares(7 - x, y)
+                            ElseIf Board(x, y) = "r" Then
+                                Score -= 0.001 * RookSquares(7 - x, y)
+                            ElseIf Board(x, y) = "q" Then
+                                Score -= 0.001 * QueenSquares(7 - x, y)
+                            Else
+                                Score -= 0.001 * KingSquares(7 - x, y)
+                            End If
+                        End If
+                    End If
+                Next
+            Next
+        End If
+        Return Math.Round(Score, 2)
     End Function
 
 End Class
