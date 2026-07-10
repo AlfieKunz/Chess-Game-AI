@@ -6,16 +6,15 @@ Public Class Settings
     Private PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
     Private SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
     Private ColourScheme As String 'Colour code from the text file.
-    Private AnimationSpeed As SByte 'Represents the speed of the piece-moving animation: 0 = Off, 1 = Fast, 2 = Medium, 3 = Slow
-    Private GeneralOptions As String = "TTTTTFFF" '8-character string that represents the configuration of the program.
-    'Index: 0 = Sound, 1 = Opening Animation, 2 = Large Opening Book, 3 = Board Highlights, 4 = Piece Highlights, 5 = Touch Move, 6 = Invisible Pieces, 7 = Hammad Mode (bad AI).
+    Private AnimationSpeed As SByte = GlobalConstants.DefaultAnimationSpeed 'Represents the speed of the piece-moving animation: 0 = Off, 1 = Fast, 2 = Medium, 3 = Slow
+    Private GeneralOptions As String = GlobalConstants.DefaultGeneralOptions
     Private FixedSearchDepth As Byte = 0 'Number representing the fixed depth the AI will search to (0 = off).
 
     Private SquareHistory(1, 1) As SByte
     Private AnimationRunning, AnimationSettingsChanged As Boolean 'Information regarding the piece animation testing.
 
     Private ReadOnly Sound_Move As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Sounds\Chess_Move.wav"
+        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Move.wav"
     }
 
     'Subroutines that sets up the form.
@@ -73,8 +72,8 @@ Public Class Settings
         Catch ex As Exception
             'Sets all settings to their default values.
             ColourScheme = "def"
-            AnimationSpeed = 2
-            GeneralOptions = "TTTTTFFF"
+            AnimationSpeed = GlobalConstants.DefaultAnimationSpeed
+            GeneralOptions = GlobalConstants.DefaultGeneralOptions
             FixedSearchDepth = 0
         End Try
         FileClose(1)
@@ -592,12 +591,12 @@ Public Class Settings
         Else
             GeneralOptions = GeneralOptions.Remove(6, 1).Insert(6, "F")
             'Restores the images back to the PictureBoxes.
-            WP1.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WPawn.png")
-            WP2.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WPawn.png")
-            WP3.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WPawn.png")
-            WR1.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WRook.png")
-            WN1.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WKnight.png")
-            WB1.Image = Image.FromFile(Application.StartupPath & "\Images\Default\WBishop.png")
+            WP1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WPawn.png")
+            WP2.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WPawn.png")
+            WP3.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WPawn.png")
+            WR1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WRook.png")
+            WN1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WKnight.png")
+            WB1.Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\WBishop.png")
         End If
         If Not AnimationRunning Then SaveSettings()
     End Sub

@@ -94,7 +94,7 @@ Public Class OnePlayerCustomisation
     End Sub
 
     'Button that displays information regarding the various AI difficulties.
-    Private Sub Button1_Click() Handles InfoBtn.Click
+    Private Sub InfoBtn_Click() Handles InfoBtn.Click
         MsgBox("• Beginner: 1s per search, Quiescence off, Piece Heat Maps off." & vbCrLf & "• Easy: 3s per search, Quiescence off, Piece Heat Maps on." & vbCrLf & "• Medium: 3s per search, Quiescence on, Piece Heat Maps off." & vbCrLf & "• Hard: 5s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• Expert: 10s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• Pain: 30s per search, Quiescence on, Piece Heat Maps on." & vbCrLf & "• (From difficulties 'Expert' and onwards, the AI will search on the position in the background, on the User's turn.)", vbInformation + vbApplicationModal, "AI Difficulty Information")
     End Sub
     'Button that takes the user back to the main menu.

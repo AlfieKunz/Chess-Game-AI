@@ -7,15 +7,16 @@ Imports System.Threading
 'Will be the first section of code that the user sees, and provides the starting 
 'point for instantiating all theother classes & forms in my program.
 Public Class MainMenu
-    Private PlayAnimation, PlaySounds, UseLargeOpeningBook As Boolean 'Represents the user's settings (in User Profile)
+    Private PlayAnimation, PlaySounds, UseSmallOpeningBook As Boolean 'Represents the user's settings (in User Profile)
     'that affect the MainMenu form.
     Private PrimaryColour As Color 'Colour representing the dark squares on the Chessboard.
     Private SecondaryColour As Color 'Colour representing the light squares on the Chessboard.
     Private ColourScheme As String 'Colour code from the text file.
     Private OpeningBook As New List(Of OpeningBookEntry)
+    Private BookLoaded As Boolean
     'Startup sound effect - sounds taken from Chess.com.
     ReadOnly Sound_Startup As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Sounds\Chess_Startup.wav"
+        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Startup.wav"
     }
 
     Private Sub MainMenu_Load() Handles Me.Load
@@ -29,13 +30,13 @@ Public Class MainMenu
             'Calibrates attributes based on settings.
             If GeneralSettings(0) = "T" Then PlaySounds = True
             If GeneralSettings(1) = "T" Then PlayAnimation = True
-            If GeneralSettings(2) = "T" Then UseLargeOpeningBook = True
+            If GeneralSettings(2) = "T" Then UseSmallOpeningBook = True
         Catch ex As Exception
             'Unable to retrieve - set all settings to their default value.
             ColourScheme = "def"
             PlayAnimation = True
             PlaySounds = True
-            UseLargeOpeningBook = False
+            UseSmallOpeningBook = False
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
             Console.ResetColor()
@@ -142,19 +143,19 @@ Public Class MainMenu
         'Gives all pieces their appropriate images.
         Dim Colour As String = "W"
         For x = 0 To 16 Step 16
-            Pieces(x).Image = Image.FromFile(Application.StartupPath & "\Images\Default\" & Colour & "King.png")
-            Pieces(x + 1).Image = Image.FromFile(Application.StartupPath & "\Images\Default\" & Colour & "Queen.png")
+            Pieces(x).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "King.png")
+            Pieces(x + 1).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Queen.png")
             For n = x + 2 To x + 3
-                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Images\Default\" & Colour & "Bishop.png")
+                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Bishop.png")
             Next
             For n = x + 4 To x + 5
-                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Images\Default\" & Colour & "Knight.png")
+                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Knight.png")
             Next
             For n = x + 6 To x + 7
-                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Images\Default\" & Colour & "Rook.png")
+                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Rook.png")
             Next
             For n = x + 8 To x + 15
-                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Images\Default\" & Colour & "Pawn.png")
+                Pieces(n).Image = Image.FromFile(Application.StartupPath & "\Assets\Images\Default\" & Colour & "Pawn.png")
             Next
             Colour = "B"
         Next
@@ -279,9 +280,8 @@ Public Class MainMenu
                 If n >= 7 Then RowHider7.Left += 75
                 If n >= 8 Then RowHider8.Left += 75
                 Application.DoEvents()
-                Thread.Sleep(100)
+                If n < 15 Then Thread.Sleep(-3 * Math.Abs(n - 7) + 70)
             Next
-            Thread.Sleep(50)
         Else
             'Makes all the RowHider objects invisible.
             For n = 1 To 8
@@ -289,46 +289,43 @@ Public Class MainMenu
             Next
         End If
         'Slowly makes the pieces on the board visible (in a spiral pattern).
-        AnimatePiece(WK1)
-        AnimatePiece(WQ1)
-        AnimatePiece(BK1)
-        AnimatePiece(BQ1)
-        Wait()
-        AnimatePiece(WB1)
-        AnimatePiece(WB2)
-        AnimatePiece(BB1)
-        AnimatePiece(BB2)
-        Wait()
-        AnimatePiece(WN1)
-        AnimatePiece(WN2)
-        AnimatePiece(BN1)
-        AnimatePiece(BN2)
-        Wait()
         AnimatePiece(WR1)
         AnimatePiece(WR2)
         AnimatePiece(BR1)
         AnimatePiece(BR2)
-        Wait()
+        Wait(1)
+        AnimatePiece(WN1)
+        AnimatePiece(WN2)
+        AnimatePiece(BN1)
+        AnimatePiece(BN2)
         AnimatePiece(WP1)
         AnimatePiece(WP2)
         AnimatePiece(BP1)
         AnimatePiece(BP2)
-        Wait()
+        Wait(3)
+        AnimatePiece(WB1)
+        AnimatePiece(WB2)
+        AnimatePiece(BB1)
+        AnimatePiece(BB2)
         AnimatePiece(WP3)
         AnimatePiece(WP4)
         AnimatePiece(BP3)
         AnimatePiece(BP4)
-        Wait()
+        Wait(3)
+        AnimatePiece(WK1)
+        AnimatePiece(WQ1)
+        AnimatePiece(BK1)
+        AnimatePiece(BQ1)
         AnimatePiece(WP5)
         AnimatePiece(WP6)
         AnimatePiece(BP5)
         AnimatePiece(BP6)
-        Wait()
+        Wait(3)
         AnimatePiece(WP7)
         AnimatePiece(WP8)
         AnimatePiece(BP7)
         AnimatePiece(BP8)
-        Wait()
+        Wait(2.5)
 
         'Makes the labels & buttons visible, then audibly notifies the user that they can choose a menu option.
         Title.Visible = True
@@ -345,10 +342,10 @@ Public Class MainMenu
 
 
     'Subroutine that temporarily stalls the program every time a piece appears in the opening animation.
-    Private Sub Wait()
+    Private Sub Wait(ByVal Interval As SByte)
         If PlayAnimation Then
             Application.DoEvents()
-            Thread.Sleep(150)
+            Thread.Sleep(20 + 30 * Interval)
         End If
     End Sub
 
@@ -358,10 +355,10 @@ Public Class MainMenu
         Dim TempEntry As OpeningBookEntry
         Dim BookPath As String
         'Determines the specific book to load.
-        If UseLargeOpeningBook Then
-            BookPath = "\Assets\LargeOpeningBook.txt"
-        Else
+        If UseSmallOpeningBook Then
             BookPath = "\Assets\SmallOpeningBook.txt"
+        Else
+            BookPath = "\Assets\LargeOpeningBook.txt"
         End If
         Try
             GCSettings.LatencyMode = GCLatencyMode.LowLatency 'Relaxes garbage collection during the forming of the Opening Book,
@@ -369,14 +366,14 @@ Public Class MainMenu
             Timer.Start()
             'Opens opening book from file using StreamReader.
             Using SR As New StreamReader(Application.StartupPath & BookPath, Encoding.UTF8, True, 16384)
-                While Not SR.EndOfStream
+                While Not (SR.EndOfStream OrElse BookLoaded)
                     TempEntry = New OpeningBookEntry(SR.ReadLine())
                     OpeningBook.Add(TempEntry)
                 End While
             End Using
             Timer.Stop()
-            Console.ForegroundColor = ConsoleColor.Green
-            Console.WriteLine("Opening Book Successfully Retrieved in: " & Math.Round(Timer.Elapsed.TotalMilliseconds, 1) & "ms.")
+            If Not BookLoaded Then Console.ForegroundColor = ConsoleColor.Green : Console.WriteLine("Opening Book Successfully Retrieved in: " & Math.Round(Timer.Elapsed.TotalMilliseconds, 1) & "ms.")
+            BookLoaded = True
         Catch ex As Exception 'Could not successfully retrieve book.
             Timer.Stop()
             Console.ForegroundColor = ConsoleColor.DarkRed
@@ -407,6 +404,7 @@ Public Class MainMenu
         End If
     End Sub
     Private Sub OnePlayer_Click() Handles OnePlayer.Click
+        If Not BookLoaded Then HandleOpeningBookNotLoaded()
         'Instantiates a new version of the OnePlayerCustomisation form.
         Dim Customisation = New OnePlayerCustomisation(OpeningBook)
         Customisation.Show()
@@ -420,6 +418,7 @@ Public Class MainMenu
         End If
     End Sub
     Private Sub TwoPlayer_Click() Handles TwoPlayer.Click
+        If Not BookLoaded Then HandleOpeningBookNotLoaded()
         'Instantiates a new version of the TwoPlayerCustomisation form.
         Dim Customisation As New TwoPlayerCustomisation
         Customisation.Show()
@@ -442,6 +441,7 @@ Public Class MainMenu
         Training.Font = New Font("Microsoft Sans Serif", 18, FontStyle.Bold)
     End Sub
     Private Sub Training_Click() Handles Training.Click
+        If Not BookLoaded Then HandleOpeningBookNotLoaded()
         'Instantiates a new version of the TrainingCustomisation form.
         Dim Customisation As New TrainingCustomisation
         Customisation.Show()
@@ -464,6 +464,7 @@ Public Class MainMenu
         Analysis.Font = New Font("Microsoft Sans Serif", 18, FontStyle.Bold)
     End Sub
     Private Sub Analysis_Click() Handles Analysis.Click
+        If Not BookLoaded Then HandleOpeningBookNotLoaded()
         'Creates the chess game (if Opening Book could not be retrieved then do not pass book.
         Dim ChessGame As Chess
         If OpeningBook.Count > 0 Then ChessGame = New Chess(OpeningBook) : Else ChessGame = New Chess()
@@ -489,9 +490,28 @@ Public Class MainMenu
         Me.Close()
     End Sub
 
+
+    'Subroutine which clears the Opening Book, in case it has not been fully loaded by the time the user has clicked on a Game Mode.
+    'This is to prevent an unfinished / broken Book from entering the System.
+    Private Sub HandleOpeningBookNotLoaded()
+        Console.ForegroundColor = ConsoleColor.DarkRed
+        Console.WriteLine("WARNING: Opening Book not fully Loaded into the System - Continuing Without...")
+        Console.ResetColor()
+        OpeningBook.Clear()
+        BookLoaded = True
+    End Sub
+
+
+
+
     'Button that displays the credits information onto the screen (in the form of a pop-up).
+    'To fix a bug where the form would become unresponsive after closing the MsgBox, a separate thread now displays the MsgBox to the user.
     Private Sub Credits_Click() Handles Credits.Click
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (v8.2)" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2023)", vbInformation + vbApplicationModal, "Credits")
+        Dim MsgBoxThread As New Task(AddressOf ShowCreditsBox)
+        MsgBoxThread.Start()
+    End Sub
+    Sub ShowCreditsBox()
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2024)", vbInformation, "Credits")
     End Sub
 
 End Class

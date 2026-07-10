@@ -32,7 +32,7 @@ Partial Class TrainingCustomisation
         'BackBtn
         '
         Me.BackBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.BackBtn.Location = New System.Drawing.Point(10, 251)
+        Me.BackBtn.Location = New System.Drawing.Point(10, 246)
         Me.BackBtn.Name = "BackBtn"
         Me.BackBtn.Size = New System.Drawing.Size(23, 23)
         Me.BackBtn.TabIndex = 13
@@ -87,7 +87,7 @@ Partial Class TrainingCustomisation
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
         Me.BackColor = System.Drawing.Color.LightGray
-        Me.ClientSize = New System.Drawing.Size(284, 286)
+        Me.ClientSize = New System.Drawing.Size(284, 281)
         Me.Controls.Add(Me.MoveBtn)
         Me.Controls.Add(Me.CoorBtn)
         Me.Controls.Add(Me.PuzzlesBtn)

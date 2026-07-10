@@ -416,9 +416,9 @@ Partial Class Settings
         Me.AnimationBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.AnimationBtn.Location = New System.Drawing.Point(637, 82)
         Me.AnimationBtn.Name = "AnimationBtn"
-        Me.AnimationBtn.Size = New System.Drawing.Size(176, 20)
+        Me.AnimationBtn.Size = New System.Drawing.Size(169, 20)
         Me.AnimationBtn.TabIndex = 28
-        Me.AnimationBtn.Text = "Play Opening Animation?"
+        Me.AnimationBtn.Text = "Play Opening Animation"
         Me.AnimationBtn.UseVisualStyleBackColor = True
         '
         'BoardBtn
@@ -449,9 +449,9 @@ Partial Class Settings
         Me.InvisBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.InvisBtn.Location = New System.Drawing.Point(637, 252)
         Me.InvisBtn.Name = "InvisBtn"
-        Me.InvisBtn.Size = New System.Drawing.Size(127, 20)
+        Me.InvisBtn.Size = New System.Drawing.Size(120, 20)
         Me.InvisBtn.TabIndex = 28
-        Me.InvisBtn.Text = "Invisible Pieces?"
+        Me.InvisBtn.Text = "Invisible Pieces"
         Me.InvisBtn.UseVisualStyleBackColor = True
         '
         'AnimationPieceInfo
@@ -470,9 +470,9 @@ Partial Class Settings
         Me.HammadBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.HammadBtn.Location = New System.Drawing.Point(637, 320)
         Me.HammadBtn.Name = "HammadBtn"
-        Me.HammadBtn.Size = New System.Drawing.Size(185, 20)
+        Me.HammadBtn.Size = New System.Drawing.Size(209, 20)
         Me.HammadBtn.TabIndex = 28
-        Me.HammadBtn.Text = "Hammad Mode (Unstable)"
+        Me.HammadBtn.Text = "'Hammad AI' Mode  (Unstable)"
         Me.HammadBtn.UseVisualStyleBackColor = True
         '
         'FixedSearchBtn
@@ -481,16 +481,16 @@ Partial Class Settings
         Me.FixedSearchBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.FixedSearchBtn.Location = New System.Drawing.Point(637, 286)
         Me.FixedSearchBtn.Name = "FixedSearchBtn"
-        Me.FixedSearchBtn.Size = New System.Drawing.Size(196, 20)
+        Me.FixedSearchBtn.Size = New System.Drawing.Size(195, 20)
         Me.FixedSearchBtn.TabIndex = 28
-        Me.FixedSearchBtn.Text = "Fixed AI Search?          Depth:"
+        Me.FixedSearchBtn.Text = "Fixed AI Search:           Depth:"
         Me.FixedSearchBtn.UseVisualStyleBackColor = True
         '
         'FixedSearchBox
         '
         Me.FixedSearchBox.Enabled = False
         Me.FixedSearchBox.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.FixedSearchBox.Location = New System.Drawing.Point(828, 285)
+        Me.FixedSearchBox.Location = New System.Drawing.Point(829, 285)
         Me.FixedSearchBox.Name = "FixedSearchBox"
         Me.FixedSearchBox.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.FixedSearchBox.Size = New System.Drawing.Size(35, 22)
@@ -504,9 +504,9 @@ Partial Class Settings
         Me.TouchMoveBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.TouchMoveBtn.Location = New System.Drawing.Point(637, 218)
         Me.TouchMoveBtn.Name = "TouchMoveBtn"
-        Me.TouchMoveBtn.Size = New System.Drawing.Size(108, 20)
+        Me.TouchMoveBtn.Size = New System.Drawing.Size(132, 20)
         Me.TouchMoveBtn.TabIndex = 28
-        Me.TouchMoveBtn.Text = "Touch Move?"
+        Me.TouchMoveBtn.Text = "Touch Move Rule"
         Me.TouchMoveBtn.UseVisualStyleBackColor = True
         '
         'OpeningBookBtn
@@ -515,9 +515,9 @@ Partial Class Settings
         Me.OpeningBookBtn.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.OpeningBookBtn.Location = New System.Drawing.Point(637, 116)
         Me.OpeningBookBtn.Name = "OpeningBookBtn"
-        Me.OpeningBookBtn.Size = New System.Drawing.Size(182, 20)
+        Me.OpeningBookBtn.Size = New System.Drawing.Size(216, 20)
         Me.OpeningBookBtn.TabIndex = 28
-        Me.OpeningBookBtn.Text = "Use Larger Opening Book"
+        Me.OpeningBookBtn.Text = "Use Small Book  (Faster Loads)"
         Me.OpeningBookBtn.UseVisualStyleBackColor = True
         '
         'Settings
