@@ -2,6 +2,7 @@
 'my AI class (either via instavintiation or by inheritance). It will contain the algorithms that will be used by both my Chess
 '& AI classes, such as the ‘TFTable’ Generator, ‘DoesMoveResolveCheck’, 'Move Converters', and others.
 Imports System.Data.OleDb
+Imports System.Xml.XPath
 
 Partial Public Class CoreMethods
     'TrueTables are just TrueFalse Tables containing only the letter T. Very useful for resetting TrueFalse Tables
@@ -18,12 +19,12 @@ Partial Public Class CoreMethods
         'Sets PieceValues variables using a Hash Function (Upper Case letter --> ASCII, then MOD 11). This
         'creates a unique index / row in the PieceValue array for each piece and its corresponding weight,
         'so its value can be searched up quickly. PieceValue(Asc(UCase(Board(x, y))) Mod 11)
-        PieceValue(0) = 300 'Bishop Weight
-        PieceValue(1) = 300 'Knight Weight
-        PieceValue(3) = 100 'Pawn Weight
-        PieceValue(4) = 900 'Queen Weight
-        PieceValue(5) = 500 'Rook Weight
-        PieceValue(9) = 0 'King Weight
+        PieceValue(0) = GlobalConstants.PieceWeight.Bishop * 100 'Bishop Weight
+        PieceValue(1) = GlobalConstants.PieceWeight.Knight * 100 'Knight Weight
+        PieceValue(3) = GlobalConstants.PieceWeight.Pawn * 100 'Pawn Weight
+        PieceValue(4) = GlobalConstants.PieceWeight.Queen * 100 'Queen Weight
+        PieceValue(5) = GlobalConstants.PieceWeight.Rook * 100 'Rook Weight
+        PieceValue(9) = GlobalConstants.PieceWeight.King * 100 'King Weight
 
         'Creates MasterTrueTable and TrueTable.
         For x As Byte = 0 To 7
@@ -108,7 +109,7 @@ Partial Public Class CoreMethods
                     'Checks for pawns incorrectly placed on the 1st or 8th rank. If we detect any, then we provoke an
                     'intentional crash, which our encapsulating Try-Catch detects and promptly reverses.
                     For m As Byte = 0 To 7
-                        If UCase(tempArray(m, 0)) = "P" OrElse UCase(tempArray(m, 7)) = "P" Then FEN = ""
+                        If UCase(tempArray(m, 0)) = "P" OrElse UCase(tempArray(m, 7)) = "P" Then Throw New Exception("Invalid Pawn Placements.")
                     Next
                     ' Once the SPACE has been reached In the FEN, we know that we have read the entire board. We can then move onto
                     ' info about castling, who's turn it is, En Passant And more.
@@ -132,6 +133,7 @@ Partial Public Class CoreMethods
                         ElseIf FEN(m) >= "a" AndAlso FEN(m) <= "h" Then
                             'converts the a-h coordinate To the more computer-friendly index from 0-7 (eg: h3 --> 75)
                             EnPassant = PGNtoCoorConverter(FEN.Substring(m, 2))
+                            If Not CheckEnPassantSquareIsLegal(tempArray, EnPassant, IsWhite) Then Throw New Exception("Invalid En-Passant Square.")
                         End If
                     Next
                     Exit For
@@ -190,6 +192,25 @@ Partial Public Class CoreMethods
         End If
         Return ConvertToFEN
     End Function
+
+
+
+    'Function which chcecks if the EnPassant square (given by a FEN) is valid on the board.
+    Public Function CheckEnPassantSquareIsLegal(ByVal Board(,) As Char, ByVal EnPassant As String, ByVal isWhite As Boolean) As Boolean
+        If EnPassant = "-" OrElse EnPassant = Nothing Then Return True
+        Dim XCoor As SByte = Val(EnPassant(0))
+        Dim YCoor As SByte = Val(EnPassant(1))
+        'Checks that the row is correct, and that there is an enemy pawn behind the square.
+        If isWhite AndAlso YCoor = 2 AndAlso Board(XCoor, YCoor + 1) = "p" Then
+            'Checks that there is a friendly pawn next to that enemy pawn.
+            Return (Board(XCoor + 1, YCoor + 1) = "P" OrElse Board(XCoor - 1, YCoor + 1) = "P")
+        ElseIf Not isWhite AndAlso YCoor = 5 AndAlso Board(XCoor, YCoor - 1) = "P" Then
+            'Similar code for black en-passant.
+            Return (Board(XCoor + 1, YCoor - 1) = "p" OrElse Board(XCoor - 1, YCoor - 1) = "p")
+        End If
+        Return False
+    End Function
+
 
 
     'Subroutine which outputs a given board to the console.
@@ -275,11 +296,18 @@ Partial Public Class CoreMethods
         TempMove.OldMoveY = (BitMove And 448) >> 6
         TempMove.NewMoveX = (BitMove And 56) >> 3
         TempMove.NewMoveY = BitMove And 7
+        If (BitMove And 28672) = 4096 Then
+            TempMove.EndState = "Q"
+        ElseIf (BitMove And 28672) = 28672 Then
+            TempMove.EndState = "N"
+        Else
+            TempMove.EndState = "f"
+        End If
     End Sub
 
     'Function which converts a string coordinate (eg: "54") to its BitMove counterpart (eg: "00101100")
     Public Function ConvertStringToBitCoor(ByVal MoveString As String) As Byte
-        If MoveString = "-" Then Return 0 'For blank En-Passant.
+        If MoveString = "-" OrElse MoveString = Nothing Then Return 0 'For blank En-Passant.
         Return (Val(MoveString(0)) << 3) Or Val(MoveString(1))
     End Function
 
@@ -289,7 +317,7 @@ Partial Public Class CoreMethods
     'This is done by generating all the legal moves of the pieces that could influence the enemy king's motion.
     'This creates a 'field' around the king (stating where its legal moves are), along with creating pinned pieces
     'and checks.
-    Public Sub FixTFTables(ByVal Board(,) As Char, ByVal FixWhite As Boolean, ByRef TrueFalseTable(,) As Char, ByRef KPos As Byte, ByRef InCheck As Byte, ByVal EnPassant As Byte)
+    Public Sub FixTFTables(ByRef Board(,) As Char, ByVal FixWhite As Boolean, ByRef TrueFalseTable(,) As Char, ByRef KPos As Byte, ByRef InCheck As Byte, ByVal EnPassant As Byte)
         Dim dx, dy As SByte
         'Resets TFTables.
         Array.Copy(MasterTrueTable, TrueFalseTable, 64)
@@ -378,8 +406,8 @@ Partial Public Class CoreMethods
 
     'Function which counts up all the material (and their values) on the board. Stores this information in two
     'variables - one for white's total material count, and the other for black's total material count.
-    Public Function CountMaterial(ByVal Board(,) As Char) As Int16()
-        Dim MaterialCount(1) As Int16
+    Public Function CountMaterial(ByVal Board(,) As Char) As UInt16()
+        Dim MaterialCount(1) As UInt16
         For y As Byte = 0 To 7
             For x As Byte = 0 To 7
                 If Board(x, y) <> " " Then
@@ -453,7 +481,7 @@ Partial Public Class CoreMethods
                 MoveConverter &= 8 - TempMove.NewMoveY
             End If
             'Code for pawn promotions.
-            If MovedPiece = "P" AndAlso (TempMove.NewMoveY = 0 OrElse TempMove.NewMoveY = 7) Then MoveConverter &= "=Q"
+            If MovedPiece = "P" AndAlso (TempMove.NewMoveY = 0 OrElse TempMove.NewMoveY = 7) Then MoveConverter &= "=" & TempMove.EndState
 
             If KPos < 255 Then
                 'Once the move has been generated, run it through ConvertToMove, to see if the move can be interpreted in multiple ways.
@@ -461,7 +489,7 @@ Partial Public Class CoreMethods
                 Dim TestMove As New Move
                 Dim TestPGN As String = MoveConverter
                 TestMove = ConvertToMove(TestPGN, Board, isWhite, KPos, TFTable)
-                Do Until TestMove.EndState = "o"
+                Do Until TestMove.EndState = "o" OrElse TestMove.EndState = "Q" OrElse TestMove.EndState = "N"
                     If TestMove.EndState = "a" Then
                         'Invalid Move - return error state.
                         Return "ERROR"
@@ -470,14 +498,14 @@ Partial Public Class CoreMethods
                         Select Case TestPGN.Length
                             Case MoveConverter.Length
                                 'Add column constraint.
-                                TestPGN = TestPGN.Insert(1, Chr(Val(TestMove.OldMoveX) + 97))
+                                TestPGN = TestPGN.Insert(1, Chr(Val(TempMove.OldMoveX) + 97))
                             Case MoveConverter.Length + 1
                                 If Char.IsLetter(TestPGN(1)) Then
                                     'Add row constraint to replace column constraint.
-                                    TestPGN = TestPGN(0) & (8 - Val(TestMove.OldMoveY)) & TestPGN.Substring(2)
+                                    TestPGN = TestPGN(0) & (8 - Val(TempMove.OldMoveY)) & TestPGN.Substring(2)
                                 Else
                                     'Add column constraint to row constraint.
-                                    TestPGN = TestPGN.Insert(1, Chr(Val(TestMove.OldMoveX) + 97))
+                                    TestPGN = TestPGN.Insert(1, Chr(Val(TempMove.OldMoveX) + 97))
                                 End If
                             Case Else
                                 'No more constraints can be added. Return collision error.
@@ -488,9 +516,9 @@ Partial Public Class CoreMethods
                 Loop
                 MoveConverter = TestPGN
 
-            End If
-        Else
-            Return "ERROR"
+                End If
+            Else
+                Return "ERROR"
         End If
     End Function
 
@@ -499,13 +527,17 @@ Partial Public Class CoreMethods
     Public Function ConvertToMove(ByVal InputMove As String, ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal KPos As Byte, ByVal TFTable(,) As Char) As Move
         'Removes extra data from move (that is not useful to my system, ie: checks & pawn promotion tags).
         InputMove = InputMove.TrimEnd(CChar("+"))
-        If InputMove(InputMove.Length - 2) = "=" Then InputMove = InputMove.Substring(0, InputMove.Length - 2)
         Dim ResultMove As New Move
+        ResultMove.EndState = "o"
+        If InputMove(InputMove.Length - 2) = "=" Then
+            ResultMove.EndState = InputMove(InputMove.Length - 1) 'Sets promotion piece.
+            InputMove = InputMove.Substring(0, InputMove.Length - 2)
+        End If
         'Sets end position to the last 2 characters of the move.
         Dim TempEndPosition As String = PGNtoCoorConverter(InputMove.Substring(InputMove.Length - 2, 2))
         ResultMove.NewMoveX = TempEndPosition(0)
         ResultMove.NewMoveY = TempEndPosition(1)
-        ResultMove.EndState = "o"
+
         Select Case InputMove(0)
             Case "B", "N", "R", "Q"
                 'Constraint is used to specify which piece should move to the square (if there are multiple to choose from).

@@ -97,6 +97,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AI.vb" />
+    <Compile Include="Chess_AIHandles.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Chess_Displaying.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Chess_DragDropMechanics.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Chess_GUIObjects.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -141,7 +150,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="PieceHeatSqaures.vb" />
+    <Compile Include="AILookupTables.vb" />
     <Compile Include="PieceLegalMoveGenerators.vb" />
     <Compile Include="Settings.Designer.vb">
       <DependentUpon>Settings.vb</DependentUpon>

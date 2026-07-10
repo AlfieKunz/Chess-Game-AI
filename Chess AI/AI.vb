@@ -1,14 +1,12 @@
-﻿'This class contains my Chess AI, which involves the MiniMax algorithm with Alpha-Beta Pruning.
+﻿'This class contains my Chess AI, which is built using the MiniMax algorithm with Alpha-Beta Pruning.
 'This class is modular from my Chess class - being constructed only from the FEN position, and only returning a Move (see the structure below).
 'Some other interacting is done, however, such as allowing the AI to be remotely aborted.
 Imports System.IO
 Imports System.Runtime
 Imports System.Text
 
-Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
+Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     Inherits CoreMethods
-    Private PieceHeatMap As New PieceHeatSqaures() 'Calls & Constructs PieceHeatMaps - producing a hashed array containing the
-    '"ideal" locations for each piece on the board (used to evaluate a board position).
 
     Private HasBeenInstantiated As Boolean 'The AI will not perform methods if it has not been fully instantiated with a FEN.
     'Below are the details that the AI requires for a search. Please see their counterparts in the Chess form for their info.
@@ -23,7 +21,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     'The above three attributes are represented as a set of bits, where the three LSBs refer to the Y coordinate
     'of the king / square, and the next three bits refer to the X coordinate of the king / square.
 
-    Private PrimaryMaterialCount(1) As Int16
+    Private PrimaryMaterialCount(1) As UInt16
     Private PlayerTurn As Boolean
     Private BaseZobristValue As UInt64 'Represents the Zorbist Hash Key of the position to be searched on.
 
@@ -34,8 +32,8 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     'C = Capture Flag.
     '
     'F = Other Flags: (Mask = 28672)
-    '000 = No Flag     001 = Pawn Promotion (Mask = 4096)     010 = Pawn Double Push (Mask = 8192)     011 = En-Passant Capture (Mask = 12288)
-    '100 = Castle Flag (Mask = 16384)     101 = KS Castle Flag (Mask = 20480)     110 = QS Castle Flag (Mask = 24576)     111 = Unused.
+    '000 = No Flag     001 = Queen Promotion (Mask = 4096)     010 = Pawn Double Push (Mask = 8192)     011 = En-Passant Capture (Mask = 12288)
+    '100 = Castle Flag (Mask = 16384)     101 = KS Castle Flag (Mask = 20480)     110 = QS Castle Flag (Mask = 24576)     111 = Knight Promotion Flag (Mask = 28672).
     '
     'X = Start X Coordinate (0-7)  -  Mask = 3584, Shift of 9.
     'Y = Start Y Coordinate (0-7)  -  Mask = 448, Shift of 6.
@@ -45,37 +43,37 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
 
     Private SearchSettings As New AISearchSettings 'Settings of the current search.
-    Private TotalPositionsSearched, TranspositionsFound, CheckmatesFound As UInt32 'Numbers showing the stats of the current search.
-    Private LifetimePositions, LifetimeTranspositions, LifetimeCheckmates As UInt32 'Numbers showing the lifetime stats of the AI (persists
+    Private TotalPositionsSearched, TranspositionsFound, WinsFound As UInt32 'Numbers showing the stats of the current search.
+    Private LifetimePositions, LifetimeTranspositions, LifetimeCheckmates As UInt64 'Numbers showing the lifetime stats of the AI (persists
     'across multiple boot-ups).
     Private HighestQuiescenceDepth, HighestSuccessfulQuiescenceDepth As SByte 'Shows the maximum reached depth of a search that has not been ABORTed.
     Private NodeCount, EndPositionCount, PositionCollisions As UInt64 'Variables containing the stats of a Node Search.
     'NodeCount = Total number of positions searched. EndPositionCount = Total Number of Leaf Nodes searched. PositionCollisions = Number of Positions evaluated multiple times.
 
-
     Private ABORT As Boolean 'Controlled by the thread handlers - an AI is aborted if another AI has
     'found a mating pattern, or if the AI has ran out of time. If ABORT is set to True, then the AI finishes its search ASAP.
     Private MasterDepth As SByte 'The Surface Depth of the search, as set by the user.
+
 
     Private KillerMoves(255, 1) As UInt16 'Array containing Killer Moves: non-capture moves which caused an alpha-beta cut off.
     'If we detect killer moves in sibling positions (ie: positions of the same depth), we search the Killer Move(s) first.
 
     'Arrays that the CreateMoves function uses (delared before to save processing time in the search process).
-    Private AmazingCaptureMoves(19) As UInt16 'Min size = 19
-    Private CaptureMoves(19) As UInt16 'Min size = 19
-    Private OtherCaptureMoves(19) As UInt16 'Min size = 19
-    Private PawnPromotionMoves(7) As UInt16 'Min size = 7
+    Private AmazingCaptureMoves(39) As UInt16 'Min size = 19
+    Private CaptureMoves(39) As UInt16 'Min size = 19
+    Private OtherCaptureMoves(39) As UInt16 'Min size = 19
+    Private PawnPromotionMoves(15) As UInt16 'Min size = 7
     Private GoodMoves(99) As UInt16 'Min size = 49
     Private OtherMoves(99) As UInt16 'Min size = 99
-    Private BadMoves(49) As UInt16 'Min size = 49
-    Private TerribleMoves(49) As UInt16 'Min size = 49
+    Private BadMoves(74) As UInt16 'Min size = 49
+    Private TerribleMoves(74) As UInt16 'Min size = 49
+
 
     'Structures for the TranspositionTable - a large table containing the basic details of a position - stored via their Zobrist Hash.
     'Stored as a hashed array so that the overall size of the Table can be reduced (would need to be 2^64 elements large otherwise).
     'This structure uses the 'Greatest Depth' replacement scheme, where each entry is timestamped for 3 moves.
-    Private Const TranspositionTableSize As Byte = 64 - ((23)) 'Constant referring to how large the TranspositionTable object is.
     'Table will contain 2^n entries, where n is the value set in TranspositionTableSize (in the brackets).
-    Private TranspositionTable(2 ^ (64 - TranspositionTableSize) - 1) As TTEntry
+    Private TranspositionTable(2 ^ (64 - GlobalConstants.TranspositionTableSize) - 1) As TTEntry
     Private TTIsEmpty As Boolean
 
 
@@ -95,11 +93,13 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
     'Constructor method.
     Public Sub New(ByVal FEN As String)
+        PieceHeatMap = GeneratePieceHeatSquares()
+        PopulateEndgameEvalLookupTable()
         'Configures the AI using a given FEN.
         Reconfigure(FEN, True)
         'Loads the Lifetime stats file, and stores the results into their appropriate variables.
         Try
-            Using SR As New StreamReader(Application.StartupPath & "\Assets\AIStats.txt", Encoding.UTF8, True)
+            Using SR As New StreamReader(Application.StartupPath & "\Assets\User\AIStats.txt", Encoding.UTF8, True)
                 LifetimePositions = SR.ReadLine()
                 LifetimeTranspositions = SR.ReadLine()
                 LifetimeCheckmates = SR.ReadLine()
@@ -206,6 +206,8 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         HasBeenInstantiated = True
     End Sub
 
+
+
     'Subroutines which handle the Transposition Table. This involves resetting the table for a new position,
     'clearing its memory for a garbage collection, and incrementing / decrementing the TimeToLive attribute
     'on each of the nodes in the Transposition Table.
@@ -226,17 +228,22 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     Public Sub IncrementTTTimeToLive()
         If Not TTIsEmpty Then
             For n As UInt32 = 0 To TranspositionTable.Length - 1
-                If TranspositionTable(n).Flag <> 4 Then TranspositionTable(n).TimeToLive = Math.Min(TranspositionTable(n).TimeToLive + 1, 255)
+                If TranspositionTable(n).Flag <> 4 AndAlso TranspositionTable(n).TimeToLive < 255 Then
+                    TranspositionTable(n).TimeToLive += 1
+                End If
             Next
         End If
     End Sub
     Public Sub DecrementTTTimeToLive()
         If Not TTIsEmpty Then
             For n As UInt32 = 0 To TranspositionTable.Length - 1
-                If TranspositionTable(n).Flag <> 4 Then TranspositionTable(n).TimeToLive = Math.Max(TranspositionTable(n).TimeToLive - 1, 0)
+                If TranspositionTable(n).Flag <> 4 AndAlso TranspositionTable(n).TimeToLive > 0 Then
+                    TranspositionTable(n).TimeToLive -= 1
+                End If
             Next
         End If
     End Sub
+
 
 
     'Subroutines that adds / removes the Board History to / from the Transposition Table, so that MiniMax can flag these positions
@@ -254,7 +261,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             For n As UInt16 = 0 To BoardHistory.Length - 1
                 'Hashes Zobrist key to find the location of the Entry in the Table.
                 TempTTEntry.Key = BoardHistory(n)
-                TranspositionTable(BoardHistory(n) >> TranspositionTableSize) = TempTTEntry
+                TranspositionTable(BoardHistory(n) >> GlobalConstants.TranspositionTableSize) = TempTTEntry
             Next
         End If
     End Sub
@@ -264,13 +271,15 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             'Finds, then removes each position to the Transposition Table.
             For n As UInt16 = 0 To BoardHistory.Length - 1
                 'Hashes Zobrist key to find the location of the Entry in the Table.
-                EntryInTT = BoardHistory(n) >> TranspositionTableSize
+                EntryInTT = BoardHistory(n) >> GlobalConstants.TranspositionTableSize
                 If TranspositionTable(EntryInTT).Key = BoardHistory(n) Then
                     TranspositionTable(EntryInTT) = New TTEntry
                 End If
             Next
         End If
     End Sub
+
+
 
     'Subroutine which copies a parameter's settings to the AI's SearchSettings.
     Public Sub ConfigureSettings(ByVal UserSearchSettings As AISearchSettings, ByVal ResetTTIfSettingsChanged As Boolean)
@@ -295,6 +304,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     End Function
 
 
+
     'Setter & Getter Functions for the ABORT attribute.
     Public Sub ABORTSearch()
         ABORT = True
@@ -302,6 +312,8 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     Public Function GetABORTState() As Boolean
         Return ABORT
     End Function
+
+
 
 
     'Algorithm that finds the AI's 'Best Move' for a given position, using the MiniMax algorithm.
@@ -321,13 +333,14 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             TTIsEmpty = False
             TotalPositionsSearched = 0
             TranspositionsFound = 0
-            CheckmatesFound = 0
+            WinsFound = 0
             HighestQuiescenceDepth = 1
+
 
             'Creates temp variables.
             MasterDepth = Depth
             Dim TempBoard(7, 7) As Char
-            Dim TempMaterialCount(1) As Int16
+            Dim TempMaterialCount(1) As UInt16
             Dim TempMeKPos As Byte
             Dim TempMeCanCastle As New CanCastle
             Dim TempZobristValue As UInt64
@@ -442,7 +455,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 End If
                 If Not ABORT Then Return BestMove
             ElseIf SearchSettings.OutputToConsole Then
-                If Math.Abs(BestMove.Score) >= 295 Then
+                If Math.Abs(BestMove.Score) > 295 Then
                     'Calibrates checkmate score.
                     If BestMove.Score > 0 Then
                         BestMove.Score -= 0.01
@@ -457,10 +470,10 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 If ABORT Then Console.Write(" Incomplete. Predicted ") Else Console.Write(" Completed. ")
                 OutputMoveInfo(BestMove) 'Outputs the diagnostics for the current search.
 
-                If SearchSettings.OutputPath Then Console.WriteLine("Path = " & GenerateBestMoveLine(BestBitMove)) 'Generates the path of 'best moves' leading from this position.
+                If SearchSettings.OutputPath Then Console.WriteLine("Path = " & GenerateBestMoveLine(BestBitMove, Math.Abs(BestMove.Score) >= 295)) 'Generates the path of 'best moves' leading from this position.
             End If
 
-            If SearchSettings.OutputToConsole Then Console.WriteLine("Positions searched = " & TotalPositionsSearched.ToString("N0") & vbCrLf & "Transpositions Found: " & TranspositionsFound.ToString("N0") & vbCrLf & "Checkmates Found: " & CheckmatesFound.ToString("N0") & vbCr)
+            If SearchSettings.OutputToConsole Then Console.WriteLine("Positions Searched: " & TotalPositionsSearched.ToString("N0") & vbCrLf & "Transposition Hits: " & TranspositionsFound.ToString("N0") & vbCrLf & "Win Sequence Count: " & WinsFound.ToString("N0") & vbCr)
 
             If SearchSettings.UpdateLifetimeStats Then
                 'Increments lifetime stats.
@@ -483,17 +496,24 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         Dim LocationInMoves As Byte
         If (BasePieceMoves(0) And 4095) <> TempMove Then
             'Finds the location of PreviousBestMove in BasePieceMoves.
+            Dim MoveFound As Boolean
             For n As Byte = 1 To BasePieceMoves.Length - 1
                 If (BasePieceMoves(n) And 4095) = TempMove Then
+                    If PreviousBestMove.EndState = "Q" Then
+                        If (BasePieceMoves(n) And 28672) = 4096 Then MoveFound = True
+                    ElseIf PreviousBestMove.EndState = "N" Then
+                        If (BasePieceMoves(n) And 28672) = 28672 Then MoveFound = True
+                    Else
+                        MoveFound = True
+                    End If
+                End If
+
+                If MoveFound Then
                     LocationInMoves = n
                     Exit For
                 End If
             Next
-            If LocationInMoves = 0 Then
-                Console.ForegroundColor = ConsoleColor.Red
-                Console.WriteLine("Unable to find Input Move in the current position - performing search as normal...")
-                Console.ResetColor()
-            Else
+            If MoveFound Then
                 'Shifts all BasePieceMoves variables one index down, then adds PreviousBestMove to the start of the array.
                 Dim BestMove As UInt16 = BasePieceMoves(LocationInMoves)
                 If SearchSettings.ReturnBestMove Then
@@ -504,6 +524,10 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                     Array.Copy(BasePieceMoves, LocationInMoves + 1, BasePieceMoves, LocationInMoves, BasePieceMoves.Length - LocationInMoves - 1)
                     BasePieceMoves(BasePieceMoves.Length - 1) = BestMove
                 End If
+            Else
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine("Unable to find Input Move in the current position - performing search as normal...")
+                Console.ResetColor()
             End If
         End If
         'Performs the search as normal.
@@ -523,11 +547,12 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         Return TestSearchMove
     End Function
 
+
+
+
     Public Sub EnableMoveDebugInfo()
         SearchSettings.OutputMoveDebugInfo = True
     End Sub
-
-
 
     Public Function GetHighestQuiescenceDepth() As Byte
         Return HighestSuccessfulQuiescenceDepth
@@ -535,22 +560,27 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
     'Subroutine that returns the diagnostics of the current search.
     Private Sub OutputMoveInfo(ByVal BestMove As Move)
-        Console.Write("Move = " & MoveConverter(PrimaryBoard, BestMove, PlayerTurn, PrimaryMeKPos, PrimaryEnPassant, PrimaryTFTable) & ", with Evaluation = ")
+        Console.Write("Move = " & MoveConverter(PrimaryBoard, BestMove, PlayerTurn, PrimaryMeKPos, PrimaryEnPassant, PrimaryTFTable))
+        If Math.Abs(BestMove.Score) = 299.99 Then Console.Write("#")
+        Console.Write(", with Evaluation: ")
         'Colours BestMove.Score depending on whether the AI thinks it is winning, drawing, or losing.
         If BestMove.Score = 0 Then
             Console.ForegroundColor = ConsoleColor.White
+            Console.Write("0.")
         ElseIf PlayerTurn Xor BestMove.Score < 0 Then
             Console.ForegroundColor = ConsoleColor.Green
+            Console.Write("+")
         Else
             Console.ForegroundColor = ConsoleColor.Red
+            Console.Write("-")
         End If
-        Console.WriteLine(BestMove.Score)
+        Console.WriteLine(Math.Abs(BestMove.Score))
         Console.ResetColor()
     End Sub
 
     'Function that generates the line containing the best sequence of moves, as found by the AI,
     'generated by following the TranspositionTable 'best move' trail.
-    Private Function GenerateBestMoveLine(ByVal BestMove As UInt16) As String
+    Private Function GenerateBestMoveLine(ByVal BestMove As UInt16, ByVal IsCheckmate As Boolean) As String
         Dim TempMove As New Move
         AddBitMoveToMove(TempMove, BestMove)
         Dim BestLine As String = MoveConverter(PrimaryBoard, TempMove, PrimaryEnPassant)
@@ -572,16 +602,19 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             TempWKPos = PrimaryEnemyKPos
             TempBKPos = PrimaryMeKPos
         End If
-        Dim TempMaterialCount(1) As Int16
+        Dim TempMaterialCount(1) As UInt16
+        TempMaterialCount(0) = UInt16.MaxValue \ 2
+        TempMaterialCount(1) = UInt16.MaxValue \ 2
         Dim TempEnPassant As Byte = PrimaryEnPassant
         Dim TempZobristValue As UInt64 = BaseZobristValue
 
 
         Dim TempTTEntry As TTEntry
         Dim EntryInTT As UInt32
+        Dim MaxIterations As Byte = 20
 
         'Caps the maximum amount of moves being displaced to prevent the system from getting stuck in a loop.
-        For i As Byte = 1 To 20
+        For i As Byte = 1 To MaxIterations
             'Makes the AI's calculated Best Move (from this position) on the temporary board.
             If isWhite Then
                 MakeMove(TempBoard, BestMove, TempWCanCastle, TempWKPos, TempMaterialCount, TempEnPassant, TempZobristValue)
@@ -590,7 +623,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             End If
 
             'Hashes the current position, then finds the TranspositionTable entry containing that move.
-            EntryInTT = TempZobristValue >> TranspositionTableSize
+            EntryInTT = TempZobristValue >> GlobalConstants.TranspositionTableSize
             If TranspositionTable(EntryInTT).Key = TempZobristValue Then
                 TempTTEntry = TranspositionTable(EntryInTT) 'Node is a match - assign to TempTTEntry.
             Else
@@ -602,7 +635,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 'As this node in the TranspositionTable is involved in the set of best moves (as predicted by the AI), we
                 'keep it alive by resetting its TimeToLive value. This ensures that the AI does not 'forget' its most vital
                 'nodes, due to them expiring.
-                TranspositionTable(EntryInTT).TimeToLive = Math.Max(TranspositionTable(EntryInTT).TimeToLive, 3)
+                TranspositionTable(EntryInTT).TimeToLive = Math.Max(TranspositionTable(EntryInTT).TimeToLive, 2)
                 'We have stored a move in this position - retrieve this move, then add the PGN version of it to BestLine.
                 BestMove = TempTTEntry.BestMove
                 AddBitMoveToMove(TempMove, BestMove)
@@ -613,22 +646,26 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 Exit For
             End If
 
-            If i = 20 Then BestLine &= ".." 'Move limit reached.
+            If i = MaxIterations Then
+                BestLine &= ".." 'Move limit reached.
+                If IsCheckmate Then BestLine &= "."
+            End If
         Next
 
+        If IsCheckmate Then BestLine &= "#"
         Return BestLine & "."
     End Function
 
 
+
     'Subroutine which outputs the lifetime stats of the AI to the AIStats file.
     Public Sub OutputStatsToFile()
-        Using SR As New StreamWriter(Application.StartupPath & "\Assets\AIStats.txt")
+        Using SR As New StreamWriter(Application.StartupPath & "\Assets\User\AIStats.txt")
             SR.WriteLine(LifetimePositions)
             SR.WriteLine(LifetimeTranspositions)
             SR.WriteLine(LifetimeCheckmates)
         End Using
     End Sub
-
 
     'Function which calculates how full the TranspositionTable is.
     Public Function GetPercentageTranspositionTableFilled() As Decimal
@@ -705,7 +742,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
     'Method which uses the NegaMax algorithm to calculate how many nodes / positions stem from the current position.
     'Used for testing the AI system.
-    Public Sub PerformNodeTestOnPosition(ByVal Depth As SByte, ByVal CalculateRepeatedLeafNodes As Boolean)
+    Public Sub PerformNodeTestOnPosition(ByVal Depth As SByte)
         Console.WriteLine()
         If HasBeenInstantiated AndAlso Depth > 0 Then
             ABORT = False
@@ -714,7 +751,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 ResetTranspositionTable()
 
                 'Resets the test statistics.
-                If CalculateRepeatedLeafNodes Then TTIsEmpty = False
+                If SearchSettings.NodeSearchCalculateRepetitions Then TTIsEmpty = False
                 NodeCount = 0
                 EndPositionCount = 0
                 PositionCollisions = 0
@@ -725,7 +762,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
                 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency 'Relaxes garbage collection during the NegaMax search.
                 NodeTestStopwatch.Start()
-                NodeTest(PrimaryBoard, Depth, PlayerTurn, PrimaryMeCanCastle, PrimaryEnemyCanCastle, PrimaryMeKPos, PrimaryEnemyKPos, PrimaryEnPassant, BaseZobristValue, CalculateRepeatedLeafNodes)
+                NodeTest(PrimaryBoard, Depth, PlayerTurn, PrimaryMeCanCastle, PrimaryEnemyCanCastle, PrimaryMeKPos, PrimaryEnemyKPos, PrimaryEnPassant, BaseZobristValue)
                 NodeTestStopwatch.Stop()
                 GCSettings.LatencyMode = GCLatencyMode.Interactive
 
@@ -734,9 +771,13 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                     Console.ForegroundColor = ConsoleColor.DarkGreen
                     Console.WriteLine("Node Test at a Depth of " & Depth & " Completed.     ")
                     Console.ResetColor()
-                    Console.WriteLine((NodeCount + EndPositionCount).ToString("N0") & " Nodes Searched in " & NodeTestStopwatch.Elapsed.TotalMilliseconds.ToString("N0") & "ms (" & Math.Round(NodeCount / NodeTestStopwatch.Elapsed.TotalMilliseconds, 1) & "k Nodes/s).")
+
+                    Dim NodesPerSecond As Decimal = (NodeCount + EndPositionCount) / NodeTestStopwatch.Elapsed.TotalMilliseconds
+                    Dim NodesPerSecondString = If(NodesPerSecond >= 1000, NodesPerSecond.ToString("N0"), Math.Round(NodesPerSecond, 1))
+                    Console.WriteLine((NodeCount + EndPositionCount).ToString("N0") & " Nodes Searched in " & NodeTestStopwatch.Elapsed.TotalMilliseconds.ToString("N0") & "ms (" & NodesPerSecondString & "k Nodes/s).")
+
                     Console.Write("Total Position Count = " & EndPositionCount.ToString("N0"))
-                    If CalculateRepeatedLeafNodes Then Console.WriteLine(" (" & (EndPositionCount - PositionCollisions).ToString("N0") & " Unique Positions).") Else Console.WriteLine(".")
+                    If SearchSettings.NodeSearchCalculateRepetitions Then Console.WriteLine(" (" & (EndPositionCount - PositionCollisions).ToString("N0") & " Unique Positions).") Else Console.WriteLine(".")
                 End If
             Else
                 'Depth is 1, or there are no legal moves in the position.
@@ -755,7 +796,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     End Sub
 
     'Subroutine which uses the NegaMax algorithm to calculate the total nodes in a given board position.
-    Private Sub NodeTest(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal MeCanCastle As CanCastle, ByVal EnemyCanCastle As CanCastle, ByVal MeKPos As Byte, ByVal EnemyKPos As Byte, ByVal EnPassant As Byte, ByVal ZobristValue As UInt64, ByRef CalculateRepeatedLeafNodes As Boolean)
+    Private Sub NodeTest(ByVal Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal MeCanCastle As CanCastle, ByVal EnemyCanCastle As CanCastle, ByVal MeKPos As Byte, ByVal EnemyKPos As Byte, ByVal EnPassant As Byte, ByVal ZobristValue As UInt64)
         If ABORT Then Exit Sub
         NodeCount += 1
         Dim MeInCheck As Byte
@@ -765,7 +806,6 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
         'Creates temporary vehicles.
         Dim TempBoard(7, 7), TFTable(7, 7) As Char
-        Dim TempMaterialCount(1) As Int16
         Dim TempMeKPos As Byte
         Dim TempMeCanCastle As New CanCastle
         Dim TempMeInCheck As Byte
@@ -810,13 +850,13 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                             TempMeCanCastle.CopyFrom(MeCanCastle)
 
                             'Makes the current move onto the temporary board.
-                            MakeMove(TempBoard, PieceMoves(n), TempMeCanCastle, TempMeKPos, TempMaterialCount, TempEnPassant, TempZobristValue)
+                            MakeMove(TempBoard, PieceMoves(n), TempMeCanCastle, TempMeKPos, {10000, 10000}, TempEnPassant, TempZobristValue)
 
                             If depth = 1 Then
                                 EndPositionCount += 1
-                                If CalculateRepeatedLeafNodes Then
+                                If SearchSettings.NodeSearchCalculateRepetitions Then
                                     'Leaf node reached - check if end position has already been encountered, using the Zobrist Hash of the position.
-                                    Dim EntryInTT As UInt32 = TempZobristValue >> TranspositionTableSize
+                                    Dim EntryInTT As UInt32 = TempZobristValue >> GlobalConstants.TranspositionTableSize
                                     If TranspositionTable(EntryInTT).Key = TempZobristValue Then
                                         PositionCollisions += 1
                                     Else
@@ -826,7 +866,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                                 End If
                             Else
                                 'Recursively calls the Node Count on this new position.
-                                NodeTest(TempBoard, depth - 1, Not isWhite, EnemyCanCastle, TempMeCanCastle, EnemyKPos, TempMeKPos, TempEnPassant, TempZobristValue, CalculateRepeatedLeafNodes)
+                                NodeTest(TempBoard, depth - 1, Not isWhite, EnemyCanCastle, TempMeCanCastle, EnemyKPos, TempMeKPos, TempEnPassant, TempZobristValue)
                                 'If depth = Test Then OutputBitMoveToConsole(PieceMoves(n)) : Console.WriteLine(" " & EndPositionCount - TempValue) : TempValue = EndPositionCount
                             End If
                         End If
@@ -853,8 +893,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
         'Variables that handle the KillerMoves array - first determines if the correct KillerMove index is empty.
         Dim PieceKillerOneFull As Boolean = KillerMoves(KillerDepth, 0) <> 0
         Dim PieceKillerTwoFull As Boolean = KillerMoves(KillerDepth, 1) <> 0
-        Dim KillerMoveOneCount As Byte
-        Dim KillerMoveTwoCount As Byte
+        Dim KillerMoveOneCount, KillerMoveTwoCount As Byte
 
 
         Dim PieceValueDif As Int16 'Difference in weight between the capturing piece, and the piece being captured.
@@ -1081,7 +1120,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
 
     'Subroutine that makes a move on the board, given coordinates. Includes castling (& rights), pawn promotion, and manipuation of ZobristValue.
-    Private Sub MakeMove(ByRef Board(,) As Char, ByVal Move As UInt16, ByRef CanCastle As CanCastle, ByRef KPos As Byte, ByRef MaterialCount() As Int16, ByRef EnPassant As Byte, ByRef ZobristValue As UInt64)
+    Private Sub MakeMove(ByRef Board(,) As Char, ByVal Move As UInt16, ByRef CanCastle As CanCastle, ByRef KPos As Byte, ByRef MaterialCount() As UInt16, ByRef EnPassant As Byte, ByRef ZobristValue As UInt64)
         Dim OldCoorX As SByte = (Move And 3584) >> 9
         Dim OldCoorY As SByte = (Move And 448) >> 6
         Dim NewCoorX As SByte = (Move And 56) >> 3
@@ -1105,9 +1144,12 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                     Board(NewCoorX, 3) = " "
                     ZobristValue = ZobristValue Xor ZobristHashTable(3, 1, NewCoorX, 3) 'Ammended for a capture of a pawn.
                     MaterialCount(1) -= ReturnPieceValue("P")
-                ElseIf (Move And 28672) = 4096 Then
+                ElseIf (Move And 28672) = 4096 Then 'Queen Promotion.
                     TempPiece = "Q"
                     MaterialCount(0) += ReturnPieceValue("Q") - ReturnPieceValue("P") '+ 9 for a new queen, - 1 for losing the pawn in the process.
+                ElseIf (Move And 28672) = 28672 Then 'Knight Promotion.
+                    TempPiece = "N"
+                    MaterialCount(0) += ReturnPieceValue("N") - ReturnPieceValue("P") '+ 3 for a new knight, - 1 for losing the pawn in the process.
                 End If
                 'If piece is a Rook, part of Castling is disabled (depending on which Rook has moved).
             ElseIf TempPiece = "R" AndAlso CanCastle.CanICastle Then
@@ -1163,6 +1205,9 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 ElseIf (Move And 28672) = 4096 Then
                     TempPiece = "q"
                     MaterialCount(1) += ReturnPieceValue("Q") - ReturnPieceValue("P")
+                ElseIf (Move And 28672) = 28672 Then
+                    TempPiece = "n"
+                    MaterialCount(1) += ReturnPieceValue("N") - ReturnPieceValue("P")
                 End If
             ElseIf TempPiece = "r" AndAlso CanCastle.CanICastle Then
                 If CanCastle.KS AndAlso OldCoorX = 7 AndAlso OldCoorY = 0 Then
@@ -1225,7 +1270,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
 
     'This function contains my MiniMax algorithm using Alpha-Beta Pruning, Transpotition Tables, and Quiescence (optional).
-    Private Function MiniMax(ByRef Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As Byte, ByVal BKPos As Byte, ByVal EnPassant As Byte, ByVal MaterialCount() As Int16, ByVal ZobristValue As UInt64, ByVal Alpha As Int16, ByVal Beta As Int16) As Int16
+    Private Function MiniMax(ByRef Board(,) As Char, ByVal depth As SByte, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal WKPos As Byte, ByVal BKPos As Byte, ByVal EnPassant As Byte, ByVal MaterialCount() As UInt16, ByVal ZobristValue As UInt64, ByVal Alpha As Int16, ByVal Beta As Int16) As Int16
         If ABORT Then Return 0
         TotalPositionsSearched += 1
         HighestQuiescenceDepth = Math.Min(HighestQuiescenceDepth, depth)
@@ -1235,7 +1280,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
 
         Dim TempTTEntry As TTEntry
         'Hashes Zobrist key to find the location of the Entry in the Table.
-        Dim EntryInTT As UInt32 = ZobristValue >> TranspositionTableSize
+        Dim EntryInTT As UInt32 = ZobristValue >> GlobalConstants.TranspositionTableSize
         Dim OldFlag As Byte
         Dim ReplaceTTNode As Boolean
 
@@ -1246,7 +1291,10 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             'Code for exiting the MiniMax branch early if it can successfully retrieve a correct score from that entry in TT.
             'Note that the depth of the stored position must be greater than that of the current position, as otherwise the
             'evalutation of the stored entry will be less accurate than performing the search.
-            If TempTTEntry.Flag = 5 Then CheckmatesFound += 1 : Return TempTTEntry.Score 'Position has already been calculated as an end-state - return this position.
+            If TempTTEntry.Flag = 5 Then 'Position has already been calculated as an end-state - return this position.
+                If (PlayerTurn AndAlso TempTTEntry.Score >= 29500) OrElse (Not PlayerTurn AndAlso TempTTEntry.Score <= -29500) Then WinsFound += 1
+                Return TempTTEntry.Score
+            End If
             If TempTTEntry.Depth >= depth Then
                 Select Case TempTTEntry.Flag
                     Case 4
@@ -1307,7 +1355,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             If PieceMoves IsNot Nothing Then 'If any move exists...
                 'Creates temp variables.
                 Dim TempBoard(7, 7) As Char
-                Dim TempMaterialCount(1) As Int16
+                Dim TempMaterialCount(1) As UInt16
                 Dim TempWKPos As Byte
                 Dim TempWCanCastle As New CanCastle
                 Dim TempPlayerInCheck As Byte
@@ -1430,7 +1478,7 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
             Dim PieceMoves() As UInt16 = CreateMoves(Board, False, MiniMaxTFTable, WKPos, PlayerInCheck, BCanCastle, EnPassant, Not (depth > 0 OrElse PlayerInCheck >= 128), MasterDepth - depth, TempTTEntry.BestMove)
             If PieceMoves IsNot Nothing Then
                 Dim TempBoard(7, 7) As Char
-                Dim TempMaterialCount(1) As Int16
+                Dim TempMaterialCount(1) As UInt16
                 Dim TempBKPos As Byte
                 Dim TempBCanCastle As New CanCastle
                 Dim TempPlayerInCheck As Byte
@@ -1513,8 +1561,13 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
                 'No legal move found for the player.
                 If PlayerInCheck >= 128 Then
                     'Checkmate!
-                    If isWhite Then BestMove = -30000 Else BestMove = 30000
-                    CheckmatesFound += 1
+                    If isWhite Then
+                        BestMove = -30000
+                        If Not PlayerTurn Then WinsFound += 1
+                    Else
+                        BestMove = 30000
+                        If PlayerTurn Then WinsFound += 1
+                    End If
                 Else 'Stalemate: return 0.
                     BestMove = 0
                 End If
@@ -1542,47 +1595,44 @@ Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know).
     'This algorithm is used to condense a board position into an evaluation score, used to determine best moves.
     'We take into account the difference in material between the two sides, along with a heuristic to help
     'the AI find checkmated in simple endgame positions.
-    Private Function Evaluate(ByRef Board(,) As Char, ByVal MaterialCount() As Int16, ByVal WKPos As Byte, ByVal BKPos As Byte) As Int16
+    Private Function Evaluate(ByRef Board(,) As Char, ByVal MaterialCount() As UInt16, ByVal WKPos As Byte, ByVal BKPos As Byte) As Int16
         'Finds difference in material between both sides.
-        Dim Score As Int16 = MaterialCount(0) - MaterialCount(1)
+        Dim Score As Int32 = MaterialCount(0)
+        Score -= MaterialCount(1)
 
         If SearchSettings.UsePieceHeatMaps Then
             'If the opponent has a lot of material, then score positions where the player's king is safe as being more advantageous.
-            If MaterialCount(1) >= 1500 Then Score += PieceHeatMap.HeatSqaures(9, WKPos And 7, (WKPos And 56) >> 3)
-            If MaterialCount(0) >= 1500 Then Score -= PieceHeatMap.HeatSqaures(9, 7 - (BKPos And 7), (BKPos And 56) >> 3)
+            If MaterialCount(1) >= 1500 Then Score += PieceHeatMap(9, WKPos And 7, (WKPos And 56) >> 3)
+            If MaterialCount(0) >= 1500 Then Score -= PieceHeatMap(9, 7 - (BKPos And 7), (BKPos And 56) >> 3)
 
             'For each piece on the board, calculate how advantageously it is placed (using the PieceHeatSquares). Add this to the score.
             For y As Byte = 0 To 7
                 For x As Byte = 0 To 7
                     If Not (Board(x, y) = " " OrElse UCase(Board(x, y)) = "K") Then
                         If Char.IsUpper(Board(x, y)) Then
-                            Score += PieceHeatMap.HeatSqaures(Asc(Board(x, y)) Mod 11, y, x)
+                            Score += PieceHeatMap(Asc(Board(x, y)) Mod 11, y, x)
                         Else
-                            Score -= PieceHeatMap.HeatSqaures((Asc(Board(x, y)) + 1) Mod 11, 7 - y, x)
+                            Score -= PieceHeatMap((Asc(Board(x, y)) + 1) Mod 11, 7 - y, x)
                         End If
                     End If
                 Next
             Next
         End If
 
-        'If the opponent has little material left, we try to find positions where the opponent king is close to
-        'the edge / corner of the board, and where the kings are closer together. This can help find a checkmate.
-        If MaterialCount(0) <= 1200 OrElse MaterialCount(1) <= 1200 Then
-            'Finds distances between kings.
-            Dim KingDistance As Byte = Math.Max(Math.Abs(((WKPos And 56) >> 3) - ((BKPos And 56) >> 3)), Math.Abs((WKPos And 7) - (BKPos And 7)))
-            Dim KingCentreDistance As Byte
-            If MaterialCount(1) <= 1200 Then
-                'Finds distance from opponent's king to the centre of the board.
-                KingCentreDistance = Math.Max(((BKPos And 56) >> 3) - 4, 3 - ((BKPos And 56) >> 3)) + Math.Max((BKPos And 7) - 4, 3 - (BKPos And 7))
-                'Heuristic becomes more prevelant as the opponent has fewer and fewer pieces (exponential curve).
-                Score += Math.Round((KingCentreDistance * 1.5 + (7 - KingDistance)) * (1.25 ^ (12 - MaterialCount(1) / 100)))
-            End If
-            If MaterialCount(0) <= 1200 Then 'Similar code for the white pieces.
-                KingCentreDistance = Math.Max(((WKPos And 56) >> 3) - 4, 3 - ((WKPos And 56) >> 3)) + Math.Max((WKPos And 7) - 4, 3 - (WKPos And 7))
-                Score -= Math.Round((KingCentreDistance * 1.5 + (7 - KingDistance)) * (1.25 ^ (12 - MaterialCount(0) / 100)))
-                'TODO: make calculation more efficient.
-            End If
+
+        'If a player has little material left, we calculate the value of this endgame position for the opposing player, using the
+        'Lookup Table. This value takes into consideration the distances between the kings, and how close the player's king is to
+        'the edge of the board (and therefore how easy / difficult it will be to checkmate the player).
+        If MaterialCount(0) <= 1200 Then
+            'White has little material left. Penelise white's king from being at the edges of the board, and when white's king
+            'is close to black's king.
+            Score -= EndgameEvalLookupTable(WKPos, BKPos, MaterialCount(0) / 100)
         End If
+        If MaterialCount(1) <= 1200 Then
+            'Black has little material left.
+            Score += EndgameEvalLookupTable(BKPos, WKPos, MaterialCount(1) / 100)
+        End If
+
 
         Return Score
     End Function

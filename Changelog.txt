@@ -1,30 +1,38 @@
 ~~~~~~~~  New Features  ~~~~~~~~
-- AI Moves updated to BitMoves (2x Performance Increase) :D.
-- Added PGNs to GameHistory.
-- Added AutoPGN outputter to One & Two Player Modes.
-- Checks are now added to the PGN exporter.
-- Re-implementation of MouseUp() subroutine.
-- InCheck, KPos, and EnPassant updated to BitMoves.
-- Added 'Node Test' feature to Analysis Mode.
-- Restructured TranspositionTable to improve memory usage (stored as a static array, instead of a list of nodes). Implemented using the 'Deep' Replacement scheme (strict replacement).
-- Added TimeToLive attribute to TranspositionTable nodes, to improve the long-term efficiency of the 'Deep' Replacement scheme.
-- Ensures that the nodes involved in the AI's best line are kept alive in the TranspositionTable (using TimeToLive).
-- Updated main AI FOR loops to include the variable type of the incrementing variable.
-- Added constraint information to PGN move generator.
-- Refined Memory Management Tools.
-- Improved Hammad Mode Base Level Algorithm.
-- Reduced Opening Book load times (using GC Settings).
-- General code condensing & Refactoring :).
-- Tweaked PieceHeatMaps.
+- King Endgame Heuristic is now stored as a large, pre-computed look-up table, so that values do not need to be calculated for every position (40% efficiency gain over old method).
+- Added ability to promote to a knight (by holding down SHIFT during promotion).
+- New 'Board Edit' Feature, allowing for easy creation of custom positions.
+- 'Click-Move' Feature, where the user is able to make a move by clicking on a piece, followed by its destination.
+- Improved King Endgame Heuristic Algorithm (more detailed 'Manhattan Distance').
+- Added AI Version to Credits.
+- Added an automatic game resetter to Endless AI mode, so that the AI can play forever.
+- Redesigned PictureBox system to allow for infinitely many of each piece to be on the board at once (allowing for custom games).
+- Decreased time between AI moves (30ms).
+- Reworked Opening Animation.
+- Updated Puzzle Database.
+- Moved 'Images' & 'Sounds' folders to 'Assets'.
+- Improved Hammad Mode End-State Responce Algorithm.
+- Moved many constants to the GlobalConstants class.
+- Refined Settings General Options.
+- Added Optional 'Speed' Mode to AI Puzzle Solving (AIWaitAfterPuzzleComplete).
+- Small Changes to AI chosen Move output (main change: outputs number of win sequences, rather than overall checkmates).
+- Chess.vb is now broken down into further partial classes.
+- byVal to byRef changes.
+- General Code Condensing :D.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 ~~~~~~~~~  Bug Fixes  ~~~~~~~~~
-- Fixed bug with MakeMove not working correctly with black castling.
-- Fixed bug with black not being able to checkmate correctly.
-- Transposition Table now resets if the core AI settings have been changed mid-game (ie: Quiescence, PieceHeatMaps, Hammad Mode, ...).
-- Only one Settings Form can be opened at a time.
-- Fixed Bug with OpeningBook not working correctly for Upper Bound.
-- Added Cancel button to GameOver screen, so that the user is able to copy the final PGN / FEN.
+- Fixed bug where MainMenu would become unresponsive when the Credits button is clicked.
+- Improved Piece Drop Smoothness (when piece is dropped, it no longer 'glitches out' before disappearing).
+- Puzzles now include pawn promotions to pieces other than the Queen.
+- AI Stats are now reset when the 'Reset Program' button is pressed.
+- If the Opening Book has not loaded by the time the user enters a mode, the Opening Book is no longer passed through the system.
+- Fixed bugs with MoveConverter collisions.
+- Fixed NodeCount per Second Calculation.
+- Fixed Sounds not playing correctly on some devices (length of audio too short).
+- Added EnPassant Square Error Detection.
+- Increased Size of AI Lifetime Stats (prevents mass crashing after a while).
+- Fixed invalid Move Numbers in Puzzle FENs.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

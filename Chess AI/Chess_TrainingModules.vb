@@ -17,10 +17,11 @@ Partial Public Class Chess
     'a puzzle is often comprised of multiple moves).
     Private PuzzleTimeForSearch As Decimal 'Represents the total time the user / the AI has to make a single puzzle move (before
     'the puzzle is automatically deemed incorrect).
+    Private Const AIWaitAfterPuzzleComplete As Boolean = True 'Determines if, when the AI is searching on a puzzle, and the puzzle is deemed complete,
+    'Whether the system waits before displaying the next puzzle.
+
 
     'Below are all the attributes relating to the Coordinate & Move training modes.
-    Private Const MovesPerPosition As Byte = 3 'A constant referring to the number of moves the user needs to make before
-    'a new random position is chosen.
     Private TrainingMovesCompleted As Byte 'Represents the number of moves the user has completed on the position.
     Private MovesInPosition(,) As String 'Represents the full number of legal moves in the position.
     'Leaderboard info for training games: 0 = Index, 1 = Name, 2 = Score, 3 = Date Achieved.
@@ -29,13 +30,13 @@ Partial Public Class Chess
 
     'Sets up sound effects.
     Private ReadOnly Sound_321Go As New Media.SoundPlayer With {
-    .SoundLocation = Application.StartupPath & "\Sounds\3210Effect.wav"
+    .SoundLocation = Application.StartupPath & "\Assets\Sounds\3210Effect.wav"
 }
     Private ReadOnly Sound_Correct As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Sounds\Chess_Correct.wav"
+        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Correct.wav"
     }
     Private ReadOnly Sound_Incorrect As New Media.SoundPlayer With {
-        .SoundLocation = Application.StartupPath & "\Sounds\Chess_Incorrect.wav"
+        .SoundLocation = Application.StartupPath & "\Assets\Sounds\Chess_Incorrect.wav"
     }
 
 
@@ -63,8 +64,8 @@ Partial Public Class Chess
             Using SR As New StreamReader(Application.StartupPath & "\Assets\User\PuzzleStats.txt", Encoding.UTF8, True)
                 'Ensures that the Ratings are within the general confines of the lowest & highest rated puzzle
                 'in the Puzzle databse (50 rating points in both ways).
-                UserPuzzleRating = Math.Max(Math.Min(Val(SR.ReadLine()), 3000), 650) '650 = min puzzle rating.
-                AIPuzzleRating = Math.Max(Math.Min(Val(SR.ReadLine()), 3000), 650) '3000 = max puzzle rating.
+                UserPuzzleRating = Math.Max(Math.Min(Val(SR.ReadLine()), 3200), 650) '650 = min puzzle rating.
+                AIPuzzleRating = Math.Max(Math.Min(Val(SR.ReadLine()), 3200), 650) '3000 = max puzzle rating.
             End Using
         Catch ex As Exception
             'Unable to retrieve the puzzle ratings - reset them to their default values.
@@ -120,6 +121,7 @@ Partial Public Class Chess
             Console.ResetColor()
             MsgBox("Error: Unable to retrive a Puzzle from the Database." & vbCrLf & "This likely means that you've exhausted all the puzzles in the sample database, which I didn't even know was possible tbh hahah." & vbCrLf & "To generate new puzzles, please re-enter Puzzle Mode from the Main Menu...", vbCritical + vbOKOnly + vbApplicationModal)
             ExitBtn_Click()
+            Return Nothing
         Else
             'Retrive a random puzzle from the database that resides within the confines of LowerBound and UpperBound.
             Static RNDGen As New Random()
@@ -146,14 +148,17 @@ Partial Public Class Chess
         End If
     End Function
 
+
     'Subroutine that handles the user clicking the NextPuzzle button - handles the generation of a new puzzle,
     'updating the GUI objects, resetting the AI and puzzle timer, prepares the position for the new puzzle,
     'then plays the first move of the puzzle.
     Private Sub NextPuzzleBtn_Click() Handles NextPuzzleBtn.Click
         'Stops the AI from searching on the position, and disables the puzzle timer.
         CancelAIPuzzleSearch()
+        BoardHistory.Clear() 'Removes the Puzzle Data from BoardHistory.
         ResetPuzzleTimer()
-        If AutoAdvanceOnComplete.Checked Then Thread.Sleep(450) 'Allows the correct / incorrect sound to play.
+        If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
+        If AutoAdvanceOnComplete.Checked AndAlso (UserPuzzleMode OrElse AIWaitAfterPuzzleComplete) Then Thread.Sleep(450) 'Allows the correct / incorrect sound to play.
 
         'Changes the mode from User to AI (or vice versa), if neeeded.
         If HumanModeBtn.Checked <> UserPuzzleMode Then
@@ -173,6 +178,7 @@ Partial Public Class Chess
         'Resets the puzzle attributes, and retrieves a new puzzle from the database.
         UserTakenHint = False
         CurrentFEN = GetRndPuzzle()
+        If CurrentFEN Is Nothing Then Exit Sub 'We have ran out of puzzles! Exit the method before the non-existent FEN breaks everything :O.
         NoOfPuzzleMovesComplete = 0
         NextPuzzleBtn.Visible = False
 
@@ -203,6 +209,9 @@ Partial Public Class Chess
 
         'Displays the board onto the GUI, then plays the first move of the puzzle.
         DisplayPieces()
+        MasterZobristValue = SharedAlgorithms.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant))
+        BoardHistory.PushZobrist(MasterZobristValue, False)
+
         MainAI.ResetTranspositionTable()
         PlayNextPuzzleMove(0, True)
         If UserPuzzleMode Then HintBtn.Enabled = True
@@ -266,6 +275,32 @@ Partial Public Class Chess
         End If
     End Sub
 
+    'Function which checks if the move matches the correct puzzle move.
+    Private Function HandlePuzzleMoveInput(ByVal TempMove As Move) As Boolean
+        'Retrieves the correct puzzle move.
+        Dim CorrectMove As New Move
+        CorrectMove = PuzzleSampleDatabase(CurrentPuzzleIndex).GetMove(NoOfPuzzleMovesComplete * 2 + 1)
+
+        If (CorrectMove.OldMoveX = TempMove.OldMoveX AndAlso CorrectMove.OldMoveY = TempMove.OldMoveY) AndAlso (CorrectMove.NewMoveX = TempMove.NewMoveX AndAlso CorrectMove.NewMoveY = TempMove.NewMoveY) Then
+            If CorrectMove.EndState = "" OrElse CorrectMove.EndState = TempMove.EndState Then
+                HandlePuzzleMoveInput = True
+            Else
+                'The pawn is promoting to a piece, but the user has selected the wrong piece.
+                HandlePuzzleMoveInput = False
+            End If
+        Else
+            HandlePuzzleMoveInput = False
+        End If
+
+        If Not HandlePuzzleMoveInput Then
+            'User's move does not match the correct puzzle move, and is therefore incorrect.
+            If GeneralOptions(0) = "T" Then Sound_Incorrect.Play()
+            If Not NextPuzzleBtn.Visible Then CalculateRatingLost(True, True) 'Calculates & Enforces rating loss.
+            LostRatingLabel.ForeColor = Color.Red
+            If AutoAdvanceOnComplete.Checked Then NextPuzzleBtn_Click() Else NextPuzzleBtn.Visible = True
+        End If
+    End Function
+
 
 
     'Controls for the Hint button. When toggled, the starting square of the piece to move is highlighed to the user,
@@ -273,6 +308,7 @@ Partial Public Class Chess
     Private Sub HintBtn_Click() Handles HintBtn.Click
         HintBtn.Enabled = False
         UserTakenHint = True
+        If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
 
         'Retrives the next (correct) move of the puzzle, and extracts its starting square.
         Dim CorrectMove As New Move
@@ -293,7 +329,8 @@ Partial Public Class Chess
         If Not PieceIsMoving Then 'Prevents the position from changing if an animation is taking place.
             CancelAIPuzzleSearch()
             If GeneralOptions(0) = "T" Then Sound_Incorrect.Play()
-            Thread.Sleep(100) 'Gives the sound enough time to play before the position changes.
+            If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
+            If UserPuzzleMode OrElse AIWaitAfterPuzzleComplete Then Thread.Sleep(100) 'Gives the sound enough time to play before the position changes.
             CalculateRatingLost(UserPuzzleMode, GiveUpBtn.Enabled) 'Decrements the user's / the AI's puzzle rating.
             'Note that the user / the AI should not be penelised multiple times per puzzle, so if the GiveUp Button
             'is not enabled (representing that the puzzle is already incorrect), then the rating should not change.
@@ -561,6 +598,10 @@ Partial Public Class Chess
                 LoadPuzzleRatings()
                 NextPuzzleBtn_Click()
             End If
+        Else
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Please ensure that the Current Puzzle is complete (correct or incorrect), before attempting to Reset Puzzle Ratings.")
+            Console.ResetColor()
         End If
     End Sub
 
@@ -684,12 +725,20 @@ Partial Public Class Chess
 
     'Subroutine that handles user inputs in the coordinate practice trianing mode.
     Private Sub Checkerboard_Click(ByVal sender As Object, ByVal e As System.Windows.Forms.MouseEventArgs) Handles Checkerboard.Click
-        If GameMode = 5 AndAlso GameRunning Then
-            'Calculates the board square that the user has clicked.
-            Dim MouseLocation As Point = Me.PointToClient(MousePosition)
-            Dim XLocation As Byte = (MouseLocation.X - Checkerboard.Location.X) \ 75
-            Dim YLocation As Byte = (MouseLocation.Y - Checkerboard.Location.Y) \ 75
-            If Not OrientForWhite Then XLocation = 7 - XLocation : YLocation = 7 - YLocation
+        'Calculates the board square that the user has clicked.
+        Dim MouseLocation As Point = Me.PointToClient(MousePosition)
+        Dim XLocation As Byte = (MouseLocation.X - Checkerboard.Location.X) \ 75
+        Dim YLocation As Byte = (MouseLocation.Y - Checkerboard.Location.Y) \ 75
+        If ClickMoveMode Then
+            HandleClickMoveMode(XLocation, YLocation)
+            Exit Sub
+        End If
+        If Not OrientForWhite Then XLocation = 7 - XLocation : YLocation = 7 - YLocation
+
+        If BoardEditMode AndAlso e.Button = Windows.Forms.MouseButtons.Right Then
+            If XLocation <= 8 Then HandleBoardEditEnPassantClick(XLocation, YLocation)
+
+        ElseIf GameMode = 5 AndAlso GameRunning Then
             'Checks if this square matches the objective move.
             If XLocation = Asc(MoveDisplayer.Text(0)) - 97 AndAlso YLocation = 8 - Val(MoveDisplayer.Text(1)) Then
                 'Move is correct - increment score and generate new move.
@@ -724,7 +773,7 @@ Partial Public Class Chess
                     MainAI.Reconfigure(NewFEN, True)
                     If MasterWInCheck < 128 Then
                         MovesInPosition = MainAI.GetLegalMoves()
-                        If MovesInPosition.GetUpperBound(0) >= MovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
+                        If MovesInPosition.GetUpperBound(0) >= GlobalConstants.TrainingMovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
                     End If
                 End If
                 NoOfRetries += 1
@@ -761,10 +810,45 @@ Partial Public Class Chess
         End While
     End Function
 
+    'Function that checks a user's input move on the Move Training Game, and retrieves a new move / position if needed. Returns true if a new position has been generated.
+    Private Function HandleMoveTrainingInput(ByVal TempMove As Move) As Boolean
+        HandleMoveTrainingInput = False
+        'The user is playing the Move Training Game, and the move they entered may be correct - test move.
+        Dim UserMove As String
+        If PlayerTurn Then
+            UserMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
+        Else
+            UserMove = SharedAlgorithms.MoveConverter(MasterBoard, TempMove, False, MasterBKPos, SharedAlgorithms.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
+        End If
+        If UserMove = MoveDisplayer.Text Then
+            'The move is correct - notify the user.
+            TrainingScore.Text = CInt(TrainingScore.Text) + 1
+            If GeneralOptions(0) = "T" Then Sound_Check.Play()
+            TrainingMovesCompleted += 1
+            If TrainingMovesCompleted = GlobalConstants.TrainingMovesPerPosition Then
+                'Generate new position & move.
+                TrainingMovesCompleted = 0
+                MovesInPosition = RetrieveRandomPosition()
+                DisplayPieces()
+                MoveDisplayer.Text = GenerateNewTrainingMove()
+                HandleMoveTrainingInput = True
+            Else
+                'Generate new move and light up correct square.
+                If OrientForWhite Then LegalMoveSquares(TempMove.NewMoveX, TempMove.NewMoveY) = True Else LegalMoveSquares(7 - TempMove.NewMoveX, 7 - TempMove.NewMoveY) = True
+                MoveDisplayer.Text = GenerateNewTrainingMove()
+            End If
+        Else
+            'The move is incorrect. Play a bad sound :(.
+            Sound_Incorrect.Play()
+        End If
+        Checkerboard.Refresh()
+    End Function
+
 
 
     'Algorithm that begins a training game.
     Private Sub TrainingStart_Click() Handles TrainingStart.Click
+        If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
         'Prepares timer & objects.
         TrainingTimer.Enabled = False
         If GeneralOptions(0) = "T" Then Sound_321Go.Play() 'Countdown sound.
@@ -938,11 +1022,11 @@ Partial Public Class Chess
     'Button that displays information about the training modes.
     Private Sub InfoBtn_Click() Handles InfoBtn.Click
         If GameMode = 4 Then
-            MsgBox("• In this training mode, you will be given a chess position, where the side to move only has one winning move. You will need to find that winning move, and play it on the board." & vbCrLf & "• Getting a puzzle correct will increase your rating, getting it incorrect will decrease your rating." & vbCrLf & "• If you cannot find the move(s), you can either take a hint (which displays the piece to move, but will halve the potential rating gain), or give up to reveal the move." & vbCrLf & "• The AI will search on the position in the background, and (if the toggle is set to AI mode) will automatically play its moves on the board." & vbCrLf & "• Note: when modifying settings, your changes will be implemented on the next move / puzzle." & vbCrLf & "• Please note that you can only reset the puzzle ratings once the current puzzle has been solved / deemed as being incorrect.", vbInformation + vbApplicationModal, "Instructions")
+            MsgBox("• In this training mode, you will be given a chess position, where the side to move only has one winning move. You will need to find that winning move, and play it on the board." & vbCrLf & "• Getting a puzzle correct will increase your rating, getting it incorrect will decrease your rating." & vbCrLf & "• If you cannot find the move(s), you can either take a hint (which displays the piece to move, but will halve the potential rating gain), or give up to reveal the move." & vbCrLf & "• The AI will search on the position in the background, and (if the toggle is set to AI mode) will automatically play its moves on the board." & vbCrLf & "• The AI will be set to its maximum difficulty during its search." & vbCrLf & "• Note: when modifying settings, your changes will be implemented on the next move / puzzle." & vbCrLf & "• Please note that you can only reset the puzzle ratings once the current puzzle has been solved / deemed as being incorrect.", vbInformation + vbApplicationModal, "Instructions")
         ElseIf GameMode = 5 Then
             MsgBox("• In this training game, you will be given a chess coordinate (in standard chess notation), and will be tasked with clicking the corresponding square on the chessboard as fast as you can." & vbCrLf & "• If you click the correct square, it will light up in green, and you will be given a new coordinate to click." & vbCrLf & "• Click the most coordinates you can in 20 seconds, and try to get a place on the leaderboard!" & vbCrLf & "• Clicking the 'Flip Board' button will rotate the board 180°, so that each coordinate will be from black's point of view.", vbInformation + vbApplicationModal, "Instructions")
         Else
-            MsgBox("• In this training game, you will be given a random chess position along with a possible move (in standard chess notation). You will need to play that move as fast as you can." & vbCrLf & "• If you make the correct move, that square will light up in green, and you will be given a new move to make." & vbCrLf & "• After " & MovesPerPosition & " moves are made in a position, a new random position will be generated." & vbCrLf & "• Complete the most moves you can in 30 seconds, and try to get a place on the leaderboard!" & vbCrLf & "• Clicking the 'Flip Board' button will rotate the board 180°, so that each move will be from black's point of view." & vbCrLf & vbCrLf & "• Note: Regardless of whether the board is flipped or not, only the white pieces will need to be moved.", vbInformation + vbApplicationModal, "Instructions")
+            MsgBox("• In this training game, you will be given a random chess position along with a possible move (in standard chess notation). You will need to play that move as fast as you can." & vbCrLf & "• If you make the correct move, that square will light up in green, and you will be given a new move to make." & vbCrLf & "• After " & GlobalConstants.TrainingMovesPerPosition & " moves are made in a position, a new random position will be generated." & vbCrLf & "• Complete the most moves you can in 30 seconds, and try to get a place on the leaderboard!" & vbCrLf & "• Clicking the 'Flip Board' button will rotate the board 180°, so that each move will be from black's point of view." & vbCrLf & vbCrLf & "• Note: Regardless of whether the board is flipped or not, only the white pieces will need to be moved.", vbInformation + vbApplicationModal, "Instructions")
         End If
     End Sub
 

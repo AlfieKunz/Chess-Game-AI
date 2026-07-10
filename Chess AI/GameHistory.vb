@@ -3,12 +3,12 @@
 Public Class GameHistory
 
     'Stacks for the Zobrist values. 'Buffer' holds the GameHistory of the previous position (used in case the user undos their move).
-    Private ZobristMain(1023) As UInt64
-    Private ZobristBuffer(1023) As UInt64
+    Private ZobristMain(GlobalConstants.MaxPositionsPerGame - 1) As UInt64
+    Private ZobristBuffer(GlobalConstants.MaxPositionsPerGame - 1) As UInt64
 
     'Stacks for the PGN values.
-    Private PGNMain(1023) As String
-    Private PGNBuffer(1023) As String
+    Private PGNMain(GlobalConstants.MaxPositionsPerGame - 1) As String
+    Private PGNBuffer(GlobalConstants.MaxPositionsPerGame - 1) As String
 
     Private MainSize, BufferSize As UInt16 '= Index of last item + 1
 
@@ -46,9 +46,15 @@ Public Class GameHistory
     Public Sub PushZobrist(ByVal Value As UInt64, ByVal MoveArray As Boolean)
         'MoveArray is used to signify if a new move has been played on the board (if it hasn't [ie: the user has undone the position]
         'then we don't overwrite Buffer, as the board hsan't actually changed).
-        If MoveArray Then Move()
-        ZobristMain(MainSize) = Value
-        MainSize += 1
+        If MainSize < GlobalConstants.MaxPositionsPerGame - 1 Then
+            If MoveArray Then Move()
+            ZobristMain(MainSize) = Value
+            MainSize += 1
+        Else
+            Console.ForegroundColor = ConsoleColor.DarkRed
+            Console.WriteLine("Error when adding Position Data to GameHistory: Array Full.")
+            Console.ResetColor()
+        End If
     End Sub
 
     'Subroutine that adds a new PGN Value to the GameHistory array.

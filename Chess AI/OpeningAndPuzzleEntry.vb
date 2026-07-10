@@ -126,9 +126,8 @@ Public Class PuzzleEntry
         MoveList = New List(Of Move)
 
         'Separates the FEN from the list of puzzle moves.
-        Dim TempStr As String() = Details.Split("=")
-        FEN = TempStr(0)
-        Dim MoveInfo As String() = TempStr(1).Split(",")
+        FEN = Details.Substring(0, Details.IndexOf("="))
+        Dim MoveInfo As String() = (Details.Substring(Details.IndexOf("=") + 1)).Split(",")
 
         'Constructs the moves from the string of puzzle moves, then adds this to the MoveList attribute.
         Dim TempMove As Move
@@ -138,6 +137,7 @@ Public Class PuzzleEntry
             TempMove.OldMoveY = Entry(1)
             TempMove.NewMoveX = Entry(3)
             TempMove.NewMoveY = Entry(4)
+            If Entry.Length > 5 Then TempMove.EndState = UCase(Entry(Entry.Length - 1)) 'Adds promotion flag to move, if needed.
             MoveList.Add(TempMove)
         Next
 

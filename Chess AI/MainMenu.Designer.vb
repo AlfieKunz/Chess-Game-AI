@@ -608,7 +608,7 @@ Partial Class MainMenu
         Me.Credits.Name = "Credits"
         Me.Credits.Size = New System.Drawing.Size(268, 18)
         Me.Credits.TabIndex = 37
-        Me.Credits.Text = "Created by: Alfie Kunz - 2021-2023"
+        Me.Credits.Text = "Created by: Alfie Kunz - 2021-2024"
         '
         'PlayBtn
         '
