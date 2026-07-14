@@ -25,8 +25,11 @@ Partial Public Class Chess 'Remote Mode
         Public ScreenCapture As Bitmap
         Public g As Graphics
         Public BitmapWidth, BitmapHeight As Integer
+
+        Public DPIScale As Single
         Public ScaledRes As Rectangle 'If the Windows scaling of the screen is set to, for example, 125%, we find and store this data, so that
         'our pixel operations are specific to the givn screen.
+
         Public InterfaceScreen As Screen
         Public InterfaceStartX, InterfaceStartY As UInt16
         Public InterfaceSquareSize As UInt16
@@ -47,7 +50,7 @@ Partial Public Class Chess 'Remote Mode
 
     'These libraries allow us to access specific screen data, that is not currently available (specifically, scaling).
     <DllImport("user32.dll")>
-    Public Shared Function SetProcessDpiAwarenessContext(ByVal value As Integer) As Boolean
+    Private Shared Function SetThreadDpiAwarenessContext(ByVal dpiContext As IntPtr) As IntPtr
     End Function
     <DllImport("user32.dll")>
     Public Shared Function MonitorFromPoint(ByVal pt As Point, ByVal flags As UInteger) As IntPtr
@@ -130,14 +133,24 @@ Partial Public Class Chess 'Remote Mode
                 Console.Write(" on " & RemoteMode.InterfaceScreen.DeviceName.Substring(4) & "... ")
 
                 'Determines the scaling of the monitor, using the imported libraries.
-                SetProcessDpiAwarenessContext(-4) 'where -4 = DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2.
+                Dim OldDPIContext As IntPtr = SetThreadDpiAwarenessContext(New IntPtr(-4)) 'where -4 = DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2.
                 Dim DpiX, DpiY As UInteger
                 Dim hMonitor As IntPtr = MonitorFromPoint(RemoteMode.InterfaceScreen.Bounds.Location, 2)
                 GetDpiForMonitor(hMonitor, 0, DpiX, DpiY)
+                If DpiX <> DpiY Then
+                    Console.ForegroundColor = ConsoleColor.DarkRed
+                    Console.WriteLine(vbCr & "Unable to Resolve Conflicing DPI Scales: {" & DpiX / 96.0F & ", " & DpiY / 96.0F & "}. Please Try with Different Windows Scalings...")
+                    Console.ForegroundColor = ConsoleColor.White
+                    Exit Sub
+                End If
+                'Scales Screen for DPI.
+                RemoteMode.DPIScale = DpiX / 96.0F
                 RemoteMode.ScaledRes = RemoteMode.InterfaceScreen.Bounds
-                RemoteMode.ScaledRes.Width *= DpiX / 96.0F
-                RemoteMode.ScaledRes.Height *= DpiX / 96.0F
-                Console.WriteLine("(Scaling Factor: {" & DpiX / 96.0F & ", " & DpiX / 96.0F & "})")
+                RemoteMode.ScaledRes.X *= RemoteMode.DPIScale
+                RemoteMode.ScaledRes.Y *= RemoteMode.DPIScale
+                RemoteMode.ScaledRes.Width *= RemoteMode.DPIScale
+                RemoteMode.ScaledRes.Height *= RemoteMode.DPIScale
+                Console.WriteLine("(Scaling Factor: {" & RemoteMode.DPIScale & "})")
                 Console.ForegroundColor = ConsoleColor.White
 
                 'Sets up the screen capture of this screen, then takes the first screenshot to save into SCBytes.
@@ -155,6 +168,9 @@ Partial Public Class Chess 'Remote Mode
                 Marshal.Copy(ScreenCaptureLock.Scan0, SCBytes, 0, PixelCount) 'Copies to SCBytes.
                 RemoteMode.ScreenCapture.UnlockBits(ScreenCaptureLock)
                 RemoteMode.SCBytes = SCBytes
+
+                'Resets DPI Settings.
+                If OldDPIContext <> IntPtr.Zero Then SetThreadDpiAwarenessContext(OldDPIContext)
 
                 'Prepares for the pixel scanning, using a strict tolerance & red colour scheme.
                 RemoteMode.Tolerance = 5
@@ -800,6 +816,14 @@ Partial Public Class Chess 'Remote Mode
             Dim InterfacePosOldY As UInt16 = RemoteMode.ScaledRes.Top + RemoteMode.InterfaceStartY + Math.Floor((Move.OldMoveY + 0.5) * RemoteMode.InterfaceSquareSize)
             Dim InterfacePosNewX As UInt16 = RemoteMode.ScaledRes.Left + RemoteMode.InterfaceStartX + Math.Floor((Move.NewMoveX + 0.5) * RemoteMode.InterfaceSquareSize)
             Dim InterfacePosNewY As UInt16 = RemoteMode.ScaledRes.Top + RemoteMode.InterfaceStartY + Math.Floor((Move.NewMoveY + 0.5) * RemoteMode.InterfaceSquareSize)
+
+            'Scales for DPI.
+            If RemoteMode.DPIScale <> 1 Then
+                InterfacePosOldX /= RemoteMode.DPIScale
+                InterfacePosOldY /= RemoteMode.DPIScale
+                InterfacePosNewX /= RemoteMode.DPIScale
+                InterfacePosNewY /= RemoteMode.DPIScale
+            End If
 
             Dim IsPromoting As Boolean = (Move.Code = "Q" OrElse Move.Code = "N")
             Dim PreviousMousePoint As Point

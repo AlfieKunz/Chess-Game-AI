@@ -825,7 +825,10 @@ Partial Public Class Chess 'Training Modules
     Private Function GenerateNewTrainingMove() As String
         Dim TrainingMove As String = ""
         Dim TempMove As New Move
-        While MoveDisplayer.Text <> TrainingMove
+        Dim AttemptCounter As Integer = 0
+        Do
+            AttemptCounter += 1
+            If AttemptCounter >= 100 Then Return "-"
             'Retrieves random move from TrainingMode.MovesInPosition, then contructs TempMove using this data.
             Dim RndIndex As Byte = Math.Truncate(Rnd() * (TrainingMode.MovesInPosition.GetUpperBound(0) + 1))
             TempMove.OldMoveX = TrainingMode.MovesInPosition(RndIndex, 0)(0)
@@ -834,7 +837,7 @@ Partial Public Class Chess 'Training Modules
             TempMove.NewMoveY = TrainingMode.MovesInPosition(RndIndex, 1)(1)
             'Converts this Move to standard chess notation. If this is different to the current move then accept & return it.
             TrainingMove = Helper.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-        End While
+        Loop Until MoveDisplayer.Text <> TrainingMove
         Return TrainingMove
     End Function
 

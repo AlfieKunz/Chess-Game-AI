@@ -178,7 +178,7 @@ Partial Public Class Chess 'AI Handles
     'the subroutine makes this move on the board.
     Private Sub InitialiseAISystem() Handles AIMoveBtn.Click
         If AIEndlessMode.Checked AndAlso AutoResetter.Checked AndAlso Not GameRunning Then AcceptFENIntoSystem(AIHandles.FENToResetTo, False) 'Enables AI Endless Mode (across multiple games).
-        If GameRunning AndAlso Not ComputerIsSearching Then
+        If GameRunning AndAlso (Not ComputerIsSearching OrElse AIEndlessMode.Checked) Then
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
             Dim BestMove As Move = MainAI.CheckForEndState() 'Ensures that the position is valid, and that the
             'AI will (hopefully) not crash whilst searching on the position.
@@ -233,7 +233,7 @@ Partial Public Class Chess 'AI Handles
                 End If
                 Console.ForegroundColor = ConsoleColor.White
 
-                If Me.IsHandleCreated Then 'If form is still open...
+                If Me.IsHandleCreated AndAlso Not IsClosing Then 'If form is still open...
                     Dim UpdateAllGUI As Boolean = AIHandles.TimeForSearch >= 0.5
                     GameRunning = True
                     If BestMove.Code = "t" Then
@@ -259,13 +259,6 @@ Partial Public Class Chess 'AI Handles
                         End If
                     End If
 
-                    'Resets GUI objects & cursor design.
-                    UserTimeBar.Enabled = True
-                    ComputerIsSearching = False
-                    If UpdateAllGUI Then
-                        Me.Cursor = Cursors.Default
-                        Me.Text = GlobalConstants.ProgramName
-                    End If
                     Application.DoEvents() 'Allows the GUI to update after the AI's move.
 
                     If BestMove.Code <> "t" Then
@@ -282,8 +275,16 @@ Partial Public Class Chess 'AI Handles
                         'The below lines fix a bug, where the AI wouldn't make a move after the user restarts their game (1P mode only).
                         If AIEndlessMode.Checked OrElse (GameMode = 1 AndAlso CurrentFEN = PreviousFEN AndAlso Not UserPlayer = PlayerTurn) Then
                             Thread.Sleep(1) 'Allows the system to recalibrate (to prevent spam).
-                            InitialiseAISystem()
+                            Me.BeginInvoke(New Action(AddressOf InitialiseAISystem)) 'Runs the AI again, in such a way that does not add InitialiseAISystem()
+                            'to the stack for every move (causing stack overflows).
                         Else
+                            'Resets GUI objects & cursor design.
+                            UserTimeBar.Enabled = True
+                            ComputerIsSearching = False
+                            If UpdateAllGUI Then
+                                Me.Cursor = Cursors.Default
+                                Me.Text = GlobalConstants.ProgramName
+                            End If
 
                             If GameRunning AndAlso GameMode <= 1 Then
                                 'It is the user's turn to make a move - notify them by changing the program's title.
@@ -305,6 +306,14 @@ Partial Public Class Chess 'AI Handles
                                     AIThread.Start()
                                 End If
                             End If
+                        End If
+                    Else
+                        'Resets GUI objects & cursor design.
+                        UserTimeBar.Enabled = True
+                        ComputerIsSearching = False
+                        If UpdateAllGUI Then
+                            Me.Cursor = Cursors.Default
+                            Me.Text = GlobalConstants.ProgramName
                         End If
                     End If
                 End If

@@ -992,6 +992,7 @@ Partial Public Class Chess 'GUI Objects
 
     'Button that returns the user back to the Main Menu. 
     Private Sub ExitBtn_Click() Handles ExitBtn.Click
+        IsClosing = True
         If MainAI IsNot Nothing Then AICanSearchOnUsersTurn = False : MainAI.ABORTSearch()
         If GameMode = 4 Then TrainingMode.PuzzleSampleDatabase = Nothing 'Clears the puzzle database to save memory.
 
@@ -1009,6 +1010,10 @@ Partial Public Class Chess 'GUI Objects
         Me.Close() 'Closes the current form.
         Menu.Show()
         Menu.BringToFront()
+    End Sub
+    Private Sub ChessClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        IsClosing = True
+        TerminateSearch = True
     End Sub
 
     'Button that displays the credits information onto the screen (in the form of a pop-up).

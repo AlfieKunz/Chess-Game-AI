@@ -121,7 +121,7 @@ Once a branch is proven no better than an already-found alternative, there is no
 
 To correctly evaluate a board position, we keep track of its details down the tree (hence motivating the use of storing the board, its pieces, and its data in efficient 'bit' form). From this, we can use the piece material, the activity of each piece, what phase of the game we are in, how likely pawns are to promote, king safety, etc to judge the strength of a given position for each player.
 
-For effective move generation (amongst numerous optimisation practices), we introduce a novel technique I call 'TFTables'. This contains an 8x8 lookup table which stores the 'mobility' of each piece. This involves restricting pinned pieces, the movement of the king, and check handling and resolution. For more information on its intricacies, and how it interacts with the MiniMax algorithm, see the <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Alfie%20Kunz%20Computer%20Science%20NEA%20Project%20Report.pdf" target="_blank" rel="noopener noreferrer">**original NEA report**</a>.
+For effective move generation (amongst numerous optimisation practices), we introduce a novel technique I call 'TFTables'. This contains an 8x8 lookup table which stores the 'mobility' of each piece. This involves restricting pinned pieces, the movement of the king, and check handling and resolution. For more information on its intricacies, and how it interacts with the MiniMax algorithm, see the <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Alfie%20Kunz%20Computer%20Science%20NEA%20Project%20Report.pdf#page=27" target="_blank" rel="noopener noreferrer">**original NEA report**</a>.
 
 ---
 
@@ -134,6 +134,7 @@ To install, simply clone this repository using the following terminal prompts.
 git clone https://github.com/AlfieKunz/Chess-Game-AI
 cd Chess-Game-AI
 ```
+Alternatively, you can download the latest version source code (or an old one!) as a zip through the 'Releases' tab. Simply unzip the folder and open the "Chess AI.sln" file in Visual Studio.
 
 Feel free to also fork this repository, open an issue, or submit pull requests. All contributions welcome! :)  
 To better navigate this project, please see below for the related folder structure.
@@ -141,55 +142,54 @@ To better navigate this project, please see below for the related folder structu
 ```
 Chess AI                                                              
 ├─ Chess AI                                                           
-│  ├─ AI.vb                                                           // Main Chess AI code, built about the NegaMax algorithm with Alpha-Beta Pruning, and interactions with the main chess environment
-│  ├─ AILookupTables.vb                                               // List of PieceHeatMaps, Endgame Lookup table, and pawn bonus tables
-│  ├─ bin                                                             //
-│  │  └─ Debug                                                        //
-│  │     └─ net8.0-windows                                            //
-│  │        ├─ Assets                                                 //
-│  │        │  ├─ Chess960 FENs.txt                                   // List of all possible Chess960 starting positions.
-│  │        │  ├─ Images                                              // Pictures of each chess piece, with room for extra themes
-│  │        │  ├─ LargeOpeningBook.txt                                // A bespoke list of over 530,000 opening chess positions, and their expert-recommended moves
-│  │        │  ├─ Puzzle Database                                     // List of over 2 million puzzle FENs (and their moves), sorted by rating into 8 equal buckets (only 1 loaded per session to save time), and a small set of the highest-rated puzzles 
-│  │        │  ├─ RandomFENs.txt                                      // 10,000 chess positions taken from random online games, for use in Move Training mode.
-│  │        │  ├─ SmallOpeningBook.txt                                // A small list of ~21,000 expert-level chess opening chess positions, and future moves (for fast loading times)
-│  │        │  ├─ Sounds                                              // Chess sound effects, taken from Lichess and Chess.com
-│  │        │  └─ User                                                //
-│  │        │     ├─ AIStats.txt                                      // Number of AI nodes searched, transpositions found, and checkmates made
-│  │        │     ├─ CoordinatePracticeLeaderboardB.txt               // Leaderboard for the Coordinate Training mode (black side)
-│  │        │     ├─ CoordinatePracticeLeaderboardW.txt               // ditto for the white side
-│  │        │     ├─ MovePracticeLeaderboardB.txt                     // Leaderboard for the Move Training mode (black side)
-│  │        │     ├─ MovePracticeLeaderboardW.txt                     // ditto for the white side
-│  │        │     ├─ PuzzleStats.txt                                  // User and AI puzzle rating
-│  │        │     └─ UserProfile.txt                                  // User custom settings: colour scheme, animation speed, general options
-│  │        └─ Chess AI.exe                                           // Main application
-│  ├─ Chess.Designer.vb                                               // WinForms design for the main chess program form
-│  ├─ Chess.vb                                                        // Main form for the core chess UI, and the basic game of chess: the rules of chess, importing / exporting positions & moves, manipulating the board, instantiating the AI class and translating its and user moves
-│  ├─ Chess_AIHandles.vb                                              // Class for allowing AI interactions with the Chess UI, initiating AI searching, book move handling, multithreading, GUI interactions, etc
-│  ├─ Chess_Displaying.vb                                             // Class containing core GUI elements: displaying the checkerboard & its intricacies, the pieces, animating moves, etc
-│  ├─ Chess_DragDropMechanics.vb                                      // Class holding information regarding UI drag & drop and click & place mechanics, handles for submitting moves into the system
-│  ├─ Chess_GUIObjects.vb                                             // Class holding all methods referring to GUI controls in the main Chess designer form
-│  ├─ Chess_RemoteMode.vb                                             // Class for the 'Remote Mode' feature: locates a Chess Interface on the user's screen, connects to it by mapping moves, and allows the user or AI to play on this interface via my program
-│  ├─ Chess_TrainingModules.vb                                        // Class for the Training Modes: Coordinate Practice, Move Practice, Puzzles
-│  ├─ CoreMethods.vb                                                  // Shared, primary chess class algorithms: board, move and position helper functions, debug information, translation from AI to user-friendly notation, TFTable generation, Zobrist handling
-│  ├─ GameHistory.vb                                                  // Stacks that holds the Zobrist Keys & PGNs of all game positions: enforces three-fold repetition, FEN information, PGN tracking
-│  ├─ Icon.ico                                                        // Chess program logo (2x2 checkerboard)
-│  ├─ MainMenu.Designer.vb                                            // WinForms design for the main menu form
-│  ├─ MainMenu.vb                                                     // Allows the user to access the full extent of my program: introductory animation, provides the starting point for instantiating all the other classes & forms in my program. Pre-storing of opening book
-│  ├─ OnePlayerCustomisation.Designer.vb                              // WinForms design for the 1P AI customisation menu form
-│  ├─ OnePlayerCustomisation.vb                                       // Allows the user to customise their one-player game of chess with the AI, with pre-set difficulties
-│  ├─ OpeningAndPuzzleEntry.vb                                        // Class representing entries for the OpeningBook  and PuzzleDatabase list: constructed and stored upon boot-up, with minimal initial computation until they are probed individually (after which we decode fully them)
-│  ├─ PieceLegalMoveGenerators.vb                                     // Holds the core moves of chess: returns either pseudo-legal moves of a piece, or updates the TFTable from a given piece's moves
-│  ├─ Resources                                                       // 'Dragging hand' cursor designs for drag & drop mechanics
-│  ├─ Settings.Designer.vb                                            // WinForms design for the settings form
-│  ├─ Settings.vb                                                     // Form that allows the user to customise the program's settings: colour scheme, piece animation speed, general settings
-│  ├─ SubObjects.vb                                                   // Holds small structures: global constants, castling and move information, AI search settings
-│  ├─ TrainingCustomisation.Designer.vb                               // WinForms design for the Training Mode selector form
-│  ├─ TrainingCustomisation.vb                                        // Form that takes the user from the MainMenu to the Chess form, under a specific Training Mode.
-│  ├─ TwoPlayerCustomisation.Designer.vb                              // WinForms design for the 2P game menu form
-│  └─ TwoPlayerCustomisation.vb                                       // Form allowing the user to customise their two-player game of chess
-'Called from the main menu, and is involved in instantiating the Chess form.
-└─ Chess AI.sln                                                       // Main VS code solution
+│  ├─ AI.vb                                             // Main Chess AI code, built about the NegaMax algorithm with Alpha-Beta Pruning, and interactions with the main chess environment
+│  ├─ AILookupTables.vb                                 // List of PieceHeatMaps, Endgame Lookup table, and pawn bonus tables
+│  ├─ bin                                               //
+│  │  └─ Debug                                          //
+│  │     └─ net8.0-windows                              //
+│  │        ├─ Assets                                   //
+│  │        │  ├─ Chess960 FENs.txt                     // List of all possible Chess960 starting positions.
+│  │        │  ├─ Images                                // Pictures of each chess piece, with room for extra themes
+│  │        │  ├─ LargeOpeningBook.txt                  // A bespoke list of over 530,000 opening chess positions, and their expert-recommended moves
+│  │        │  ├─ Puzzle Database                       // List of over 2 million puzzle FENs (and their moves), sorted by rating into 8 equal buckets (only 1 loaded per session to save time), and a small set of the highest-rated puzzles 
+│  │        │  ├─ RandomFENs.txt                        // 10,000 chess positions taken from random online games, for use in Move Training mode.
+│  │        │  ├─ SmallOpeningBook.txt                  // A small list of ~21,000 expert-level chess opening chess positions, and future moves (for fast loading times)
+│  │        │  ├─ Sounds                                // Chess sound effects, taken from Lichess and Chess.com
+│  │        │  └─ User                                  //
+│  │        │     ├─ AIStats.txt                        // Number of AI nodes searched, transpositions found, and checkmates made
+│  │        │     ├─ CoordinatePracticeLeaderboardB.txt // Leaderboard for the Coordinate Training mode (black side)
+│  │        │     ├─ CoordinatePracticeLeaderboardW.txt // ditto for the white side
+│  │        │     ├─ MovePracticeLeaderboardB.txt       // Leaderboard for the Move Training mode (black side)
+│  │        │     ├─ MovePracticeLeaderboardW.txt       // ditto for the white side
+│  │        │     ├─ PuzzleStats.txt                    // User and AI puzzle rating
+│  │        │     └─ UserProfile.txt                    // User custom settings: colour scheme, animation speed, general options
+│  │        └─ Chess AI.exe                             // Main application
+│  ├─ Chess.Designer.vb                                 // WinForms design for the main chess program form
+│  ├─ Chess.vb                                          // Main form for the core chess UI, and the basic game of chess: the rules of chess, importing / exporting positions & moves, manipulating the board, instantiating the AI class and translating its and user moves
+│  ├─ Chess_AIHandles.vb                                // Class for allowing AI interactions with the Chess UI, initiating AI searching, book move handling, multithreading, GUI interactions, etc
+│  ├─ Chess_Displaying.vb                               // Class containing core GUI elements: displaying the checkerboard & its intricacies, the pieces, animating moves, etc
+│  ├─ Chess_DragDropMechanics.vb                        // Class holding information regarding UI drag & drop and click & place mechanics, handles for submitting moves into the system
+│  ├─ Chess_GUIObjects.vb                               // Class holding all methods referring to GUI controls in the main Chess designer form
+│  ├─ Chess_RemoteMode.vb                               // Class for the 'Remote Mode' feature: locates a Chess Interface on the user's screen, connects to it by mapping moves, and allows the user or AI to play on this interface via my program
+│  ├─ Chess_TrainingModules.vb                          // Class for the Training Modes: Coordinate Practice, Move Practice, Puzzles
+│  ├─ CoreMethods.vb                                    // Shared, primary chess class algorithms: board, move and position helper functions, debug information, translation from AI to user-friendly notation, TFTable generation, Zobrist handling
+│  ├─ GameHistory.vb                                    // Stacks that holds the Zobrist Keys & PGNs of all game positions: enforces three-fold repetition, FEN information, PGN tracking
+│  ├─ Icon.ico                                          // Chess program logo (2x2 checkerboard)
+│  ├─ MainMenu.Designer.vb                              // WinForms design for the main menu form
+│  ├─ MainMenu.vb                                       // Allows the user to access the full extent of my program: introductory animation, provides the starting point for instantiating all the other classes & forms in my program. Pre-storing of opening book
+│  ├─ OnePlayerCustomisation.Designer.vb                // WinForms design for the 1P AI customisation menu form
+│  ├─ OnePlayerCustomisation.vb                         // Allows the user to customise their one-player game of chess with the AI, with pre-set difficulties
+│  ├─ OpeningAndPuzzleEntry.vb                          // Class representing entries for the OpeningBook  and PuzzleDatabase list: constructed and stored upon boot-up, with minimal initial computation until they are probed individually (after which we decode fully them)
+│  ├─ PieceLegalMoveGenerators.vb                       // Holds the core moves of chess: returns either pseudo-legal moves of a piece, or updates the TFTable from a given piece's moves
+│  ├─ Resources                                         // 'Dragging hand' cursor designs for drag & drop mechanics
+│  ├─ Settings.Designer.vb                              // WinForms design for the settings form
+│  ├─ Settings.vb                                       // Form that allows the user to customise the program's settings: colour scheme, piece animation speed, general settings
+│  ├─ SubObjects.vb                                     // Holds small structures: global constants, castling and move information, AI search settings
+│  ├─ TrainingCustomisation.Designer.vb                 // WinForms design for the Training Mode selector form
+│  ├─ TrainingCustomisation.vb                          // Form that takes the user from the MainMenu to the Chess form, under a specific Training Mode.
+│  ├─ TwoPlayerCustomisation.Designer.vb                // WinForms design for the 2P game menu form
+│  └─ TwoPlayerCustomisation.vb                         // Form allowing the user to customise their two-player game of chess
+└─ Chess AI.sln                                         // Main VS code solution
 ```
 
 ---

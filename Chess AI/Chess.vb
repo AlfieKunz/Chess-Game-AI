@@ -23,6 +23,7 @@ Partial Public Class Chess 'ew- danny
     Private BoardHistory As New GameHistory
     Private GeneralOptions As String = GlobalConstants.DefaultGeneralOptions
     Private ReadOnly OpeningBook As New List(Of OpeningBookEntry)
+    Private IsClosing As Boolean
 
 
     'Here are the computer's primary "eyes" - MasterBoard (which contains each piece's location on the board) and,

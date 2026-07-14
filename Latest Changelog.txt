@@ -1,0 +1,13 @@
+~~~~~~~~  New Features  ~~~~~~~~
+- General Code Condensing, Refactoring, and Efficiency Improvements :D.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+~~~~~~~~~  Bug Fixes  ~~~~~~~~~
+- Fixed DPI Scaling Errors in Remote Mode.
+- Stopped 'Automatically Reset Game' in Analysis from causing stack overflow errors when running many games sequentially.
+- Stopped Analysis mode functions from working in the split moment between AI moves in 'AI vs AI' mode.
+- Stopped controls from breaking when exiting or closing the program during an AI move.
+- Fixed move generation While Loop breaking in "Move Training" Mode.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
