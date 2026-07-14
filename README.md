@@ -86,6 +86,8 @@ Alternatively, one can download the source code, as instructed below, for full c
 
 > This project was originally developed as my A-level Computer Science NEA project (which uses v5.2): you can access the <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Alfie%20Kunz%20Computer%20Science%20NEA%20Project%20Report.pdf" target="_blank" rel="noopener noreferrer">**original report here**</a>, or <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Previous%20AI%20Search%20Efficiency%20Tracking%20(Plotted%20-%2027.12.24).pdf" target="_blank" rel="noopener noreferrer">**track my AI's searching speed**</a> for all versions before v10.0.
 
+> As of v8.3, I began rigorously comparing each subsequent AI iteration, by integrating models into a sophisticated, custom-made sui-style benchmarking system. You can see the <a href="https://docs.google.com/document/d/1l2azNiomihHmkGiXxQ9ZlNTO_YLcn6JF" target="_blank" rel="noopener noreferrer">**results of those tournaments here**</a>.
+
 <table align="center" width="100%">
   <tr>
     <td align="center" valign="middle" width="50%">
