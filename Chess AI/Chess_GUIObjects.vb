@@ -784,13 +784,13 @@ Partial Public Class Chess 'GUI Objects
             While True
                 Try
                     'Displays text box popup to user, where they can enter their time.
-                    Temp = InputBox("Please input how long you want the AI to search for (in seconds):" & vbCrLf & vbCrLf & "Min Time = 0.1s, Max Time = 600s." & vbCrLf & "0 = Infinity (Indefinite Search)", "Time Inputter")
+                    Temp = InputBox("Please input how long you want the AI to search for (in seconds):" & vbCrLf & vbCrLf & "Min Time = 0.01s, Max Time = 600s." & vbCrLf & "0 = Infinity (Indefinite Search)", "Time Inputter")
                     If Temp = "" OrElse Temp = " " Then 'Cancel / Exit button was pressed - abort.
                         UserTime = AIHandles.TimeForSearch
                         Exit While
                     End If
-                    UserTime = Math.Round(CDec(Temp), 1)
-                    If UserTime = 0 OrElse (UserTime >= 0.1 AndAlso UserTime <= 600) Then
+                    UserTime = Math.Round(CDec(Temp), 2)
+                    If UserTime = 0 OrElse (UserTime >= 0.01 AndAlso UserTime <= 600) Then
                         Exit While 'Inside range - input has passed all the checks :).
                     Else 'Input was outside the given range - displays appropriate message.
                         If MsgBox("Invalid Number - Please make sure your input is in the correct range.", vbCritical + vbRetryCancel + vbApplicationModal) = 2 Then

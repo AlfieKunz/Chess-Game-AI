@@ -273,7 +273,7 @@ Partial Public Class Chess 'AI Handles
                         End If
 
                         'The below lines fix a bug, where the AI wouldn't make a move after the user restarts their game (1P mode only).
-                        If AIEndlessMode.Checked OrElse (GameMode = 1 AndAlso CurrentFEN = PreviousFEN AndAlso Not UserPlayer = PlayerTurn) Then
+                        If GameRunning AndAlso (AIEndlessMode.Checked OrElse (GameMode = 1 AndAlso CurrentFEN = PreviousFEN AndAlso Not UserPlayer = PlayerTurn)) Then
                             Thread.Sleep(1) 'Allows the system to recalibrate (to prevent spam).
                             Me.BeginInvoke(New Action(AddressOf InitialiseAISystem)) 'Runs the AI again, in such a way that does not add InitialiseAISystem()
                             'to the stack for every move (causing stack overflows).
