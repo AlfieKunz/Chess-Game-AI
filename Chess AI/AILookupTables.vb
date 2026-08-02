@@ -1,4 +1,5 @@
-﻿
+﻿Option Strict On
+
 Partial Public Class AI
 
     Private PieceHeatMap(,,,) As Integer 'Calls & Constructs PieceHeatMaps - producing a hashed array containing the

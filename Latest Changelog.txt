@@ -1,5 +1,8 @@
 ~~~~~~~~  New Features  ~~~~~~~~
+- Increased Breadth of custom AI search timings.
 - General Code Condensing, Refactoring, and Efficiency Improvements :D.
+- Performance increases from Option Strict On in AI files.
+- Performance boosts to compiler settings and Server GC management.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -10,4 +13,6 @@
 - Stopped Analysis mode functions from working in the split moment between AI moves in 'AI vs AI' mode.
 - Stopped controls from breaking when exiting or closing the program during an AI move.
 - Fixed move generation While Loop breaking in "Move Training" Mode.
+- Fixed Soft-lock at end of AI Endless Mode.
+- Fixed invalid queen check detection for long castling.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,4 +1,6 @@
-﻿'This class contains the code for generating the pseudo-legal moves for a given piece on the board. I have broken these
+﻿Option Strict On
+
+'This class contains the code for generating the pseudo-legal moves for a given piece on the board. I have broken these
 'algorithms into two main components: one which will be called by the Move Generation algorithms, and will return a set
 'of moves that the input piece can make. The second set will be called by the TFTable Fixer algorithms, and will only
 'update the TFTable squares of the required player (however, the core of each of these algorithms remain the same - to

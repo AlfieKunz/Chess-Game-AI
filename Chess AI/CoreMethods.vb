@@ -1,4 +1,6 @@
-﻿'This class contains most of the primary algorithms I will be using in my project, and will link to both my Chess class and
+﻿Option Strict On
+
+'This class contains most of the primary algorithms I will be using in my project, and will link to both my Chess class and
 'my AI class (either via instavintiation or by inheritance). It will contain the algorithms that will be used by both my Chess
 '& AI classes, such as the ‘TFTable’ Generator, ‘DoesMoveResolveCheck’, 'Move Converters', and others.
 Imports System.Data.OleDb
@@ -136,7 +138,7 @@ Partial Public Class CoreMethods
                     Next
                     ' Once the SPACE has been reached In the FEN, we know that we have read the entire board. We can then move onto
                     ' info about castling, who's turn it is, En Passant And more.
-                    SpaceLocation = FEN.IndexOf(" ") 'Following characters revolve around location of SPACE.
+                    SpaceLocation = FEN.IndexOf(" "c) 'Following characters revolve around location of SPACE.
                     If FEN(SpaceLocation + 1) = "w" Then
                         IsWhite = True
                     Else
@@ -208,7 +210,7 @@ Partial Public Class CoreMethods
         If WCanCastle.QS Then ConvertToFEN &= "Q"
         If BCanCastle.KS Then ConvertToFEN &= "k"
         If BCanCastle.QS Then ConvertToFEN &= "q"
-        If ConvertToFEN.EndsWith(" ") Then ConvertToFEN &= "-" '= therefore no castling privileges
+        If ConvertToFEN.EndsWith(" "c) Then ConvertToFEN &= "-" '= therefore no castling privileges
         If EnPassant <> 0 Then
             'converts the computer-friendly index from 0-7 into the more human-friendly a-h coordinate (eg: 75 -> h3)
             ConvertToFEN &= " " & Chr(((EnPassant And 56) >> 3) + 97) & 8 - (EnPassant And 7) & " 0 1"
@@ -403,7 +405,7 @@ Partial Public Class CoreMethods
                                 'If the king can castle, the rook might be able to cut off the king's motion - give the rook one more move of sight.
                                 PieceInfluenceKing = Math.Min(dx, dy) <= If(CanICastle, 2, 1)
                             Case "q"c
-                                PieceInfluenceKing = Math.Min(dx, dy) <= 1 OrElse Math.Abs(dx - dy) <= 2
+                                PieceInfluenceKing = Math.Min(dx, dy) <= If(CanICastle, 2, 1) OrElse Math.Abs(dx - dy) <= 2
                             Case Else
                                 PieceInfluenceKing = Math.Max(dx, dy) <= 2 'is a king.
                         End Select
@@ -430,7 +432,7 @@ Partial Public Class CoreMethods
                             Case "R"c
                                 PieceInfluenceKing = Math.Min(dx, dy) <= If(CanICastle, 2, 1)
                             Case "Q"c
-                                PieceInfluenceKing = Math.Min(dx, dy) <= 1 OrElse Math.Abs(dx - dy) <= 2
+                                PieceInfluenceKing = Math.Min(dx, dy) <= If(CanICastle, 2, 1) OrElse Math.Abs(dx - dy) <= 2
                             Case Else
                                 PieceInfluenceKing = Math.Max(dx, dy) <= 2 'is a king.
                         End Select

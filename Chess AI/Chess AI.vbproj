@@ -34,12 +34,20 @@
     <DocumentationFile>Chess AI.xml</DocumentationFile>
     <WarningsAsErrors>
     </WarningsAsErrors>
+    <PlatformTarget>x64</PlatformTarget>
+    <Optimize>False</Optimize>
+    <RemoveIntegerChecks>True</RemoveIntegerChecks>
+    <DefineDebug>True</DefineDebug>
+    <DefineTrace>False</DefineTrace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DefineDebug>false</DefineDebug>
     <DocumentationFile>Chess AI.xml</DocumentationFile>
     <WarningsAsErrors>
     </WarningsAsErrors>
+    <PlatformTarget>x64</PlatformTarget>
+    <RemoveIntegerChecks>True</RemoveIntegerChecks>
+    <DefineTrace>False</DefineTrace>
   </PropertyGroup>
   <ItemGroup>
     <Import Include="System.Drawing" />

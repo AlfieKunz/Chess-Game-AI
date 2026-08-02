@@ -1,4 +1,6 @@
-﻿'This class contains my Chess AI, which is built using the NegaMax algorithm with Alpha-Beta Pruning.
+﻿Option Strict On
+
+'This class contains my Chess AI, which is built using the NegaMax algorithm with Alpha-Beta Pruning.
 'This class is modular from my Chess class - being constructed only from the FEN position, and only returning a Move (see the structure below).
 'Some other interacting is done, however, such as allowing the AI to be remotely aborted.
 Imports System.ComponentModel
@@ -176,13 +178,13 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         'Creates the pawn bit masks for each player.
         PrimaryWhitePawnMask = 0UL
         PrimaryBlackPawnMask = 0UL
-        For y As ULong = 0UL To 7UL
-            For x As ULong = 0UL To 7UL
+        For y As Integer = 0UL To 7UL
+            For x As Integer = 0UL To 7UL
                 If UCase(PrimaryBoard(x, y)) = "P"c Then
                     If Char.IsUpper(PrimaryBoard(x, y)) Then
-                        PrimaryWhitePawnMask = PrimaryWhitePawnMask Or (1UL << (y * 8UL + x))
+                        PrimaryWhitePawnMask = PrimaryWhitePawnMask Or (1UL << (y * 8 + x))
                     Else
-                        PrimaryBlackPawnMask = PrimaryBlackPawnMask Or (1UL << (y * 8UL + x))
+                        PrimaryBlackPawnMask = PrimaryBlackPawnMask Or (1UL << (y * 8 + x))
                     End If
                 End If
             Next
@@ -440,7 +442,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             Dim TempEnemyCanCastle As New CanCastle
             Dim TempZobristValue As UInt64
             Dim TempWhitePawnMask, TempBlackPawnMask As UInt64
-            Dim TempHalfMoveSize As UInt64
+            Dim TempHalfMoveSize As UInt16
             Dim TempEnPassant As Int16
 
             'If the AI needs to return the worst move in the position, it searches the moves from worst to best (in order to improve
@@ -470,7 +472,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             Else
                 'Aspiration Windows - set Alpha & Beta via the previous search score. Note we only do this when the depth is high enough, so that we can get
                 'a good, stable bound on the score.
-                If Depth < 7 Then DynamicAWWidth *= 1.5
+                If Depth < 7 Then DynamicAWWidth += CShort(DynamicAWWidth * 0.5)
                 DynamicAWWidth += CShort(Math.Min(Math.Abs(PreviousBestScore), 1250S) / 25) 'Change the Aspiraton Window Width Depending on the position: a higher score is more likely to be volatile, so increase the width accordingly.
                 AspirationWindow = {PreviousBestScore - DynamicAWWidth, PreviousBestScore + DynamicAWWidth}
             End If
@@ -570,7 +572,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                     If Depth > 15 AndAlso AWFailCount(0) = 0 Then
                         'If the aspiration window breaks for a deep search such as this, it would be very expensive to re-search for a full window.
                         'Thus, run again on a larger window, to encapsulate minor to moderate positional changes.
-                        AspirationWindow(0) -= 2 * DynamicAWWidth
+                        AspirationWindow(0) -= 2S * DynamicAWWidth
                         AWFailCount(0) = 1
                     Else
                         AspirationWindow(0) = -InfScore
@@ -579,7 +581,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 ElseIf BestMove.Score >= AspirationWindow(1) Then
                     'We failed high - widen the upper bound.
                     If Depth > 15 AndAlso AWFailCount(1) = 0 Then
-                        AspirationWindow(1) += 2 * DynamicAWWidth
+                        AspirationWindow(1) += 2S * DynamicAWWidth
                         AWFailCount(1) = 1
                     Else
                         AspirationWindow(1) = InfScore
@@ -1124,7 +1126,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Dim KillerMoveOneCount, KillerMoveTwoCount As Byte
 
 
-        Dim PieceValueDif As Integer 'Difference in weight between the capturing piece, and the piece being captured.
+        Dim PieceValueDif As UInt16 'Difference in weight between the capturing piece, and the piece being captured.
         Dim XPosNew, YPosNew As Integer
         Dim PieceMoves() As UInt16
 
@@ -1515,7 +1517,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
         Dim TempPiece As Char = Board(OldCoorX, OldCoorY)
         Dim HasEnPassanted As Boolean
-        HalfMoveSize += 1 'We assume that the move is not a pawn move or a capture, and increment the Half-Move count. If we are wrong, we just reset to 0 :).
+        HalfMoveSize += 1US 'We assume that the move is not a pawn move or a capture, and increment the Half-Move count. If we are wrong, we just reset to 0 :).
         'If TempMove > 32768 Then MakeMove = Board((TempMove And 56) >> 3, TempMove And 7)
         If Char.IsUpper(TempPiece) Then
             'Removes the piece from the board's Zobrist Value.
@@ -1536,7 +1538,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             If TempPiece = "P"c Then
                 'Code for Promoting Pawns and En Passant. Also increments the material count.
                 'Removes the pawn's old position from the white pawn bitboard, and adds the new position.
-                WhitePawnMask = WhitePawnMask Xor (1UL << (OldCoorY * 8UL + OldCoorX)) Xor (1UL << (NewCoorY * 8UL + NewCoorX))
+                WhitePawnMask = WhitePawnMask Xor (1UL << (OldCoorY * 8US + OldCoorX)) Xor (1UL << (NewCoorY * 8US + NewCoorX))
                 If (Move And 28672US) > 0US Then
                     If (Move And 28672) = 8192 AndAlso (Board(Math.Max(NewCoorX - 1, 0), 4) = "p" OrElse Board(Math.Min(NewCoorX + 1, 7), 4) = "p") Then
                         'EnPassant creation.
@@ -1549,15 +1551,15 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         ZobristValue = ZobristValue Xor ZobristHashTable(3, 1, NewCoorX, 3) 'Ammended for a capture of a pawn.
                         MaterialCount(1) -= GlobalConstants.PieceWeight.Pawn
                         If SearchSettings.UsePieceHeatMaps Then PHMValues(1) -= PieceHeatMap(Asc("P") Mod 11, 4, NewCoorX, 16) 'y=3 for enpassant.
-                        BlackPawnMask = BlackPawnMask Xor (1UL << (24UL + NewCoorX))
+                        BlackPawnMask = BlackPawnMask Xor (1UL << (24US + NewCoorX))
                     ElseIf (Move And 28672) = 4096 Then 'Queen Promotion.
                         TempPiece = "Q"c
                         MaterialCount(0) += GlobalConstants.PieceWeight.Queen - GlobalConstants.PieceWeight.Pawn '+ 9 for a new queen, - 1 for losing the pawn in the process.
-                        WhitePawnMask = WhitePawnMask Xor (1UL << (NewCoorY * 8UL + NewCoorX)) 'The pawn has promoted - remove from the bitboard.
+                        WhitePawnMask = WhitePawnMask Xor (1UL << (NewCoorY * 8US + NewCoorX)) 'The pawn has promoted - remove from the bitboard.
                     ElseIf (Move And 28672) = 28672 Then 'Knight Promotion.
                         TempPiece = "N"c
                         MaterialCount(0) += GlobalConstants.PieceWeight.Knight - GlobalConstants.PieceWeight.Pawn '+ 3 for a new knight, - 1 for losing the pawn in the process.
-                        WhitePawnMask = WhitePawnMask Xor (1UL << (NewCoorY * 8UL + NewCoorX)) 'The pawn has promoted - remove from the bitboard.
+                        WhitePawnMask = WhitePawnMask Xor (1UL << (NewCoorY * 8US + NewCoorX)) 'The pawn has promoted - remove from the bitboard.
                     End If
                 End If
                 HalfMoveSize = 0 'A pawn has moved - reset the Half-Move.
@@ -1625,7 +1627,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             End If
 
             If TempPiece = "p"c Then
-                BlackPawnMask = BlackPawnMask Xor (1UL << (OldCoorY * 8UL + OldCoorX)) Xor (1UL << (NewCoorY * 8UL + NewCoorX))
+                BlackPawnMask = BlackPawnMask Xor (1UL << (OldCoorY * 8US + OldCoorX)) Xor (1UL << (NewCoorY * 8US + NewCoorX))
                 If (Move And 28672US) > 0US Then
                     If (Move And 28672) = 8192 AndAlso (Board(Math.Max(NewCoorX - 1, 0), 3) = "P" OrElse Board(Math.Min(NewCoorX + 1, 7), 3) = "P") Then
                         If EnPassant <> 0 Then ZobristValue = ZobristValue Xor ZobristHashTable(2, 0, (EnPassant And 56) >> 3, 5)
@@ -1637,15 +1639,15 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         ZobristValue = ZobristValue Xor ZobristHashTable(3, 0, NewCoorX, 4)
                         MaterialCount(0) -= GlobalConstants.PieceWeight.Pawn
                         If SearchSettings.UsePieceHeatMaps Then PHMValues(0) -= PieceHeatMap(Asc("P") Mod 11, 4, NewCoorX, 16) 'y=4 for enpassant.
-                        WhitePawnMask = WhitePawnMask Xor (1UL << (32UL + NewCoorX))
+                        WhitePawnMask = WhitePawnMask Xor (1UL << (32US + NewCoorX))
                     ElseIf (Move And 28672) = 4096 Then
                         TempPiece = "q"c
                         MaterialCount(1) += GlobalConstants.PieceWeight.Queen - GlobalConstants.PieceWeight.Pawn
-                        BlackPawnMask = BlackPawnMask Xor (1UL << (NewCoorY * 8UL + NewCoorX))
+                        BlackPawnMask = BlackPawnMask Xor (1UL << (NewCoorY * 8US + NewCoorX))
                     ElseIf (Move And 28672) = 28672 Then
                         TempPiece = "n"c
                         MaterialCount(1) += GlobalConstants.PieceWeight.Knight - GlobalConstants.PieceWeight.Pawn
-                        BlackPawnMask = BlackPawnMask Xor (1UL << (NewCoorY * 8UL + NewCoorX))
+                        BlackPawnMask = BlackPawnMask Xor (1UL << (NewCoorY * 8US + NewCoorX))
                     End If
                 End If
                 HalfMoveSize = 0
@@ -1706,7 +1708,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 ZobristValue = ZobristValue Xor ZobristHashTable(Asc(CapturedPiece) Mod 11, 0, NewCoorX, NewCoorY)
                 If SearchSettings.UsePieceHeatMaps Then PHMValues(0) -= PieceHeatMap(Asc(CapturedPiece) Mod 11, NewCoorY, NewCoorX, 16)
                 If CapturedPiece = "P"c Then
-                    WhitePawnMask = WhitePawnMask Xor (1UL << (NewCoorY * 8UL + NewCoorX))
+                    WhitePawnMask = WhitePawnMask Xor (1UL << (NewCoorY * 8US + NewCoorX))
                 ElseIf CapturedPiece = "R"c AndAlso EnemyCanCastle.CanICastle() Then
                     'A rook has been captured - remove castling privileges if required (and modify the Zobrist Value).
                     If EnemyCanCastle.KS AndAlso NewCoorY = 7 AndAlso NewCoorX = 7 Then
@@ -1724,7 +1726,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 ZobristValue = ZobristValue Xor ZobristHashTable((Asc(CapturedPiece) + 1) Mod 11, 1, NewCoorX, NewCoorY)
                 If SearchSettings.UsePieceHeatMaps Then PHMValues(1) -= PieceHeatMap((Asc(CapturedPiece) + 1) Mod 11, 7 - NewCoorY, NewCoorX, 16)
                 If CapturedPiece = "p"c Then
-                    BlackPawnMask = BlackPawnMask Xor (1UL << (NewCoorY * 8UL + NewCoorX))
+                    BlackPawnMask = BlackPawnMask Xor (1UL << (NewCoorY * 8US + NewCoorX))
                 ElseIf CapturedPiece = "r"c AndAlso EnemyCanCastle.CanICastle() Then
                     If EnemyCanCastle.KS AndAlso NewCoorY = 0 AndAlso NewCoorX = 7 Then
                         EnemyCanCastle.KS = False
@@ -2176,8 +2178,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 'Calculates all the squares on the same rank as the pawn in question, and the rank to the left & right.
                 PawnFile = PawnPosition Mod 8
                 FileMaskCentre = &H8080808080808080UL >> PawnFile '&H8080808080808080UL (hex) represents all the 1s on the a file.
-                FileMaskLeft = If(PawnFile = 0, 0, &H8080808080808080UL >> (PawnFile - 1))
-                FileMaskRight = If(PawnFile = 7, 0, &H8080808080808080UL >> (PawnFile + 1))
+                FileMaskLeft = If(PawnFile = 0, 0UL, &H8080808080808080UL >> (PawnFile - 1))
+                FileMaskRight = If(PawnFile = 7, 0UL, &H8080808080808080UL >> (PawnFile + 1))
 
                 'There are no enemy pawns in the way of the pawn in question - it is a past pawn. Add a bonus.
                 If ((ForwardMask And (FileMaskLeft Or FileMaskCentre Or FileMaskRight)) And BlackPawnMask) = 0UL Then Score += EvalPastPawnBonus(PawnRank)
@@ -2187,7 +2189,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 If (ForwardMask And FileMaskCentre And WhitePawnMask) <> 0UL Then Score -= EvalDoubledPawnPenalty
 
                 'Removes the 1 in the Pawn Mask referring to the pawn in question, and moves on until we've tackled all the pawns.
-                TempWhitePawnMask = (TempWhitePawnMask And (TempWhitePawnMask - 1))
+                TempWhitePawnMask = (TempWhitePawnMask And (TempWhitePawnMask - 1UL))
             End While
             While TempBlackPawnMask <> 0UL
                 PawnPosition = 63 - BitOperations.TrailingZeroCount(TempBlackPawnMask)
@@ -2195,12 +2197,12 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 ForwardMask = ULong.MaxValue << (8 * PawnRank)
                 PawnFile = PawnPosition Mod 8
                 FileMaskCentre = &H8080808080808080UL >> PawnFile
-                FileMaskLeft = If(PawnFile = 0, 0, &H8080808080808080UL >> (PawnFile - 1))
-                FileMaskRight = If(PawnFile = 7, 0, &H8080808080808080UL >> (PawnFile + 1))
+                FileMaskLeft = If(PawnFile = 0, 0UL, &H8080808080808080UL >> (PawnFile - 1))
+                FileMaskRight = If(PawnFile = 7, 0UL, &H8080808080808080UL >> (PawnFile + 1))
                 If ((ForwardMask And (FileMaskLeft Or FileMaskCentre Or FileMaskRight)) And WhitePawnMask) = 0UL Then Score -= EvalPastPawnBonus(PawnRank)
                 If ((FileMaskLeft Or FileMaskRight) And BlackPawnMask) = 0UL Then Score += EvalIsolatedPawnPenalty(PawnRank)
                 If (ForwardMask And FileMaskCentre And BlackPawnMask) <> 0UL Then Score += EvalDoubledPawnPenalty
-                TempBlackPawnMask = (TempBlackPawnMask And (TempBlackPawnMask - 1))
+                TempBlackPawnMask = (TempBlackPawnMask And (TempBlackPawnMask - 1UL))
             End While
         End If
 

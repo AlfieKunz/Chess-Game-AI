@@ -1,4 +1,6 @@
-﻿Imports System.Runtime.CompilerServices
+﻿Option Strict On
+
+Imports System.Runtime.CompilerServices
 Imports System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar
 Imports Microsoft.VisualBasic.ApplicationServices
 
