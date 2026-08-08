@@ -231,8 +231,34 @@ End Class
 
 
 'Class holding the TFTable of each depth of the search.
-Public Class TFTableStorage
-    Public Table(7, 7) As Char
+Public Structure BoardState
+    Public BitBoardPawnWhite As UInt64
+    Public BitBoardPawnBlack As UInt64
+    Public BitBoardKnightWhite As UInt64
+    Public BitBoardKnightBlack As UInt64
+    Public BitBoardBishopWhite As UInt64
+    Public BitBoardBishopBlack As UInt64
+    Public BitBoardRookWhite As UInt64
+    Public BitBoardRookBlack As UInt64
+    Public BitBoardQueenWhite As UInt64
+    Public BitBoardQueenBlack As UInt64
+
+    Public ZobristValue As UInt64
+
+    Public TFTable As UInt64
+    Public PinnedPieceInfo As UInt64 '8x8 structure holding all pinned piece info (6 bits for each direction 0-3,0-3, 2 for labelling and en-passant info)
+    Public MeKPos As UInt16
+    Public EnemyKPos As UInt16
+
+    Public MeCanCastle As CanCastle
+    Public EnemyCanCastle As CanCastle
+    Public MeInCheck As UInt16
+    Public EnPassant As Int16
+
+
+
+
+    Public OLDTFTable(7, 7) As Char
     'Public Sub SetTable(ByVal TableToCopy(,) As Char)
     '    Array.Copy(TableToCopy, Table, 64)
     'End Sub
@@ -242,4 +268,4 @@ Public Class TFTableStorage
     'Public Function GetTable() As Char(,)
     '    Return Table
     'End Function
-End Class
+End Structure

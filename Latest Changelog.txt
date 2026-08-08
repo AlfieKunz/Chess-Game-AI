@@ -1,8 +1,10 @@
 ~~~~~~~~  New Features  ~~~~~~~~
 - Increased Breadth of custom AI search timings.
-- General Code Condensing, Refactoring, and Efficiency Improvements :D.
 - Performance increases from Option Strict On in AI files.
 - Performance boosts to compiler settings and Server GC management.
+- Reduced size of Transposition Table elements.
+
+- General Code Condensing, Refactoring, and Efficiency Improvements :D.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

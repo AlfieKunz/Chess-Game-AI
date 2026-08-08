@@ -22,7 +22,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
     Private HasBeenInstantiated As Boolean 'The AI will not perform methods if it has not been fully instantiated with a FEN.
     'Below are the details that the AI requires for a search. Please see their counterparts in the Chess form for their info.
     Private PrimaryBoard(7, 7), PrimaryTFTable(7, 7) As Char, NegaMaxTFTable(7, 7) As Char
-    Private TFTableStorageArray(127) As TFTableStorage 'Holds the TFTables for each depth of the search in the NegaMax algorithm.
+    Private TFTableStorageArray(127) As BoardState 'Holds the TFTables for each depth of the search in the NegaMax algorithm.
     'The reason we do this is because of Null Moves: as this is called between TFTableFixer & CreateMoves, the branches from the Null Nodes
     'mess with the TFTable. As a result, we store the TFTable for each depth, and call it when needed.
     'Alfie Note 24.12.24: this seems very unnecessary... why can't we just pass a reference to NegaMaxTFTable?? Hopefully wanting to fix this soon...
@@ -98,13 +98,13 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
     'Table will contain 2^n entries, where n is the value set in TranspositionTableSize (in the brackets).
     Private TranspositionTable(1 << (64 - GlobalConstants.TranspositionTableSize) - 1) As TTEntry
     Private TTIsEmpty As Boolean
-    Private TTGeneration As Int16 'Represents the current move count of the position, so that we can index when TTEntries are made.
+    Private TTGeneration As Byte 'Represents the current move count of the position, so that we can index when TTEntries are made.
 
 
     Private Structure TTEntry
         'Dim isPopulated As Boolean
         Dim Key As UInt64 'Zobrist Key of position - used to pinpoint the correct board.
-        Dim Generation As Int16 'Represents the move at which the entry was created. If the current move is much higher than this number, we call this entry 'dead'.
+        Dim Generation As Byte 'Represents the move at which the entry was created. If the current move is much higher than this number, we call this entry 'dead'.
         Dim Depth As SByte
         Dim Flag As Byte 'Represents additional information about the move:
         '0 = Score is exact (no ambiguity), 1 = Lower Bound (score could be higher), 2 = Upper Bound (score could be lower),
@@ -256,7 +256,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         For n As Int16 = 0 To 127
             KillerMoves(n, 0) = 0
             KillerMoves(n, 1) = 0
-            TFTableStorageArray(n) = New TFTableStorage
+            TFTableStorageArray(n) = New BoardState
         Next
         If ResetTT Then ResetTranspositionTable() Else IncreaseTTGeneration()
         PrimaryHalfMoveSize = 0
@@ -287,18 +287,21 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         TTGeneration = 0
     End Sub
     Public Sub IncreaseTTGeneration()
-        If TTGeneration >= Int16.MaxValue Then
+        If TTGeneration >= Byte.MaxValue Then
             'Move Limit has been matched - must reset TT :(
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine("Transposition Table Generation Limit Reached: Resetting...")
+            Console.ResetColor()
             If Not TTIsEmpty Then
                 For n = 0 To TranspositionTable.Length - 1
-                    If TranspositionTable(n).Flag <> 4 And TranspositionTable(n).Generation <> UInt16.MaxValue Then
+                    If TranspositionTable(n).Flag <> 4 And TranspositionTable(n).Generation <> Byte.MaxValue Then
                         TranspositionTable(n).Generation = 0
                     End If
                 Next
             End If
             TTGeneration = 0
         Else
-            TTGeneration += 1S
+            TTGeneration = CByte(TTGeneration + 1)
         End If
     End Sub
 
@@ -665,7 +668,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
     End Function
 
     'Search function with added 'PreviousBestMove' attribute - ammends 'BasePieceMoves' so that PreviousBestMove will be searched first.
-    Public Function Search(ByVal Depth As SByte, ByVal PreviousBestMove As Move) As Move
+    Public Function Search(ByVal Depth As Integer, ByVal PreviousBestMove As Move) As Move
         Dim TempMove As UInt16 = PreviousBestMove.BitMove
         Dim LocationInMoves As Integer
         If BasePieceMoves(0) <> TempMove Then
@@ -808,7 +811,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 'As this node in the TranspositionTable is involved in the set of best moves (as predicted by the AI), we
                 'keep it alive by resetting its TimeToLive value. This ensures that the AI does not 'forget' its most vital
                 'nodes, due to them expiring.
-                TranspositionTable(EntryInTT).Generation = 3S + TTGeneration
+                TranspositionTable(EntryInTT).Generation = CByte(3 + TTGeneration)
                 'We have stored a move in this position - retrieve this move, then add the PGN version of it to BestLine.
                 BestMove = TempTTEntry.BestMove
                 ConvertBitMoveToMove(TempMove, BestMove)
@@ -1036,20 +1039,22 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 End If
 
                 If TempMeInCheck = 0 Then 'Therefore, is a legal move.
-                    'Copies the board position to its temporary counterparts.
-                    Array.Copy(Board, TempBoard, 64)
-                    TempEnPassant = EnPassant
-                    TempZobristValue = ZobristValue
-                    TempMeKPos = MeKPos
-                    TempMeCanCastle.CopyFrom(MeCanCastle)
-                    TempEnemyCanCastle.CopyFrom(EnemyCanCastle)
-
-                    'Makes the current move onto the temporary board.
-                    MakeMove(TempBoard, PieceMoves(n), TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, {10000, 10000}, {0, 0}, TempEnPassant, TempZobristValue, 0UL, 0UL, 0S)
-
-                    If depth = 1 Then
+                    If depth = 1 AndAlso Not SearchSettings.NodeSearchUseHashing Then
                         EndPositionCount += 1UL
-                        If SearchSettings.NodeSearchUseHashing Then
+                    Else
+                        'Copies the board position to its temporary counterparts.
+                        Array.Copy(Board, TempBoard, 64)
+                        TempEnPassant = EnPassant
+                        TempZobristValue = ZobristValue
+                        TempMeKPos = MeKPos
+                        TempMeCanCastle.CopyFrom(MeCanCastle)
+                        TempEnemyCanCastle.CopyFrom(EnemyCanCastle)
+
+                        'Makes the current move onto the temporary board.
+                        MakeMove(TempBoard, PieceMoves(n), TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, {10000, 10000}, {0, 0}, TempEnPassant, TempZobristValue, 0UL, 0UL, 0S)
+
+                        If depth = 1 Then
+                            EndPositionCount += 1UL
                             'Leaf node reached - check if end position has already been encountered, using the Zobrist Hash of the position.
                             Dim EntryInTT As Integer = CInt(TempZobristValue >> GlobalConstants.TranspositionTableSize)
                             If TranspositionTable(EntryInTT).Key = TempZobristValue Then
@@ -1057,12 +1062,11 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                             Else
                                 TranspositionTable(EntryInTT).Key = TempZobristValue
                             End If
-
+                        Else
+                            'Recursively calls the Node Count on this new position.
+                            NodeTest(TempBoard, depth - 1, Not isWhite, EnemyCanCastle, TempMeCanCastle, EnemyKPos, TempMeKPos, TempEnPassant, TempZobristValue)
+                            'If depth = Test Then OutputBitMoveToConsole(PieceMoves(n)) : Console.WriteLine(" " & EndPositionCount - TempValue) : TempValue = EndPositionCount
                         End If
-                    Else
-                        'Recursively calls the Node Count on this new position.
-                        NodeTest(TempBoard, depth - 1, Not isWhite, EnemyCanCastle, TempMeCanCastle, EnemyKPos, TempMeKPos, TempEnPassant, TempZobristValue)
-                        'If depth = Test Then OutputBitMoveToConsole(PieceMoves(n)) : Console.WriteLine(" " & EndPositionCount - TempValue) : TempValue = EndPositionCount
                     End If
                 End If
                 'If depth = 2 Then
@@ -1778,9 +1782,9 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         If HalfMoveSize >= 100 AndAlso depth > 0 Then
             'We have hit the 50-move rule - this can only be overruled if we are in checkmate, so assuming that is not the case, we can safely return 0.
             Dim FiftyMoveCheck As UInt16
-            FixTFTable(Board, isWhite, TFTableStorageArray(DepthFromRoot).Table, MeKPos, FiftyMoveCheck, MeCanCastle.CanICastle(), EnPassant)
+            FixTFTable(Board, isWhite, TFTableStorageArray(DepthFromRoot).OLDTFTable, MeKPos, FiftyMoveCheck, MeCanCastle.CanICastle(), EnPassant)
             If FiftyMoveCheck >= 128 Then
-                Dim FiftyMoveMoves() As UInt16 = CreateMoves(Board, isWhite, TFTableStorageArray(DepthFromRoot).Table, EnemyKPos, FiftyMoveCheck, MeCanCastle, EnPassant, False, DepthFromRoot, 0)
+                Dim FiftyMoveMoves() As UInt16 = CreateMoves(Board, isWhite, TFTableStorageArray(DepthFromRoot).OLDTFTable, EnemyKPos, FiftyMoveCheck, MeCanCastle, EnPassant, False, DepthFromRoot, 0)
                 If FiftyMoveMoves IsNot Nothing Then
                     Dim TempFiftyMoveCheck As UInt16
                     For n = 0 To FiftyMoveMoves.Length - 1
@@ -1862,7 +1866,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
         ElseIf depth > 0 AndAlso (TranspositionTable(EntryInTT).Depth < depth OrElse TTGeneration - TranspositionTable(EntryInTT).Generation >= SearchSettings.TimeToLive) AndAlso SearchSettings.UseTranspositionTable Then
             'Creates a new TTEntry for the current position, as it could not be found in the Transposition Table.
-            TempTTEntry.Generation = CShort(TTGeneration)
+            TempTTEntry.Generation = CByte(TTGeneration)
             TempTTEntry.Key = ZobristValue
             TempTTEntry.Flag = 4
             TempTTEntry.Depth = CSByte(depth)
@@ -1877,7 +1881,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Dim NeedFullSearch As Boolean
         'Creates and forms the TFTable for the player to move. This subroutine will also flag for Minor & Major piece in the position.
         Dim NoPieceInPos As Boolean = True
-        FixTFTable(Board, isWhite, TFTableStorageArray(DepthFromRoot).Table, MeKPos, PlayerInCheck, MeCanCastle.CanICastle(), EnPassant, NoPieceInPos)
+        FixTFTable(Board, isWhite, TFTableStorageArray(DepthFromRoot).OLDTFTable, MeKPos, PlayerInCheck, MeCanCastle.CanICastle(), EnPassant, NoPieceInPos)
 
         If Not (depth > 0 OrElse PlayerInCheck >= 128) Then 'Quiescence mode activated.
             'Evaluation of board is the current move to beat.
@@ -1931,7 +1935,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         'Assumes Flag to be an Upper bound, unless proven otherwise.
         TempTTEntry.Flag = 2
         'Creates the pseudo-legal moves for the chosen player. If Quiescence mode is activated then use capture moves only.
-        Dim PieceMoves() As UInt16 = CreateMoves(Board, isWhite, TFTableStorageArray(DepthFromRoot).Table, EnemyKPos, PlayerInCheck, MeCanCastle, EnPassant, Not (depth > 0 OrElse PlayerInCheck >= 128), DepthFromRoot, TempTTEntry.BestMove)
+        Dim PieceMoves() As UInt16 = CreateMoves(Board, isWhite, TFTableStorageArray(DepthFromRoot).OLDTFTable, EnemyKPos, PlayerInCheck, MeCanCastle, EnPassant, Not (depth > 0 OrElse PlayerInCheck >= 128), DepthFromRoot, TempTTEntry.BestMove)
 
         If PieceMoves IsNot Nothing Then 'If any move exists...
             'Creates temp variables.

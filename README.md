@@ -9,7 +9,9 @@
 
 v10.0 of my commercial-quality **Chess AI Project**, originally for my A-Level Computer Science NEA (on which my supervisor said it was the "best he had ever seen" in his years of teaching), on which I was awarded 100%. This features a strong Artificial Intelligence (built upon a highly-optimised, original NegaMax algorithm), created around a sophisticated chess-playing interface, packed to the brim with classic and original ideas.
 > **Online Rating:** ~2850 ELO (Lichess).  
-**Puzzle Rating:** ~3125 ELO (hand-crafted).
+**Puzzle Rating:** ~3125 ELO (hand-crafted database from Lichess).
+
+This project forms the backbone of other hand-crafted work, including an [**Opening Book Builder**](https://github.com/AlfieKunz/Chess-Book-Builder) and a [**Sui-Style Benchmarking System**](https://github.com/AlfieKunz/Chess-Tournament).
 
 This work is self-motivated and self-funded, and is written primarily in VB.NET as a Visual Studio WinForms application.
 
