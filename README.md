@@ -82,7 +82,7 @@ This work is self-motivated and self-funded, and is written primarily in VB.NET 
 
 ## Project Showcase
 
-> **Project Demo:** You can see this project live directly through the [**v10.0 release**](https://drive.google.com/open?id=1sIJN5SI466Z6pHWhx42FbaHb7Ml4dm82) (Intel 32/64-bit). Simply click the 'Download All' button in the link attached, unzip and run the "Chess AI.exe" application. All instructions of use are provided throughout.
+> **Project Demo:** You can see this project live directly through the [**v10.0 release**](https://drive.google.com/open?id=1sIJN5SI466Z6pHWhx42FbaHb7Ml4dm82) (Intel 64-bit). Simply click the 'Download All' button in the link attached, unzip and run the "Chess AI.exe" application. All instructions of use are provided throughout.
 
 Alternatively, one can download the source code, as instructed below, for full control.
 
