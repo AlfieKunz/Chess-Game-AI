@@ -11,7 +11,7 @@ v10.0 of my commercial-quality **Chess AI Project**, originally for my A-Level C
 > **Online Rating:** ~2850 ELO (Lichess).  
 **Puzzle Rating:** ~3125 ELO (hand-crafted database from Lichess).
 
-This project forms the backbone of other hand-crafted work, including an [**Opening Book Builder**](https://github.com/AlfieKunz/Chess-Book-Builder) and a [**Sui-Style Benchmarking System**](https://github.com/AlfieKunz/Chess-Tournament).
+This project forms the backbone of other hand-crafted work, including an [**Opening Book Builder**](https://github.com/AlfieKunz/Chess-Book-Builder) and a [**Swiss-Style Benchmarking System**](https://github.com/AlfieKunz/Chess-Tournament).
 
 This work is self-motivated and self-funded, and is written primarily in VB.NET as a Visual Studio WinForms application.
 
