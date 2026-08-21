@@ -7,7 +7,7 @@
 
 ---
 
-v10.0 of my commercial-quality **Chess AI Project**, originally for my A-Level Computer Science NEA (on which my supervisor said it was the "best he had ever seen" in his years of teaching), on which I was awarded 100%. This features a strong Artificial Intelligence (built upon a highly-optimised, original NegaMax algorithm), created around a sophisticated chess-playing interface, packed to the brim with classic and original ideas.
+v10.0 of my commercial-quality **Chess AI Project**, originally for my A-Level Computer Science NEA (which my supervisor called the "best he had ever seen" in his years of teaching), for which I was awarded 100%. This features a strong Artificial Intelligence (built upon a highly-optimised, original NegaMax algorithm), created around a sophisticated chess-playing interface, packed to the brim with classic and original ideas.
 > **Online Rating:** ~2850 ELO (Lichess).  
 **Puzzle Rating:** ~3125 ELO (hand-crafted database from Lichess).
 
@@ -27,12 +27,12 @@ This work is self-motivated and self-funded, and is written primarily in VB.NET 
 ✅ Drag & drop, and click & move functionality for pieces.  
 ✅ Allows for inputting of positions (FEN) or moves in the current position (PGN move, full Lichess game, etc), dynamically choosing between them, and heavily robust validation & parsing (eg: estimating missing data). Invalid inputs flagged as such, with descriptive error messages.  
 ✅ Board highlights for legal-move highlighting, previous moves, and check highlighting.  
-✅ Piece animations (move making) and board animations (morphing between positionsL uses bespoke greedy neighbour matching algorithm).  
+✅ Piece animations (move making) and board animations (morphing between positions: uses bespoke greedy neighbour matching algorithm).  
 ✅ Ability to flip the board for each player's perspective (+ auto-flipping support).  
 ✅ Colourful, intuitive board GUI that adapts dramatically to each game mode. Displays extra information such as live search timings (with the updating AI current move info).  
 ✅ Animated boot sequence on the main menu.  
 ✅ In-depth, interactable settings form, for controls such as board colour scheme, piece animation speed, toggling highlights, fixed-depth AI searching, 'blindfold' mode, touch-move, etc. Settings persist across sessions, with robust fallback support.  
-✅ Full range of sounds for each move, startup, training mode responces, and game termination.  
+✅ Full range of sounds for each move, startup, training mode responses, and game termination.  
 ✅ Credits panel, displaying persisted lifetime AI statistics.  
 
 
@@ -53,7 +53,7 @@ This work is self-motivated and self-funded, and is written primarily in VB.NET 
 ✅ Dynamic Aspiration Windows.  
 ✅ Detailed search diagnostics: node counts, leaf-node counts, and position-collision tracking.  
 ✅ Extensively tuned, tiered move-ordering system (with an advanced system for the base position), using techniques such as MVV-LVA, Killer Moves, Transposition-Table-aware ordering, trades vs. open captures, near-promotions, moves closing in on the enemy king, moves giving check, contested squares (especially by enemy pawns), and static exchange evaluation.  
-✅ Sophisticated pre-computed-driven evaluation function, involving hashed material count lookup, hand-crafted (aggressive) PieceHeatMaps (that adapt to the game phase and adjust 'on the fly' as pieces are traded), pawn bitboards (for quick identification of passed, isolated, or doubled pawns), king endgame heuristic (encourages well-knonw mating patterns and hindering opposing king movement).  
+✅ Sophisticated pre-computed-driven evaluation function, involving hashed material count lookup, hand-crafted (aggressive) PieceHeatMaps (that adapt to the game phase and adjust 'on the fly' as pieces are traded), pawn bitboards (for quick identification of passed, isolated, or doubled pawns), king endgame heuristic (encouraging well-known mating patterns and hindering opposing king movement).  
 ✅ Realistic AI search time mode, that mimics human-like behaviours when playing online: adapts to the complexity of the position, number of forced moves, pre-moves and book-moves, the AI's previous search information (eg: a recently broken aspiration window), win sequences found, and the estimated strength of the opponent.  
 
 
@@ -61,16 +61,15 @@ This work is self-motivated and self-funded, and is written primarily in VB.NET 
 ✅ One-Player Mode: play against the AI at a range of pre-coded strengths and behavioural styles.  
 ✅ Two-Player Mode: local PvP, with customisable starting positions.  
 ✅ Analysis Mode: a sandbox for inputting, studying, and extracting full sequences of moves, returning detailed computer analysis (evaluation, best-path, and deep node testing), and in-depth adjustment of AI strength & search time. Also contains extra features such as 'endless AI' mode, board editor (for quick editing of the position, by freely dragging pieces around or spawning new pieces, with robust illegal placement detection), and perft-style node testing.  
-✅ Puzzle Mode: solve (or give the AI to solve) over 2 million rated positions (with an 'extra hard' set). Live AI evaluation, and an optional timed 'puzzle rush' mode. Individually tracked ELO rating system (using exponential rating change weighted by puzzle rating) that persist over time.   
+✅ Puzzle Mode: solve (or give the AI to solve) over 2 million rated positions (with an 'extra hard' set). Live AI evaluation, and an optional timed 'puzzle rush' mode. Individually tracked ELO rating system (using exponential rating change weighted by puzzle rating) that persists over time.   
 ✅ Training Modes: Coordinate or Move time-based drills, for square-recognition or algebraic-notation recall against random legal moves in random positions. Persistent leaderboards for each side.  
-✅ Remote Mode: locates any external chess interface (eg: lichess, chess.com) visible on the screen via computer-vision screen-reading (no matter the size, position, theme, or monitor), and connects to it by mapping all the squares and pieces to its internal structure. From here, the interface continuously tracks all moves made on the interface, then allows either to the user or the AI to make their response (on my chess GUI), which is then made on the external interface by controlling the mouse. Well-handled for poor data: error tolerances, quick & deep hybrid row scans, greyscale colour switching for locating the external board, estimating promotion pieces based on available data, remote and user move verification, etc. Purpose-built for benchmarking the AI's real-world strength against other engines, on sites such as Lichess.  
+✅ Remote Mode: locates any external chess interface (eg: lichess, chess.com) visible on the screen via computer-vision screen-reading (no matter the size, position, theme, or monitor), and connects to it by mapping all the squares and pieces to its internal structure. From here, the interface continuously tracks all moves made on the interface, then allows either the user or the AI to make their response (on my chess GUI), which is then made on the external interface by controlling the mouse. Well-handled for poor data: error tolerances, quick & deep hybrid row scans, greyscale colour switching for locating the external board, estimating promotion pieces based on available data, remote and user move verification, etc. Purpose-built for benchmarking the AI's real-world strength against other engines, on sites such as Lichess.  
 
 
 ### Quality of Life, and Code Profiling
 ✅ Colourful, information-dense console window containing board states, live AI search and move information, colour-coded evaluation, and debug information for each game mode.  
 ✅ Custom cursor states (macOS-style "open hand") on sliders and pieces for drag & drop.  
-✅ Support for undo-ing moves, and copying or exporting of current FEN / PGN.  
-
+✅ Support for undoing moves, and copying or exporting of current FEN / PGN.  
 ✅ Lazy-loaded database entries: only key information of puzzle & opening book entries are parsed on boot-up, with full detail computed on demand. The user can also choose a smaller opening book, if preferred.  
 ✅ Adaptive, dynamic program title reflecting the current game state.  
 ✅ Correct handling of multi-monitor setups and High-DPI displays.  
@@ -88,7 +87,7 @@ Alternatively, one can download the source code, as instructed below, for full c
 
 > This project was originally developed as my A-level Computer Science NEA project (which uses v5.2): you can access the <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Alfie%20Kunz%20Computer%20Science%20NEA%20Project%20Report.pdf" target="_blank" rel="noopener noreferrer">**original report here**</a>, or <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Previous%20AI%20Search%20Efficiency%20Tracking%20(Plotted%20-%2027.12.24).pdf" target="_blank" rel="noopener noreferrer">**track my AI's searching speed**</a> for all versions before v10.0.
 
-> As of v5.2, I began rigorously comparing each subsequent AI iteration, by integrating models into a sophisticated, custom-made sui-style benchmarking system. You can see the <a href="https://docs.google.com/document/d/1l2azNiomihHmkGiXxQ9ZlNTO_YLcn6JF" target="_blank" rel="noopener noreferrer">**results of those tournaments here**</a>, and the program by which I carry out said tournaments <a href="https://github.com/AlfieKunz/Chess-Tournament" target="_blank" rel="noopener noreferrer">**here**</a>.
+> As of v5.2, I began rigorously comparing each subsequent AI iteration, by integrating models into a sophisticated, custom-made swiss-style benchmarking system. You can see the <a href="https://docs.google.com/document/d/1l2azNiomihHmkGiXxQ9ZlNTO_YLcn6JF" target="_blank" rel="noopener noreferrer">**results of those tournaments here**</a>, and the program by which I carry out said tournaments <a href="https://github.com/AlfieKunz/Chess-Tournament" target="_blank" rel="noopener noreferrer">**here**</a>.
 
 <table align="center" width="100%">
   <tr>
@@ -119,9 +118,9 @@ Alternatively, one can download the source code, as instructed below, for full c
 
 Chess averages ~35 legal moves per position; searching 10 moves deep yields no more than 35^10 ≈ 2.7×10^15 positions!! To have any hope of writing a chess engine, we are forced to walk down one of two paths: reinforcement-learning based AIs (such as AlphaZero), or deterministic, tree-search AIs (such as MiniMax). As the former can produce "blind spots" in practice for unknown scenarios, we traverse the latter...
 
-The **MiniMax** algorithm provides a robust, "play-safe" foundation: by assuming 'perfect' play from the opponent, the algorithm guarantees mathematically optimal decisions within its search depth: we effectively *minimise* the *maximum* evaluation of all our opponent's responces to a given move, by emplyoying a depth-first search on the current position. Henceforth, a strong chess engine can be broken down into one which searches through positions quickly and efficiently, and one that can effectively evaluate the leaf nodes of our tree.
+The **MiniMax** algorithm provides a robust, "play-safe" foundation: by assuming 'perfect' play from the opponent, the algorithm guarantees mathematically optimal decisions within its search depth: we effectively *minimise* the *maximum* evaluation of all our opponent's responses to a given move, by employing a depth-first search on the current position. Hence, a strong chess engine can be broken down into one which searches through positions quickly and efficiently, and one that can effectively evaluate the leaf nodes of our tree.
 
-Once a branch is proven no better than an already-found alternative, there is no need to explore it deeper: we can 'prune' the search early, saving *lots* of time. This forms the basis of Alpha-Beta Pruning. As a result, it is desired to search the moves in some position from 'best to worse'; all these weaker moves can be pruned very quickly, from our previously calculated strong score. This incentivises many algorithms for sorting the available moves, before sorting them. Advanced techniques like Null Move Pruning and Delta Pruning further compress the search tree aggressively, allowing the AI to reach significantly higher depths in identical time controls.
+Once a branch is proven no better than an already-found alternative, there is no need to explore it deeper: we can 'prune' the search early, saving *lots* of time. This forms the basis of Alpha-Beta Pruning. As a result, it is desired to search the moves in some position from 'best to worst'; all these weaker moves can be pruned very quickly, from our previously calculated strong score. This incentivises many algorithms for sorting the available moves, before searching them. Advanced techniques like Null Move Pruning and Delta Pruning further compress the search tree aggressively, allowing the AI to reach significantly higher depths in identical time controls.
 
 To correctly evaluate a board position, we keep track of its details down the tree (hence motivating the use of storing the board, its pieces, and its data in efficient 'bit' form). From this, we can use the piece material, the activity of each piece, what phase of the game we are in, how likely pawns are to promote, king safety, etc to judge the strength of a given position for each player.
 
@@ -129,7 +128,7 @@ For effective move generation (amongst numerous optimisation practices), we intr
 
 ---
 
-## Installation, and Folder Structure
+## Installation and Folder Structure
 
 ### Required Software: Visual Studio (.NET 8.0).
 
@@ -183,7 +182,7 @@ Chess AI
 │  ├─ MainMenu.vb                                       // Allows the user to access the full extent of my program: introductory animation, provides the starting point for instantiating all the other classes & forms in my program. Pre-storing of opening book
 │  ├─ OnePlayerCustomisation.Designer.vb                // WinForms design for the 1P AI customisation menu form
 │  ├─ OnePlayerCustomisation.vb                         // Allows the user to customise their one-player game of chess with the AI, with pre-set difficulties
-│  ├─ OpeningAndPuzzleEntry.vb                          // Class representing entries for the OpeningBook  and PuzzleDatabase list: constructed and stored upon boot-up, with minimal initial computation until they are probed individually (after which we decode fully them)
+│  ├─ OpeningAndPuzzleEntry.vb                          // Class representing entries for the OpeningBook and PuzzleDatabase list: constructed and stored upon boot-up, with minimal initial computation until they are probed individually (after which we fully decode them)
 │  ├─ PieceLegalMoveGenerators.vb                       // Holds the core moves of chess: returns either pseudo-legal moves of a piece, or updates the TFTable from a given piece's moves
 │  ├─ Resources                                         // 'Dragging hand' cursor designs for drag & drop mechanics
 │  ├─ Settings.Designer.vb                              // WinForms design for the settings form
