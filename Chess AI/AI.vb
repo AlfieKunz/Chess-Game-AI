@@ -2174,16 +2174,16 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             Dim TempWhitePawnMask As ULong = WhitePawnMask
             Dim TempBlackPawnMask As ULong = BlackPawnMask
             While TempWhitePawnMask <> 0UL
-                PawnPosition = 63 - BitOperations.TrailingZeroCount(TempWhitePawnMask) 'Returns the bit position of the next particle, s.t a value of 0 refers to
-                'the a8 square, 8 refers to a7, 63 refers to h1. The 63 - ... puts this in the same form as how the pawn masks are constructed.
+                PawnPosition = BitOperations.TrailingZeroCount(TempWhitePawnMask) 'Returns the bit position of the next particle, s.t a value of 0 refers to
+                'the a8 square, 8 refers to a7, 63 refers to h1.
                 'Calcualates all squares in front of the pawn.
-                PawnRank = 1 + PawnPosition \ 8
+                PawnRank = 8 - (PawnPosition \ 8)
+                PawnFile = PawnPosition Mod 8
                 ForwardMask = ULong.MaxValue >> (8 * PawnRank)
                 'Calculates all the squares on the same rank as the pawn in question, and the rank to the left & right.
-                PawnFile = PawnPosition Mod 8
-                FileMaskCentre = &H8080808080808080UL >> PawnFile '&H8080808080808080UL (hex) represents all the 1s on the a file.
-                FileMaskLeft = If(PawnFile = 0, 0UL, &H8080808080808080UL >> (PawnFile - 1))
-                FileMaskRight = If(PawnFile = 7, 0UL, &H8080808080808080UL >> (PawnFile + 1))
+                FileMaskCentre = &H101010101010101UL << PawnFile '&H0101010101010101UL (hex) represents all the 1s on the a file.
+                FileMaskLeft = If(PawnFile = 0, 0UL, &H101010101010101UL << (PawnFile - 1))
+                FileMaskRight = If(PawnFile = 7, 0UL, &H101010101010101UL << (PawnFile + 1))
 
                 'There are no enemy pawns in the way of the pawn in question - it is a past pawn. Add a bonus.
                 If ((ForwardMask And (FileMaskLeft Or FileMaskCentre Or FileMaskRight)) And BlackPawnMask) = 0UL Then Score += EvalPastPawnBonus(PawnRank)
@@ -2196,13 +2196,13 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 TempWhitePawnMask = (TempWhitePawnMask And (TempWhitePawnMask - 1UL))
             End While
             While TempBlackPawnMask <> 0UL
-                PawnPosition = 63 - BitOperations.TrailingZeroCount(TempBlackPawnMask)
-                PawnRank = 8 - (PawnPosition \ 8)
+                PawnPosition = BitOperations.TrailingZeroCount(TempBlackPawnMask)
+                PawnRank = 1 + (PawnPosition \ 8)
                 ForwardMask = ULong.MaxValue << (8 * PawnRank)
                 PawnFile = PawnPosition Mod 8
-                FileMaskCentre = &H8080808080808080UL >> PawnFile
-                FileMaskLeft = If(PawnFile = 0, 0UL, &H8080808080808080UL >> (PawnFile - 1))
-                FileMaskRight = If(PawnFile = 7, 0UL, &H8080808080808080UL >> (PawnFile + 1))
+                FileMaskCentre = &H101010101010101UL << PawnFile
+                FileMaskLeft = If(PawnFile = 0, 0UL, &H101010101010101UL << (PawnFile - 1))
+                FileMaskRight = If(PawnFile = 7, 0UL, &H101010101010101UL << (PawnFile + 1))
                 If ((ForwardMask And (FileMaskLeft Or FileMaskCentre Or FileMaskRight)) And WhitePawnMask) = 0UL Then Score -= EvalPastPawnBonus(PawnRank)
                 If ((FileMaskLeft Or FileMaskRight) And BlackPawnMask) = 0UL Then Score += EvalIsolatedPawnPenalty(PawnRank)
                 If (ForwardMask And FileMaskCentre And BlackPawnMask) <> 0UL Then Score += EvalDoubledPawnPenalty

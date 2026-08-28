@@ -231,7 +231,7 @@ End Class
 
 
 'Class holding the TFTable of each depth of the search.
-Public Structure BoardState
+Public Class BoardState 'MAKE STRUCTURE!!!!!!
     Public BitBoardPawnWhite As UInt64
     Public BitBoardPawnBlack As UInt64
     Public BitBoardKnightWhite As UInt64
@@ -268,4 +268,4 @@ Public Structure BoardState
     'Public Function GetTable() As Char(,)
     '    Return Table
     'End Function
-End Structure
+End Class
