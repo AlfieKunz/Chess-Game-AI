@@ -4,7 +4,9 @@
 'my AI class (either via instavintiation or by inheritance). It will contain the algorithms that will be used by both my Chess
 '& AI classes, such as the ‘TFTable’ Generator, ‘DoesMoveResolveCheck’, 'Move Converters', and others.
 Imports System.Data.OleDb
+Imports System.Numerics
 Imports System.Runtime.CompilerServices
+Imports System.Xml
 Imports System.Xml.XPath
 
 Partial Public Class CoreMethods
@@ -20,7 +22,7 @@ Partial Public Class CoreMethods
     'a is Similar to PieceValue: use (Asc(UCase(PieceName)) Mod 11) to calculate - [2] used for EnPassant square.
     Protected Shared ReadOnly HashConstants(4) As UInt64 '0 = Player Turn, 1 = WhiteKSCastle, 2 = WhiteQSCastle, 3 = BlackKSCastle, 4 = BlackQSCastle.
     Public Sub New()
-        PopulateKnightLegalMoveArray()
+        PrecomputeKnightLegalMoveArray()
         'Sets PieceValues variables using a Hash Function (Upper Case letter --> ASCII, then MOD 11). This
         'creates a unique index / row in the PieceValue array for each piece and its corresponding weight,
         'so its value can be searched up quickly. PieceValue(Asc(UCase(Board(x, y))) Mod 11)
@@ -97,6 +99,9 @@ Partial Public Class CoreMethods
     End Function
     Public Function PGNtoCoorConverter(ByVal Position As String) As String 'f5 --> 53
         Return Asc(Position(0)) - 97 & 8 - Val(Position(1))
+    End Function
+    Public Function SquareToPGNConverter(ByVal Square As Integer) As String
+        Return Chr((Square Mod 8) + 97) & 8 - (Square \ 8)
     End Function
 
 
@@ -273,12 +278,35 @@ Partial Public Class CoreMethods
         Console.ForegroundColor = ConsoleColor.White
         Console.WriteLine()
     End Sub
+    Public Sub OutputTFTableToConsole(ByVal TFTable As UInt64, Optional ByVal PinInfo As UInt64 = 0UL, Optional ByVal InCheck As UInt16 = 0US, Optional ByVal MeKPos As UInt16 = UInt16.MaxValue)
+        Console.ForegroundColor = ConsoleColor.DarkCyan
+        Console.WriteLine("Denary: " & TFTable)
+        Dim BinaryMask As String = StrReverse(String.Join("", BitConverter.GetBytes(CULng(TFTable)).Reverse().Select(Function(b) Convert.ToString(b, 2).PadLeft(8, "0"c))))
+        Dim Counter As Integer
+        For i = 0 To 63
+            If i = MeKPos Then
+                Console.ForegroundColor = ConsoleColor.DarkYellow
+            ElseIf InCheck <> 0US AndAlso i = (InCheck And 63US) Then
+                Console.ForegroundColor = ConsoleColor.White
+            ElseIf (PinInfo And (1UL << i)) <> 0UL Then
+                Console.ForegroundColor = ConsoleColor.Blue
+            Else
+                Console.ForegroundColor = If(BinaryMask(i) = "1"c, ConsoleColor.Green, ConsoleColor.Red)
+            End If
+            Console.Write(If(BinaryMask(i) = "1"c, "T"c, "F"c))
+            Counter += 1
+            If Counter = 8 Then Counter = 0 : Console.WriteLine()
+        Next
+        Console.ForegroundColor = ConsoleColor.White
+        Console.WriteLine()
+    End Sub
+
 
     'Subroutine which outputs a given BitMove (as used by my AI) to the console.
     Protected Sub OutputBitMoveToConsole(ByVal Move As UInt16, Optional ByVal PrecedingText As String = "")
         'Converts the BitMove to binary (base 2).
         Dim BinaryString As String = (Convert.ToString(Move, 2)).PadLeft(16, "0"c)
-        Dim OldMove, NewMove As String
+        Dim OldMove, NewMove As Integer
         If PrecedingText <> "" Then Console.Write(PrecedingText)
         For n As Byte = 0 To 15
             Select Case n
@@ -288,17 +316,11 @@ Partial Public Class CoreMethods
                 Case 1 To 3
                     'Other Flags
                     Console.ForegroundColor = ConsoleColor.Magenta
-                Case 4 To 6
-                    'OldPosX
-                    Console.ForegroundColor = ConsoleColor.Red
-                Case 7 To 9
-                    'OldPosY
+                Case 4 To 9
+                    'OldPos
                     Console.ForegroundColor = ConsoleColor.DarkYellow
-                Case 10 To 12
-                    'NewPosX
-                    Console.ForegroundColor = ConsoleColor.Green
-                Case 13 To 15
-                    'NewPosY
+                Case 10 To 15
+                    'NewPos
                     Console.ForegroundColor = ConsoleColor.Blue
             End Select
             Console.Write(BinaryString(n))
@@ -308,20 +330,16 @@ Partial Public Class CoreMethods
         Console.Write((" (" & Move.ToString("N0") & ")").PadRight(10) & "=  ")
 
         'Converts the BitMove into the more user-friendly coor system, then outputs each digit in their respective colour.
-        OldMove = ((Move And 3584) >> 9) & ((Move And 448) >> 6)
-        NewMove = ((Move And 56) >> 3) & (Move And 7)
-        Console.ForegroundColor = ConsoleColor.Red
-        Console.Write(OldMove(0))
+        OldMove = (Move And 4032) >> 6
+        NewMove = Move And 63
         Console.ForegroundColor = ConsoleColor.DarkYellow
-        Console.Write(OldMove(1) & " ")
-        Console.ForegroundColor = ConsoleColor.Green
-        Console.Write(NewMove(0))
+        Console.Write($"{OldMove:D2} ")
         Console.ForegroundColor = ConsoleColor.Blue
-        Console.Write(NewMove(1))
+        Console.Write($"{NewMove:D2} ")
         Console.ForegroundColor = ConsoleColor.Gray
 
         'Outputs the PGN equivilent of the move (in the format a1b2, where a1 = start position, and b2 = end position).
-        Console.WriteLine(" (" & CoorToPGNConverter(OldMove) & CoorToPGNConverter(NewMove) & ").")
+        Console.WriteLine("(" & SquareToPGNConverter(OldMove) & SquareToPGNConverter(NewMove) & ").")
     End Sub
 
     Protected Sub OutputBitMaskToConsole(ByVal Mask As ULong, Optional ByVal PawnPosition As Integer = -1, Optional ByVal EnemyPawnMask As ULong = 0UL)
@@ -373,6 +391,233 @@ Partial Public Class CoreMethods
         If MoveString = "-" OrElse MoveString = Nothing Then Return 0 'For blank En-Passant.
         Return CShort((CCharInt(MoveString(0)) << 3) Or Val(MoveString(1)))
     End Function
+
+
+    'Creates and handles bitboards.
+    Public Sub ConvertBoardtoBitboards(ByVal Board(,) As Char, ByRef State As BoardState, Optional ByVal StateNeedsCleaning As Boolean = False)
+        If StateNeedsCleaning Then State.ClearBitboards()
+        For y As UInt16 = 0 To 7
+            For x As UInt16 = 0 To 7
+                Dim Piece As Char = Board(x, y)
+                If Piece <> " " Then
+                    Dim Square As UInt16 = Flatten2DBoardIndex(x, y)
+                    If Char.IsUpper(Piece) Then
+                        Select Case Piece
+                            Case "P"c : State.BitboardPawnWhite = State.BitboardPawnWhite Or (1UL << Square)
+                            Case "N"c : State.BitboardKnightWhite = State.BitboardKnightWhite Or (1UL << Square)
+                            Case "B"c : State.BitboardBishopWhite = State.BitboardBishopWhite Or (1UL << Square)
+                            Case "R"c : State.BitboardRookWhite = State.BitboardRookWhite Or (1UL << Square)
+                            Case "Q"c : State.BitboardQueenWhite = State.BitboardQueenWhite Or (1UL << Square)
+                            Case "K"c : State.WhiteKPos = Square
+                        End Select
+                    Else
+                        Select Case Piece
+                            Case "p"c : State.BitboardPawnBlack = State.BitboardPawnBlack Or (1UL << Square)
+                            Case "n"c : State.BitboardKnightBlack = State.BitboardKnightBlack Or (1UL << Square)
+                            Case "b"c : State.BitboardBishopBlack = State.BitboardBishopBlack Or (1UL << Square)
+                            Case "r"c : State.BitboardRookBlack = State.BitboardRookBlack Or (1UL << Square)
+                            Case "q"c : State.BitboardQueenBlack = State.BitboardQueenBlack Or (1UL << Square)
+                            Case "k"c : State.BlackKPos = Square
+                        End Select
+                    End If
+                End If
+            Next
+        Next
+    End Sub
+    Public Function ConvertBitboardstoBoard(ByRef State As BoardState) As Char(,)
+        Dim Board(7, 7) As Char
+        Dim BoardMap As (Bitboard As UInt64, Symbol As Char)() = {
+            (State.BitboardPawnWhite, "P"c),
+            (State.BitboardKnightWhite, "N"c),
+            (State.BitboardBishopWhite, "B"c),
+            (State.BitboardRookWhite, "R"c),
+            (State.BitboardQueenWhite, "Q"c),
+            (State.BitboardPawnBlack, "p"c),
+            (State.BitboardKnightBlack, "n"c),
+            (State.BitboardBishopBlack, "b"c),
+            (State.BitboardRookBlack, "r"c),
+            (State.BitboardQueenBlack, "q"c)}
+        For Each Map In BoardMap
+            While Map.Bitboard > 0UL
+                Dim BoardCoords = Unwrap1DBoardIndex(CUShort(BitOperations.TrailingZeroCount(Map.Bitboard)))
+                If Board(BoardCoords.x, BoardCoords.y) = " " Then
+                    Console.ForegroundColor = ConsoleColor.DarkRed
+                    Console.WriteLine("Experienced a Collision Error When Converting Bitboards into Board.")
+                Else
+                    Board(BoardCoords.x, BoardCoords.y) = Map.Symbol
+                End If
+                Map.Bitboard = Map.Bitboard And (Map.Bitboard - 1UL)
+            End While
+        Next
+        Return Board
+    End Function
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function Flatten2DBoardIndex(ByVal x As UInt16, y As UInt16) As UInt16
+        Return 8US * y + x
+    End Function
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function Flatten2DBoardIndex(ByVal x As Int16, y As Int16) As Int16
+        Return 8S * y + x
+    End Function
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function Unwrap1DBoardIndex(ByVal Square As UInt16) As (x As UInt16, y As UInt16)
+        Return (Square Mod 8US, Square \ 8US)
+    End Function
+
+
+
+    Public Sub CalibrateForMoveGeneration(ByRef TFTable As UInt64, ByRef PinInfoStraight As UInt64, ByRef PinInfoDiag As UInt64, ByRef InCheck As UInt16, ByRef Board As BoardState, ByVal isWhite As Boolean, ByVal CanICastle As Boolean)
+        'Resets all variables.
+        'TFTable = 0UL
+        'PinInfoStraight = 0UL
+        'PinInfoDiag = 0UL
+        'InCheck = 0US
+
+        'We construct the full bitboards of all pieces, minus the kings (allows rooks to 'see' through them so the king cannot move backwards when in check).
+        Dim FriendlyPieceMask, EnemyPieceMap, OccupancyMask As UInt64
+        Dim WhiteKingMask As UInt64 = 1UL << Board.WhiteKPos
+        Dim BlackKingMask As UInt64 = 1UL << Board.BlackKPos
+        Dim MeKPos As UInt16
+
+        'Calibrates TFTable by checking all pieces which could influence the king.
+        Dim dx, dy As Integer
+        Dim TempMask As UInt64
+        If isWhite Then
+            FriendlyPieceMask = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
+            EnemyPieceMap = Board.BitboardPawnBlack Or Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack
+            Board.BitboardWhite = FriendlyPieceMask Or WhiteKingMask
+            Board.BitboardBlack = EnemyPieceMap Or BlackKingMask
+            OccupancyMask = FriendlyPieceMask Or EnemyPieceMap
+            MeKPos = Board.WhiteKPos
+
+            TempMask = Board.BitboardPawnBlack
+            While TempMask <> 0UL
+                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
+                dy = (MeKPos \ 8) - (Square \ 8)
+                Dim PieceInfluenceKing As Boolean = dy >= 0 AndAlso (Math.Abs(dy) <= 2 AndAlso (Math.Abs((MeKPos And 7) - (Square And 7)) <= 2) OrElse (CanICastle AndAlso Square \ 8 = 6))
+                If PieceInfluenceKing Then TFTable = TFTable Or PawnBlackAttackMap(Square)
+                'Check for checks! (time for thyme?) Double checks must incorporate at least one sliding piece - can't have happened yet.
+                If (PawnBlackAttackMap(Square) And WhiteKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
+                TempMask = TempMask And (TempMask - 1UL)
+            End While
+
+            TempMask = Board.BitboardKnightBlack
+            While TempMask <> 0UL
+                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
+                dx = Math.Abs((MeKPos And 7) - (Square And 7))
+                dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
+                If dx <= 3 AndAlso dy <= 3 AndAlso dx + dy <= 5 Then TFTable = TFTable Or KnightMoveMap(Square)
+                If (KnightMoveMap(Square) And WhiteKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
+                TempMask = TempMask And (TempMask - 1UL)
+            End While
+
+            'King checks.
+            dx = Math.Abs((MeKPos And 7) - (Board.BlackKPos And 7))
+            dy = Math.Abs((MeKPos \ 8) - (Board.BlackKPos \ 8))
+            If dx <= 2 AndAlso dy <= 2 Then TFTable = TFTable Or KingMoveMap(Board.BlackKPos)
+
+            'Sliding piece checks: rooks & bishops (counting queen twice, once for each movement type).
+            TempMask = Board.BitboardBishopBlack Or Board.BitboardQueenBlack
+            While TempMask <> 0UL
+                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
+                Dim ddiag As Integer = Math.Abs(Math.Abs((MeKPos And 7) - (Square And 7)) - Math.Abs((MeKPos \ 8) - (Square \ 8)))
+                If ddiag <= 2 Then TFTable = TFTable Or BishopMagicLookup(CUShort(Square), OccupancyMask)
+                TempMask = TempMask And (TempMask - 1UL)
+            End While
+            TempMask = Board.BitboardRookBlack Or Board.BitboardQueenBlack
+            While TempMask <> 0UL
+                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
+                Dim InfluenceDistance As Integer = If(CanICastle, 2, 1)
+                dx = Math.Abs((MeKPos And 7) - (Square And 7))
+                dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
+                If dx <= InfluenceDistance OrElse dy <= InfluenceDistance Then TFTable = TFTable Or RookMagicLookup(CUShort(Square), OccupancyMask)
+                TempMask = TempMask And (TempMask - 1UL)
+            End While
+
+        Else 'Identical code but for the white pieces (fixing the Black TFTable).
+            FriendlyPieceMask = Board.BitboardPawnBlack Or Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack
+            EnemyPieceMap = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
+            Board.BitboardWhite = EnemyPieceMap Or WhiteKingMask
+            Board.BitboardBlack = FriendlyPieceMask Or BlackKingMask
+            OccupancyMask = FriendlyPieceMask Or EnemyPieceMap
+            MeKPos = Board.BlackKPos
+
+            TempMask = Board.BitboardPawnWhite
+            While TempMask <> 0UL
+                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
+                dy = (MeKPos \ 8) - (Square \ 8)
+                Dim PieceInfluenceKing As Boolean = dy <= 0 AndAlso (Math.Abs(dy) <= 2 AndAlso (Math.Abs((MeKPos And 7) - (Square And 7)) <= 2) OrElse (CanICastle AndAlso Square \ 8 = 1))
+                If PieceInfluenceKing Then TFTable = TFTable Or PawnWhiteAttackMap(Square)
+                If (PawnWhiteAttackMap(Square) And BlackKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
+                TempMask = TempMask And (TempMask - 1UL)
+            End While
+
+            TempMask = Board.BitboardKnightWhite
+            While TempMask <> 0UL
+                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
+                dx = Math.Abs((MeKPos And 7) - (Square And 7))
+                dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
+                If dx <= 3 AndAlso dy <= 3 AndAlso dx + dy <= 5 Then TFTable = TFTable Or KnightMoveMap(Square)
+                If (KnightMoveMap(Square) And BlackKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
+                TempMask = TempMask And (TempMask - 1UL)
+            End While
+
+            dx = Math.Abs((MeKPos And 7) - (Board.WhiteKPos And 7))
+            dy = Math.Abs((MeKPos \ 8) - (Board.WhiteKPos \ 8))
+            If dx <= 2 AndAlso dy <= 2 Then TFTable = TFTable Or KingMoveMap(Board.WhiteKPos)
+
+            TempMask = Board.BitboardBishopWhite Or Board.BitboardQueenWhite
+            While TempMask <> 0UL
+                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
+                Dim ddiag As Integer = Math.Abs(Math.Abs((MeKPos And 7) - (Square And 7)) - Math.Abs((MeKPos \ 8) - (Square \ 8)))
+                If ddiag <= 2 Then TFTable = TFTable Or BishopMagicLookup(CUShort(Square), OccupancyMask)
+                TempMask = TempMask And (TempMask - 1UL)
+            End While
+            TempMask = Board.BitboardRookWhite Or Board.BitboardQueenWhite
+            While TempMask <> 0UL
+                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
+                Dim InfluenceDistance As Integer = If(CanICastle, 2, 1)
+                dx = Math.Abs((MeKPos And 7) - (Square And 7))
+                dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
+                If dx <= InfluenceDistance OrElse dy <= InfluenceDistance Then TFTable = TFTable Or RookMagicLookup(CUShort(Square), OccupancyMask)
+                TempMask = TempMask And (TempMask - 1UL)
+            End While
+        End If
+        TFTable = Not TFTable
+
+
+        'Calibrates check and pin data by treating the king as a queen, casting rays to detect enemy pieces, and removing immediate blockers to detect pins.
+        'Double checks must incorporate at least one sliding piece (and, if two sliding pieces are used, one of each type) - impossible to have achieved one at this point.
+        Dim PossiblePinners As UInt64 = BishopMoveMap(MeKPos) And If(isWhite, Board.BitboardBishopBlack Or Board.BitboardQueenBlack, Board.BitboardBishopWhite Or Board.BitboardQueenWhite)
+        While PossiblePinners <> 0UL
+            'Uses the RayMap to find all the piece between the pinning candidate and the king. If there is just one friendly piece, itsapin.
+            Dim PinnerSquare As Integer = BitOperations.TrailingZeroCount(PossiblePinners)
+            Dim CandidatePins As UInt64 = OccupancyMask And RayMap(MeKPos, PinnerSquare)
+            If CandidatePins = 0UL Then
+                'No pieces in te way - it's a check! Add data (or double check flag, depending on if we've already flagged this state as a check).
+                InCheck = If(InCheck = 0US, 128US Or CUShort(PinnerSquare), InCheck Or 64US)
+            ElseIf (CandidatePins And (CandidatePins - 1UL)) = 0UL AndAlso (CandidatePins And FriendlyPieceMask) <> 0UL Then
+                'Flags the pin.
+                PinInfoDiag = PinInfoDiag Or CandidatePins
+            End If
+            PossiblePinners = PossiblePinners And (PossiblePinners - 1UL)
+        End While
+
+        'Same code for straight pins and checks.
+        PossiblePinners = RookMoveMap(MeKPos) And If(isWhite, Board.BitboardRookBlack Or Board.BitboardQueenBlack, Board.BitboardRookWhite Or Board.BitboardQueenWhite)
+        While PossiblePinners <> 0UL
+            Dim PinnerSquare As Integer = BitOperations.TrailingZeroCount(PossiblePinners)
+            Dim CandidatePins As UInt64 = OccupancyMask And RayMap(MeKPos, PinnerSquare)
+            If CandidatePins = 0UL Then
+                If (InCheck And 64US) = 0US Then InCheck = If(InCheck = 0US, 128US Or CUShort(PinnerSquare), InCheck Or 64US)
+            ElseIf (CandidatePins And (CandidatePins - 1UL)) = 0UL AndAlso (CandidatePins And FriendlyPieceMask) <> 0UL Then
+                PinInfoStraight = PinInfoStraight Or CandidatePins
+            End If
+            PossiblePinners = PossiblePinners And (PossiblePinners - 1UL)
+        End While
+
+    End Sub
+
 
 
 

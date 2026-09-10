@@ -231,41 +231,68 @@ End Class
 
 
 'Class holding the TFTable of each depth of the search.
-Public Class BoardState 'MAKE STRUCTURE!!!!!!
-    Public BitBoardPawnWhite As UInt64
-    Public BitBoardPawnBlack As UInt64
-    Public BitBoardKnightWhite As UInt64
-    Public BitBoardKnightBlack As UInt64
-    Public BitBoardBishopWhite As UInt64
-    Public BitBoardBishopBlack As UInt64
-    Public BitBoardRookWhite As UInt64
-    Public BitBoardRookBlack As UInt64
-    Public BitBoardQueenWhite As UInt64
-    Public BitBoardQueenBlack As UInt64
+Public Structure BoardState
+
+    'All Uint64 Bitboards. We don't store king bitboards here - this is done via KPos information.
+    Public BitboardPawnWhite As UInt64
+    Public BitboardPawnBlack As UInt64
+    Public BitboardKnightWhite As UInt64
+    Public BitboardKnightBlack As UInt64
+    Public BitboardBishopWhite As UInt64
+    Public BitboardBishopBlack As UInt64
+    Public BitboardRookWhite As UInt64
+    Public BitboardRookBlack As UInt64
+    Public BitboardQueenWhite As UInt64
+    Public BitboardQueenBlack As UInt64
+
+    Public BitboardWhite As UInt64
+    Public BitboardBlack As UInt64
 
     Public ZobristValue As UInt64
 
-    Public TFTable As UInt64
-    Public PinnedPieceInfo As UInt64 '8x8 structure holding all pinned piece info (6 bits for each direction 0-3,0-3, 2 for labelling and en-passant info)
-    Public MeKPos As UInt16
-    Public EnemyKPos As UInt16
+    'King position information. Bits 11-16 hold the 0-64 square king location.
+    'Check detection is handled via the generation of TFTable (non-sliding pieces), and placing a queen at the king's location and casting rays via occupancy masks (sliding pieces).
+    'Resolving via captures & king movement handled via TFTable and KPos InCheck information, resolving via blocks handled by running checking piece bitboard for updated occupancy mask.
+    Public WhiteKPos As UInt16
+    Public BlackKPos As UInt16
+    Public TFTable As UInt64 'An attacking map of all pieces that could influence the king's motion (where the king is removed)
+
+    'MADE LOCAL INSIDE MINIMAX:
+    'Public PinnedPieceInfo As UInt64 'actually wait, no store as two uint64 bitmaps, one for each pin type.
+    'CheckInfo as uint16, bit 1 is a double check flag, 11-16 hold the 0-64 checking piece location.
 
     Public MeCanCastle As CanCastle
     Public EnemyCanCastle As CanCastle
-    Public MeInCheck As UInt16
-    Public EnPassant As Int16
+    Public EnPassant As UInt16
 
 
+    Public Sub CopyFrom(ByRef PreviousState As BoardState)
 
+    End Sub
+    Public Sub Reset()
+        ClearBitboards()
+        ZobristValue = 0UL
+        WhiteKPos = 0US
+        BlackKPos = 0US
+        TFTable = 0UL
+        MeCanCastle.CanCastle()
+        EnemyCanCastle.CanCastle()
+        EnPassant = 0S
+    End Sub
+    Public Sub ClearBitboards()
+        BitboardPawnWhite = 0UL
+        BitboardPawnBlack = 0UL
+        BitboardKnightWhite = 0UL
+        BitboardKnightBlack = 0UL
+        BitboardBishopWhite = 0UL
+        BitboardBishopBlack = 0UL
+        BitboardRookWhite = 0UL
+        BitboardRookBlack = 0UL
+        BitboardQueenWhite = 0UL
+        BitboardQueenBlack = 0UL
+    End Sub
+End Structure
 
-    Public OLDTFTable(7, 7) As Char
-    'Public Sub SetTable(ByVal TableToCopy(,) As Char)
-    '    Array.Copy(TableToCopy, Table, 64)
-    'End Sub
-    'Public Sub CopyTableTo(ByVal TableToCopy(,) As Char)
-    '    Array.Copy(Table, TableToCopy, 64) 'Alfie Note 24.12.24 - this seems very unnecessary... why can't we just pass a reference to NegaMaxTFTable??
-    'End Sub
-    'Public Function GetTable() As Char(,)
-    '    Return Table
-    'End Function
+Public Class oldtfstorage
+    Public OLDTFTable(7, 7) As Char 'TO CLEAR AND SWITCH TO STRUCTURE!!!!
 End Class

@@ -21,16 +21,22 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
     Private HasBeenInstantiated As Boolean 'The AI will not perform methods if it has not been fully instantiated with a FEN.
     'Below are the details that the AI requires for a search. Please see their counterparts in the Chess form for their info.
+
+    Private PrimaryBoardState As BoardState
+    Private SearchTFTable As UInt64
+    Private SearchPinInfoStraight As UInt64
+    Private SearchPinInfoDiag As UInt64
+
     Private PrimaryBoard(7, 7), PrimaryTFTable(7, 7) As Char, NegaMaxTFTable(7, 7) As Char
-    Private TFTableStorageArray(127) As BoardState 'Holds the TFTables for each depth of the search in the NegaMax algorithm.
+    Private TFTableStorageArray(127) As oldtfstorage 'Holds the TFTables for each depth of the search in the NegaMax algorithm.
     'The reason we do this is because of Null Moves: as this is called between TFTableFixer & CreateMoves, the branches from the Null Nodes
     'mess with the TFTable. As a result, we store the TFTable for each depth, and call it when needed.
     'Alfie Note 24.12.24: this seems very unnecessary... why can't we just pass a reference to NegaMaxTFTable?? Hopefully wanting to fix this soon...
     Private PrimaryMeCanCastle, PrimaryEnemyCanCastle As New CanCastle
 
     Private PrimaryMeInCheck As UInt16 'Checking data is represented as a set of bits, in the format:
-    'CDXXXYYY
-    'C = Check Flag. D = Double Check Flag. X = Checking Piece X coors. Y = Checking Piece Y coors.
+    '00000000CDXXXYYY
+    'C = Check (Flag = 128). D = Double Check (Flag = 64). XY = Checking Piece Coordinates (Flag = 63)
     Private PrimaryMeKPos, PrimaryEnemyKPos As Int16
     Private PrimaryEnPassant As Int16
     'The above three attributes are represented as a set of bits, where the three LSBs refer to the Y coordinate
@@ -54,10 +60,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
     '000 = No Flag     001 = Queen Promotion (Mask = 4096)     010 = Pawn Double Push (Mask = 8192)     011 = En-Passant Capture (Mask = 12288)
     '100 = Castle Flag (Mask = 16384)     101 = KS Castle Flag (Mask = 20480)     110 = QS Castle Flag (Mask = 24576)     111 = Knight Promotion Flag (Mask = 28672).
     '
-    'X = Start X Coordinate (0-7)  -  Mask = 3584, Shift of 9.
-    'Y = Start Y Coordinate (0-7)  -  Mask = 448, Shift of 6.
-    'x = End X Coordinate (0-7)  -  Mask = 56, Shift of 3.
-    'y = End Y Coordinate (0-7)  -  Mask = 7.
+    'XY = Start X & Y Coordinate (0-63)  -  Mask = 4032, Shift of 6.
+    'xy = End X & Y Coordinate (0-63)  -  Mask = 63, Shift of 0.
     Public NumCapturesThreatsInBasePos As Integer
 
 
@@ -120,6 +124,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Me.New(GlobalConstants.StartingFENPosition)
     End Sub
     Public Sub New(ByVal FEN As String)
+        PrecomputeAllPieceMaps()
         PieceHeatMap = GeneratePieceHeatSquares()
         PopulateEndgameEvalLookupTable()
         'Configures the AI using a given FEN.
@@ -144,6 +149,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         'Converts the user's FEN into a board position, then resets checking rules.
         Try
             PrimaryBoard = FENConverter(FEN, PrimaryMeCanCastle, PrimaryEnemyCanCastle, PrimaryMeKPos, PrimaryEnemyKPos, PrimaryEnPassant, PlayerTurn)
+            ConvertBoardtoBitboards(PrimaryBoard, PrimaryBoardState, True)
         Catch ex As Exception
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Unable to Calibrate AI from given FEN. Please try again...")
@@ -175,7 +181,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             PrimaryZobristValue = ZobristHashPosition(PrimaryBoard, False, PrimaryEnemyCanCastle, PrimaryMeCanCastle, PrimaryEnPassant)
         End If
 
-        'Creates the pawn bit masks for each player.
+        'Creates the pawn bit masks for each player. TODO: REMOVE!!!!!!!!!!!!!!
         PrimaryWhitePawnMask = 0UL
         PrimaryBlackPawnMask = 0UL
         For y As Integer = 0UL To 7UL
@@ -256,7 +262,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         For n As Int16 = 0 To 127
             KillerMoves(n, 0) = 0
             KillerMoves(n, 1) = 0
-            TFTableStorageArray(n) = New BoardState
+            TFTableStorageArray(n) = New oldtfstorage
         Next
         If ResetTT Then ResetTranspositionTable() Else IncreaseTTGeneration()
         PrimaryHalfMoveSize = 0
@@ -896,24 +902,97 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
     'Function that returns all the legal moves of a given piece on the board.
     'Used for when the user is attempting to move a piece on the GUI.
     Public Function ReturnPiecesLegalMoves(ByVal CoorX As String, ByVal CoorY As String) As String()
-        Dim LegalMoves As New List(Of String)
-        If HasBeenInstantiated AndAlso BasePieceMoves IsNot Nothing Then
-            'Loops through all of the legal moves in the position, and makes a note of all of them that involve
-            'the piece that is wanting to move.
-            Dim PieceMove As String
-            For n = 0 To BasePieceMoves.Length - 1
-                If Val(CoorX) = (BasePieceMoves(n) And 3584) >> 9 AndAlso Val(CoorY) = (BasePieceMoves(n) And 448) >> 6 Then
-                    'Move found - add it to LegalMoves.
-                    PieceMove = ((BasePieceMoves(n) And 56) >> 3).ToString() & (BasePieceMoves(n) And 7).ToString()
-                    If Not LegalMoves.Contains(PieceMove) Then LegalMoves.Add(PieceMove) 'Removes any duplicates that arrise from actions such as pawn promotions.
-                End If
-            Next
-        Else 'AI not correctly instantiated.
-            Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("Error when Attempting Search - FEN Position not set / no Legal Moves in Position.")
-            Console.ForegroundColor = ConsoleColor.White
+        'Okay ima completely redesign this function here we goooooooooo (make sure to fix this later!!!)
+        Dim Square As UInt16 = Flatten2DBoardIndex(CUShort(CoorX), CUShort(CoorY))
+        Dim Piece As Char = PrimaryBoard(CInt(CoorX), CInt(CoorY))
+        Dim EnPassant As UInt16 = CUShort(Flatten2DBoardIndex((PrimaryEnPassant And 56S) >> 3, PrimaryEnPassant And 7S))
+
+        Dim TFTable, PinInfoStraight, PinInfoDiag As UInt64
+        Dim InCheck As UInt16
+        Dim MeKPos As UInt16 = If(PlayerTurn, PrimaryBoardState.WhiteKPos, PrimaryBoardState.BlackKPos)
+        CalibrateForMoveGeneration(TFTable, PinInfoStraight, PinInfoDiag, InCheck, PrimaryBoardState, PlayerTurn, PrimaryMeCanCastle.CanICastle)
+        OutputTFTableToConsole(TFTable, PinInfoDiag Or PinInfoStraight, InCheck, MeKPos)
+
+        Dim OccupancyMap As UInt64 = PrimaryBoardState.BitboardWhite Or PrimaryBoardState.BitboardBlack
+
+        Dim LegalMoveArray() As UInt16 = Nothing
+
+        If Char.IsUpper(Piece) Then
+            Select Case Piece
+                Case "P"c : LegalMoveArray = WhitePawnLegalMoves(Square, PrimaryBoardState.BitboardBlack, OccupancyMap, PinInfoStraight, PinInfoDiag, PrimaryBoardState.WhiteKPos, EnPassant)
+                Case "N"c : LegalMoveArray = KnightLegalMoves(Square, PrimaryBoardState.BitboardBlack, OccupancyMap, PinInfoStraight Or PinInfoDiag)
+                Case "B"c : LegalMoveArray = BishopLegalMoves(Square, PrimaryBoardState.BitboardBlack, OccupancyMap, PinInfoStraight, PinInfoDiag, PrimaryBoardState.WhiteKPos)
+                Case "R"c : LegalMoveArray = RookLegalMoves(Square, PrimaryBoardState.BitboardBlack, OccupancyMap, PinInfoStraight, PinInfoDiag, PrimaryBoardState.WhiteKPos)
+                Case "Q"c : LegalMoveArray = QueenLegalMoves(Square, PrimaryBoardState.BitboardBlack, OccupancyMap, PinInfoStraight, PinInfoDiag, PrimaryBoardState.WhiteKPos)
+                Case "K"c : LegalMoveArray = KingLegalMoves(Square, PrimaryBoardState.BitboardBlack, OccupancyMap, TFTable, PrimaryMeCanCastle, InCheck)
+            End Select
+        Else
+            Select Case Piece
+                Case "p"c : LegalMoveArray = BlackPawnLegalMoves(Square, PrimaryBoardState.BitboardWhite, OccupancyMap, PinInfoStraight, PinInfoDiag, PrimaryBoardState.BlackKPos, EnPassant)
+                Case "n"c : LegalMoveArray = KnightLegalMoves(Square, PrimaryBoardState.BitboardWhite, OccupancyMap, PinInfoStraight Or PinInfoDiag)
+                Case "b"c : LegalMoveArray = BishopLegalMoves(Square, PrimaryBoardState.BitboardWhite, OccupancyMap, PinInfoStraight, PinInfoDiag, PrimaryBoardState.BlackKPos)
+                Case "r"c : LegalMoveArray = RookLegalMoves(Square, PrimaryBoardState.BitboardWhite, OccupancyMap, PinInfoStraight, PinInfoDiag, PrimaryBoardState.BlackKPos)
+                Case "q"c : LegalMoveArray = QueenLegalMoves(Square, PrimaryBoardState.BitboardWhite, OccupancyMap, PinInfoStraight, PinInfoDiag, PrimaryBoardState.BlackKPos)
+                Case "k"c : LegalMoveArray = KingLegalMoves(Square, PrimaryBoardState.BitboardWhite, OccupancyMap, TFTable, PrimaryMeCanCastle, InCheck)
+            End Select
         End If
-        If LegalMoves.Count = 0 Then Return Nothing Else Return LegalMoves.ToArray()
+        Dim LegalMoves As New List(Of String)
+
+        If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) > 0 Then
+            For n = 1 To LegalMoveArray(0)
+                If InCheck <> 0US Then
+                    'Assume all moves are legal, unless proven otherwise.
+                    'King moves are Not considered, as the player's TFTable will ensure that all king moves are legal.
+                    If (LegalMoveArray(n) And 4032US) >> 6 <> MeKPos Then
+                        'Runs through bitboard DoesMoveResolveCheck. TODO: PUT DOESMOVERESOLVECHECK INSIDE CREATEMOVES!!!!!
+                        'Double checks cannot be resolved by anything other than king moves (handled above)
+                        If (InCheck And 64US) <> 0US Then Continue For
+                        If LegalMoveArray(n) >= 32768US Then
+                            'Captures of the checking piece (or en-passant captures) is considered a resolution. Otherwise, not valid.
+                            If Not ((LegalMoveArray(n) And 63US) = (InCheck And 63US) OrElse ((LegalMoveArray(n) And 28672US) = 12288US AndAlso (LegalMoveArray(n) Mod 8) = (InCheck Mod 8))) Then
+                                Continue For
+                            End If
+                        Else
+                            'Move must block a sliding piece's ray for it to be valid.
+                            If (RayMap(InCheck And 63US, MeKPos) And 1UL << (LegalMoveArray(n) And 63US)) = 0UL Then Continue For
+                        End If
+                    End If
+                ElseIf (LegalMoveArray(n) And 28672US) = 12288US Then
+                    'Removes violations of EnPassant Pins by simulating the move and checking if this opened up a rook's ray.
+                    Dim LostPawnSquare As Integer = (LegalMoveArray(n) And 63US) + If(PlayerTurn, 8, -8)
+                    Dim OccupancyAfterEnPassant As UInt64 = OccupancyMap Xor ((1UL << LostPawnSquare) Or (1UL << ((LegalMoveArray(n) And 4032US) >> 6)))
+                    Dim PossiblePinners As UInt64 = If(PlayerTurn, PrimaryBoardState.BitboardRookBlack Or PrimaryBoardState.BitboardQueenBlack, PrimaryBoardState.BitboardRookWhite Or PrimaryBoardState.BitboardQueenWhite)
+                    If (RookMagicLookup(MeKPos, OccupancyAfterEnPassant) And PossiblePinners) <> 0UL Then Continue For
+                End If
+
+                Dim PieceMove As String = CStr((LegalMoveArray(n) And 63) Mod 8) & CStr((LegalMoveArray(n) And 63) \ 8)
+                If Not LegalMoves.Contains(PieceMove) Then LegalMoves.Add(PieceMove) 'Removes any duplicates that arrise from actions such as pawn promotions.
+            Next
+            Return LegalMoves.ToArray()
+        Else
+            Return Nothing
+        End If
+
+
+
+        'Dim LegalMoves As New List(Of String)
+        'If HasBeenInstantiated AndAlso BasePieceMoves IsNot Nothing Then
+        '    'Loops through all of the legal moves in the position, and makes a note of all of them that involve
+        '    'the piece that is wanting to move.
+        '    Dim PieceMove As String
+        '    For n = 0 To BasePieceMoves.Length - 1
+        '        If Val(CoorX) = (BasePieceMoves(n) And 3584) >> 9 AndAlso Val(CoorY) = (BasePieceMoves(n) And 448) >> 6 Then
+        '            'Move found - add it to LegalMoves.
+        '            PieceMove = ((BasePieceMoves(n) And 56) >> 3).ToString() & (BasePieceMoves(n) And 7).ToString()
+        '            If Not LegalMoves.Contains(PieceMove) Then LegalMoves.Add(PieceMove) 'Removes any duplicates that arrise from actions such as pawn promotions.
+        '        End If
+        '    Next
+        'Else 'AI not correctly instantiated.
+        '    Console.ForegroundColor = ConsoleColor.DarkRed
+        '    Console.WriteLine("Error when Attempting Search - FEN Position not set / no Legal Moves in Position.")
+        '    Console.ForegroundColor = ConsoleColor.White
+        'End If
+        'If LegalMoves.Count = 0 Then Return Nothing Else Return LegalMoves.ToArray()
     End Function
 
     'Function that scans the position for End States - positions where the game must terminate.
