@@ -503,7 +503,7 @@ Partial Public Class CoreMethods
                 Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
                 dx = Math.Abs((MeKPos And 7) - (Square And 7))
                 dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
-                If dx <= 3 AndAlso dy <= 3 AndAlso dx + dy <= 5 Then TFTable = TFTable Or KnightMoveMap(Square)
+                If dx <= If(CanICastle, 4, 3) AndAlso dy <= 3 AndAlso dx + dy <= 5 Then TFTable = TFTable Or KnightMoveMap(Square)
                 If (KnightMoveMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
@@ -641,7 +641,7 @@ Partial Public Class CoreMethods
                             Case "b"c
                                 PieceInfluenceKing = Math.Abs(dx - dy) <= 2
                             Case "n"c
-                                PieceInfluenceKing = Math.Max(dx, dy) <= 3 AndAlso dx + dy <= 5
+                                PieceInfluenceKing = Math.Max(dx + If(CanICastle, -1, 0), dy) <= 3 AndAlso dx + dy <= 5
                             Case "r"c
                                 'If the king can castle, the rook might be able to cut off the king's motion - give the rook one more move of sight.
                                 PieceInfluenceKing = Math.Min(dx, dy) <= If(CanICastle, 2, 1)

@@ -5,6 +5,7 @@
 - Full pre-computation and storing of all piece pseudo-legal moves, for use in move generation.
 - Implemented hand-crafted fancy magic bitboard move generation for sliding pieces (standalone program).
 - Full reimagining of TFTables: decomposed into three Uint64 tables - one for legal king moves, one for diagonal pin masking, the other for straight pin masking. We partition these so that a pinned piece's movement is restricted by ANDing with a bishop / rook's legal moves at the king position.
+- Relaxing of TFTable PieceInfluenceKing variable for faster lookups (taking advantage of speedy bitboards).
 - Rewritten check and pin detection: casts rays from the king (using efficient bitboards) to detect checking piece and pinners.
 - Improved TFTable to use x-ray king masking (allows rays to pass through it, for king legal moves)
 - Redesigned EnPassant pins to be enforced in CreateMoves via "test break and see if the king is exposed" simulation, to better reflect its rare nature.
