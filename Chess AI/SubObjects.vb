@@ -7,45 +7,45 @@ Imports Microsoft.VisualBasic.ApplicationServices
 
 'Class holding all the constants that my program needs - can be accessed by all classes.
 Public Class GlobalConstants
-    Public Shared ReadOnly StartingFENPosition As String = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    Public Shared ReadOnly ProgramName As String = "Chess Game & Artificial Intelligence" 'also known as 'chessbot 9000' - thanks stroganoff <3
-    Public Shared ReadOnly ProgramVersion As String = "v10.0"
+    Public Const StartingFENPosition As String = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    Public Const ProgramName As String = "Chess Game & Artificial Intelligence" 'also known as 'chessbot 9000' - thanks stroganoff <3
+    Public Const ProgramVersion As String = "v10.0"
     Public Shared ReadOnly StartupPath As String = (AppDomain.CurrentDomain.BaseDirectory).TrimEnd("\"c)
 
-    Public Shared ReadOnly TranspositionTableSize As Byte = 64 - ((23)) 'Constant referring to how large the TranspositionTable object is.
+    Public Const TranspositionTableSize As Byte = 64 - ((23)) 'Constant referring to how large the TranspositionTable object is.
     'Used to determine how much to scate the ZobristValue by.
 
     'Structure holding the relative weights of all the pieces on the board.
     Public Structure PieceWeight
-        Public Shared ReadOnly Pawn As Integer = 100
-        Public Shared ReadOnly Knight As Integer = 300
-        Public Shared ReadOnly Bishop As Integer = 300
-        Public Shared ReadOnly Rook As Integer = 500
-        Public Shared ReadOnly Queen As Integer = 900
-        Public Shared ReadOnly King As Integer = 1000 'No meaning to this value, other than to de-prioritise king captures.
+        Public Const Pawn As Integer = 100
+        Public Const Knight As Integer = 300
+        Public Const Bishop As Integer = 300
+        Public Const Rook As Integer = 500
+        Public Const Queen As Integer = 900
+        Public Const King As Integer = 1000 'No meaning to this value, other than to de-prioritise king captures.
     End Structure
 
     'Structure holding the unique identifier for each piece type. Used for indexing into PieceValue, MVVLVAValues, ZobristHashTable.
     Public Structure PieceIndex
-        Public Shared ReadOnly Pawn As Integer = 0
-        Public Shared ReadOnly Knight As Integer = 1
-        Public Shared ReadOnly Bishop As Integer = 2
-        Public Shared ReadOnly Rook As Integer = 3
-        Public Shared ReadOnly Queen As Integer = 4
-        Public Shared ReadOnly King As Integer = 5
+        Public Const Pawn As Integer = 0
+        Public Const Knight As Integer = 1
+        Public Const Bishop As Integer = 2
+        Public Const Rook As Integer = 3
+        Public Const Queen As Integer = 4
+        Public Const King As Integer = 5
     End Structure
 
-    Public Shared ReadOnly MaxPieceLegalMoves As Byte = ((27)) - 1 'The maximum number of legal moves that can be theoretically made by a piece.
-    Public Shared ReadOnly MaxTurnLegalMoves As Byte = ((218)) - 1 'The max number of legal moves that can be made by on a given player's turn.
-    Public Shared ReadOnly MaxPositionsPerGame As UInt16 = 2048 'Holds the value of the maximum number of positions that can be stored in GameHistory.
+    Public Const MaxPieceLegalMoves As Byte = ((27)) - 1 'The maximum number of legal moves that can be theoretically made by a piece.
+    Public Const MaxTurnLegalMoves As Byte = ((218)) - 1 'The max number of legal moves that can be made by on a given player's turn.
+    Public Const MaxPositionsPerGame As UInt16 = 2048 'Holds the value of the maximum number of positions that can be stored in GameHistory.
 
-    Public Shared ReadOnly DefaultGeneralOptions As String = "TTFTTFFF" '8-character string that represents the configuration of the program.
+    Public Const DefaultGeneralOptions As String = "TTFTTFFF" '8-character string that represents the configuration of the program.
     'Index: 0 = Sound, 1 = Opening Animation, 2 = Small Opening Book, 3 = Board Highlights, 4 = Piece Highlights, 5 = Touch Move Rule, 6 = Invisible Pieces, 7 = Hammad Mode (bad AI).
-    Public Shared ReadOnly DefaultAnimationSpeed As Byte = 2 'Represents the speed of the piece-moving animation: 0 = Off, 1 = VFast, 2 = Fast, 3 = Medium, 4 = Slow.
-    Public Shared ReadOnly MemoryThreshold As UInt64 = 256 * (1024 * 1024) 'Max amount of memory (in Bytes) that can be allocated before
+    Public Const DefaultAnimationSpeed As Byte = 2 'Represents the speed of the piece-moving animation: 0 = Off, 1 = VFast, 2 = Fast, 3 = Medium, 4 = Slow.
+    Public Const MemoryThreshold As UInt64 = 256 * (1024 * 1024) 'Max amount of memory (in Bytes) that can be allocated before
     'the AI's Transposition Table is reset.
 
-    Public Shared ReadOnly TrainingMovesPerPosition As Byte = 3 'A constant referring to the number of moves the user needs to make before
+    Public Const TrainingMovesPerPosition As Byte = 3 'A constant referring to the number of moves the user needs to make before
     'a new random position is chosen.
 
 End Class

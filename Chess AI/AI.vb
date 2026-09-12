@@ -132,7 +132,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
     End Sub
     Public Sub New(ByVal FEN As String)
         PrecomputeAllPieceMaps()
-        PieceHeatMap = GeneratePieceHeatSquares()
+        PopulatePieceHeatSquares()
         PopulateEndgameEvalLookupTable()
         'Configures the AI using a given FEN.
         Reconfigure(FEN, True)
@@ -533,7 +533,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                     TempBlackPawnMask = PrimaryBlackPawnMask
                     TempHalfMoveSize = PrimaryHalfMoveSize
                     'Makes move on temp board, then calls NegaMax for this new position.
-                    MakeMove(TempBoard, BasePieceMoves(n), NegaMaxBoardStates(DepthFromRoot), PlayerTurn, TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, TempMaterialCount, TempPHMValues, TempEnPassant, TempZobristValue, TempWhitePawnMask, TempBlackPawnMask, TempHalfMoveSize)
+                    MakeMove(TempBoard, BasePieceMoves(n), NegaMaxBoardStates(DepthFromRoot), PlayerTurn, TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, TempMaterialCount, TempPHMValues, TempEnPassant, TempZobristValue, TempWhitePawnMask, TempBlackPawnMask, TempHalfMoveSize, True)
 
                     If TempMaterialCount(0) + TempMaterialCount(1) = 0 Then
                         'Enforce draw by repetition.
@@ -808,9 +808,9 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         For i As Byte = 1 To MaxIterations
             'Makes the AI's calculated Best Move (from this position) on the temporary board.
             If isWhite Then
-                MakeMove(TempBoard, BestMove, TempState, True, TempWCanCastle, TempBCanCastle, TempWKPos, TempMaterialCount, {0, 0}, TempEnPassant, TempZobristValue, 0UL, 0UL, 0US)
+                MakeMove(TempBoard, BestMove, TempState, True, TempWCanCastle, TempBCanCastle, TempWKPos, TempMaterialCount, {0, 0}, TempEnPassant, TempZobristValue, 0UL, 0UL, 0US, False)
             Else
-                MakeMove(TempBoard, BestMove, TempState, False, TempBCanCastle, TempWCanCastle, TempBKPos, TempMaterialCount, {0, 0}, TempEnPassant, TempZobristValue, 0UL, 0UL, 0US)
+                MakeMove(TempBoard, BestMove, TempState, False, TempBCanCastle, TempWCanCastle, TempBKPos, TempMaterialCount, {0, 0}, TempEnPassant, TempZobristValue, 0UL, 0UL, 0US, False)
             End If
 
             'Hashes the current position, then finds the TranspositionTable entry containing that move.
@@ -861,7 +861,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             TempMeCanCastle.CopyFrom(PrimaryMeCanCastle)
             TempEnemyCanCastle.CopyFrom(PrimaryEnemyCanCastle)
             Try
-                MakeMove(TempBoard, TempMove.BitMove, TempState, PlayerTurn, TempMeCanCastle, TempEnemyCanCastle, 0S, {10000, 10000}, {0, 0}, TempEnPassant, 0UL, 0UL, 0UL, 0US)
+                MakeMove(TempBoard, TempMove.BitMove, TempState, PlayerTurn, TempMeCanCastle, TempEnemyCanCastle, 0S, {10000, 10000}, {0, 0}, TempEnPassant, 0UL, 0UL, 0UL, 0US, False)
                 'Returns this new FEN.
                 Return ConvertToFEN(TempBoard, If(PlayerTurn, TempMeCanCastle, TempEnemyCanCastle), If(PlayerTurn, TempEnemyCanCastle, TempMeCanCastle), TempEnPassant, Not PlayerTurn)
             Catch ex As Exception
@@ -1144,7 +1144,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         TempEnemyCanCastle.CopyFrom(EnemyCanCastle)
 
                         'Makes the current move onto the temporary board.
-                        MakeMove(TempBoard, PieceMoves(n), NegaMaxBoardStates(depth - 1), isWhite, TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, {10000, 10000}, {0, 0}, TempEnPassant, TempZobristValue, 0UL, 0UL, 0S)
+                        MakeMove(TempBoard, PieceMoves(n), NegaMaxBoardStates(depth - 1), isWhite, TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, {10000, 10000}, {0, 0}, TempEnPassant, TempZobristValue, 0UL, 0UL, 0S, SearchSettings.NodeSearchUseHashing)
 
                         If depth = 1 Then
                             EndPositionCount += 1UL
@@ -1248,14 +1248,14 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                                 If Board(XPosNew, YPosNew) <> " " Then '= capture move.
                                     PieceMoves(n) = PieceMoves(n) Or 32768US 'Adds capture flag.
                                     'Gets the difference in weight between the capturing piece, and the captured piece.
-                                    PieceValueDif = MVVLVAValues(LegacyPieceIndexConverter(Asc(UCase(Board(XPosNew, YPosNew))) Mod 11), LegacyPieceIndexConverter(Asc(Board(x, y)) Mod 11))
+                                    PieceValueDif = GetMVVLVAValue(LegacyPieceIndexConverter(Asc(UCase(Board(XPosNew, YPosNew))) Mod 11), LegacyPieceIndexConverter(Asc(Board(x, y)) Mod 11))
                                     TempCaptureMoves(CaptureMoveCount) = PieceMoves(n)
                                     TempCaptureMoveScores(CaptureMoveCount) = PieceValueDif
                                     CaptureMoveCount += 1
                                 ElseIf (PieceMoves(n) And 28672US) = 12288US Then 'Is an En Passant Capture - add to Capture Moves.
                                     '(aghhh I don't like how we need to check EVERY single move to see whether it's EnPassant) :((
                                     TempCaptureMoves(CaptureMoveCount) = PieceMoves(n)
-                                    TempCaptureMoveScores(CaptureMoveCount) = MVVLVAValues(LegacyPieceIndexConverter(3), LegacyPieceIndexConverter(3))
+                                    TempCaptureMoveScores(CaptureMoveCount) = GetMVVLVAValue(LegacyPieceIndexConverter(3), LegacyPieceIndexConverter(3))
                                     CaptureMoveCount += 1
                                 ElseIf Not OnlyCaptures Then 'Non-Capture moves are not considered when Quiescence mode has been activated.
                                     'Determines if the move is a direct match with the required index in KillerMoves(). If there is one,
@@ -1312,13 +1312,13 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                                 YPosNew = PieceMoves(n) And 7
                                 If Board(XPosNew, YPosNew) <> " " Then
                                     PieceMoves(n) = PieceMoves(n) Or 32768US
-                                    PieceValueDif = MVVLVAValues(LegacyPieceIndexConverter(Asc(Board(XPosNew, YPosNew)) Mod 11), LegacyPieceIndexConverter(Asc(UCase(Board(x, y))) Mod 11))
+                                    PieceValueDif = GetMVVLVAValue(LegacyPieceIndexConverter(Asc(Board(XPosNew, YPosNew)) Mod 11), LegacyPieceIndexConverter(Asc(UCase(Board(x, y))) Mod 11))
                                     TempCaptureMoves(CaptureMoveCount) = PieceMoves(n)
                                     TempCaptureMoveScores(CaptureMoveCount) = PieceValueDif
                                     CaptureMoveCount += 1
                                 ElseIf (PieceMoves(n) And 28672US) = 12288US Then
                                     TempCaptureMoves(CaptureMoveCount) = PieceMoves(n)
-                                    TempCaptureMoveScores(CaptureMoveCount) = MVVLVAValues(LegacyPieceIndexConverter(3), LegacyPieceIndexConverter(3))
+                                    TempCaptureMoveScores(CaptureMoveCount) = GetMVVLVAValue(LegacyPieceIndexConverter(3), LegacyPieceIndexConverter(3))
                                     CaptureMoveCount += 1
                                 ElseIf Not OnlyCaptures Then
                                     If PieceKillerOneFull AndAlso PieceMoves(n) = KillerMoves(KillerDepth, 0) Then
@@ -1522,11 +1522,10 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 TempEnemyCanCastle.CopyFrom(EnemyCanCastle)
                 Dim TempInCheck As UInt16 = 0US
                 Dim TempEnPassant As Int16 = EnPassant
-                Dim TempZobristValue As UInt64 = ZobristValue
                 Dim TempWhitePawnMask As UInt64 = WhitePawnMask
                 Dim TempBlackPawnMask As UInt64 = BlackPawnMask
 
-                MakeMove(TempBoard, Moves(n), TempState, isWhite, TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, {10000, 10000}, {0, 0}, TempEnPassant, TempZobristValue, TempWhitePawnMask, TempBlackPawnMask, 0US)
+                MakeMove(TempBoard, Moves(n), TempState, isWhite, TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, {10000, 10000}, {0, 0}, TempEnPassant, 0UL, TempWhitePawnMask, TempBlackPawnMask, 0US, False)
 
                 FixTFTable(TempBoard, Not isWhite, TempTFTable, EnemyKPos, TempInCheck, TempEnemyCanCastle.CanICastle(), TempEnPassant)
                 If TempInCheck >= 128 Then
@@ -1607,55 +1606,60 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
 
     'Subroutine that makes a move on the board, given coordinates. Includes castling (& rights), pawn promotion, and manipuation of ZobristValue.
-    Private Sub MakeMove(ByRef Board(,) As Char, ByVal OLDMove As UInt16, ByRef State As BoardState, ByVal isWhite As Boolean, ByRef MeCanCastle As CanCastle, ByRef EnemyCanCastle As CanCastle, ByRef OLDKPos As Int16, ByRef MaterialCount() As Integer, ByRef PHMValues() As Integer, ByRef OLDEnPassant As Int16, ByRef ZobristValue As UInt64, ByRef WhitePawnMask As UInt64, ByRef BlackPawnMask As UInt64, ByRef HalfMoveSize As UInt16)
+    Private Sub MakeMove(ByRef Board(,) As Char, ByVal OLDMove As UInt16, ByRef State As BoardState, ByVal isWhite As Boolean, ByRef MeCanCastle As CanCastle, ByRef EnemyCanCastle As CanCastle, ByRef OLDKPos As Int16, ByRef MaterialCount() As Integer, ByRef PHMValues() As Integer, ByRef OLDEnPassant As Int16, ByRef ZobristValue As UInt64, ByRef WhitePawnMask As UInt64, ByRef BlackPawnMask As UInt64, ByRef HalfMoveSize As UInt16, ByVal CalculateExtraDetails As Boolean)
         'TODO: REMOVE. converts legacy states to new ones.
-        Dim Move As UInt16 = (61440US And OLDMove) Or (Flatten2DBoardIndex((OLDMove And 3584US) >> 9, (OLDMove And 448US) >> 6) << 6) Or Flatten2DBoardIndex((OLDMove And 56US) >> 3, OLDMove And 7US)
-        Dim KPos As UInt16 = CUShort(Flatten2DBoardIndex((OLDKPos And 56S) >> 3, OLDKPos And 7S))
-        Dim EnPassant As UInt16 = CUShort(Flatten2DBoardIndex((OLDEnPassant And 56S) >> 3, OLDEnPassant And 7S))
+        'Dim Move As UInt16 = (61440US And OLDMove) Or (Flatten2DBoardIndex((OLDMove And 3584US) >> 9, (OLDMove And 448US) >> 6) << 6) Or Flatten2DBoardIndex((OLDMove And 56US) >> 3, OLDMove And 7US)
+        'Dim KPos As UInt16 = CUShort(Flatten2DBoardIndex((OLDKPos And 56S) >> 3, OLDKPos And 7S))
+        'Dim EnPassant As UInt16 = CUShort(Flatten2DBoardIndex((OLDEnPassant And 56S) >> 3, OLDEnPassant And 7S))
         Dim OldCoorX As UInt16 = (OLDMove And 3584US) >> 9
         Dim OldCoorY As UInt16 = (OLDMove And 448US) >> 6
         Dim NewCoorX As UInt16 = (OLDMove And 56US) >> 3
         Dim NewCoorY As UInt16 = OLDMove And 7US
 
-        Dim OldSquare As UInt16 = Move And 63US
-        Dim NewSquare As UInt16 = (Move And 4032US) >> 6
-        Dim TempPieceMap As UInt64 = 1UL << NewSquare
-        HalfMoveSize += 1US 'We assume that the move is not a pawn move or a capture, and increment the Half-Move count. If we are wrong, we just reset to 0 :).
-        If isWhite Then
-            If (TempPieceMap And State.BitboardPawnWhite) <> 0UL Then
 
-            ElseIf (TempPieceMap And State.BitboardKnightWhite) <> 0UL Then
+        'Dim OldSquare As UInt16 = Move And 63US
+        'Dim NewSquare As UInt16 = (Move And 4032US) >> 6
+        'Dim TempPieceMap As UInt64 = 1UL << NewSquare
+        'Dim PieceIndex As Integer
+        'HalfMoveSize += 1US 'We assume that the move is not a pawn move or a capture, and increment the Half-Move count. If we are wrong, we just reset to 0 :).
+        'If isWhite Then
+        '    If (TempPieceMap And State.BitboardPawnWhite) <> 0UL Then
+        '        PieceIndex = GlobalConstants.PieceIndex.Pawn
+        '    ElseIf (TempPieceMap And State.BitboardKnightWhite) <> 0UL Then
+        '        PieceIndex = GlobalConstants.PieceIndex.Knight
+        '    ElseIf (TempPieceMap And State.BitboardBishopWhite) <> 0UL Then
+        '        PieceIndex = GlobalConstants.PieceIndex.Bishop
+        '    ElseIf (TempPieceMap And State.BitboardRookWhite) <> 0UL Then
+        '        PieceIndex = GlobalConstants.PieceIndex.Rook
+        '    ElseIf (TempPieceMap And State.BitboardQueenWhite) <> 0UL Then
+        '        PieceIndex = GlobalConstants.PieceIndex.Queen
+        '    Else
+        '        'The piece must be the king!
+        '        PieceIndex = GlobalConstants.PieceIndex.King
+        '    End If
 
-            ElseIf (TempPieceMap And State.BitboardBishopWhite) <> 0UL Then
 
-            ElseIf (TempPieceMap And State.BitboardRookWhite) <> 0UL Then
-
-            ElseIf (TempPieceMap And State.BitboardQueenWhite) <> 0UL Then
-
-            Else
-                'The piece must be the king!
-            End If
-        End If
+        'End If
 
 
 
         Dim TempPiece As Char = Board(OldCoorX, OldCoorY)
         Dim HasEnPassanted As Boolean
-
+        HalfMoveSize += 1US 'We assume that the move is not a pawn move or a capture, and increment the Half-Move count. If we are wrong, we just reset to 0 :).
         'If TempMove > 32768 Then MakeMove = Board((TempMove And 56) >> 3, TempMove And 7)
         If Char.IsUpper(TempPiece) Then
             'Removes the piece from the board's Zobrist Value.
-            ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(Asc(TempPiece) Mod 11), 0, Flatten2DBoardIndex(OldCoorX, OldCoorY))
+            ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(Asc(TempPiece) Mod 11), 0, Flatten2DBoardIndex(OldCoorX, OldCoorY))
 
             'Modifies the PHM values (white).
             If SearchSettings.UsePieceHeatMaps Then
-                PHMValues(0) -= PieceHeatMap(Asc(TempPiece) Mod 11, OldCoorY, OldCoorX, 16)
+                PHMValues(0) -= GetPHMValue(LegacyPieceIndexConverter(Asc(TempPiece) Mod 11), 0, Flatten2DBoardIndex(OldCoorX, OldCoorY), 16)
                 If (OLDMove And 28672) = 4096 Then 'Queen Promotion.
-                    PHMValues(0) += PieceHeatMap(Asc("Q") Mod 11, NewCoorY, NewCoorX, 16)
+                    PHMValues(0) += GetPHMValue(GlobalConstants.PieceIndex.Queen, 0, Flatten2DBoardIndex(NewCoorX, NewCoorY), 16)
                 ElseIf (OLDMove And 28672) = 28672 Then 'Knight Promotion.
-                    PHMValues(0) += PieceHeatMap(Asc("N") Mod 11, NewCoorY, NewCoorX, 16)
+                    PHMValues(0) += GetPHMValue(GlobalConstants.PieceIndex.Knight, 0, Flatten2DBoardIndex(NewCoorX, NewCoorY), 16)
                 Else
-                    PHMValues(0) += PieceHeatMap(Asc(TempPiece) Mod 11, NewCoorY, NewCoorX, 16)
+                    PHMValues(0) += GetPHMValue(LegacyPieceIndexConverter(Asc(TempPiece) Mod 11), 0, Flatten2DBoardIndex(NewCoorX, NewCoorY), 16)
                 End If
             End If
 
@@ -1672,9 +1676,9 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         HasEnPassanted = True
                     ElseIf (OLDMove And 28672) = 12288 Then 'En Passant
                         Board(NewCoorX, 3) = " "c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(3), 1, Flatten2DBoardIndex(NewCoorX, 3)) 'Ammended for a capture of a pawn.
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(3), 1, Flatten2DBoardIndex(NewCoorX, 3)) 'Ammended for a capture of a pawn.
                         MaterialCount(1) -= GlobalConstants.PieceWeight.Pawn
-                        If SearchSettings.UsePieceHeatMaps Then PHMValues(1) -= PieceHeatMap(Asc("P") Mod 11, 4, NewCoorX, 16) 'y=3 for enpassant.
+                        If SearchSettings.UsePieceHeatMaps Then PHMValues(1) -= GetPHMValue(GlobalConstants.PieceIndex.Pawn, 1, Flatten2DBoardIndex(NewCoorX, 3), 16) 'y=3 for enpassant.
                         BlackPawnMask = BlackPawnMask Xor (1UL << (24US + NewCoorX))
                     ElseIf (OLDMove And 28672) = 4096 Then 'Queen Promotion.
                         TempPiece = "Q"c
@@ -1704,12 +1708,12 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                     If OLDMove = 23031 Then
                         'Moves elements about on the board, and the Zobrist value.
                         Board(5, 7) = "R"c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(5), 0, Flatten2DBoardIndex(5, 7))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(5), 0, Flatten2DBoardIndex(5, 7))
                         Board(7, 7) = " "c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(5), 0, Flatten2DBoardIndex(7, 7))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(5), 0, Flatten2DBoardIndex(7, 7))
                         If SearchSettings.UsePieceHeatMaps Then
-                            PHMValues(0) -= PieceHeatMap(Asc("R") Mod 11, 7, 7, 16)
-                            PHMValues(0) += PieceHeatMap(Asc("R") Mod 11, 7, 5, 16)
+                            PHMValues(0) -= GetPHMValue(GlobalConstants.PieceIndex.Rook, 0, Flatten2DBoardIndex(7, 7), 16)
+                            PHMValues(0) += GetPHMValue(GlobalConstants.PieceIndex.Rook, 0, Flatten2DBoardIndex(5, 7), 16)
                         End If
                     End If
                     'Player can no longer castle.
@@ -1719,12 +1723,12 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 If MeCanCastle.QS Then
                     If OLDMove = 27095 Then
                         Board(0, 7) = " "c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(5), 0, Flatten2DBoardIndex(0, 7))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(5), 0, Flatten2DBoardIndex(0, 7))
                         Board(3, 7) = "R"c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(5), 0, Flatten2DBoardIndex(3, 7))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(5), 0, Flatten2DBoardIndex(3, 7))
                         If SearchSettings.UsePieceHeatMaps Then
-                            PHMValues(0) -= PieceHeatMap(Asc("R") Mod 11, 7, 0, 16)
-                            PHMValues(0) += PieceHeatMap(Asc("R") Mod 11, 7, 3, 16)
+                            PHMValues(0) -= GetPHMValue(GlobalConstants.PieceIndex.Rook, 0, Flatten2DBoardIndex(0, 7), 16)
+                            PHMValues(0) += GetPHMValue(GlobalConstants.PieceIndex.Rook, 0, Flatten2DBoardIndex(3, 7), 16)
                         End If
                     End If
                     ZobristValue = ZobristValue Xor ZobristHashConstants(10)
@@ -1732,21 +1736,21 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 End If
             End If
             'Places the piece on the board's new position using its Zobrist value.
-            ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(Asc(TempPiece) Mod 11), 0, Flatten2DBoardIndex(NewCoorX, NewCoorY))
+            ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(Asc(TempPiece) Mod 11), 0, Flatten2DBoardIndex(NewCoorX, NewCoorY))
 
         Else
             'Near-identical Code for the Black Pieces.
-            ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter((Asc(TempPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(OldCoorX, OldCoorY))
+            ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter((Asc(TempPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(OldCoorX, OldCoorY))
 
             'Modifies the PHM values (black).
             If SearchSettings.UsePieceHeatMaps Then
-                PHMValues(1) -= PieceHeatMap((Asc(TempPiece) + 1) Mod 11, 7 - OldCoorY, OldCoorX, 16)
+                PHMValues(1) -= GetPHMValue(LegacyPieceIndexConverter((Asc(TempPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(OldCoorX, OldCoorY), 16)
                 If (OLDMove And 28672) = 4096 Then 'Queen Promotion.
-                    PHMValues(1) += PieceHeatMap(Asc("Q") Mod 11, 7 - NewCoorY, NewCoorX, 16)
+                    PHMValues(1) += GetPHMValue(GlobalConstants.PieceIndex.Queen, 1, Flatten2DBoardIndex(NewCoorX, NewCoorY), 16)
                 ElseIf (OLDMove And 28672) = 28672 Then 'Knight Promotion.
-                    PHMValues(1) += PieceHeatMap(Asc("N") Mod 11, 7 - NewCoorY, NewCoorX, 16)
+                    PHMValues(1) += GetPHMValue(GlobalConstants.PieceIndex.Knight, 1, Flatten2DBoardIndex(NewCoorX, NewCoorY), 16)
                 Else
-                    PHMValues(1) += PieceHeatMap((Asc(TempPiece) + 1) Mod 11, 7 - NewCoorY, NewCoorX, 16)
+                    PHMValues(1) += GetPHMValue(LegacyPieceIndexConverter((Asc(TempPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(NewCoorX, NewCoorY), 16)
                 End If
             End If
 
@@ -1760,9 +1764,9 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         HasEnPassanted = True
                     ElseIf (OLDMove And 28672) = 12288 Then
                         Board(NewCoorX, 4) = " "c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(3), 0, Flatten2DBoardIndex(NewCoorX, 4))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(3), 0, Flatten2DBoardIndex(NewCoorX, 4))
                         MaterialCount(0) -= GlobalConstants.PieceWeight.Pawn
-                        If SearchSettings.UsePieceHeatMaps Then PHMValues(0) -= PieceHeatMap(Asc("P") Mod 11, 4, NewCoorX, 16) 'y=4 for enpassant.
+                        If SearchSettings.UsePieceHeatMaps Then PHMValues(0) -= GetPHMValue(GlobalConstants.PieceIndex.Pawn, 0, Flatten2DBoardIndex(NewCoorX, 4), 16) 'y=4 for enpassant.
                         WhitePawnMask = WhitePawnMask Xor (1UL << (32US + NewCoorX))
                     ElseIf (OLDMove And 28672) = 4096 Then
                         TempPiece = "q"c
@@ -1788,33 +1792,33 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 If MeCanCastle.KS Then
                     If OLDMove = 22576 Then
                         Board(5, 0) = "r"c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(5), 1, Flatten2DBoardIndex(5, 0))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(5), 1, Flatten2DBoardIndex(5, 0))
                         Board(7, 0) = " "c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(5), 1, Flatten2DBoardIndex(7, 0))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(5), 1, Flatten2DBoardIndex(7, 0))
                     End If
                     MeCanCastle.KS = False
                     ZobristValue = ZobristValue Xor ZobristHashConstants(11)
                     If SearchSettings.UsePieceHeatMaps Then
-                        PHMValues(1) -= PieceHeatMap(Asc("R") Mod 11, 7, 7, 16)
-                        PHMValues(1) += PieceHeatMap(Asc("R") Mod 11, 7, 5, 16)
+                        PHMValues(1) -= GetPHMValue(GlobalConstants.PieceIndex.Rook, 1, Flatten2DBoardIndex(7, 0), 16)
+                        PHMValues(1) += GetPHMValue(GlobalConstants.PieceIndex.Rook, 1, Flatten2DBoardIndex(5, 0), 16)
                     End If
                 End If
                 If MeCanCastle.QS Then
                     If OLDMove = 26640 Then
                         Board(0, 0) = " "c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(5), 1, Flatten2DBoardIndex(0, 0))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(5), 1, Flatten2DBoardIndex(0, 0))
                         Board(3, 0) = "r"c
-                        ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(5), 1, Flatten2DBoardIndex(3, 0))
+                        ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(5), 1, Flatten2DBoardIndex(3, 0))
                         If SearchSettings.UsePieceHeatMaps Then
-                            PHMValues(1) -= PieceHeatMap(Asc("R") Mod 11, 7, 0, 16)
-                            PHMValues(1) += PieceHeatMap(Asc("R") Mod 11, 7, 3, 16)
+                            PHMValues(1) -= GetPHMValue(GlobalConstants.PieceIndex.Rook, 1, Flatten2DBoardIndex(0, 0), 16)
+                            PHMValues(1) += GetPHMValue(GlobalConstants.PieceIndex.Rook, 1, Flatten2DBoardIndex(3, 0), 16)
                         End If
                     End If
                     ZobristValue = ZobristValue Xor ZobristHashConstants(12)
                     MeCanCastle.QS = False
                 End If
             End If
-            ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter((Asc(TempPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(NewCoorX, NewCoorY))
+            ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter((Asc(TempPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(NewCoorX, NewCoorY))
         End If
 
         If Not (OLDEnPassant = 0 OrElse HasEnPassanted) Then
@@ -1829,8 +1833,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             If Char.IsUpper(CapturedPiece) Then
                 MaterialCount(0) -= ReturnPieceValue(CapturedPiece)
                 'Removes the captured piece from the Zobrist Key.
-                ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter(Asc(CapturedPiece) Mod 11), 0, Flatten2DBoardIndex(NewCoorX, NewCoorY))
-                If SearchSettings.UsePieceHeatMaps Then PHMValues(0) -= PieceHeatMap(Asc(CapturedPiece) Mod 11, NewCoorY, NewCoorX, 16)
+                ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter(Asc(CapturedPiece) Mod 11), 0, Flatten2DBoardIndex(NewCoorX, NewCoorY))
+                If SearchSettings.UsePieceHeatMaps Then PHMValues(0) -= GetPHMValue(LegacyPieceIndexConverter(Asc(CapturedPiece) Mod 11), 0, Flatten2DBoardIndex(NewCoorX, NewCoorY), 16)
                 If CapturedPiece = "P"c Then
                     WhitePawnMask = WhitePawnMask Xor (1UL << (NewCoorY * 8US + NewCoorX))
                 ElseIf CapturedPiece = "R"c AndAlso EnemyCanCastle.CanICastle() Then
@@ -1847,8 +1851,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 End If
             Else
                 MaterialCount(1) -= ReturnPieceValue(CapturedPiece)
-                ZobristValue = ZobristValue Xor ZobristHashTable(LegacyPieceIndexConverter((Asc(CapturedPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(NewCoorX, NewCoorY))
-                If SearchSettings.UsePieceHeatMaps Then PHMValues(1) -= PieceHeatMap((Asc(CapturedPiece) + 1) Mod 11, 7 - NewCoorY, NewCoorX, 16)
+                ZobristValue = ZobristValue Xor GetZobristHashTableValue(LegacyPieceIndexConverter((Asc(CapturedPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(NewCoorX, NewCoorY))
+                If SearchSettings.UsePieceHeatMaps Then PHMValues(1) -= GetPHMValue(LegacyPieceIndexConverter((Asc(CapturedPiece) + 1) Mod 11), 1, Flatten2DBoardIndex(NewCoorX, NewCoorY), 16)
                 If CapturedPiece = "p"c Then
                     BlackPawnMask = BlackPawnMask Xor (1UL << (NewCoorY * 8US + NewCoorX))
                 ElseIf CapturedPiece = "r"c AndAlso EnemyCanCastle.CanICastle() Then
@@ -2122,7 +2126,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                     TempBlackPawnMask = BlackPawnMask
                     TempHalfMoveSize = HalfMoveSize
                     'Makes move on temp board, then calls NegaMax for this new position.
-                    MakeMove(TempBoard, PieceMoves(n), NegaMaxBoardStates(DepthFromRoot), isWhite, TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, TempMaterialCount, TempPHMValues, TempEnPassant, TempZobristValue, TempWhitePawnMask, TempBlackPawnMask, TempHalfMoveSize)
+                    MakeMove(TempBoard, PieceMoves(n), NegaMaxBoardStates(DepthFromRoot), isWhite, TempMeCanCastle, TempEnemyCanCastle, TempMeKPos, TempMaterialCount, TempPHMValues, TempEnPassant, TempZobristValue, TempWhitePawnMask, TempBlackPawnMask, TempHalfMoveSize, True)
                     TotalPositionsSearched += 1UL
 
                     If TempMaterialCount(0) + TempMaterialCount(1) = 0 Then
@@ -2338,11 +2342,11 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         If MaterialCount(0) <= 1400 Then
             'White has little material left. Penelise white's king from being at the edges of the board, and when white's king
             'is close to black's king.
-            Score -= EndgameEvalLookupTable(WKPos, BKPos, MaterialCount(0) \ 100)
+            Score -= GetEEVTValue(CUShort(WKPos), CUShort(BKPos), MaterialCount(0) \ 100)
         End If
         If MaterialCount(1) <= 1400 Then
             'Black has little material left.
-            Score += EndgameEvalLookupTable(BKPos, WKPos, MaterialCount(1) \ 100)
+            Score += GetEEVTValue(CUShort(BKPos), CUShort(WKPos), MaterialCount(1) \ 100)
         End If
 
         Return CShort(Score)
@@ -2356,13 +2360,13 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Dim ScaledMaterialCountB As Int32 = Math.Min(MaterialCount(1) \ 100, 16)
 
         'For each piece on the board, calculate how advantageously it is placed (using the PieceHeatSquares). Add this to the score.
-        For y = 0 To 7
-            For x = 0 To 7
+        For y As Int16 = 0 To 7
+            For x As Int16 = 0 To 7
                 If Board(x, y) <> " "c Then
                     If Char.IsUpper(Board(x, y)) Then
-                        If CalculateCode <> 2 Then PHMEval(0) += PieceHeatMap(Asc(Board(x, y)) Mod 11, y, x, ScaledMaterialCountB)
+                        If CalculateCode <> 2 Then PHMEval(0) += GetPHMValue(LegacyPieceIndexConverter(Asc(Board(x, y)) Mod 11), 0, Flatten2DBoardIndex(x, y), ScaledMaterialCountB)
                     Else
-                        If CalculateCode <> 1 Then PHMEval(1) += PieceHeatMap((Asc(Board(x, y)) + 1) Mod 11, 7 - y, x, ScaledMaterialCountW)
+                        If CalculateCode <> 1 Then PHMEval(1) += GetPHMValue(LegacyPieceIndexConverter((Asc(Board(x, y)) + 1) Mod 11), 1, Flatten2DBoardIndex(x, y), ScaledMaterialCountW)
                     End If
                 End If
             Next

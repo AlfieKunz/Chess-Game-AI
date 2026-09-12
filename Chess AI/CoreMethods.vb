@@ -8,6 +8,7 @@ Imports System.Numerics
 Imports System.Runtime.CompilerServices
 Imports System.Xml
 Imports System.Xml.XPath
+Imports Chess_AI.GlobalConstants
 
 Partial Public Class CoreMethods
     'TrueTables are just TrueFalse Tables containing only the letter T. Very useful for resetting TrueFalse Tables
@@ -19,10 +20,10 @@ Partial Public Class CoreMethods
     'for indexing into PieceValue, MVVLVAValues, ZobristHashTable. We convert this to the structure that bitboards use (indexing through unique
     'PieceIndex.Piece value) by storing said indices in this array. TODO: clear these from AI.vb
     Private Shared ReadOnly PieceValue(5) As Integer 'Array Containing the Value or Weight of each Piece.
-    Protected Shared MVVLVAValues(4, 5) As UInt16 'Array Containing the score associated with each possible capture configuration in chess.
+    Protected Shared MVVLVAValues(29) As UInt16 'Array Containing the score associated with each possible capture configuration in chess.
     'This is used for move ordering, and represents the premise of encouraging high captures, and capturing _with_ low material.
 
-    Protected Shared ReadOnly ZobristHashTable(5, 1, 63) As UInt64 '(a, b, c), where a = piece type, b = piece colour, c = square.
+    Protected Shared ReadOnly ZobristHashTable(767) As UInt64 '(a, b, c), where a = piece type, b = piece colour, c = square.
     'a is Similar to PieceValue: use (Asc(UCase(PieceName)) Mod 11) to calculate - [2] used for EnPassant square.
     Protected Shared ReadOnly ZobristHashConstants(12) As UInt64 '0-7 = EnPassant Square information, 8 = Player Turn, 9 = WhiteKSCastle, 10 = WhiteQSCastle, 11 = BlackKSCastle, 12 = BlackQSCastle.
     Public Sub New()
@@ -37,11 +38,11 @@ Partial Public Class CoreMethods
 
         'Loads the appropriate values into MVA-LVA. For more info, see rustic-chess.org/search/ordering/mvv_lva.html
         MVVLVAValues = {
-            {15, 14, 13, 12, 11, 10}, ' Victim: Pawn   (P, N, B, R, Q, K)
-            {25, 24, 23, 22, 21, 20}, ' Victim: Knight (P, N, B, R, Q, K)
-            {35, 34, 33, 32, 31, 30}, ' Victim: Bishop (P, N, B, R, Q, K)
-            {45, 44, 43, 42, 41, 40}, ' Victim: Rook   (P, N, B, R, Q, K)
-            {55, 54, 53, 52, 51, 50} ' Victim: Queen  (P, N, B, R, Q, K)
+            15, 14, 13, 12, 11, 10, ' Victim: Pawn   (P, N, B, R, Q, K)
+            25, 24, 23, 22, 21, 20, ' Victim: Knight (P, N, B, R, Q, K)
+            35, 34, 33, 32, 31, 30, ' Victim: Bishop (P, N, B, R, Q, K)
+            45, 44, 43, 42, 41, 40, ' Victim: Rook   (P, N, B, R, Q, K)
+            55, 54, 53, 52, 51, 50 ' Victim: Queen  (P, N, B, R, Q, K)
         }
 
         'Creates MasterTrueTable and TrueTable.
@@ -63,7 +64,7 @@ Partial Public Class CoreMethods
                     RNDTwo = CULng(RND.Next())
                     'Combine these numbers together into a 64-bit number by applying a 32-bit left shift to RNDOne,
                     'then combining this with RNDTwo via a bitwise OR operation.
-                    ZobristHashTable(PieceIndex, Turn, Square) = (RNDOne << 32) Or RNDTwo
+                    ZobristHashTable((128 * PieceIndex) + (64 * Turn) + Square) = (RNDOne << 32) Or RNDTwo
                 Next
             Next
         Next
@@ -74,6 +75,14 @@ Partial Public Class CoreMethods
             ZobristHashConstants(n) = (RNDOne << 32) Or RNDTwo
         Next
     End Sub
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function GetZobristHashTableValue(ByVal Piece As Integer, ByVal Colour As Integer, ByVal Square As Integer) As UInt64
+        Return ZobristHashTable((128 * Piece) + (64 * Colour) + Square)
+    End Function
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function GetMVVLVAValue(ByVal VictimPiece As Integer, ByVal AttackingPiece As Integer) As UInt16
+        Return MVVLVAValues(6 * VictimPiece + AttackingPiece)
+    End Function
 
 
 
@@ -715,9 +724,9 @@ Partial Public Class CoreMethods
                 'If the square contains a piece, xor the required entry in ZobristHashTable into the key.
                 If Board(x, y) <> " " Then
                     If Char.IsUpper(Board(x, y)) Then
-                        ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable(LegacyPieceIndexConverter(Asc(Board(x, y)) Mod 11), 0, Flatten2DBoardIndex(x, y))
+                        ZobristHashPosition = ZobristHashPosition Xor GetZobristHashTableValue(LegacyPieceIndexConverter(Asc(Board(x, y)) Mod 11), 0, Flatten2DBoardIndex(x, y))
                     Else
-                        ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable(LegacyPieceIndexConverter((Asc(Board(x, y)) + 1) Mod 11), 1, Flatten2DBoardIndex(x, y))
+                        ZobristHashPosition = ZobristHashPosition Xor GetZobristHashTableValue(LegacyPieceIndexConverter((Asc(Board(x, y)) + 1) Mod 11), 1, Flatten2DBoardIndex(x, y))
                     End If
                 End If
             Next

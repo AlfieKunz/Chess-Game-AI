@@ -1,16 +1,18 @@
 ﻿Option Strict On
+Imports System.Formats.Asn1.AsnWriter
+Imports System.Runtime.CompilerServices
 
 Partial Public Class AI
 
-    Private PieceHeatMap(,,,) As Integer 'Calls & Constructs PieceHeatMaps - producing a hashed array containing the
+    Private PieceHeatMap() As Integer 'Calls & Constructs PieceHeatMaps - producing a hashed array containing the
     '"ideal" locations for each piece on the board (used to evaluate a board position).
 
 
     'Function which generates the data for the Piece Heat Maps - 2D arrays that represent the 'ideal' positions for each piece.
     'Used by the evaluation function to determine how favourable a position is for white.
-    Private Function GeneratePieceHeatSquares() As Integer(,,,)
+    Private Sub PopulatePieceHeatSquares()
         'Array containing all the PieceHeatMap data - hashed so that a specific piece's index can be easily retrieved using its symbol.
-        Dim HeatSqaures(9, 7, 7, 16) As Integer
+        ReDim PieceHeatMap(13055)
         Dim EndgameLerpWeight As Double
 
         'Below are the Heat Maps for each individual piece: the greater the number, the more favourable a position is that has that
@@ -135,49 +137,61 @@ Partial Public Class AI
             {-30, -30, 0, 0, 0, 0, -30, -30},
             {-50, -30, -30, -30, -30, -30, -30, -50}}
 
-        For x = 0 To 7
-            For y = 0 To 7
+        For y As Int16 = 0 To 7
+            For x As Int16 = 0 To 7
                 'From testing, I am using the "Aggressive-Endgame-Endgame Hybrid" model of my PHM values, which prioritises heavy piece activity
                 'and strong piece activity in the endgame phase. I presume this aggressive behaviour works well so that the AI does not have to
                 'face 'defensive' positions, which may expose its poor understanding of king safety.
 
                 'Most chess engines value the bishop as worth 3.25 points of material, but my chess engine uses 3.
                 'For PHM, add this change.
-                BishopHeatSquares(x, y) += 25
-                BishopEndgameHeatSquares(x, y) += 25
+                BishopHeatSquares(y, x) += 25
+                BishopEndgameHeatSquares(y, x) += 25
 
                 'Multiples each Heat Map index by the piece multiplier (so that they reflect the weight of each piece).
-                BishopHeatSquares(x, y) *= 1.28
-                KnightHeatSquares(x, y) *= 1.18
-                PawnHeatSquares(x, y) *= 1.42
-                QueenHeatSquares(x, y) *= 2.55
-                RookHeatSquares(x, y) *= 1.98
-                KingHeatSquares(x, y) *= 1.33
+                BishopHeatSquares(y, x) *= 1.28
+                KnightHeatSquares(y, x) *= 1.18
+                PawnHeatSquares(y, x) *= 1.42
+                QueenHeatSquares(y, x) *= 2.55
+                RookHeatSquares(y, x) *= 1.98
+                KingHeatSquares(y, x) *= 1.33
 
                 'Corresponding values for the endgame phase.
-                BishopEndgameHeatSquares(x, y) *= 1.35
-                KnightEndgameHeatSquares(x, y) *= 0.92
-                PawnEndgameHeatSquares(x, y) *= 1.65
-                QueenEndgameHeatSquares(x, y) *= 2.9
-                RookEndgameHeatSquares(x, y) *= 2.25
-                KingEndgameHeatSquares(x, y) *= 1.65
+                BishopEndgameHeatSquares(y, x) *= 1.35
+                KnightEndgameHeatSquares(y, x) *= 0.92
+                PawnEndgameHeatSquares(y, x) *= 1.65
+                QueenEndgameHeatSquares(y, x) *= 2.9
+                RookEndgameHeatSquares(y, x) *= 2.25
+                KingEndgameHeatSquares(y, x) *= 1.65
 
                 For m = 0 To 16
                     EndgameLerpWeight = Math.Min(2 - 0.125 * m, 1)
 
                     'Combines each Piece Heat Map into one big Heat Map, so that the correct Heat Map can be called by hashing the name of the required piece.
-                    HeatSqaures(0, x, y, m) = CInt((1 - EndgameLerpWeight) * BishopHeatSquares(x, y) + EndgameLerpWeight * BishopEndgameHeatSquares(x, y))
-                    HeatSqaures(1, x, y, m) = CInt((1 - EndgameLerpWeight) * KnightHeatSquares(x, y) + EndgameLerpWeight * KnightEndgameHeatSquares(x, y))
-                    HeatSqaures(3, x, y, m) = CInt((1 - EndgameLerpWeight) * PawnHeatSquares(x, y) + EndgameLerpWeight * PawnEndgameHeatSquares(x, y))
-                    HeatSqaures(4, x, y, m) = CInt((1 - EndgameLerpWeight) * QueenHeatSquares(x, y) + EndgameLerpWeight * QueenEndgameHeatSquares(x, y))
-                    HeatSqaures(5, x, y, m) = CInt((1 - EndgameLerpWeight) * RookHeatSquares(x, y) + EndgameLerpWeight * RookEndgameHeatSquares(x, y))
-                    HeatSqaures(9, x, y, m) = CInt((1 - EndgameLerpWeight) * KingHeatSquares(x, y) + EndgameLerpWeight * KingEndgameHeatSquares(x, y))
+                    SetPHMValue(GlobalConstants.PieceIndex.Pawn, 0, Flatten2DBoardIndex(x, y), m, CInt((1 - EndgameLerpWeight) * PawnHeatSquares(y, x) + EndgameLerpWeight * PawnEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Pawn, 1, Flatten2DBoardIndex(x, 7S - y), m, CInt((1 - EndgameLerpWeight) * PawnHeatSquares(y, x) + EndgameLerpWeight * PawnEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Knight, 0, Flatten2DBoardIndex(x, y), m, CInt((1 - EndgameLerpWeight) * KnightHeatSquares(y, x) + EndgameLerpWeight * KnightEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Knight, 1, Flatten2DBoardIndex(x, 7S - y), m, CInt((1 - EndgameLerpWeight) * KnightHeatSquares(y, x) + EndgameLerpWeight * KnightEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Bishop, 0, Flatten2DBoardIndex(x, y), m, CInt((1 - EndgameLerpWeight) * BishopHeatSquares(y, x) + EndgameLerpWeight * BishopEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Bishop, 1, Flatten2DBoardIndex(x, 7S - y), m, CInt((1 - EndgameLerpWeight) * BishopHeatSquares(y, x) + EndgameLerpWeight * BishopEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Rook, 0, Flatten2DBoardIndex(x, y), m, CInt((1 - EndgameLerpWeight) * RookHeatSquares(y, x) + EndgameLerpWeight * RookEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Rook, 1, Flatten2DBoardIndex(x, 7S - y), m, CInt((1 - EndgameLerpWeight) * RookHeatSquares(y, x) + EndgameLerpWeight * RookEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Queen, 0, Flatten2DBoardIndex(x, y), m, CInt((1 - EndgameLerpWeight) * QueenHeatSquares(y, x) + EndgameLerpWeight * QueenEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.Queen, 1, Flatten2DBoardIndex(x, 7S - y), m, CInt((1 - EndgameLerpWeight) * QueenHeatSquares(y, x) + EndgameLerpWeight * QueenEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.King, 0, Flatten2DBoardIndex(x, y), m, CInt((1 - EndgameLerpWeight) * KingHeatSquares(y, x) + EndgameLerpWeight * KingEndgameHeatSquares(y, x)))
+                    SetPHMValue(GlobalConstants.PieceIndex.King, 1, Flatten2DBoardIndex(x, 7S - y), m, CInt((1 - EndgameLerpWeight) * KingHeatSquares(y, x) + EndgameLerpWeight * KingEndgameHeatSquares(y, x)))
                 Next
             Next
         Next
-
-        Return HeatSqaures
+    End Sub
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function GetPHMValue(ByVal Piece As Integer, ByVal Colour As Integer, ByVal Square As Integer, ByVal Score As Integer) As Integer
+        Return PieceHeatMap((2176 * Piece) + (1088 * Colour) + (17 * Square) + Score)
     End Function
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Sub SetPHMValue(ByVal Piece As Integer, ByVal Colour As Integer, ByVal Square As Integer, ByVal Score As Integer, Value As Integer)
+        PieceHeatMap((2176 * Piece) + (1088 * Colour) + (17 * Square) + Score) = Value
+    End Sub
 
 
 
@@ -185,7 +199,7 @@ Partial Public Class AI
 
 
 
-    Private EndgameEvalLookupTable(63, 63, 14) As Int16 'Lookup Table that calculates the evaluation of simple endgame positions,
+    Private EndgameEvalLookupTable(61439) As Int16 'Lookup Table that calculates the evaluation of simple endgame positions,
     'taking into account the king positions, and the player's material count (value scales as material count decreases).
     '(a,b,c), where a = position of the player's king, b = position of the opposition's king, c = player's material count
     '(which is divided by 100 in the main NegaMax code).
@@ -214,11 +228,15 @@ Partial Public Class AI
                 'for each possible material count of the player. This value is then stored in the Lookup Table.
                 For c = 0 To 14
                     'Heuristic becomes more prevelant as the opponent has fewer and fewer pieces (exponential curve).
-                    EndgameEvalLookupTable(MeKPos, EnemyKPos, c) = CShort((KingCentreDistance * 1.5 + (7 - KingDistance)) * (1.25 ^ (12 - c)))
+                    EndgameEvalLookupTable((960 * MeKPos) + (15 * EnemyKPos) + c) = CShort((KingCentreDistance * 1.5 + (7 - KingDistance)) * (1.25 ^ (12 - c)))
                 Next
             Next
         Next
     End Sub
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function GetEEVTValue(ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal Score As Integer) As Integer
+        Return EndgameEvalLookupTable((960 * MeKPos) + (15 * EnemyKPos) + Score)
+    End Function
 
 
     Dim EvalPastPawnBonus() As Integer = {0, 0, 10, 15, 35, 60, 90, 120, 0}
