@@ -14,37 +14,35 @@ Partial Public Class CoreMethods
     'and debugging.
     Public MasterTrueTable(7, 7), TrueTable(7, 7) As Char
     Public CannotCastle As New CanCastle
-    Private Shared ReadOnly PieceValue(9) As Integer 'Array Containing the Value or Weight of each Piece.
-    Protected Shared MVVLVAValues(9, 9) As UInt16 'Array Containing the score associated with each possible capture configuration in chess.
+
+    Protected Shared LegacyPieceIndexConverter(9) As Integer 'Methods using the Board(,) structure use "Asc(PIECE) Mod 11" or "(Asc(piece) + 1) Mod 11"
+    'for indexing into PieceValue, MVVLVAValues, ZobristHashTable. We convert this to the structure that bitboards use (indexing through unique
+    'PieceIndex.Piece value) by storing said indices in this array. TODO: clear these from AI.vb
+    Private Shared ReadOnly PieceValue(5) As Integer 'Array Containing the Value or Weight of each Piece.
+    Protected Shared MVVLVAValues(4, 5) As UInt16 'Array Containing the score associated with each possible capture configuration in chess.
     'This is used for move ordering, and represents the premise of encouraging high captures, and capturing _with_ low material.
 
-    Protected Shared ReadOnly ZobristHashTable(9, 1, 7, 7) As UInt64 '(a, b, c, d), where a = piece type, b = piece colour, c = x-coor, d = y-coor.
+    Protected Shared ReadOnly ZobristHashTable(5, 1, 63) As UInt64 '(a, b, c), where a = piece type, b = piece colour, c = square.
     'a is Similar to PieceValue: use (Asc(UCase(PieceName)) Mod 11) to calculate - [2] used for EnPassant square.
-    Protected Shared ReadOnly HashConstants(4) As UInt64 '0 = Player Turn, 1 = WhiteKSCastle, 2 = WhiteQSCastle, 3 = BlackKSCastle, 4 = BlackQSCastle.
+    Protected Shared ReadOnly ZobristHashConstants(12) As UInt64 '0-7 = EnPassant Square information, 8 = Player Turn, 9 = WhiteKSCastle, 10 = WhiteQSCastle, 11 = BlackKSCastle, 12 = BlackQSCastle.
     Public Sub New()
         PrecomputeKnightLegalMoveArray()
-        'Sets PieceValues variables using a Hash Function (Upper Case letter --> ASCII, then MOD 11). This
-        'creates a unique index / row in the PieceValue array for each piece and its corresponding weight,
-        'so its value can be searched up quickly. PieceValue(Asc(UCase(Board(x, y))) Mod 11)
-        PieceValue(0) = GlobalConstants.PieceWeight.Bishop 'Bishop Weight
-        PieceValue(1) = GlobalConstants.PieceWeight.Knight 'Knight Weight
-        PieceValue(3) = GlobalConstants.PieceWeight.Pawn 'Pawn Weight
-        PieceValue(4) = GlobalConstants.PieceWeight.Queen 'Queen Weight
-        PieceValue(5) = GlobalConstants.PieceWeight.Rook 'Rook Weight
-        PieceValue(9) = GlobalConstants.PieceWeight.King 'King Weight
+        LegacyPieceIndexConverter = {2, 1, -1, 0, 4, 3, -1, -1, -1, 5}
+        PieceValue(GlobalConstants.PieceIndex.Pawn) = GlobalConstants.PieceWeight.Pawn 'Pawn Weight
+        PieceValue(GlobalConstants.PieceIndex.Knight) = GlobalConstants.PieceWeight.Knight 'Knight Weight
+        PieceValue(GlobalConstants.PieceIndex.Bishop) = GlobalConstants.PieceWeight.Bishop 'Bishop Weight
+        PieceValue(GlobalConstants.PieceIndex.Rook) = GlobalConstants.PieceWeight.Rook 'Rook Weight
+        PieceValue(GlobalConstants.PieceIndex.Queen) = GlobalConstants.PieceWeight.Queen 'Queen Weight
+        PieceValue(GlobalConstants.PieceIndex.King) = GlobalConstants.PieceWeight.King 'Queen Weight
 
         'Loads the appropriate values into MVA-LVA. For more info, see rustic-chess.org/search/ordering/mvv_lva.html
         MVVLVAValues = {
-            {33, 34, 0, 35, 31, 32, 0, 0, 0, 30}, 'Victim = Bishop.
-            {23, 24, 0, 25, 21, 22, 0, 0, 0, 20}, 'Victim = Knight.
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {13, 14, 0, 15, 11, 12, 0, 0, 0, 10}, 'Victim = Pawn.
-            {53, 54, 0, 55, 51, 52, 0, 0, 0, 50}, 'Victim = Queen.
-            {43, 44, 0, 45, 41, 42, 0, 0, 0, 40}, 'Victim = Rook.
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}} 'Victim = King.
+            {15, 14, 13, 12, 11, 10}, ' Victim: Pawn   (P, N, B, R, Q, K)
+            {25, 24, 23, 22, 21, 20}, ' Victim: Knight (P, N, B, R, Q, K)
+            {35, 34, 33, 32, 31, 30}, ' Victim: Bishop (P, N, B, R, Q, K)
+            {45, 44, 43, 42, 41, 40}, ' Victim: Rook   (P, N, B, R, Q, K)
+            {55, 54, 53, 52, 51, 50} ' Victim: Queen  (P, N, B, R, Q, K)
+        }
 
         'Creates MasterTrueTable and TrueTable.
         For x As Byte = 0 To 7
@@ -57,28 +55,23 @@ Partial Public Class CoreMethods
         'Fills ZobristHasTable with pseudo-random 64-bit numbers
         Static RND As New Random()
         Dim RNDOne, RNDTwo As UInt64
-        For w As Byte = 0 To 9
-            Select Case w
-                Case 0, 1, 2, 3, 4, 5, 9
-                    For x As Byte = 0 To 1
-                        For y As Byte = 0 To 7
-                            For z As Byte = 0 To 7
-                                'Produce two random 32-bit numbers
-                                RNDOne = CULng(RND.Next())
-                                RNDTwo = CULng(RND.Next())
-                                'Combine these numbers together into a 64-bit number by applying a 32-bit left shift to RNDOne,
-                                'then combining this with RNDTwo via a bitwise OR operation.
-                                ZobristHashTable(w, x, y, z) = (RNDOne << 32) Or RNDTwo
-                            Next
-                        Next
-                    Next
-            End Select
+        For PieceIndex = 0 To 5
+            For Turn = 0 To 1
+                For Square = 0 To 63
+                    'Produce two random 32-bit numbers
+                    RNDOne = CULng(RND.Next())
+                    RNDTwo = CULng(RND.Next())
+                    'Combine these numbers together into a 64-bit number by applying a 32-bit left shift to RNDOne,
+                    'then combining this with RNDTwo via a bitwise OR operation.
+                    ZobristHashTable(PieceIndex, Turn, Square) = (RNDOne << 32) Or RNDTwo
+                Next
+            Next
         Next
         'Fills HasConstants with random 64-bit numbers.
-        For n As Byte = 0 To 4
+        For n As Byte = 0 To 12
             RNDOne = CULng(RND.Next())
             RNDTwo = CULng(RND.Next())
-            HashConstants(n) = (RNDOne << 32) Or RNDTwo
+            ZobristHashConstants(n) = (RNDOne << 32) Or RNDTwo
         Next
     End Sub
 
@@ -408,7 +401,6 @@ Partial Public Class CoreMethods
                             Case "B"c : State.BitboardBishopWhite = State.BitboardBishopWhite Or (1UL << Square)
                             Case "R"c : State.BitboardRookWhite = State.BitboardRookWhite Or (1UL << Square)
                             Case "Q"c : State.BitboardQueenWhite = State.BitboardQueenWhite Or (1UL << Square)
-                            Case "K"c : State.WhiteKPos = Square
                         End Select
                     Else
                         Select Case Piece
@@ -417,7 +409,6 @@ Partial Public Class CoreMethods
                             Case "b"c : State.BitboardBishopBlack = State.BitboardBishopBlack Or (1UL << Square)
                             Case "r"c : State.BitboardRookBlack = State.BitboardRookBlack Or (1UL << Square)
                             Case "q"c : State.BitboardQueenBlack = State.BitboardQueenBlack Or (1UL << Square)
-                            Case "k"c : State.BlackKPos = Square
                         End Select
                     End If
                 End If
@@ -466,7 +457,7 @@ Partial Public Class CoreMethods
 
 
 
-    Public Sub CalibrateForMoveGeneration(ByRef TFTable As UInt64, ByRef PinInfoStraight As UInt64, ByRef PinInfoDiag As UInt64, ByRef InCheck As UInt16, ByRef Board As BoardState, ByVal isWhite As Boolean, ByVal CanICastle As Boolean)
+    Public Sub CalibrateForMoveGeneration(ByRef TFTable As UInt64, ByRef PinInfoStraight As UInt64, ByRef PinInfoDiag As UInt64, ByRef InCheck As UInt16, ByRef Board As BoardState, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal isWhite As Boolean, ByVal CanICastle As Boolean)
         'Resets all variables.
         'TFTable = 0UL
         'PinInfoStraight = 0UL
@@ -475,9 +466,7 @@ Partial Public Class CoreMethods
 
         'We construct the full bitboards of all pieces, minus the kings (allows rooks to 'see' through them so the king cannot move backwards when in check).
         Dim FriendlyPieceMask, EnemyPieceMap, OccupancyMask As UInt64
-        Dim WhiteKingMask As UInt64 = 1UL << Board.WhiteKPos
-        Dim BlackKingMask As UInt64 = 1UL << Board.BlackKPos
-        Dim MeKPos As UInt16
+        Dim MeKingMask As UInt64 = 1UL << MeKPos
 
         'Calibrates TFTable by checking all pieces which could influence the king.
         Dim dx, dy As Integer
@@ -485,10 +474,9 @@ Partial Public Class CoreMethods
         If isWhite Then
             FriendlyPieceMask = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
             EnemyPieceMap = Board.BitboardPawnBlack Or Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack
-            Board.BitboardWhite = FriendlyPieceMask Or WhiteKingMask
-            Board.BitboardBlack = EnemyPieceMap Or BlackKingMask
+            Board.BitboardWhite = FriendlyPieceMask Or MeKingMask
+            Board.BitboardBlack = EnemyPieceMap Or (1UL << EnemyKPos)
             OccupancyMask = FriendlyPieceMask Or EnemyPieceMap
-            MeKPos = Board.WhiteKPos
 
             TempMask = Board.BitboardPawnBlack
             While TempMask <> 0UL
@@ -497,7 +485,7 @@ Partial Public Class CoreMethods
                 Dim PieceInfluenceKing As Boolean = dy >= 0 AndAlso (Math.Abs(dy) <= 2 AndAlso (Math.Abs((MeKPos And 7) - (Square And 7)) <= 2) OrElse (CanICastle AndAlso Square \ 8 = 6))
                 If PieceInfluenceKing Then TFTable = TFTable Or PawnBlackAttackMap(Square)
                 'Check for checks! (time for thyme?) Double checks must incorporate at least one sliding piece - can't have happened yet.
-                If (PawnBlackAttackMap(Square) And WhiteKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
+                If (PawnBlackAttackMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
 
@@ -507,14 +495,14 @@ Partial Public Class CoreMethods
                 dx = Math.Abs((MeKPos And 7) - (Square And 7))
                 dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
                 If dx <= 3 AndAlso dy <= 3 AndAlso dx + dy <= 5 Then TFTable = TFTable Or KnightMoveMap(Square)
-                If (KnightMoveMap(Square) And WhiteKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
+                If (KnightMoveMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
 
             'King checks.
-            dx = Math.Abs((MeKPos And 7) - (Board.BlackKPos And 7))
-            dy = Math.Abs((MeKPos \ 8) - (Board.BlackKPos \ 8))
-            If dx <= 2 AndAlso dy <= 2 Then TFTable = TFTable Or KingMoveMap(Board.BlackKPos)
+            dx = Math.Abs((MeKPos And 7) - (EnemyKPos And 7))
+            dy = Math.Abs((MeKPos \ 8) - (EnemyKPos \ 8))
+            If dx <= 2 AndAlso dy <= 2 Then TFTable = TFTable Or KingMoveMap(EnemyKPos)
 
             'Sliding piece checks: rooks & bishops (counting queen twice, once for each movement type).
             TempMask = Board.BitboardBishopBlack Or Board.BitboardQueenBlack
@@ -537,10 +525,9 @@ Partial Public Class CoreMethods
         Else 'Identical code but for the white pieces (fixing the Black TFTable).
             FriendlyPieceMask = Board.BitboardPawnBlack Or Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack
             EnemyPieceMap = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
-            Board.BitboardWhite = EnemyPieceMap Or WhiteKingMask
-            Board.BitboardBlack = FriendlyPieceMask Or BlackKingMask
+            Board.BitboardWhite = EnemyPieceMap Or (1UL << EnemyKPos)
+            Board.BitboardBlack = FriendlyPieceMask Or MeKingMask
             OccupancyMask = FriendlyPieceMask Or EnemyPieceMap
-            MeKPos = Board.BlackKPos
 
             TempMask = Board.BitboardPawnWhite
             While TempMask <> 0UL
@@ -548,7 +535,7 @@ Partial Public Class CoreMethods
                 dy = (MeKPos \ 8) - (Square \ 8)
                 Dim PieceInfluenceKing As Boolean = dy <= 0 AndAlso (Math.Abs(dy) <= 2 AndAlso (Math.Abs((MeKPos And 7) - (Square And 7)) <= 2) OrElse (CanICastle AndAlso Square \ 8 = 1))
                 If PieceInfluenceKing Then TFTable = TFTable Or PawnWhiteAttackMap(Square)
-                If (PawnWhiteAttackMap(Square) And BlackKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
+                If (PawnWhiteAttackMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
 
@@ -558,13 +545,13 @@ Partial Public Class CoreMethods
                 dx = Math.Abs((MeKPos And 7) - (Square And 7))
                 dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
                 If dx <= 3 AndAlso dy <= 3 AndAlso dx + dy <= 5 Then TFTable = TFTable Or KnightMoveMap(Square)
-                If (KnightMoveMap(Square) And BlackKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
+                If (KnightMoveMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
 
-            dx = Math.Abs((MeKPos And 7) - (Board.WhiteKPos And 7))
-            dy = Math.Abs((MeKPos \ 8) - (Board.WhiteKPos \ 8))
-            If dx <= 2 AndAlso dy <= 2 Then TFTable = TFTable Or KingMoveMap(Board.WhiteKPos)
+            dx = Math.Abs((MeKPos And 7) - (EnemyKPos And 7))
+            dy = Math.Abs((MeKPos \ 8) - (EnemyKPos \ 8))
+            If dx <= 2 AndAlso dy <= 2 Then TFTable = TFTable Or KingMoveMap(EnemyKPos)
 
             TempMask = Board.BitboardBishopWhite Or Board.BitboardQueenWhite
             While TempMask <> 0UL
@@ -697,7 +684,7 @@ Partial Public Class CoreMethods
     'replaces all references of the function (which appears many times in my program) with the function itself, to reduce on overhead.
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Public Function ReturnPieceValue(ByVal Piece As Char) As Integer
-        Return PieceValue(Asc(UCase(Piece)) Mod 11)
+        Return PieceValue(LegacyPieceIndexConverter(Asc(UCase(Piece)) Mod 11))
     End Function
 
 
@@ -728,20 +715,20 @@ Partial Public Class CoreMethods
                 'If the square contains a piece, xor the required entry in ZobristHashTable into the key.
                 If Board(x, y) <> " " Then
                     If Char.IsUpper(Board(x, y)) Then
-                        ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable(Asc(Board(x, y)) Mod 11, 0, x, y)
+                        ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable(LegacyPieceIndexConverter(Asc(Board(x, y)) Mod 11), 0, Flatten2DBoardIndex(x, y))
                     Else
-                        ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable((Asc(Board(x, y)) + 1) Mod 11, 1, x, y)
+                        ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable(LegacyPieceIndexConverter((Asc(Board(x, y)) + 1) Mod 11), 1, Flatten2DBoardIndex(x, y))
                     End If
                 End If
             Next
         Next
         'Adds board meta-data to key, such as castling priviledges & en passant.
-        If Not isWhite Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(0)
-        If WCanCastle.KS Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(1)
-        If WCanCastle.QS Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(2)
-        If BCanCastle.KS Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(3)
-        If BCanCastle.QS Then ZobristHashPosition = ZobristHashPosition Xor HashConstants(4)
-        If EnPassant <> 0 Then ZobristHashPosition = ZobristHashPosition Xor ZobristHashTable(2, 0, (EnPassant And 56) >> 3, EnPassant And 7)
+        If Not isWhite Then ZobristHashPosition = ZobristHashPosition Xor ZobristHashConstants(8)
+        If WCanCastle.KS Then ZobristHashPosition = ZobristHashPosition Xor ZobristHashConstants(9)
+        If WCanCastle.QS Then ZobristHashPosition = ZobristHashPosition Xor ZobristHashConstants(10)
+        If BCanCastle.KS Then ZobristHashPosition = ZobristHashPosition Xor ZobristHashConstants(11)
+        If BCanCastle.QS Then ZobristHashPosition = ZobristHashPosition Xor ZobristHashConstants(12)
+        If EnPassant <> 0 Then ZobristHashPosition = ZobristHashPosition Xor ZobristHashConstants((EnPassant And 56S) >> 3)
     End Function
 
 
