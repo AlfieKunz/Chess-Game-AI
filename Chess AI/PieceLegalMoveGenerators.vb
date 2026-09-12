@@ -28,7 +28,7 @@ Partial Public Class CoreMethods
     'pieces we cut the search 1 cell from each edge, as to better fit with occupancy masks.
     Private Shared MagicRookInfo(63) As MagicInfo
     Private Shared MagicBishopInfo(63) As MagicInfo
-    Protected Shared RayMap(63, 63) As UInt64
+    Protected Shared RayMap(4095) As UInt64
     Protected Sub PrecomputeAllPieceMaps()
         PrecomputeKingMap()
         PrecomputePawnMaps()
@@ -70,7 +70,7 @@ Partial Public Class CoreMethods
                         Ray = Ray Or (1UL << TempSquare)
                         TempSquare += Ofset
                     End While
-                    RayMap(Square1, Square2) = Ray
+                    RayMap(64 * Square1 + Square2) = Ray
                 End If
             Next
         Next

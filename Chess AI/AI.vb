@@ -967,7 +967,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                             End If
                         Else
                             'Move must block a sliding piece's ray for it to be valid.
-                            If (RayMap(InCheck And 63US, MeKPos) And 1UL << (LegalMoveArray(n) And 63US)) = 0UL Then Continue For
+                            If (RayMap(64 * (InCheck And 63US) + MeKPos) And 1UL << (LegalMoveArray(n) And 63US)) = 0UL Then Continue For
                         End If
                     End If
                 ElseIf (LegalMoveArray(n) And 28672US) = 12288US Then

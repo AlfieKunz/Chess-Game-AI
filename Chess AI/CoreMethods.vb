@@ -588,7 +588,7 @@ Partial Public Class CoreMethods
         While PossiblePinners <> 0UL
             'Uses the RayMap to find all the piece between the pinning candidate and the king. If there is just one friendly piece, itsapin.
             Dim PinnerSquare As Integer = BitOperations.TrailingZeroCount(PossiblePinners)
-            Dim CandidatePins As UInt64 = OccupancyMask And RayMap(MeKPos, PinnerSquare)
+            Dim CandidatePins As UInt64 = OccupancyMask And RayMap(64 * MeKPos + PinnerSquare)
             If CandidatePins = 0UL Then
                 'No pieces in te way - it's a check! Add data (or double check flag, depending on if we've already flagged this state as a check).
                 InCheck = If(InCheck = 0US, 128US Or CUShort(PinnerSquare), InCheck Or 64US)
@@ -603,7 +603,7 @@ Partial Public Class CoreMethods
         PossiblePinners = RookMoveMap(MeKPos) And If(isWhite, Board.BitboardRookBlack Or Board.BitboardQueenBlack, Board.BitboardRookWhite Or Board.BitboardQueenWhite)
         While PossiblePinners <> 0UL
             Dim PinnerSquare As Integer = BitOperations.TrailingZeroCount(PossiblePinners)
-            Dim CandidatePins As UInt64 = OccupancyMask And RayMap(MeKPos, PinnerSquare)
+            Dim CandidatePins As UInt64 = OccupancyMask And RayMap(64 * MeKPos + PinnerSquare)
             If CandidatePins = 0UL Then
                 If (InCheck And 64US) = 0US Then InCheck = If(InCheck = 0US, 128US Or CUShort(PinnerSquare), InCheck Or 64US)
             ElseIf (CandidatePins And (CandidatePins - 1UL)) = 0UL AndAlso (CandidatePins And FriendlyPieceMask) <> 0UL Then

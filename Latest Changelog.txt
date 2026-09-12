@@ -1,9 +1,29 @@
 ~~~~~~~~  New Features  ~~~~~~~~
+- Separated most board objects to a single BoardState structure, allowing for rapid copying before MakeMove, storing in arrays for each depth. Allows for a complete lack of arrays in the main search tree.
+- Full AI redesign to use bitboards for each piece (vs old 2D char array) and 0-63 squares (vs old 0-7,0-7 format) for variables such as InCheck, Move, KingPos & EnPassant.
+- Full re-writing of move generation code to take advantage of bitboards and bit-shifting.
+- Full pre-computation and storing of all piece pseudo-legal moves, for use in move generation.
+- Implemented hand-crafted fancy magic bitboard move generation for sliding pieces (standalone program).
+- Full reimagining of TFTables: decomposed into three Uint64 tables - one for legal king moves, one for diagonal pin masking, the other for straight pin masking. We partition these so that a pinned piece's movement is restricted by ANDing with a bishop / rook's legal moves at the king position.
+- Rewritten check and pin detection: casts rays from the king (using efficient bitboards) to detect checking piece and pinners.
+- Improved TFTable to use x-ray king masking (allows rays to pass through it, for king legal moves)
+- Redesigned EnPassant pins to be enforced in CreateMoves via "test break and see if the king is exposed" simulation, to better reflect its rare nature.
+- Early detection of OnlyCapture moves in PieceLegalMoveGeneration.vb to minimise waste in Quiescience.
+- Early pruning of illegal moves (ie: those that don't escape check, or breaks of EnPassant pins) in CreateMoves, so that they don't get sorted and waste valuable heap space.
+- Node Test moves are played immediately upon creation, instead of being generated all at once - helps skip illegal moves early, and avoids using arrays of moves & Array.Resize().
+- Creation of RayMap tool for detecting the squares exposed between any two squares. Allows for highly efficient pin detection, check evasion, and enforcing castling rules.
+- Complete re-writing of DoesMoveResolveCheck() using RayMap and bitboard shifting.
+- Complete re-writing of CreateMoves() and MakeMove() to take advantage of new bitboard schemes.
+
+- Toggleable setting to allow MakeMove to skip MaterialCount, PHM and Zobrist updates - provides faster Perft Test results.
+- Switched many "Shared" variables in GlobalConstants to "Const" variables, allowing for faster reading.
+- Flattened all multi-dimensional array structures (MVVLVA, Zobrist Hash Table, PieceHeatMap, EndgameLookupTable) - ~35% speed boost
+- Added separate lookups for each colour for PieceHeatMaps.
+- Improved debug features for handing new bitboard structures.
 - Increased Breadth of custom AI search timings.
 - Performance increases from Option Strict On in AI files.
 - Performance boosts to compiler settings and Server GC management.
 - Reduced size of Transposition Table elements.
-
 - General Code Condensing, Refactoring, and Efficiency Improvements :D.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
