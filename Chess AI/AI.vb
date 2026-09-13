@@ -923,7 +923,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Dim MeKPos As UInt16 = CUShort(Flatten2DBoardIndex((PrimaryMeKPos And 56S) >> 3, PrimaryMeKPos And 7S))
         Dim EnemyKPos As UInt16 = CUShort(Flatten2DBoardIndex((PrimaryEnemyKPos And 56S) >> 3, PrimaryEnemyKPos And 7S))
 
-        CalibrateForMoveGeneration(TFTable, PinInfoStraight, PinInfoDiag, InCheck, PrimaryBoardState, MeKPos, EnemyKPos, PlayerTurn, PrimaryMeCanCastle.CanICastle)
+        CalibrateForMoveGeneration(TFTable, PinInfoStraight, PinInfoDiag, InCheck, PrimaryBoardState, MeKPos, EnemyKPos, PlayerTurn)
         OutputTFTableToConsole(TFTable, PinInfoDiag Or PinInfoStraight, InCheck, MeKPos)
 
         Dim OccupancyMap As UInt64 = PrimaryBoardState.BitboardWhite Or PrimaryBoardState.BitboardBlack

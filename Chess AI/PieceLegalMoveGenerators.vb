@@ -31,6 +31,7 @@ Partial Public Class CoreMethods
     Protected Shared RayMap(4095) As UInt64
     Protected Sub PrecomputeAllPieceMaps()
         PrecomputeKingMap()
+        PrecomputeKingDangerMaps()
         PrecomputePawnMaps()
         PrecomputeKnightMap()
         PrecomputeBishopMap()
@@ -194,8 +195,11 @@ Partial Public Class CoreMethods
         Next
     End Sub
 
-    'Precomputed King Data
+    'Precomputed King Data. The latter 3 structures produce a mask that tells if a given piece could influence the king's motion.
     Private Shared KingMoveMap(63) As UInt64
+    Private Shared KingDangerMapKnight(63) As UInt64
+    Private Shared KingDangerMapBishop(63) As UInt64
+    Private Shared KingDangerMapRook(63) As UInt64
     Protected Sub PrecomputeKingMap()
         For y As Int16 = 0 To 7
             For x As Int16 = 0 To 7
@@ -209,6 +213,35 @@ Partial Public Class CoreMethods
             Next
         Next
     End Sub
+    Protected Sub PrecomputeKingDangerMaps()
+        For KingY As Int16 = 0 To 7
+            For KingX As Int16 = 0 To 7
+                Dim FlatKingIndex As Int16 = Flatten2DBoardIndex(KingX, KingY)
+                Dim KingInStartPos As Boolean = FlatKingIndex = 4 OrElse FlatKingIndex = 60
+
+                Dim TempKnightMap As UInt64 = 0
+                Dim TempBishopMap As UInt64 = 0
+                Dim TempRookMap As UInt64 = 0
+                For y As Int16 = 0 To 7
+                    For x As Int16 = 0 To 7
+                        'Logic taken directly from old FixTFTable sub.
+                        Dim PieceSquareIndex As Int16 = Flatten2DBoardIndex(x, y)
+                        Dim dx As Int16 = Math.Abs(x - KingX)
+                        Dim dy As Int16 = Math.Abs(y - KingY)
+
+                        Dim KnightCanStopCastle As Boolean = (FlatKingIndex = 4 AndAlso PieceSquareIndex = 8) OrElse (FlatKingIndex = 60 AndAlso PieceSquareIndex = 48)
+                        If (Math.Max(dx, dy) <= 3 AndAlso dx + dy <= 5) OrElse KnightCanStopCastle Then TempKnightMap = TempKnightMap Or (1UL << PieceSquareIndex)
+                        If Math.Abs(dx - dy) <= 2 Then TempBishopMap = TempBishopMap Or (1UL << PieceSquareIndex)
+                        If dx <= If(KingInStartPos, 2, 1) OrElse dy <= 1 Then TempRookMap = TempRookMap Or (1UL << PieceSquareIndex)
+                    Next
+                Next
+                KingDangerMapKnight(FlatKingIndex) = TempKnightMap
+                KingDangerMapBishop(FlatKingIndex) = TempBishopMap
+                KingDangerMapRook(FlatKingIndex) = TempRookMap
+            Next
+        Next
+    End Sub
+
 
 
 

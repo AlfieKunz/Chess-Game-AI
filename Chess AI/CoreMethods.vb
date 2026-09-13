@@ -466,7 +466,7 @@ Partial Public Class CoreMethods
 
 
 
-    Public Sub CalibrateForMoveGeneration(ByRef TFTable As UInt64, ByRef PinInfoStraight As UInt64, ByRef PinInfoDiag As UInt64, ByRef InCheck As UInt16, ByRef Board As BoardState, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal isWhite As Boolean, ByVal CanICastle As Boolean)
+    Public Sub CalibrateForMoveGeneration(ByRef TFTable As UInt64, ByRef PinInfoStraight As UInt64, ByRef PinInfoDiag As UInt64, ByRef InCheck As UInt16, ByRef Board As BoardState, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal isWhite As Boolean)
         'Resets all variables.
         'TFTable = 0UL
         'PinInfoStraight = 0UL
@@ -477,8 +477,9 @@ Partial Public Class CoreMethods
         Dim FriendlyPieceMask, EnemyPieceMap, OccupancyMask As UInt64
         Dim MeKingMask As UInt64 = 1UL << MeKPos
 
-        'Calibrates TFTable by checking all pieces which could influence the king.
-        Dim dx, dy As Integer
+        'Calibrates TFTable by checking all pieces which could influence the king. For all heavy pieces, we AND the bitboard with a pre-computed
+        '"danger" map of where these pieces need to be to influence the king - this allows for fewer computation of a piece's legal moves.
+        'TODO: Try relax initially first and see what kinda difference that makes.
         Dim TempMask As UInt64
         If isWhite Then
             FriendlyPieceMask = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
@@ -487,47 +488,36 @@ Partial Public Class CoreMethods
             Board.BitboardBlack = EnemyPieceMap Or (1UL << EnemyKPos)
             OccupancyMask = FriendlyPieceMask Or EnemyPieceMap
 
-            TempMask = Board.BitboardPawnBlack
-            While TempMask <> 0UL
-                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
-                dy = (MeKPos \ 8) - (Square \ 8)
-                Dim PieceInfluenceKing As Boolean = dy >= 0 AndAlso (Math.Abs(dy) <= 2 AndAlso (Math.Abs((MeKPos And 7) - (Square And 7)) <= 2) OrElse (CanICastle AndAlso Square \ 8 = 6))
-                If PieceInfluenceKing Then TFTable = TFTable Or PawnBlackAttackMap(Square)
-                'Check for checks! (time for thyme?) Double checks must incorporate at least one sliding piece - can't have happened yet.
-                If (PawnBlackAttackMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
-                TempMask = TempMask And (TempMask - 1UL)
-            End While
+            'Shifts all the enemy pawns at once to generate the full attack map instantly. If we intersect the king, place a friendly pawn
+            'at the king's location and intersect to find the (single) attacking pawn.
+            TempMask = ((Board.BitboardPawnBlack And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((Board.BitboardPawnBlack And &H7F7F7F7F7F7F7FUL) << 9)
+            TFTable = TFTable Or TempMask
+            'Check for checks! (time for thyme?) Double checks must incorporate at least one sliding piece - can't have happened yet.
+            If (TempMask And MeKingMask) <> 0UL Then
+                TempMask = Board.BitboardPawnBlack And PawnWhiteAttackMap(MeKPos)
+                InCheck = 128US Or CUShort(BitOperations.TrailingZeroCount(TempMask))
+            End If
 
-            TempMask = Board.BitboardKnightBlack
+            TempMask = Board.BitboardKnightBlack And KingDangerMapKnight(MeKPos)
             While TempMask <> 0UL
                 Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
-                dx = Math.Abs((MeKPos And 7) - (Square And 7))
-                dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
-                If dx <= If(CanICastle, 4, 3) AndAlso dy <= 3 AndAlso dx + dy <= 5 Then TFTable = TFTable Or KnightMoveMap(Square)
+                TFTable = TFTable Or KnightMoveMap(Square)
                 If (KnightMoveMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
 
-            'King checks.
-            dx = Math.Abs((MeKPos And 7) - (EnemyKPos And 7))
-            dy = Math.Abs((MeKPos \ 8) - (EnemyKPos \ 8))
-            If dx <= 2 AndAlso dy <= 2 Then TFTable = TFTable Or KingMoveMap(EnemyKPos)
+            'Enemy king influence.
+            TFTable = TFTable Or KingMoveMap(EnemyKPos)
 
-            'Sliding piece checks: rooks & bishops (counting queen twice, once for each movement type).
-            TempMask = Board.BitboardBishopBlack Or Board.BitboardQueenBlack
+            'Sliding piece influence: rooks & bishops (counting queen twice, once for each movement type).
+            TempMask = (Board.BitboardBishopBlack Or Board.BitboardQueenBlack) And KingDangerMapBishop(MeKPos)
             While TempMask <> 0UL
-                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
-                Dim ddiag As Integer = Math.Abs(Math.Abs((MeKPos And 7) - (Square And 7)) - Math.Abs((MeKPos \ 8) - (Square \ 8)))
-                If ddiag <= 2 Then TFTable = TFTable Or BishopMagicLookup(CUShort(Square), OccupancyMask)
+                TFTable = TFTable Or BishopMagicLookup(CUShort(BitOperations.TrailingZeroCount(TempMask)), OccupancyMask)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
-            TempMask = Board.BitboardRookBlack Or Board.BitboardQueenBlack
+            TempMask = (Board.BitboardRookBlack Or Board.BitboardQueenBlack) And KingDangerMapRook(MeKPos)
             While TempMask <> 0UL
-                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
-                Dim InfluenceDistance As Integer = If(CanICastle, 2, 1)
-                dx = Math.Abs((MeKPos And 7) - (Square And 7))
-                dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
-                If dx <= InfluenceDistance OrElse dy <= InfluenceDistance Then TFTable = TFTable Or RookMagicLookup(CUShort(Square), OccupancyMask)
+                TFTable = TFTable Or RookMagicLookup(CUShort(BitOperations.TrailingZeroCount(TempMask)), OccupancyMask)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
 
@@ -538,44 +528,31 @@ Partial Public Class CoreMethods
             Board.BitboardBlack = FriendlyPieceMask Or MeKingMask
             OccupancyMask = FriendlyPieceMask Or EnemyPieceMap
 
-            TempMask = Board.BitboardPawnWhite
-            While TempMask <> 0UL
-                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
-                dy = (MeKPos \ 8) - (Square \ 8)
-                Dim PieceInfluenceKing As Boolean = dy <= 0 AndAlso (Math.Abs(dy) <= 2 AndAlso (Math.Abs((MeKPos And 7) - (Square And 7)) <= 2) OrElse (CanICastle AndAlso Square \ 8 = 1))
-                If PieceInfluenceKing Then TFTable = TFTable Or PawnWhiteAttackMap(Square)
-                If (PawnWhiteAttackMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
-                TempMask = TempMask And (TempMask - 1UL)
-            End While
+            TempMask = ((Board.BitboardPawnWhite And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((Board.BitboardPawnWhite And &H7F7F7F7F7F7F7FUL) >> 7)
+            TFTable = TFTable Or TempMask
+            If (TempMask And MeKingMask) <> 0UL Then
+                TempMask = Board.BitboardBishopWhite And PawnBlackAttackMap(MeKPos)
+                InCheck = 128US Or CUShort(BitOperations.TrailingZeroCount(TempMask))
+            End If
 
-            TempMask = Board.BitboardKnightWhite
+            TempMask = Board.BitboardKnightWhite And KingDangerMapKnight(MeKPos)
             While TempMask <> 0UL
                 Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
-                dx = Math.Abs((MeKPos And 7) - (Square And 7))
-                dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
-                If dx <= 3 AndAlso dy <= 3 AndAlso dx + dy <= 5 Then TFTable = TFTable Or KnightMoveMap(Square)
+                TFTable = TFTable Or KnightMoveMap(Square)
                 If (KnightMoveMap(Square) And MeKingMask) <> 0UL Then InCheck = 128US Or CUShort(Square)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
 
-            dx = Math.Abs((MeKPos And 7) - (EnemyKPos And 7))
-            dy = Math.Abs((MeKPos \ 8) - (EnemyKPos \ 8))
-            If dx <= 2 AndAlso dy <= 2 Then TFTable = TFTable Or KingMoveMap(EnemyKPos)
+            TFTable = TFTable Or KingMoveMap(EnemyKPos)
 
-            TempMask = Board.BitboardBishopWhite Or Board.BitboardQueenWhite
+            TempMask = (Board.BitboardBishopWhite Or Board.BitboardQueenWhite) And KingDangerMapBishop(MeKPos)
             While TempMask <> 0UL
-                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
-                Dim ddiag As Integer = Math.Abs(Math.Abs((MeKPos And 7) - (Square And 7)) - Math.Abs((MeKPos \ 8) - (Square \ 8)))
-                If ddiag <= 2 Then TFTable = TFTable Or BishopMagicLookup(CUShort(Square), OccupancyMask)
+                TFTable = TFTable Or BishopMagicLookup(CUShort(BitOperations.TrailingZeroCount(TempMask)), OccupancyMask)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
-            TempMask = Board.BitboardRookWhite Or Board.BitboardQueenWhite
+            TempMask = (Board.BitboardRookWhite Or Board.BitboardQueenWhite) And KingDangerMapRook(MeKPos)
             While TempMask <> 0UL
-                Dim Square As Integer = BitOperations.TrailingZeroCount(TempMask)
-                Dim InfluenceDistance As Integer = If(CanICastle, 2, 1)
-                dx = Math.Abs((MeKPos And 7) - (Square And 7))
-                dy = Math.Abs((MeKPos \ 8) - (Square \ 8))
-                If dx <= InfluenceDistance OrElse dy <= InfluenceDistance Then TFTable = TFTable Or RookMagicLookup(CUShort(Square), OccupancyMask)
+                TFTable = TFTable Or RookMagicLookup(CUShort(BitOperations.TrailingZeroCount(TempMask)), OccupancyMask)
                 TempMask = TempMask And (TempMask - 1UL)
             End While
         End If
