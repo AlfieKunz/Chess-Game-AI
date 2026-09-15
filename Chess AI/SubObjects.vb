@@ -53,7 +53,7 @@ End Class
 
 
 
-Public Class CanCastle
+Public Structure CanCastle
     Public KS As Boolean
     Public QS As Boolean
 
@@ -72,7 +72,7 @@ Public Class CanCastle
     Public Function CanICastle() As Boolean 'Returns True if any castling privileges exist.
         Return KS OrElse QS
     End Function
-End Class
+End Structure
 
 
 
@@ -258,22 +258,16 @@ Public Structure BoardState
     Public BitboardWhite As UInt64
     Public BitboardBlack As UInt64
 
+    Public WhiteCanCastle As CanCastle
+    Public BlackCanCastle As CanCastle
     Public ZobristValue As UInt64
-
-    'King position information. Bits 11-16 hold the 0-64 square king location.
-    'Check detection is handled via the generation of TFTable (non-sliding pieces), and placing a queen at the king's location and casting rays via occupancy masks (sliding pieces).
-    'Resolving via captures & king movement handled via TFTable and KPos InCheck information, resolving via blocks handled by running checking piece bitboard for updated occupancy mask.
-    Public TFTable As UInt64 'An attacking map of all pieces that could influence the king's motion (where the king is removed)
-
-    'MADE LOCAL INSIDE MINIMAX:
-    'Public PinnedPieceInfo As UInt64 'actually wait, no store as two uint64 bitmaps, one for each pin type.
-    'CheckInfo as uint16, bit 1 is a double check flag, 11-16 hold the 0-64 checking piece location.
 
     Public EnPassant As UInt16
     Public MaterialCountWhite As Integer
     Public MaterialCountBlack As Integer
-    Public PHMValueWhite As Integer
+    Public PHMValueWhite As Integer 'Represents the base Piece Heat Map values for each player, for the base position, using the 100% middlegame values.
     Public PHMValueBlack As Integer
+    Public HalfMoveSize As UInt16
 
 
     'Public Sub CopyFrom(ByRef PreviousState As BoardState)
@@ -300,6 +294,3 @@ Public Structure BoardState
         BitboardBlack = 0UL
     End Sub
 End Structure
-Public Class oldtfstorage
-    Public OLDTFTable(7, 7) As Char 'TO CLEAR AND SWITCH TO STRUCTURE!!!!
-End Class

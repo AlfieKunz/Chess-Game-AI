@@ -197,9 +197,9 @@ Partial Public Class CoreMethods
 
     'Precomputed King Data. The latter 3 structures produce a mask that tells if a given piece could influence the king's motion.
     Private Shared KingMoveMap(63) As UInt64
-    Private Shared KingDangerMapKnight(63) As UInt64
-    Private Shared KingDangerMapBishop(63) As UInt64
-    Private Shared KingDangerMapRook(63) As UInt64
+    Protected Shared KingDangerMapKnight(63) As UInt64
+    Protected Shared KingDangerMapBishop(63) As UInt64
+    Protected Shared KingDangerMapRook(63) As UInt64
     Protected Sub PrecomputeKingMap()
         For y As Int16 = 0 To 7
             For x As Int16 = 0 To 7
@@ -506,6 +506,9 @@ Partial Public Class CoreMethods
 
 
 
+    'TODO: REMOVE ALL THESE!!!!!!!!!!!!!!!!!!!!!
+
+
 
 
     'Attribute that contains all the legal moves for a knight, placed anywhere on the board. When the program initally boots,
@@ -585,7 +588,7 @@ Partial Public Class CoreMethods
     'Note: to help reduce unnecessary commenting, and due to the fact that much of this code is somewhat similar
     'for each type of piece, comments will only be included for the first appearance of a particular method / technique.
     'For more in-depth commenting & info, please see the section on Pseudo-legal Move Generation in my Project Report (Design). 
-    Public Function WhitePieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As UInt16, ByVal CoorY As UInt16, ByRef WhiteTFTable(,) As Char, ByVal WInCheck As UInt16, ByRef WCanCastle As CanCastle, ByVal EnPassant As Int16) As UInt16()
+    Public Function WhitePieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As UInt16, ByVal CoorY As UInt16, ByRef WhiteTFTable(,) As Char, ByVal WInCheck As UInt16, ByRef WCanCastle As CanCastle, ByVal EnPassant As UInt16) As UInt16()
         Dim n As UInt16 = 1
         Dim StartValue As UInt16 = CoorX << 9 Or CoorY << 6
         Dim TFTValue As Char = WhiteTFTable(CoorX, CoorY)
@@ -809,7 +812,7 @@ Partial Public Class CoreMethods
 
 
     'As the below subroutine is very similar to its equivilant 'WhitePieceLegalMoves' function, commenting will be limited.
-    Public Function BlackPieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As UInt16, ByVal CoorY As UInt16, ByRef BlackTFTable(,) As Char, ByVal BInCheck As UInt16, ByRef BCanCastle As CanCastle, ByVal EnPassant As Int16) As UInt16()
+    Public Function BlackPieceLegalMoves(ByRef Board(,) As Char, ByVal CoorX As UInt16, ByVal CoorY As UInt16, ByRef BlackTFTable(,) As Char, ByVal BInCheck As UInt16, ByRef BCanCastle As CanCastle, ByVal EnPassant As UInt16) As UInt16()
         Dim n As UInt16 = 1
         Dim StartValue As UInt16 = CoorX << 9 Or CoorY << 6
         Dim TFTValue As Char = BlackTFTable(CoorX, CoorY)

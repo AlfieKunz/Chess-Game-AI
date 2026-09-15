@@ -176,7 +176,7 @@ Partial Public Class CoreMethods
     End Function
 
     'Overloads of the above subroutine, but for Bitvalues for KPos, and EnPassant.
-    Public Function FENConverter(ByVal FEN As String, ByRef WCanCastle As CanCastle, ByRef BCanCastle As CanCastle, ByRef WKPos As Int16, ByRef BKPos As Int16, ByRef EnPassant As Int16, ByRef IsWhite As Boolean) As Char(,)
+    Public Function FENConverter(ByVal FEN As String, ByRef WCanCastle As CanCastle, ByRef BCanCastle As CanCastle, ByRef WKPos As UInt16, ByRef BKPos As UInt16, ByRef EnPassant As UInt16, ByRef IsWhite As Boolean) As Char(,)
         Dim TempWKPos As String = ""
         Dim TempBKPos As String = ""
         Dim TempEnPassant As String = ""
@@ -189,7 +189,7 @@ Partial Public Class CoreMethods
     End Function
 
     'Function which converts the current board position into its FEN counterpart.
-    Public Function ConvertToFEN(ByVal Board(,) As Char, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal EnPassant As Int16, ByVal isWhite As Boolean) As String
+    Public Function ConvertToFEN(ByVal Board(,) As Char, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal EnPassant As UInt16, ByVal isWhite As Boolean) As String
         Dim Counter As Integer = 0 '= the number of blank spaces in a row on the board.
         ConvertToFEN = ""
         For y As Byte = 0 To 7
@@ -390,9 +390,9 @@ Partial Public Class CoreMethods
     End Sub
 
     'Function which converts a string coordinate (eg: "54") to its BitMove counterpart (eg: "00101100")
-    Public Function ConvertStringToBitCoor(ByVal MoveString As String) As Int16
+    Public Function ConvertStringToBitCoor(ByVal MoveString As String) As UInt16
         If MoveString = "-" OrElse MoveString = Nothing Then Return 0 'For blank En-Passant.
-        Return CShort((CCharInt(MoveString(0)) << 3) Or Val(MoveString(1)))
+        Return Flatten2DBoardIndex(CUShort(Val(MoveString(0))), CUShort(Val(MoveString(1))))
     End Function
 
 
@@ -425,6 +425,38 @@ Partial Public Class CoreMethods
             Next
         Next
     End Sub
+    Public Function GetPieceIndexFromSquare(ByVal Square As UInt16, ByRef State As BoardState, ByVal PieceIsWhite As Boolean) As Integer
+        Dim NewPieceMap As UInt64 = 1UL << Square
+        If PieceIsWhite Then
+            If (NewPieceMap And State.BitboardPawnWhite) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Pawn
+            ElseIf (NewPieceMap And State.BitboardKnightWhite) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Knight
+            ElseIf (NewPieceMap And State.BitboardBishopWhite) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Bishop
+            ElseIf (NewPieceMap And State.BitboardRookWhite) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Rook
+            ElseIf (NewPieceMap And State.BitboardQueenWhite) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Queen
+            Else 'The piece must be the king.
+                Return GlobalConstants.PieceIndex.King
+            End If
+        Else
+            If (NewPieceMap And State.BitboardPawnBlack) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Pawn
+            ElseIf (NewPieceMap And State.BitboardKnightBlack) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Knight
+            ElseIf (NewPieceMap And State.BitboardBishopBlack) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Bishop
+            ElseIf (NewPieceMap And State.BitboardRookBlack) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Rook
+            ElseIf (NewPieceMap And State.BitboardQueenBlack) <> 0UL Then
+                Return GlobalConstants.PieceIndex.Queen
+            Else 'The piece must be the king.
+                Return GlobalConstants.PieceIndex.King
+            End If
+        End If
+    End Function
     Public Function ConvertBitboardstoBoard(ByRef State As BoardState) As Char(,)
         Dim Board(7, 7) As Char
         Dim BoardMap As (Bitboard As UInt64, Symbol As Char)() = {
@@ -467,12 +499,12 @@ Partial Public Class CoreMethods
 
 
 
-    Public Sub CalibrateForMoveGeneration(ByRef TFTable As UInt64, ByRef PinInfoStraight As UInt64, ByRef PinInfoDiag As UInt64, ByRef InCheck As UInt16, ByRef Board As BoardState, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal isWhite As Boolean)
+    Public Sub CalibrateForMoveGeneration(ByRef TFTable As UInt64, ByRef PinInfoStraight As UInt64, ByRef PinInfoDiag As UInt64, ByRef InCheck As UInt16, ByRef Board As BoardState, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal isWhite As Boolean, Optional ByRef PieceInPos As Boolean = True)
         'Resets all variables.
-        'TFTable = 0UL
-        'PinInfoStraight = 0UL
-        'PinInfoDiag = 0UL
-        'InCheck = 0US
+        TFTable = 0UL
+        PinInfoStraight = 0UL
+        PinInfoDiag = 0UL
+        InCheck = 0US
 
         'We construct the full bitboards of all pieces, minus the kings (allows rooks to 'see' through them so the king cannot move backwards when in check).
         Dim FriendlyPieceMask, EnemyPieceMap, OccupancyMask As UInt64
@@ -483,7 +515,10 @@ Partial Public Class CoreMethods
         'TODO: Try relax initially first and see what kinda difference that makes.
         Dim TempMask As UInt64
         If isWhite Then
-            FriendlyPieceMask = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
+            FriendlyPieceMask = Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
+            If FriendlyPieceMask = 0UL Then PieceInPos = False
+            FriendlyPieceMask = FriendlyPieceMask Or Board.BitboardPawnWhite
+
             EnemyPieceMap = Board.BitboardPawnBlack Or Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack
             Board.BitboardWhite = FriendlyPieceMask Or MeKingMask
             Board.BitboardBlack = EnemyPieceMap Or (1UL << EnemyKPos)
@@ -523,7 +558,10 @@ Partial Public Class CoreMethods
             End While
 
         Else 'Identical code but for the white pieces (fixing the Black TFTable).
-            FriendlyPieceMask = Board.BitboardPawnBlack Or Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack
+            FriendlyPieceMask = Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack
+            If FriendlyPieceMask = 0UL Then PieceInPos = False
+            FriendlyPieceMask = FriendlyPieceMask Or Board.BitboardPawnBlack
+
             EnemyPieceMap = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
             Board.BitboardWhite = EnemyPieceMap Or (1UL << EnemyKPos)
             Board.BitboardBlack = FriendlyPieceMask Or MeKingMask
@@ -600,7 +638,7 @@ Partial Public Class CoreMethods
     'This creates a 'field' around the king (stating where its legal moves are), along with creating pinned pieces
     'and checks.
     'This method returns true if the player to move contains at least 1 piece (ie: anything other than pawns). This will be useful for detecting Zugzwang in Null Move Pruning.
-    Public Sub FixTFTable(ByRef Board(,) As Char, ByVal FixWhite As Boolean, ByRef TFTableToFix(,) As Char, ByRef KPos As Int16, ByRef InCheck As UInt16, ByVal CanICastle As Boolean, ByVal EnPassant As Int16, Optional ByRef CheckForPiece As Boolean = False)
+    Public Sub FixTFTable(ByRef Board(,) As Char, ByVal FixWhite As Boolean, ByRef TFTableToFix(,) As Char, ByRef KPos As UInt16, ByRef InCheck As UInt16, ByVal CanICastle As Boolean, ByVal EnPassant As UInt16, Optional ByRef CheckForPiece As Boolean = False)
         Dim dx, dy As Int16
         Dim PieceInfluenceKing As Boolean
         'Resets TFTables.
@@ -610,8 +648,8 @@ Partial Public Class CoreMethods
                 For x = 0S To 7S
                     If Char.IsLower(Board(x, y)) Then
                         'Calculates distances between piece and the enemy king.
-                        dx = Math.Abs(((KPos And 56S) >> 3) - x)
-                        dy = Math.Abs((KPos And 7S) - y)
+                        dx = Math.Abs(((CShort(KPos) And 56S) >> 3) - x)
+                        dy = Math.Abs((CShort(KPos) And 7S) - y)
                         Select Case Board(x, y)
                             Case "p"c
                                 'If the king hasn't castled, a pawn on a2 needs to prevent a castling attempt.
@@ -639,8 +677,8 @@ Partial Public Class CoreMethods
             For y = 0S To 7S
                 For x = 0S To 7S
                     If Char.IsUpper(Board(x, y)) Then
-                        dx = Math.Abs(((KPos And 56S) >> 3) - x)
-                        dy = Math.Abs((KPos And 7S) - y)
+                        dx = Math.Abs(((CShort(KPos) And 56S) >> 3) - x)
+                        dy = Math.Abs((CShort(KPos) And 7S) - y)
                         Select Case Board(x, y)
                             Case "P"c
                                 PieceInfluenceKing = (KPos And 7) <= y AndAlso (Math.Max(dx, dy) <= 2 OrElse (CanICastle AndAlso y = 1))
@@ -695,7 +733,7 @@ Partial Public Class CoreMethods
     End Function
 
     'Function that hashes a chess position (including its details) into a 64-bit number using the 'Zobrist Hash' algorithm.
-    Public Function ZobristHashPosition(ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal EnPassant As Int16) As UInt64
+    Public Function ZobristHashPosition(ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal WCanCastle As CanCastle, ByVal BCanCastle As CanCastle, ByVal EnPassant As UInt16) As UInt64
         ZobristHashPosition = 0
         For y As Byte = 0 To 7
             For x As Byte = 0 To 7
@@ -720,11 +758,11 @@ Partial Public Class CoreMethods
 
 
     'Subroutine that converts a Move into standard PGN chess notation (eg: e4, Nf4, Ka2).
-    Public Function MoveConverter(ByVal Board(,) As Char, ByVal TempMove As Move, ByVal EnPassant As Int16) As String
+    Public Function MoveConverter(ByVal Board(,) As Char, ByVal TempMove As Move, ByVal EnPassant As UInt16) As String
         'Overload function for no constraints being added to the move.
         Return MoveConverter(Board, TempMove, True, 255, EnPassant, Nothing)
     End Function
-    Public Function MoveConverter(ByVal Board(,) As Char, ByVal TempMove As Move, ByVal isWhite As Boolean, ByVal KPos As Int16, ByVal EnPassant As Int16, ByVal TFTable(,) As Char) As String
+    Public Function MoveConverter(ByVal Board(,) As Char, ByVal TempMove As Move, ByVal isWhite As Boolean, ByVal KPos As UInt16, ByVal EnPassant As UInt16, ByVal TFTable(,) As Char) As String
         Dim MovedPiece As Char = UCase(Board(Integer.Parse(TempMove.OldMoveX), Integer.Parse(TempMove.OldMoveY)))
         'Pawns operate differently with standard chess notation - when moving a pawn, we give its column (a-h),
         'then add its file that it is moving to. For all other pieces, we state the name of the piece, then its
@@ -795,7 +833,7 @@ Partial Public Class CoreMethods
 
 
     'Function that converts a standard chess move (eg: e4, Nf4, Ka2) into a Move.
-    Public Function ConvertToMove(ByVal InputMove As String, ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal KPos As Int16, ByVal TFTable(,) As Char) As Move
+    Public Function ConvertToMove(ByVal InputMove As String, ByVal Board(,) As Char, ByVal isWhite As Boolean, ByVal KPos As UInt16, ByVal TFTable(,) As Char) As Move
         'Removes extra data from move (that is not useful to my system, ie: checks & pawn promotion tags).
         Dim FormattedMove As String = InputMove.TrimEnd(CChar("+"))
         Dim ResultMove As New Move With {.Code = "f"c} 'Denotes normal move.
