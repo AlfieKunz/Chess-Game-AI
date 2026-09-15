@@ -37,5 +37,6 @@
 - Stopped controls from breaking when exiting or closing the program during an AI move.
 - Fixed move generation While Loop breaking in "Move Training" Mode.
 - Fixed Soft-lock at end of AI Endless Mode.
-- Fixed invalid queen check detection for long castling.
+- Fixed invalid piece check detection for long castling.
+- Fixed invalid FEN detection for when the 1 file isn't fully filled.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -277,10 +277,10 @@ Partial Public Class CoreMethods
             If EnPassant <> 0S Then EnemyPieceMask = EnemyPieceMask Or (1UL << EnPassant)
             Dim AttackMap As UInt64 = PawnWhiteAttackMap(Square) And EnemyPieceMask
             If (PinInfoDiag And PieceMap) <> 0UL Then AttackMap = AttackMap And BishopMoveMap(MeKPos) 'Only allows the pinned piece to move along the king's ray.
-            'Handles EnPassant captures.
+            'Handles EnPassant captures. Crutically, we don't count this as a capture move (but still feed it through into quiescence), so that MakeMove doesn't get confused.
             If EnPassant <> 0S AndAlso (AttackMap And (1UL << EnPassant)) <> 0UL Then
                 n += 1US
-                LegalMoveArray(n) = 45056US Or StartValue Or EnPassant
+                LegalMoveArray(n) = 12288US Or StartValue Or EnPassant
                 AttackMap = AttackMap Xor (1UL << EnPassant)
             End If
             While AttackMap <> 0UL
@@ -335,7 +335,7 @@ Partial Public Class CoreMethods
             If (PinInfoDiag And PieceMap) <> 0UL Then AttackMap = AttackMap And BishopMoveMap(MeKPos) 'Only allows the pinned piece to move along the king's ray.
             If EnPassant <> 0S AndAlso (AttackMap And (1UL << EnPassant)) <> 0UL Then
                 n += 1US
-                LegalMoveArray(n) = 45056US Or StartValue Or EnPassant
+                LegalMoveArray(n) = 12288US Or StartValue Or EnPassant
                 AttackMap = AttackMap Xor (1UL << EnPassant)
             End If
             While AttackMap <> 0UL
@@ -404,7 +404,7 @@ Partial Public Class CoreMethods
                     Dim CastleMask As UInt64 = If(isWhite, &H6000000000000000UL, 96UL)
                     If (CastleMask And (Not OccupancyMask) And TFTable) = CastleMask Then
                         n += 1US
-                        LegalMoveArray(n) = If(isWhite, 24382US, 41222US)  'King-side castle move.
+                        LegalMoveArray(n) = If(isWhite, 24382US, 20742US)  'King-side castle move.
                     End If
                 End If
                 If MeCanCastle.QS Then

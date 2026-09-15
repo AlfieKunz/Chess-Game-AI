@@ -19,7 +19,7 @@ Partial Public Class CoreMethods
     Protected Shared LegacyPieceIndexConverter(9) As Integer 'Methods using the Board(,) structure use "Asc(PIECE) Mod 11" or "(Asc(piece) + 1) Mod 11"
     'for indexing into PieceValue, MVVLVAValues, ZobristHashTable. We convert this to the structure that bitboards use (indexing through unique
     'PieceIndex.Piece value) by storing said indices in this array. TODO: clear these from AI.vb
-    Private Shared ReadOnly PieceValue(5) As Integer 'Array Containing the Value or Weight of each Piece.
+    Protected Shared ReadOnly PieceValue(5) As Integer 'Array Containing the Value or Weight of each Piece.
     Protected Shared MVVLVAValues(29) As UInt16 'Array Containing the score associated with each possible capture configuration in chess.
     'This is used for move ordering, and represents the premise of encouraging high captures, and capturing _with_ low material.
 
@@ -143,8 +143,9 @@ Partial Public Class CoreMethods
                     For m As Byte = 0 To 7
                         If UCase(tempArray(m, 0)) = "P" OrElse UCase(tempArray(m, 7)) = "P" Then Throw New Exception("Invalid Pawn Placements.")
                     Next
-                    ' Once the SPACE has been reached In the FEN, we know that we have read the entire board. We can then move onto
-                    ' info about castling, who's turn it is, En Passant And more.
+                    'Once the SPACE has been reached In the FEN, we know that we have read the entire board. We can then move onto
+                    'info about castling, who's turn it is, En Passant And more. Because of this, we must have reached the h1 square.
+                    If x <> 8 Then Throw New Exception($"Incorrect Length on Row {y}.")
                     SpaceLocation = FEN.IndexOf(" "c) 'Following characters revolve around location of SPACE.
                     If FEN(SpaceLocation + 1) = "w" Then
                         IsWhite = True
@@ -646,7 +647,7 @@ Partial Public Class CoreMethods
                             Case "B"c
                                 PieceInfluenceKing = Math.Abs(dx - dy) <= 2
                             Case "N"c
-                                PieceInfluenceKing = Math.Max(dx, dy) <= 3 AndAlso dx + dy <= 5
+                                PieceInfluenceKing = Math.Max(dx + If(CanICastle, -1, 0), dy) <= 3 AndAlso dx + dy <= 5
                             Case "R"c
                                 PieceInfluenceKing = Math.Min(dx, dy) <= If(CanICastle, 2, 1)
                             Case "Q"c

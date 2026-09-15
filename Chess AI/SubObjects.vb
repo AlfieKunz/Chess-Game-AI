@@ -35,8 +35,8 @@ Public Class GlobalConstants
         Public Const King As Integer = 5
     End Structure
 
-    Public Const MaxPieceLegalMoves As Byte = ((27)) - 1 'The maximum number of legal moves that can be theoretically made by a piece.
-    Public Const MaxTurnLegalMoves As Byte = ((218)) - 1 'The max number of legal moves that can be made by on a given player's turn.
+    Public Const MaxPieceLegalMoves As Integer = ((27)) - 1 'The maximum number of legal moves that can be theoretically made by a piece.
+    Public Const MaxTurnLegalMoves As Integer = ((218))     'The max number of legal moves that can be made by on a given player's turn.
     Public Const MaxPositionsPerGame As UInt16 = 2048 'Holds the value of the maximum number of positions that can be stored in GameHistory.
 
     Public Const DefaultGeneralOptions As String = "TTFTTFFF" '8-character string that represents the configuration of the program.
@@ -270,10 +270,10 @@ Public Structure BoardState
     'CheckInfo as uint16, bit 1 is a double check flag, 11-16 hold the 0-64 checking piece location.
 
     Public EnPassant As UInt16
-    Public WhiteMaterialCount As Integer
-    Public BlackMaterialCount As Integer
-    Public WhitePHMCount As Integer
-    Public BlackPHMCount As Integer
+    Public MaterialCountWhite As Integer
+    Public MaterialCountBlack As Integer
+    Public PHMValueWhite As Integer
+    Public PHMValueBlack As Integer
 
 
     'Public Sub CopyFrom(ByRef PreviousState As BoardState)
