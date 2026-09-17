@@ -165,6 +165,7 @@ Partial Public Class Chess 'GUI Objects
         End Try
 
         CurrentFEN = FEN
+        MainAI.Reconfigure(CurrentFEN, True) 'Recalibrates AI and resets AI move info.
         'Console.Clear()
         'Edits location of Previously Used Squares.
         SquareHistory(2, 0) = SquareHistory(0, 0)
@@ -177,23 +178,12 @@ Partial Public Class Chess 'GUI Objects
         SquareHistory(1, 1) = -1
         GameRunning = True
 
-        'Resets TrueFalse Tables, then checks for Checks.
-        MasterWInCheck = 0
-        MasterBInCheck = 0
-        Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-        Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
         If FlipBoardForPlayer AndAlso (PlayerTurn Xor OrientForWhite) Then
             FlipBoard()
         Else
             Checkerboard.Refresh()
         End If
 
-        'Final logical detection of invalid board positions.
-        If Not CheckForInvalidGameStates() AndAlso GeneralOptions(0) = "T" Then Sound_Move.Play()
-        EditCheckText()
-
-        'Recalibrates AI and resets AI move info.
-        MainAI.Reconfigure(CurrentFEN, True)
         AIHandles.CurrentDepth = 2
         AIHandles.CurrentMove = "-"
         AIHandles.CurrentEvaluation = "-"
@@ -201,6 +191,10 @@ Partial Public Class Chess 'GUI Objects
         CurrentAIMove.Text = "Current Move: -"
         CurrentAIEval.Text = "Evaluation: -"
         AIHandles.FENToResetTo = CurrentFEN
+
+        'Final logical detection of invalid board positions.
+        If Not CheckForInvalidGameStates() AndAlso GeneralOptions(0) = "T" Then Sound_Move.Play()
+        EditCheckText()
 
         'Resets BoardHistory (as the position is new), but also ensuring that the 50 move counter is updated.
         BoardHistory.Clear()
@@ -225,9 +219,6 @@ Partial Public Class Chess 'GUI Objects
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
             PreviousFEN = CurrentFEN
             CurrentFEN = StartingFEN
-            'Resets Check Properties.
-            MasterWInCheck = 0
-            MasterBInCheck = 0
             'Can assume that the StartingFEN is valid, so we display it graphically.
             MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
             'Edits location of Previously Used Squares.
@@ -239,14 +230,9 @@ Partial Public Class Chess 'GUI Objects
             SquareHistory(0, 1) = -1
             SquareHistory(1, 0) = -1
             SquareHistory(1, 1) = -1
-            'Resets TrueFalse Table, then check for Checks.
-            If PlayerTurn Then
-                Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-            Else
-                Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-            End If
             Checkerboard.Refresh()
             AnimateBoard(PreviousFEN)
+            MainAI.Reconfigure(CurrentFEN, True)
             EditCheckText()
 
             Select Case GameMode
@@ -265,7 +251,6 @@ Partial Public Class Chess 'GUI Objects
             End If
 
             'Recalibrates AI and resets AI move info.
-            MainAI.Reconfigure(CurrentFEN, True)
             AIHandles.CurrentDepth = 2
             AIHandles.CurrentMove = "-"
             AIHandles.CurrentEvaluation = "-"
@@ -330,8 +315,7 @@ Partial Public Class Chess 'GUI Objects
             Dim TempFEN As String = CurrentFEN
             CurrentFEN = PreviousFEN
             PreviousFEN = TempFEN
-            MasterWInCheck = 0
-            MasterBInCheck = 0
+
             'Converts the FEN to a board position, and displays it.
             MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
             AnimateBoard(PreviousFEN)
@@ -347,12 +331,9 @@ Partial Public Class Chess 'GUI Objects
             SquareHistory(3, 1) = TempSH(1, 1)
 
             GameRunning = True
-            'Resets TrueFalse Tables, then checks for Checks.
-            If PlayerTurn Then
-                Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-            Else
-                Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-            End If
+            'Recalibrates AI.
+            If AIIsSearchingOnUsersTurn Then Thread.Sleep(5) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
+            MainAI.Reconfigure(CurrentFEN, False)
             If AutoFlipper.Checked Then
                 FlipBoard()
             Else
@@ -361,12 +342,10 @@ Partial Public Class Chess 'GUI Objects
 
             If GeneralOptions(0) = "T" Then Sound_Move.Play()
             EditCheckText()
-            'Final logical detection of invalid board positions.
-            If Not CheckForInvalidGameStates() AndAlso GeneralOptions(0) = "T" Then Sound_Move.Play()
 
-            'Recalibrates AI, then checks for end positions.
-            If AIIsSearchingOnUsersTurn Then Thread.Sleep(5) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
-            MainAI.Reconfigure(CurrentFEN, False)
+            'Final logical detection of invalid board positions.
+            If Not CheckForInvalidGameStates() AndAlso GeneralOptions(0) = "T" AndAlso Not MainAI.IsInCheck() Then Sound_Move.Play()
+
             BoardHistory.Swap()
             EnforceEndStates()
             If GameMode < 3 Then
@@ -390,9 +369,13 @@ Partial Public Class Chess 'GUI Objects
                 'Creates a backup of the baord, then erases it (new position containing only kings in their starting positions).
                 Array.Copy(MasterBoard, BoardEdit.BoardBackup, 64)
                 'Clears check information, then calibrates the GUI ready for BoardEditHandles.BoardEditMode.
-                If MasterWInCheck >= 128 Then WK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WKing.png")
-                If MasterBInCheck >= 128 Then BK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\BKing.png")
-
+                If MainAI.IsInCheck() Then
+                    If PlayerTurn Then
+                        WK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\WKing.png")
+                    Else
+                        BK1.Image = Image.FromFile(GlobalConstants.StartupPath & "\Assets\Images\Default\BKing.png")
+                    End If
+                End If
                 CalibrateBoardEditorObjectHandling()
             Else
                 'Attempt to submit the user's FEN into the system. If it is invalid, an appropriate message is displayed.
@@ -510,7 +493,7 @@ Partial Public Class Chess 'GUI Objects
                 If UCase(MasterBoard(x, y)) <> "K" Then MasterBoard(x, y) = " "
             Next
         Next
-        InputTextBox.Text = Helper.ConvertToFEN(MasterBoard, Helper.CannotCastle, Helper.CannotCastle, 0, True)
+        InputTextBox.Text = Helper.ConvertToFEN(MasterBoard, New CanCastle, New CanCastle, 0, True)
 
         'Resets the backup board attributes for the base position set in Board Edit Mode.
         BoardEditWhiteMove.Checked = True

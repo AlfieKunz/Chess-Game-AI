@@ -191,11 +191,7 @@ Partial Public Class Chess 'AI Handles
                     'Move was forced - make move instantly without searching.
                     Console.WriteLine(vbCrLf & "Search Aborted - Only 1 Move in Position.")
                     CurrentAIDepth.Text = "Current Depth: 1"
-                    If PlayerTurn Then
-                        PGNMove = Helper.MoveConverter(MasterBoard, BestMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-                    Else
-                        PGNMove = Helper.MoveConverter(MasterBoard, BestMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
-                    End If
+                    PGNMove = MainAI.GetPGNFromMove(BestMove)
                     CurrentAIMove.Text = "Current Move: " & PGNMove & " (FORCED)."
                     WaitAdvancedSearchPremoveTime("o")
                 ElseIf IndexInBook > 0 Then 'Position found in book - play move from book instantly.
@@ -207,11 +203,7 @@ Partial Public Class Chess 'AI Handles
                     Console.WriteLine("Moves Available: " & OpeningBook(IndexInBook).ReturnAllMoves() & ". Picking random move...")
                     'Locates a random book move from the position, then converts this to a Move (for the AI's purpose).
                     PGNMove = OpeningBook(IndexInBook).ReturnRndMove()
-                    If PlayerTurn Then
-                        BestMove = Helper.ConvertToMove(PGNMove, MasterBoard, True, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWhiteTFTable)
-                    Else
-                        BestMove = Helper.ConvertToMove(PGNMove, MasterBoard, False, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBlackTFTable)
-                    End If
+                    BestMove = MainAI.GetMoveFromPGN(PGNMove)
                     CurrentAIDepth.Text = "Current Depth: 0"
                     CurrentAIMove.Text = "Current Move: " & PGNMove & " (Book)."
                     CurrentAIEval.Text = "Evaluation: -"
@@ -223,11 +215,7 @@ Partial Public Class Chess 'AI Handles
 
                     If BestMove.Code <> "t" Then
                         'Converts the AI's move into the PGN format.
-                        If PlayerTurn Then
-                            PGNMove = Helper.MoveConverter(MasterBoard, BestMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-                        Else
-                            PGNMove = Helper.MoveConverter(MasterBoard, BestMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
-                        End If
+                        PGNMove = MainAI.GetPGNFromMove(BestMove)
                     End If
                     'Console.WriteLine("Transposition Table Full-ness: " & MainAI.GetPercentageTranspositionTableFilled() * 100 & "%.")
                 End If
@@ -241,8 +229,7 @@ Partial Public Class Chess 'AI Handles
                     Else
                         'Makes the AI's move on the board.
                         AnimateMove(BestMove)
-                        CalibrateCoreSystemsForMove(BestMove, GameMode <> 1, Not UpdateAllGUI)
-                        MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI.
+                        CalibrateCoreSystemsForMove(BestMove, GameMode <> 1, Not UpdateAllGUI, True)
 
                         'Checks if the new position is in the opening book. If so then output these moves.
                         If UseBook.Checked AndAlso GameMode = 3 AndAlso IndexInBook > 0 Then
@@ -263,7 +250,7 @@ Partial Public Class Chess 'AI Handles
 
                     If BestMove.Code <> "t" Then
                         'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
-                        If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GameRunning Then PGNMove &= "+"
+                        If MainAI.IsInCheck() AndAlso GameRunning Then PGNMove &= "+"
                         BoardHistory.PushPGN(PGNMove, GameMode <> 1) 'Adds this new move to the History of the game.
                         Dim NextPositionState As Char = EnforceEndStates() 'Checks for end states found from the AI's move.
                         'As two moves are made in one game 'state', we do not copy BoardHistory to its Buffer (so we don't false-trigger 3FR).
@@ -437,11 +424,7 @@ Partial Public Class Chess 'AI Handles
             Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine(vbCrLf & "No Search Completed in Allocated time - Performing Shallow Search...")
             BestMove = MainAI.PerformTestSearch()
-            If PlayerTurn Then
-                AIHandles.CurrentMove = Helper.MoveConverter(MasterBoard, BestMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-            Else
-                AIHandles.CurrentMove = Helper.MoveConverter(MasterBoard, BestMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
-            End If
+            AIHandles.CurrentMove = MainAI.GetPGNFromMove(BestMove)
         ElseIf AIHandles.AIBestMove.Code = "t" Then
             BestMove.SetEmptyMove()
         Else
@@ -543,11 +526,7 @@ Partial Public Class Chess 'AI Handles
                     If HandleAIPuzzleGuess() Then Exit While
                 Else
                     'Edits the GUI for the completed search.
-                    If PlayerTurn Then
-                        AIHandles.CurrentMove = Helper.MoveConverter(MasterBoard, AIHandles.AIBestMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-                    Else
-                        AIHandles.CurrentMove = Helper.MoveConverter(MasterBoard, AIHandles.AIBestMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
-                    End If
+                    AIHandles.CurrentMove = MainAI.GetPGNFromMove(AIHandles.AIBestMove)
                     AIHandles.CurrentDepth = CurrentAIDepth
                     AIHandles.CurrentEvaluation = AIHandles.AIBestMove.Score * If(PlayerTurn, 1, -1)
                     AIHandles.AIFinishedSearch = True
@@ -605,11 +584,7 @@ Partial Public Class Chess 'AI Handles
             Console.Write(" Completed in: " & AIHandles.AIStopwatch.ElapsedMilliseconds.ToString("N0") & " Milliseconds." & vbCrLf)
             Console.ForegroundColor = ConsoleColor.White
             'Updates GUI elements.
-            If PlayerTurn Then
-                AIHandles.CurrentMove = Helper.MoveConverter(MasterBoard, AIHandles.AIBestMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-            Else
-                AIHandles.CurrentMove = Helper.MoveConverter(MasterBoard, AIHandles.AIBestMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
-            End If
+            AIHandles.CurrentMove = MainAI.GetPGNFromMove(AIHandles.AIBestMove)
             AIHandles.CurrentEvaluation = AIHandles.AIBestMove.Score * If(PlayerTurn, 1, -1)
             AIHandles.CurrentDepth = AIHandles.StartingDepth
 

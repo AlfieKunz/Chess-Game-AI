@@ -65,24 +65,24 @@ Partial Public Class Chess 'Displaying
         Next
 
         'If a player is in check, we add a red circular highlight (falling off to 0 opacity at the edges) at the king's position.
-        If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GeneralOptions(4) = "T"c AndAlso Not BoardEdit.isEnabled Then
-            Dim CheckX As Integer = If(MasterWInCheck >= 128, Val(MasterWKPos(0)), Val(MasterBKPos(0)))
-            Dim CheckY As Integer = If(MasterWInCheck >= 128, Val(MasterWKPos(1)), Val(MasterBKPos(1)))
+        If MainAI.IsInCheck() AndAlso GeneralOptions(4) = "T"c AndAlso Not BoardEdit.isEnabled Then
+            Dim CheckX As Integer = If(PlayerTurn, Val(MasterWKPos(0)), Val(MasterBKPos(0)))
+            Dim CheckY As Integer = If(PlayerTurn, Val(MasterWKPos(1)), Val(MasterBKPos(1)))
             If Not OrientForWhite Then CheckX = 7 - CheckX : CheckY = 7 - CheckY
             Using Path As New GraphicsPath
-                    'For some reason, the circle bounded by Square isn't perfectly centred about the king's position... We add some buffer instead :).
-                    Path.AddEllipse(New Rectangle(75 * (CheckX - 0.008), 75 * (CheckY + 0.012), 75, 75))
-                    Using Brush As New PathGradientBrush(Path)
-                        Brush.CenterColor = Color.Red 'Centre colour.
-                        Brush.SurroundColors = {Color.FromArgb(0, Color.Red)} 'Falloff colour - blends to red of 0 opacity.
-                        Brush.FocusScales = New PointF(0.5F, 0.5F) 'Determines the size of the central 'blob', before falloff.
-                        g.FillPath(Brush, Path)
-                    End Using
+                'For some reason, the circle bounded by Square isn't perfectly centred about the king's position... We add some buffer instead :).
+                Path.AddEllipse(New Rectangle(75 * (CheckX - 0.008), 75 * (CheckY + 0.012), 75, 75))
+                Using Brush As New PathGradientBrush(Path)
+                    Brush.CenterColor = Color.Red 'Centre colour.
+                    Brush.SurroundColors = {Color.FromArgb(0, Color.Red)} 'Falloff colour - blends to red of 0 opacity.
+                    Brush.FocusScales = New PointF(0.5F, 0.5F) 'Determines the size of the central 'blob', before falloff.
+                    g.FillPath(Brush, Path)
                 End Using
-            End If
+            End Using
+        End If
 
-            'Gives the starting square for a piece a distinctive colour, when the user clicks on one, or when the piece is locked (touch move).
-            If PieceMoving.LockedPiece <> "" Then
+        'Gives the starting square for a piece a distinctive colour, when the user clicks on one, or when the piece is locked (touch move).
+        If PieceMoving.LockedPiece <> "" Then
             Dim Square As New Rectangle(Val(PieceMoving.LockedPiece(0)) * 75, Val(PieceMoving.LockedPiece(1)) * 75, 75, 75)
             Using Brush As New SolidBrush(Color.LightCoral)
                 g.FillRectangle(Brush, Square)
@@ -142,6 +142,7 @@ Partial Public Class Chess 'Displaying
         'Outputs the current FEN.
         Console.WriteLine(vbCrLf & vbCrLf & "FEN: " & CurrentFEN)
         Console.ForegroundColor = ConsoleColor.White
+        Dim TFTable(,) As Char = MainAI.GetLegacyTFTable
 
         If Not OnlyFEN Then
             Console.Write(" Board:" & New String(" ", 6))
@@ -186,33 +187,18 @@ Partial Public Class Chess 'Displaying
                 Console.Write(New String(" ", 7))
                 For x = StartValue To EndValue Step StepValue
                     'Colours the indexes depending if it is True, False, or the position of the player's king.
-                    If PlayerTurn Then
-                        If x & y = MasterWKPos Then
-                            Console.ForegroundColor = ConsoleColor.DarkYellow
-                        ElseIf MasterWInCheck >= 128 AndAlso ((x << 3) Or y) = (MasterWInCheck And 63) Then
-                            Console.ForegroundColor = ConsoleColor.White
-                        ElseIf MasterWhiteTFTable(x, y) = "T" Then
-                            Console.ForegroundColor = ConsoleColor.Green
-                        ElseIf MasterWhiteTFTable(x, y) = "F" Then
-                            Console.ForegroundColor = ConsoleColor.Red
-                        Else
-                            Console.ForegroundColor = ConsoleColor.Blue
-                        End If
-                        Console.Write(MasterWhiteTFTable(x, y))
+                    If x & y = If(PlayerTurn, MasterWKPos, MasterBKPos) Then
+                        Console.ForegroundColor = ConsoleColor.DarkYellow
+                    ElseIf MainAI.IsInCheck() AndAlso Helper.Flatten2DBoardIndex(x, y) = MainAI.GetCheckSquare() Then
+                        Console.ForegroundColor = ConsoleColor.White
+                    ElseIf TFTable(x, y) = "T" Then
+                        Console.ForegroundColor = ConsoleColor.Green
+                    ElseIf TFTable(x, y) = "F" Then
+                        Console.ForegroundColor = ConsoleColor.Red
                     Else
-                        If x & y = MasterBKPos Then
-                            Console.ForegroundColor = ConsoleColor.DarkYellow
-                        ElseIf MasterBInCheck >= 128 AndAlso ((x << 3) Or y) = (MasterBInCheck And 63) Then
-                            Console.ForegroundColor = ConsoleColor.White
-                        ElseIf MasterBlackTFTable(x, y) = "T" Then
-                            Console.ForegroundColor = ConsoleColor.Green
-                        ElseIf MasterBlackTFTable(x, y) = "F" Then
-                            Console.ForegroundColor = ConsoleColor.Red
-                        Else
-                            Console.ForegroundColor = ConsoleColor.Blue
-                        End If
-                        Console.Write(MasterBlackTFTable(x, y))
+                        Console.ForegroundColor = ConsoleColor.Blue
                     End If
+                    Console.Write(TFTable(x, y))
                 Next
                 Console.ForegroundColor = ConsoleColor.White
 
@@ -349,7 +335,7 @@ Partial Public Class Chess 'Displaying
 
     'Subroutine which updates the Sprites / Gamestate Textbox depending on whether a player is in check (or not).
     Private Sub EditCheckText()
-        If MasterWInCheck >= 128 OrElse MasterBInCheck >= 128 Then
+        If MainAI IsNot Nothing AndAlso MainAI.IsInCheck() Then
             If GeneralOptions(0) = "T" Then Sound_Check.Play()
             CheckLabel.Text = "    Check!    "
         Else

@@ -198,14 +198,6 @@ Partial Public Class Chess 'Training Modules
 
         'Calibrates the board, along with its objects, for use on this new puzzle,
         MasterBoard = Helper.FENConverter(CurrentFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
-        'Resets TrueFalse Tables.
-        If PlayerTurn Then
-            MasterBInCheck = 0 'Player is no longer in check.
-            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-        Else
-            MasterWInCheck = 0 'Player is no longer in check.
-            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-        End If
         'Resets location of Previously Used Squares.
         SquareHistory(0, 0) = -1
         SquareHistory(0, 1) = -1
@@ -243,8 +235,7 @@ Partial Public Class Chess 'Training Modules
         Dim NextMove As Move = (TrainingMode.PuzzleSampleDatabase(TrainingMode.CurrentPuzzleIndex).GetAllMoves())(MoveIndex)
         AnimateMove(NextMove)
 
-        CalibrateCoreSystemsForMove(NextMove, False, False)
-        MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates the AI in preparation for the new puzzle.
+        CalibrateCoreSystemsForMove(NextMove, False, False, True)
 
         FENExport_Click()
         EnforceEndStates()
@@ -794,11 +785,9 @@ Partial Public Class Chess 'Training Modules
                 'Applies that FEN to Masterboard and calibrates board info.
                 MasterBoard = Helper.FENConverter(NewFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                 If PlayerTurn Then
-                    MasterWInCheck = 0
-                    Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
                     'If White is not in check, generate all the legal moves in the position.
                     MainAI.Reconfigure(NewFEN, True)
-                    If MasterWInCheck < 128 Then
+                    If Not MainAI.IsInCheck() Then
                         TrainingMode.MovesInPosition = MainAI.GetLegalMoves()
                         If TrainingMode.MovesInPosition.GetUpperBound(0) >= GlobalConstants.TrainingMovesPerPosition * 3 Then Exit While 'If the number of legal moves in the position is > MovesPerPosition * 3 then the position is valid (lowers chance of moves being repeted).
                     End If
@@ -836,7 +825,7 @@ Partial Public Class Chess 'Training Modules
             TempMove.NewMoveX = TrainingMode.MovesInPosition(RndIndex, 1)(0)
             TempMove.NewMoveY = TrainingMode.MovesInPosition(RndIndex, 1)(1)
             'Converts this Move to standard chess notation. If this is different to the current move then accept & return it.
-            TrainingMove = Helper.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
+            TrainingMove = MainAI.GetPGNFromMove(TempMove)
         Loop Until MoveDisplayer.Text <> TrainingMove
         Return TrainingMove
     End Function
@@ -845,12 +834,7 @@ Partial Public Class Chess 'Training Modules
     Private Function HandleMoveTrainingInput(ByVal TempMove As Move) As Boolean
         HandleMoveTrainingInput = False
         'The user is playing the Move Training Game, and the move they entered may be correct - test move.
-        Dim UserMove As String
-        If PlayerTurn Then
-            UserMove = Helper.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-        Else
-            UserMove = Helper.MoveConverter(MasterBoard, TempMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
-        End If
+        Dim UserMove As String = MainAI.GetPGNFromMove(TempMove)
         If UserMove = MoveDisplayer.Text Then
             'The move is correct - notify the user.
             TrainingScore.Text = CInt(TrainingScore.Text) + 1

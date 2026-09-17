@@ -1,6 +1,6 @@
 ~~~~~~~~  New Features  ~~~~~~~~
 - Separated most board objects to a single BoardState structure, allowing for rapid copying before MakeMove, storing in arrays for each depth. Allows for a complete lack of arrays in the main search tree.
-- Full AI redesign to use bitboards for each piece (vs old 2D char array) and 0-63 squares (vs old 0-7,0-7 format) for variables such as InCheck, Move, KingPos & EnPassant.
+- Full AI redesign to use bitboards for each piece (vs old 2D char array) and 0-63 squares (vs old 0-7,0-7 format) for variables such as InCheck, Move, KingPos & EnPassant. Creates ~5x Perft Test speed increases.
 - Full re-writing of move generation code to take advantage of bitboards and bit-shifting.
 - Full pre-computation and storing of all piece pseudo-legal moves, for use in move generation.
 - Implemented hand-crafted fancy magic bitboard move generation for sliding pieces (standalone program).
@@ -15,7 +15,15 @@
 - Creation of RayMap tool for detecting the squares exposed between any two squares. Allows for highly efficient pin detection, check evasion, and enforcing castling rules.
 - Complete re-writing of DoesMoveResolveCheck() using RayMap and bitboard shifting.
 - Complete re-writing of CreateMoves() and MakeMove() to take advantage of new bitboard schemes.
+- Changed CanCastle to a structure for improved performance.
+- Added smaller MakeMove function for Perft Test.
+- Upgraded Bubble Sort to Insertion Sort in CreateMoves().
+- Actually realised that Release version of .NET projects exist: ~6x performance boost :O.
+- Migration to flat bitmove buffer for all depths, rather than heap-heavy uint16() allocation per node.
+- Addition of Span.CopyTo instead of Array.Copy, for fast move sorting and allocation.
 
+- Handed more control to the AI, for handling check states, TFTable, invalid position handling, and converting between Moves and PGNs.
+- Massively redesigned generation of PGN moves using bitboards, for speedy generation of an AI's best line.
 - Toggleable setting to allow MakeMove to skip MaterialCount, PHM and Zobrist updates - provides faster Perft Test results.
 - Switched many "Shared" variables in GlobalConstants to "Const" variables, allowing for faster reading.
 - Flattened all multi-dimensional array structures (MVVLVA, Zobrist Hash Table, PieceHeatMap, EndgameLookupTable) - ~35% speed boost
@@ -39,4 +47,6 @@
 - Fixed Soft-lock at end of AI Endless Mode.
 - Fixed invalid piece check detection for long castling.
 - Fixed invalid FEN detection for when the 1 file isn't fully filled.
+- Removed ambiguity in AI's best move line.
+- Fixed check sound not playing upon UndoMove.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -687,7 +687,7 @@ Partial Public Class Chess 'Remote Mode
             Console.WriteLine("Error: Unable to Interpret Move.")
         ElseIf RemoteMove.Code <> "0" Then 'We've found a move! Output this to the board.
             Console.ForegroundColor = ConsoleColor.Green
-            Console.WriteLine("Move Successfully Interpreted: " & Helper.MoveConverter(MasterBoard, RemoteMove, Helper.ConvertStringToBitCoor(MasterEnPassant)) & ".")
+            Console.WriteLine("Move Successfully Interpreted: " & MainAI.GetPGNFromMove(RemoteMove) & ".")
         End If
         Return RemoteMove
     End Function

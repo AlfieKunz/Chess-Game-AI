@@ -255,18 +255,16 @@ Public Structure BoardState
     Public BitboardQueenWhite As UInt64
     Public BitboardQueenBlack As UInt64
 
-    Public BitboardWhite As UInt64
-    Public BitboardBlack As UInt64
-
-    Public WhiteCanCastle As CanCastle
-    Public BlackCanCastle As CanCastle
     Public ZobristValue As UInt64
 
-    Public EnPassant As UInt16
     Public MaterialCountWhite As Integer
     Public MaterialCountBlack As Integer
     Public PHMValueWhite As Integer 'Represents the base Piece Heat Map values for each player, for the base position, using the 100% middlegame values.
     Public PHMValueBlack As Integer
+
+    Public EnPassant As UInt16
+    Public WhiteCanCastle As CanCastle
+    Public BlackCanCastle As CanCastle
     Public HalfMoveSize As UInt16
 
 
@@ -290,7 +288,17 @@ Public Structure BoardState
         BitboardRookBlack = 0UL
         BitboardQueenWhite = 0UL
         BitboardQueenBlack = 0UL
-        BitboardWhite = 0UL
-        BitboardBlack = 0UL
     End Sub
+End Structure
+
+Public Structure NegaMaxSearchTools
+    Dim TFTable As UInt64 'An attacking map of all pieces that could influence the king's motion (where the king is removed)
+    'Check detection is handled via the generation of TFTable (non-sliding pieces), and placing a queen at the king's location and casting rays via occupancy masks (sliding pieces).
+    'Resolving via captures & king movement handled via TFTable and KPos InCheck information, resolving via blocks handled by running checking piece bitboard for updated occupancy mask.
+    'An attacking map of all pieces that could influence the king's motion (where the king is removed)
+    Dim PinInfoStraight, PinInfoDiag As UInt64
+    Dim OccupancyMask, EnemyPieceMask As UInt64
+    Dim CheckInfo As UInt16 'Checking data is represented as a set of bits, in the format:
+    '00000000CDXXXYYY
+    'C = Check (Flag = 128). D = Double Check (Flag = 64). XY = Checking Piece Coordinates (Flag = 63)
 End Structure

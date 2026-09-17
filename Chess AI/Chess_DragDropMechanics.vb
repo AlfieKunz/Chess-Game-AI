@@ -327,25 +327,19 @@ Partial Public Class Chess 'DragDrop Mechanics
         AIHandles.FENToResetTo = StartingFEN
 
         'Calculates the PGN equivilent of the user's move.
-        Dim PGNMove As String
-        If PlayerTurn Then
-            PGNMove = Helper.MoveConverter(MasterBoard, TempMove, True, MasterWKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterWhiteTFTable)
-        Else
-            PGNMove = Helper.MoveConverter(MasterBoard, TempMove, False, MasterBKPos, Helper.ConvertStringToBitCoor(MasterEnPassant), MasterBlackTFTable)
-        End If
+        Dim PGNMove As String = MainAI.GetPGNFromMove(TempMove)
 
 
         'GUI controls have been completed - update board to match the user's move.
-        CalibrateCoreSystemsForMove(TempMove, True, False)
+        CalibrateCoreSystemsForMove(TempMove, True, False, GameMode <> 4)
 
         If GameMode <> 4 Then
             'If the AI is searching on the position in the background, then give the AI enough time to exit the search.
             If AIIsSearchingOnUsersTurn Then Thread.Sleep(2) : SearchSettings.OutputToConsole = True : AIIsSearchingOnUsersTurn = False
             'Perform GC Collect if AIIsSearchingOnUsersTurn??????
             AIHandles.MoveWasAIPredicted = MainAI.CheckIfMoveIsTTPrediction(TempMove)
-            MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI before checking for end states.
             'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
-            If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GameRunning Then PGNMove &= "+"
+            If MainAI.IsInCheck() AndAlso GameRunning Then PGNMove &= "+"
             BoardHistory.PushPGN(PGNMove, True)
             EnforceEndStates()
             If CurrentFEN = PreviousFEN AndAlso UserPlayer = PlayerTurn Then Exit Sub 'Stops AI from running if it is the start position (and it is the user's turn).
@@ -369,18 +363,13 @@ Partial Public Class Chess 'DragDrop Mechanics
 
 
     'Subroutine which updates the core characteristics of the chess system, after a move has been played (ie: makes move onto board).
-    Private Sub CalibrateCoreSystemsForMove(ByVal TempMove As Move, ByVal CanUndoMove As Boolean, ByVal FastUpdate As Boolean)
+    Private Sub CalibrateCoreSystemsForMove(ByVal TempMove As Move, ByVal CanUndoMove As Boolean, ByVal FastUpdate As Boolean, ByVal ReconfigureAI As Boolean)
         'Makes move onto board, and resets the correct player's TFTable.
         If PlayerTurn Then
-            MasterWInCheck = 0 'Player is no longer in check.
             MakeMove(MasterBoard, TempMove, MasterWCanCastle, MasterWKPos, MasterEnPassant, GeneralOptions(0) = "T")
-            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
         Else
-            MasterBInCheck = 0 'Player is no longer in check.
-            MakeMove(MasterBoard, TempMove, MasterBCanCastle, MasterBKPos, MasterEnPassant, GeneralOptions(0) = "T")
-            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
+            MakeMove(MasterBoard, TempMove, MasterWCanCastle, MasterBKPos, MasterEnPassant, GeneralOptions(0) = "T")
         End If
-
 
         'Update Previously Used Squares, then flips the board if necessary.
         If GameMode = 3 Then
@@ -400,6 +389,12 @@ Partial Public Class Chess 'DragDrop Mechanics
             SquareHistory(1, 1) = 7 - SquareHistory(1, 1)
         End If
 
+        'Ends the turn, then calculates the new position's FEN.
+        PlayerTurn = Not PlayerTurn
+        If CanUndoMove Then PreviousFEN = CurrentFEN
+        CurrentFEN = Helper.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
+
+        MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI.
 
         'Resets LegalMoveSquares.
         ResetLMS(False)
@@ -409,11 +404,6 @@ Partial Public Class Chess 'DragDrop Mechanics
             If FastUpdate Then Checkerboard.Invalidate() Else Checkerboard.Refresh()
         End If
         EditCheckText()
-
-        'Ends the turn, then calculates the new position's FEN.
-        PlayerTurn = Not PlayerTurn
-        If CanUndoMove Then PreviousFEN = CurrentFEN
-        CurrentFEN = Helper.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
 
         If GameMode = 0 AndAlso Not ((Not PlayerTurn) Xor OrientForWhite) Then PlayMoveOnInterface(TempMove)
     End Sub

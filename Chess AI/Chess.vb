@@ -30,7 +30,7 @@ Partial Public Class Chess 'ew- danny
     'derived from this, Master TrueFalse Tables for each player. These Tables display information such as Legal
     'Moves for the players' kings, along with pinned pieces and their location, and make handling Move Generation,
     'Checks and Evaluations much easier and more efficient.
-    Private MasterBoard(7, 7), MasterWhiteTFTable(7, 7), MasterBlackTFTable(7, 7) As Char
+    Private MasterBoard(7, 7) As Char
     Private GameRunning As Boolean
     Private GameMode As Byte = 3 '1 = 1-Player, 2 = 2-Player, 3 = Analysis, 4 = Puzzles, 5 = Coordinate Practice, 6 = Move Practice.
 
@@ -44,8 +44,7 @@ Partial Public Class Chess 'ew- danny
     Private MasterZobristValue As UInt64 'Zobrist value of the current position (a 'unique' value of a board position, that can be easily calculated)
 
     'Data for castling & checks for each player.
-    Private MasterWCanCastle, MasterBCanCastle As New CanCastle
-    Private MasterWInCheck, MasterBInCheck As Byte
+    Private MasterWCanCastle, MasterBCanCastle As CanCastle
 
 
     'Sets up sound effects. All sounds used by Chess.com
@@ -373,13 +372,7 @@ Partial Public Class Chess 'ew- danny
                 MasterBoard = Helper.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
                 DisplayPieces()
                 'Forms the TFTable for the players.
-                If PlayerTurn Then
-                    Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-                Else
-                    Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-                End If
                 If GameMode <> 3 Then CustomisationForm.Close() 'Closes the customisation form.
-                EditCheckText()
                 FENIsValid = True
             Catch ex As Exception 'FEN is not valid, as the board could not be constructed - provide error message.
                 If MsgBox("Starting Position Rejected - Invalid FEN Code. Please Input a Genuinine FEN and try again." & vbCr & "Please Click 'Retry' to enter another FEN, or Click 'Cancel' to Start the Game with the Standard Starting Position.", vbCritical + vbRetryCancel + vbApplicationModal) = 4 Then
@@ -402,9 +395,6 @@ Partial Public Class Chess 'ew- danny
             StartingFEN = GlobalConstants.StartingFENPosition
             MasterBoard = Helper.FENConverter(StartingFEN, MasterWCanCastle, MasterBCanCastle, MasterWKPos, MasterBKPos, MasterEnPassant, PlayerTurn)
             DisplayPieces()
-            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-            'Resets Black's TFTable.
-            Array.Copy(Helper.MasterTrueTable, MasterBlackTFTable, 64)
         End If
 
 
@@ -417,6 +407,14 @@ Partial Public Class Chess 'ew- danny
                 If Not UserPlayer Then FlipBoard()
             End If
 
+            'Creates our AI (for legal move generation).
+            CurrentFEN = StartingFEN
+            MainAI = New AI(CurrentFEN)
+            MainAI.ConfigureSettings(SearchSettings, False)
+            MasterZobristValue = Helper.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant))
+            AIHandles.FENToResetTo = StartingFEN
+            EditCheckText()
+
             'Final logical detection of invalid board positions.
             If Not CheckForInvalidGameStates() Then
                 'Everything is valid - begin the game as normal.
@@ -425,13 +423,6 @@ Partial Public Class Chess 'ew- danny
                 Console.WriteLine(vbCrLf & vbCrLf & "The Game has Begun.")
                 Console.ForegroundColor = ConsoleColor.White
             End If
-
-            'Creates our AI (for legal move generation).
-            CurrentFEN = StartingFEN
-            MainAI = New AI(CurrentFEN)
-            MainAI.ConfigureSettings(SearchSettings, False)
-            MasterZobristValue = Helper.ZobristHashPosition(MasterBoard, PlayerTurn, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant))
-            AIHandles.FENToResetTo = StartingFEN
 
             LoadUserProfile()
 
@@ -645,17 +636,11 @@ Partial Public Class Chess 'ew- danny
     'Function that checks for invalid board positions - part of FEN Error Detection: checks for invalid checks & king positions.
     'Returns True if the game state is invalid.
     Private Function CheckForInvalidGameStates() As Boolean
-        If MasterWInCheck >= 128 AndAlso Not PlayerTurn Then
-            'If White is in check, and it is black to move, then black can take white's king. This is illegal.
+        If MainAI.IsInactiveKingInCheck() Then
+            'If White is in check, and it is black to move (or vice versa), then black can take white's king. This is illegal.
             GameRunning = False
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
-            CheckForInvalidGameStates = True
-        ElseIf MasterBInCheck >= 128 AndAlso PlayerTurn Then
-            'If Black is in check, and it is white to move, then white can take black's king. This is illegal.
-            Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("The Game has Ended. Cause = Invalid Check.")
-            GameRunning = False
             CheckForInvalidGameStates = True
         ElseIf Math.Abs(Val(MasterWKPos(0)) - Val(MasterBKPos(0))) <= 1 AndAlso Math.Abs(Val(MasterWKPos(1)) - Val(MasterBKPos(1))) <= 1 Then
             'Kings are too close together.
@@ -739,9 +724,10 @@ Partial Public Class Chess 'ew- danny
                     TempPGNMove = FormattedPGN.Substring(0, n)
                     FormattedPGN = FormattedPGN.Substring(n + 1)
                     Try
+                        'Attempts to convert the PGN move to my program's Move format.
+                        TempMove = MainAI.GetMoveFromPGN(TempPGNMove)
                         If PlayerTurn Then
-                            'Attempts to convert the PGN move to my program's Move format.
-                            TempMove = Helper.ConvertToMove(TempPGNMove, MasterBoard, True, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWhiteTFTable)
+
                             If TempMove.Code = "a" Then
                                 Throw New Exception("Invalid Move.")
                             ElseIf TempMove.Code = "c" Then
@@ -764,7 +750,6 @@ Partial Public Class Chess 'ew- danny
                             AnimateMove(TempMove)
                             MakeMove(MasterBoard, TempMove, MasterWCanCastle, MasterWKPos, MasterEnPassant, GeneralOptions(0) = "T")
                         Else 'Similar code for the black pieces.
-                            TempMove = Helper.ConvertToMove(TempPGNMove, MasterBoard, False, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBlackTFTable)
                             If TempMove.Code = "a" Then
                                 Throw New Exception("Invalid Move.")
                             ElseIf TempMove.Code = "c" Then
@@ -814,14 +799,6 @@ Partial Public Class Chess 'ew- danny
                     End Try
 
                     If Not UndoFENChange.Visible Then 'Move is valid.
-                        'Updates TFTable for appropriate player.
-                        If PlayerTurn Then
-                            MasterWInCheck = 0 'Player is no longer in check.
-                            Helper.FixTFTable(MasterBoard, False, MasterBlackTFTable, Helper.ConvertStringToBitCoor(MasterBKPos), MasterBInCheck, MasterBCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-                        Else
-                            MasterBInCheck = 0 'Player is no longer in check.
-                            Helper.FixTFTable(MasterBoard, True, MasterWhiteTFTable, Helper.ConvertStringToBitCoor(MasterWKPos), MasterWInCheck, MasterWCanCastle.CanICastle(), Helper.ConvertStringToBitCoor(MasterEnPassant))
-                        End If
 
                         'Update Previously Used Squares, then flips the board if necessary.
                         If GameMode = 3 AndAlso FirstMove Then
@@ -851,7 +828,7 @@ Partial Public Class Chess 'ew- danny
                         CurrentFEN = Helper.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
                         MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI.
                         'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
-                        If (MasterWInCheck >= 128 OrElse MasterBInCheck >= 128) AndAlso GameRunning AndAlso TempPGNMove.Last() <> "+" Then TempPGNMove &= "+"
+                        If MainAI.IsInCheck() AndAlso GameRunning AndAlso TempPGNMove.Last() <> "+" Then TempPGNMove &= "+"
                         BoardHistory.PushPGN(TempPGNMove, FirstMove)
                         EnforceEndStates()
 
@@ -1114,7 +1091,7 @@ Partial Public Class Chess 'ew- danny
         If GameMode = 1 Then
             If EndState = "c" Then
                 'Checks if the player or the AI is the winner of the game.
-                If (MasterWInCheck >= 128 AndAlso Not UserPlayer) OrElse (MasterBInCheck >= 128 AndAlso UserPlayer) Then
+                If PlayerTurn Xor UserPlayer Then
                     If GeneralOptions(7) = "T" Then
                         Text = "wahaaaaaayyyyyy!!!!"
                     Else
@@ -1133,10 +1110,10 @@ Partial Public Class Chess 'ew- danny
         Else 'Gives unbias comment.
             Text = "The Game has Concluded"
             If EndState = "c" Then
-                If MasterBInCheck >= 128 Then
-                    Text &= ", with White Victorious!"
-                Else
+                If PlayerTurn Then
                     Text &= ", with Black Victorious!"
+                Else
+                    Text &= ", with White Victorious!"
                 End If
             Else
                 Text &= " in a Draw!"
