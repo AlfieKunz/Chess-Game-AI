@@ -86,6 +86,7 @@ Partial Public Class Chess 'Training Modules
             Console.WriteLine("Error when retrieving Puzzle Stats. Resetting...")
             TrainingMode.UserPuzzleRating = 1500
             TrainingMode.AIPuzzleRating = 1500
+            SavePuzzleRatings()
         End Try
         Console.ForegroundColor = ConsoleColor.White
     End Sub
@@ -415,6 +416,8 @@ Partial Public Class Chess 'Training Modules
 
     'Subroutine that saves the user's and the AI's puzzle ratings to the PuzzleStats txt file.
     Private Sub SavePuzzleRatings()
+        'Creates the folder structure if needed.
+        Directory.CreateDirectory(Path.Combine(GlobalConstants.StartupPath, "Assets", "User"))
         Using SR As New StreamWriter(GlobalConstants.StartupPath & "\Assets\User\PuzzleStats.txt")
             SR.WriteLine(TrainingMode.UserPuzzleRating)
             SR.WriteLine(TrainingMode.AIPuzzleRating)
@@ -654,7 +657,8 @@ Partial Public Class Chess 'Training Modules
             End While
         Catch ex As Exception 'Unable to retrieve leaderboard.
             Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("Error when retrieving White's Leaderboard data.")
+            Console.WriteLine("Error when retrieving White's Leaderboard data. Resetting...")
+            SaveToLeaderboards(True)
             Console.ForegroundColor = ConsoleColor.White
         End Try
         FileClose(1)
@@ -677,7 +681,8 @@ Partial Public Class Chess 'Training Modules
             End While
         Catch ex As Exception
             Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("Error when retrieving Black's Leaderboard data.")
+            Console.WriteLine("Error when retrieving Black's Leaderboard data. Resetting...")
+            SaveToLeaderboards(False)
             Console.ForegroundColor = ConsoleColor.White
         End Try
         FileClose(2)
@@ -687,6 +692,8 @@ Partial Public Class Chess 'Training Modules
 
     'Subroutine that writes the data in the leaderboard arrays to the leaderboard text files.
     Private Sub SaveToLeaderboards(ByVal isWhite As Boolean)
+        'Creates the folder structure if needed.
+        Directory.CreateDirectory(Path.Combine(GlobalConstants.StartupPath, "Assets", "User"))
         If isWhite Then
             'Calls the correct file (or creates it if it doesn't exist).
             If GameMode = 5 Then

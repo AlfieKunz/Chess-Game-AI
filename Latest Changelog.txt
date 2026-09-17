@@ -33,6 +33,7 @@
 - Performance increases from Option Strict On in AI files.
 - Performance boosts to compiler settings and Server GC management.
 - Reduced size of Transposition Table elements.
+- Refactored Assets.
 - General Code Condensing, Refactoring, and Efficiency Improvements :D.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -49,4 +50,7 @@
 - Fixed invalid FEN detection for when the 1 file isn't fully filled.
 - Removed ambiguity in AI's best move line.
 - Fixed check sound not playing upon UndoMove.
+- Fixed invalid castle privilege handling for Node Test MakeMove.
+- Added error handling to changing of AI settings.
+- Fixed User Assets not being re-created upon program reset or being missing.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

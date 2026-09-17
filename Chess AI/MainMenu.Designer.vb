@@ -609,7 +609,7 @@ Partial Class MainMenu
         Credits.Name = "Credits"
         Credits.Size = New Size(268, 18)
         Credits.TabIndex = 37
-        Credits.Text = "Created by: Alfie Kunz - 2021-2025"
+        Credits.Text = "Created by: Alfie Kunz - 2021-2026"
         ' 
         ' PlayBtn
         ' 

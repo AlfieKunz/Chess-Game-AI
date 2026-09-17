@@ -521,6 +521,23 @@ Partial Public Class Chess 'ew- danny
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
             Console.ForegroundColor = ConsoleColor.White
+
+            'Creates the folder structure if needed.
+            Directory.CreateDirectory(Path.Combine(GlobalConstants.StartupPath, "Assets", "User"))
+            'Writes the colour preferences to a file (creates the file if one does not exist).
+            Try
+                FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Output)
+                PrintLine(1, ColourScheme)
+                PrintLine(1, CStr(AnimationSpeed))
+                PrintLine(1, TempGeneralOptions)
+                PrintLine(1, AIHandles.FixedSearchDepth)
+                FileClose(1)
+            Catch
+                FileClose(1)
+                Console.ForegroundColor = ConsoleColor.DarkRed
+                Console.WriteLine("Unable to Save Settings. Please try again...")
+                Console.ForegroundColor = ConsoleColor.White
+            End Try
         End Try
         FileClose(1)
 

@@ -858,7 +858,13 @@ Partial Public Class Chess 'GUI Objects
                     ElseIf System.Text.RegularExpressions.Regex.IsMatch(sender.Text, "^[0-9]+$") Then
                         'If we are using numerical values, we need to ensure that there purely numbers. If so, we convert the value to the
                         'specific numerical type that that field uses, then assigns it.
-                        Field.SetValue(SearchSettings, Convert.ChangeType(sender.Text, Field.FieldType))
+                        Try
+                            Field.SetValue(SearchSettings, Convert.ChangeType(sender.Text, Field.FieldType))
+                        Catch ex As Exception
+                            Console.ForegroundColor = ConsoleColor.DarkRed
+                            Console.WriteLine("Unable to Calibrate AI based on Settings. Reverting back to old state...")
+                            Console.ResetColor()
+                        End Try
                     End If
                 End If
             Next
@@ -1018,7 +1024,7 @@ Partial Public Class Chess 'GUI Objects
             Console.ForegroundColor = ConsoleColor.White
         End Try
 
-        Dim CreditsMessage As String = Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2025)"
+        Dim CreditsMessage As String = Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2026)"
         If CanRetrieveStats Then
             MsgBox(CreditsMessage & vbCrLf & vbCrLf & vbCrLf & "Lifetime AI Statistics:" & vbCrLf & "Positions Searched: " & LifetimePositions.ToString("N0") & vbCrLf & "Transpositions Found: " & LifetimeTranspositions.ToString("N0") & vbCrLf & "Checkmates Made: " & LifetimeCheckmates.ToString("N0"), vbInformation, "Credits")
         Else

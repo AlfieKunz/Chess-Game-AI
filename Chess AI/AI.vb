@@ -126,6 +126,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Catch ex As Exception
             Console.ForegroundColor = ConsoleColor.DarkRed
             Console.WriteLine("Unable to retrieve AI lifetime stats. Resetting...")
+            OutputStatsToFile()
             Console.ForegroundColor = ConsoleColor.White
         End Try
     End Sub
@@ -147,7 +148,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         'Finds the material count of the board.
         Dim MaterialCount = CountMaterial(PrimaryBoard) : PrimaryState.MaterialCountWhite = MaterialCount(0) : PrimaryState.MaterialCountBlack = MaterialCount(1)
         'Calculates the PHM values for the base position.
-        If SearchSettings.UsePieceHeatMaps Then Dim PHMValues = GetPHMEval(PrimaryState, PrimaryMeKPos, PrimaryEnemyKPos, CalculateEndgameValues:=False) : PrimaryState.MaterialCountWhite = PHMValues.White : PrimaryState.MaterialCountBlack = PHMValues.Black
+        If SearchSettings.UsePieceHeatMaps Then Dim PHMValues = GetPHMEval(PrimaryState, PrimaryMeKPos, PrimaryEnemyKPos, CalculateEndgameValues:=False) : PrimaryState.PHMValueWhite = PHMValues.White : PrimaryState.PHMValueBlack = PHMValues.Black
 
         If Not PlayerTurn Then
             'Swaps the Primary & Enemy King privileges. This is because, for the AI, all variables are in context of which player the AI
@@ -178,7 +179,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 End If
             Next
         Next
-        NoLegalMoves = CreateMoves(PrimaryState, 0, PlayerTurn, PrimarySearchVars, PrimaryMeKPos, True, 0, 0US)
+        NoLegalMoves = CreateMoves(PrimaryState, 0, PlayerTurn, PrimarySearchVars, PrimaryMeKPos, PrimaryEnemyKPos, True, 0, 0US)
         'Creates the Zobrist Value for the position.
         PrimaryState.ZobristValue = ZobristHashPosition(PrimaryBoard, PlayerTurn, PrimaryState.WhiteCanCastle, PrimaryState.BlackCanCastle, PrimaryState.EnPassant)
 
@@ -189,7 +190,6 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Else
             BasePieceMoves = Nothing
         End If
-
         SortMovesThorough(BasePieceMoves, PrimaryState, PlayerTurn, PrimaryMeKPos, PrimaryEnemyKPos, PrimarySearchVars.TFTable)
 
         'If BasePieceMoves IsNot Nothing Then
@@ -822,6 +822,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
     'Subroutine which outputs the lifetime stats of the AI to the AIStats file.
     Public Sub OutputStatsToFile()
+        'Creates the folder structure if needed.
+        Directory.CreateDirectory(Path.Combine(GlobalConstants.StartupPath, "Assets", "User"))
         Using SR As New StreamWriter(GlobalConstants.StartupPath & "\Assets\User\AIStats.txt")
             SR.WriteLine(LifetimePositions)
             SR.WriteLine(LifetimeTranspositions)
@@ -1419,7 +1421,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
 
     'Function which creates and orders all the legal moves a player can make, given certain criteria. Returns the total number of moves.
-    Public Function CreateMoves(ByRef State As BoardState, ByVal MoveBufferStrafe As Integer, ByVal isWhite As Boolean, ByRef SearchVars As NegaMaxSearchTools, ByVal KPos As UInt16, ByVal IncludeNonCaptures As Boolean, ByVal KillerDepth As Integer, Optional ByVal TTMove As UInt16 = 0US) As Integer
+    Public Function CreateMoves(ByRef State As BoardState, ByVal MoveBufferStrafe As Integer, ByVal isWhite As Boolean, ByRef SearchVars As NegaMaxSearchTools, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal IncludeNonCaptures As Boolean, ByVal KillerDepth As Integer, Optional ByVal TTMove As UInt16 = 0US) As Integer
         Dim TempPieceMap As UInt64
         Dim CaptureCount As Integer
         Dim LegalMoveArray() As UInt16
@@ -1447,8 +1449,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 TempPieceMap = State.BitboardPawnWhite
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
-                    LegalMoveArray = WhitePawnLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, KPos, State.EnPassant, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Pawn, SearchVars, NeedValidateMoves, KPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    LegalMoveArray = WhitePawnLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, MeKPos, State.EnPassant, IncludeNonCaptures)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Pawn, SearchVars, NeedValidateMoves, MeKPos, EnemyKPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
 
@@ -1456,78 +1458,78 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
                     LegalMoveArray = KnightLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight Or SearchVars.PinInfoDiag, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Knight, SearchVars, InCheck, KPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Knight, SearchVars, InCheck, MeKPos, EnemyKPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
 
                 TempPieceMap = State.BitboardBishopWhite
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
-                    LegalMoveArray = BishopLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, KPos, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Bishop, SearchVars, InCheck, KPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    LegalMoveArray = BishopLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, MeKPos, IncludeNonCaptures)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Bishop, SearchVars, InCheck, MeKPos, EnemyKPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
 
                 TempPieceMap = State.BitboardRookWhite
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
-                    LegalMoveArray = RookLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, KPos, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Rook, SearchVars, InCheck, KPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    LegalMoveArray = RookLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, MeKPos, IncludeNonCaptures)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Rook, SearchVars, InCheck, MeKPos, EnemyKPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
 
                 TempPieceMap = State.BitboardQueenWhite
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
-                    LegalMoveArray = QueenLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, KPos, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Queen, SearchVars, InCheck, KPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    LegalMoveArray = QueenLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, MeKPos, IncludeNonCaptures)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Queen, SearchVars, InCheck, MeKPos, EnemyKPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
             End If
 
-            LegalMoveArray = KingLegalMoves(KPos, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.TFTable, State.WhiteCanCastle, SearchVars.CheckInfo, IncludeNonCaptures)
+            LegalMoveArray = KingLegalMoves(MeKPos, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.TFTable, State.WhiteCanCastle, SearchVars.CheckInfo, IncludeNonCaptures)
             'Never need to validate king moves - pseudolegal = legal here.
-            If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.King, SearchVars, False, KPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+            If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.King, SearchVars, False, MeKPos, EnemyKPos, True, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
         Else
             If (SearchVars.CheckInfo And 64US) = 0US Then
                 TempPieceMap = State.BitboardPawnBlack
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
-                    LegalMoveArray = BlackPawnLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, KPos, State.EnPassant, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Pawn, SearchVars, NeedValidateMoves, KPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    LegalMoveArray = BlackPawnLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, MeKPos, State.EnPassant, IncludeNonCaptures)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Pawn, SearchVars, NeedValidateMoves, MeKPos, EnemyKPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
                 TempPieceMap = State.BitboardKnightBlack
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
                     LegalMoveArray = KnightLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight Or SearchVars.PinInfoDiag, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Knight, SearchVars, InCheck, KPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Knight, SearchVars, InCheck, MeKPos, EnemyKPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
                 TempPieceMap = State.BitboardBishopBlack
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
-                    LegalMoveArray = BishopLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, KPos, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Bishop, SearchVars, InCheck, KPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    LegalMoveArray = BishopLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, MeKPos, IncludeNonCaptures)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Bishop, SearchVars, InCheck, MeKPos, EnemyKPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
                 TempPieceMap = State.BitboardRookBlack
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
-                    LegalMoveArray = RookLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, KPos, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Rook, SearchVars, InCheck, KPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    LegalMoveArray = RookLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, MeKPos, IncludeNonCaptures)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Rook, SearchVars, InCheck, MeKPos, EnemyKPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
                 TempPieceMap = State.BitboardQueenBlack
                 While TempPieceMap <> 0UL
                     Dim Square As UInt16 = CUShort(BitOperations.TrailingZeroCount(TempPieceMap))
-                    LegalMoveArray = QueenLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, KPos, IncludeNonCaptures)
-                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Queen, SearchVars, InCheck, KPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+                    LegalMoveArray = QueenLegalMoves(Square, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.PinInfoStraight, SearchVars.PinInfoDiag, MeKPos, IncludeNonCaptures)
+                    If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.Queen, SearchVars, InCheck, MeKPos, EnemyKPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
                     TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
                 End While
             End If
-            LegalMoveArray = KingLegalMoves(KPos, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.TFTable, State.BlackCanCastle, SearchVars.CheckInfo, IncludeNonCaptures)
-            If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.King, SearchVars, False, KPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
+            LegalMoveArray = KingLegalMoves(MeKPos, SearchVars.EnemyPieceMask, SearchVars.OccupancyMask, SearchVars.TFTable, State.BlackCanCastle, SearchVars.CheckInfo, IncludeNonCaptures)
+            If LegalMoveArray IsNot Nothing AndAlso LegalMoveArray(0) <> 0US Then ValidateAndPopulateMoveBuffer(LegalMoveArray, State, GlobalConstants.PieceIndex.King, SearchVars, False, MeKPos, EnemyKPos, False, MoveBufferStrafe, CaptureCount, TTMove, TTMoveFlag, KillerOneMove, KillerMoveOneFlag, KillerTwoMove, KillerMoveTwoFlag)
         End If
 
         Dim TotalMoveCount As Integer = If(TTMoveFlag > 0, 1, 0) + CaptureCount
@@ -1604,15 +1606,15 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Return TotalMoveCount 'We already have the strafe into this array - this allows us to calculate all the moves.
     End Function
 
-    Public Sub ValidateAndPopulateMoveBuffer(ByVal LegalMoveArray() As UInt16, ByRef State As BoardState, ByVal PieceIndex As Integer, ByRef SearchInfo As NegaMaxSearchTools, ByVal NeedValidateMoves As Boolean, ByVal KPos As UInt16, ByVal isWhite As Boolean, ByVal Strafe As Integer, ByRef CaptureCount As Integer, ByVal TTMove As UInt16, ByRef TTMoveFlag As Integer, ByVal KillerOneMove As UInt16, ByRef KillerOneFlag As Integer, ByVal KillerTwoMove As UInt16, ByRef KillerTwoFlag As Integer)
+    Public Sub ValidateAndPopulateMoveBuffer(ByVal LegalMoveArray() As UInt16, ByRef State As BoardState, ByVal PieceIndex As Integer, ByRef SearchInfo As NegaMaxSearchTools, ByVal NeedValidateMoves As Boolean, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal isWhite As Boolean, ByVal Strafe As Integer, ByRef CaptureCount As Integer, ByVal TTMove As UInt16, ByRef TTMoveFlag As Integer, ByVal KillerOneMove As UInt16, ByRef KillerOneFlag As Integer, ByVal KillerTwoMove As UInt16, ByRef KillerTwoFlag As Integer)
         For n = 1 To LegalMoveArray(0)
             Dim Move As UInt16 = LegalMoveArray(n)
             'Locates TTMoves immediately.
             If TTMoveFlag = 0 AndAlso Move = TTMove Then
                 TTMoveFlag = 1
-                Continue For
+                'Continue For
             End If
-            If NeedValidateMoves AndAlso Not ValidateMove(Move, State, isWhite, PieceIndex, KPos, SearchInfo.CheckInfo, SearchInfo.OccupancyMask) Then Continue For
+            If NeedValidateMoves AndAlso Not ValidateMove(Move, State, isWhite, PieceIndex, MeKPos, SearchInfo.CheckInfo, SearchInfo.OccupancyMask) Then Continue For
 
             'The move is legal: add it to the main move buffer (if it is a capture move - sorted by MVVLVA first) or a segmented set of move classes.
             Dim PieceMap As UInt64 = 1UL << (Move And 63US)
@@ -1669,17 +1671,17 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                        ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((PieceMap And &H7F7F7F7F7F7F7FUL) << 9)) And State.BitboardPawnWhite)) <> 0UL Then
                         'New square is controlled by an enemy pawn - ammend move list.
                         TerribleMoves(0) += 1US
-                            TerribleMoves(TerribleMoves(0)) = Move
-                        ElseIf (KingDangerMapKnight(TargetSquare) And PieceMap) <> 0UL Then
-                            'Piece moves to a location close to the enemy king - leading to a possible check / attack.
-                            GoodMoves(0) += 1US
-                            GoodMoves(GoodMoves(0)) = Move
-                        ElseIf (SearchInfo.TFTable And PieceMap) <> 0UL Then
-                            'Piece is positioned on a "False" on the TFTable, meaning the square is controlled by an enemy piece.
-                            BadMoves(0) += 1US
-                            BadMoves(BadMoves(0)) = Move
-                        Else 'Is a regular move. Ammend move list.
-                            OtherMoves(0) += 1US
+                        TerribleMoves(TerribleMoves(0)) = Move
+                    ElseIf (KingDangerMapKnight(EnemyKPos) And PieceMap) <> 0UL Then
+                        'Piece moves to a location close to the enemy king - leading to a possible check / attack.
+                        GoodMoves(0) += 1US
+                        GoodMoves(GoodMoves(0)) = Move
+                    ElseIf (SearchInfo.TFTable And PieceMap) = 0UL Then
+                        'Piece is positioned on a "False" on the TFTable, meaning the square is controlled by an enemy piece.
+                        BadMoves(0) += 1US
+                        BadMoves(BadMoves(0)) = Move
+                    Else 'Is a regular move. Ammend move list.
+                        OtherMoves(0) += 1US
                         OtherMoves(OtherMoves(0)) = Move
                     End If
                 End If
@@ -1796,7 +1798,6 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 'Creates temporary variables.
                 Dim TempState As BoardState = State
                 Dim TempMeKPos As UInt16 = MeKPos
-
                 MakeMove(Moves(n), TempState, isWhite, TempMeKPos)
                 Dim TempSearchVars As NegaMaxSearchTools = CalibrateForMoveGeneration(State, TempMeKPos, EnemyKPos, Not isWhite)
                 If TempSearchVars.CheckInfo <> 0US Then
@@ -2148,7 +2149,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             'We have hit the 50-move rule - this can only be overruled if we are in checkmate, so assuming that is not the case, we can safely return 0.
             SearchVars = CalibrateForMoveGeneration(State, MeKPos, EnemyKPos, isWhite)
             If SearchVars.CheckInfo <> 0US Then
-                Dim FiftyMoveCount As Integer = CreateMoves(State, GlobalConstants.MaxTurnLegalMoves * DepthFromRoot, isWhite, SearchVars, MeKPos, True, DepthFromRoot, 0US)
+                Dim FiftyMoveCount As Integer = CreateMoves(State, GlobalConstants.MaxTurnLegalMoves * DepthFromRoot, isWhite, SearchVars, MeKPos, EnemyKPos, True, DepthFromRoot, 0US)
                 If FiftyMoveCount > 0 Then Return 0 'There is at least one valid move in the position - not in checkmate :D.
             Else
                 'We have confirmed that we are not in check, and so can classify this position as a draw.
@@ -2289,7 +2290,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         TempTTEntry.Flag = 2
         'Creates the legal moves for the chosen player. If Quiescence mode is activated then use capture moves only.
         Dim MoveBufferStrafe As Integer = GlobalConstants.MaxTurnLegalMoves * DepthFromRoot
-        NoLegalMoves = CreateMoves(State, MoveBufferStrafe, isWhite, SearchVars, MeKPos, (depth > 0 OrElse SearchVars.CheckInfo <> 0US), DepthFromRoot, TempTTEntry.BestMove)
+        NoLegalMoves = CreateMoves(State, MoveBufferStrafe, isWhite, SearchVars, MeKPos, EnemyKPos, (depth > 0 OrElse SearchVars.CheckInfo <> 0US), DepthFromRoot, TempTTEntry.BestMove)
 
         If NoLegalMoves > 0 Then 'If any move exists...
             'Creates temp variables.
@@ -2536,11 +2537,11 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         If State.MaterialCountWhite <= 1400 Then
             'White has little material left. Penelise white's king from being at the edges of the board, and when white's king
             'is close to black's king.
-            Score -= GetEEVTValue(CUShort(WKPos), CUShort(BKPos), State.MaterialCountWhite \ 100)
+            Score -= GetEEVTValue(WKPos, BKPos, State.MaterialCountWhite \ 100)
         End If
         If State.MaterialCountBlack <= 1400 Then
             'Black has little material left.
-            Score += GetEEVTValue(CUShort(BKPos), CUShort(WKPos), State.MaterialCountBlack \ 100)
+            Score += GetEEVTValue(BKPos, WKPos, State.MaterialCountBlack \ 100)
         End If
 
         Return CShort(Score)
@@ -2619,7 +2620,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 BlackPHMEval += GetPHMValue(GlobalConstants.PieceIndex.Queen, 1, Square, ScaledMaterialCountW)
                 TempPieceMap = TempPieceMap And (TempPieceMap - 1UL)
             End While
-            WhitePHMEval += GetPHMValue(GlobalConstants.PieceIndex.King, 1, BKPos, ScaledMaterialCountW)
+            BlackPHMEval += GetPHMValue(GlobalConstants.PieceIndex.King, 1, BKPos, ScaledMaterialCountW)
         End If
 
         Return (WhitePHMEval, BlackPHMEval)

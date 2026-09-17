@@ -25,29 +25,6 @@ Public Class MainMenu
     }
 
     Private Sub MainMenu_Load() Handles Me.Load
-        'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
-        Try
-            FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
-            ColourScheme = LineInput(1)
-            LineInput(1)
-            Dim GeneralSettings As String = LineInput(1)
-            Dim temp As String = GeneralSettings(7) 'Tests that the General Options are the correct length.
-            'Calibrates attributes based on settings.
-            If GeneralSettings(0) = "T" Then PlaySounds = True
-            If GeneralSettings(1) = "T" Then PlayAnimation = True
-            If GeneralSettings(2) = "T" Then UseSmallOpeningBook = True
-        Catch ex As Exception
-            'Unable to retrieve - set all settings to their default value.
-            ColourScheme = "def"
-            PlayAnimation = True
-            PlaySounds = True
-            UseSmallOpeningBook = False
-            Console.ForegroundColor = ConsoleColor.DarkRed
-            Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
-            Console.ForegroundColor = ConsoleColor.White
-        End Try
-        FileClose(1)
-        CreateColourProfile(ColourScheme)
         'Sets up the text, buttons, objects and opening book.
         SetupOptions()
         SetupPieces()
@@ -260,18 +237,51 @@ Public Class MainMenu
         Me.BringToFront()
         If PlayAnimation Then Console.Clear()
 
-        Dim TempColour As String
-        'Resets the user's colour profile (as it may have changed in the Settings form, and hence must be updated).
+
+        'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
+        Dim TempColour As String = ColourScheme
         Try
             FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
-            TempColour = LineInput(1)
-            FileClose(1)
-            If TempColour <> ColourScheme Then
-                ColourScheme = TempColour
-                CreateColourProfile(ColourScheme)
-            End If
+            ColourScheme = LineInput(1)
+            LineInput(1)
+            Dim GeneralSettings As String = LineInput(1)
+            Dim temp As String = GeneralSettings(7) 'Tests that the General Options are the correct length.
+            'Calibrates attributes based on settings.
+            If GeneralSettings(0) = "T" Then PlaySounds = True
+            If GeneralSettings(1) = "T" Then PlayAnimation = True
+            If GeneralSettings(2) = "T" Then UseSmallOpeningBook = True
         Catch ex As Exception
+            'Unable to retrieve - set all settings to their default value.
+            ColourScheme = "def"
+            PlayAnimation = True
+            PlaySounds = True
+            UseSmallOpeningBook = False
+            Console.ForegroundColor = ConsoleColor.DarkRed
+            Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
+            Console.ForegroundColor = ConsoleColor.White
+
+            'Creates the folder structure if needed.
+            Directory.CreateDirectory(Path.Combine(GlobalConstants.StartupPath, "Assets", "User"))
+            'Writes the colour preferences to a file (creates the file if one does not exist).
+            Try
+                FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Output)
+                PrintLine(1, ColourScheme)
+                PrintLine(1, CStr(GlobalConstants.DefaultAnimationSpeed))
+                PrintLine(1, GlobalConstants.DefaultGeneralOptions)
+                PrintLine(1, "0")
+                FileClose(1)
+            Catch
+                FileClose(1)
+                Console.ForegroundColor = ConsoleColor.DarkRed
+                Console.WriteLine("Unable to Save Settings. Please try again...")
+                Console.ForegroundColor = ConsoleColor.White
+            End Try
         End Try
+        FileClose(1)
+        If TempColour <> ColourScheme Then
+            'Resets the user's colour profile (as it may have changed in the Settings form, and hence must be updated).
+            CreateColourProfile(ColourScheme)
+        End If
         MyBase.Refresh()
 
         'To prevent the opening animation from triggering when the user exits back to the main menu, we test
@@ -552,7 +562,7 @@ Public Class MainMenu
         MsgBoxThread.Start()
     End Sub
     Sub ShowCreditsBox()
-        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2025)", vbInformation, "Credits")
+        MsgBox(Strings.StrDup(10, " ") & "Chess Game & Artificial Intelligence (" & GlobalConstants.ProgramVersion & ")" & vbCrLf & Strings.StrDup(21, " ") & "Created by Alfie Kunz (8158)" & vbCrLf & Strings.StrDup(22, " ") & "of Beckfoot School (37101)" & vbCrLf & "Project used for the AQA GCE Computer Science NEA" & vbCrLf & Strings.StrDup(35, " ") & "(2021 - 2026)", vbInformation, "Credits")
     End Sub
 
     Private Sub ExitBtn_Click() Handles ExitBtn.Click

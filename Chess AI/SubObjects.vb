@@ -9,7 +9,7 @@ Imports Microsoft.VisualBasic.ApplicationServices
 Public Class GlobalConstants
     Public Const StartingFENPosition As String = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     Public Const ProgramName As String = "Chess Game & Artificial Intelligence" 'also known as 'chessbot 9000' - thanks stroganoff <3
-    Public Const ProgramVersion As String = "v10.0"
+    Public Const ProgramVersion As String = "b11.0"
     Public Shared ReadOnly StartupPath As String = (AppDomain.CurrentDomain.BaseDirectory).TrimEnd("\"c)
 
     Public Const TranspositionTableSize As Byte = 64 - ((23)) 'Constant referring to how large the TranspositionTable object is.

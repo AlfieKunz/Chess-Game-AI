@@ -61,22 +61,7 @@ Public Class Settings
     'Subroutine which calibrates all the elements of the form. Used upon boot-up, and when resetting all settings.
     Private Sub ConfigureSettings()
         KnightClicked() 'Knight = default piece to move.
-        'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
-        Try
-            FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
-            ColourScheme = LineInput(1)
-            AnimationSpeed = Val(LineInput(1))
-            GeneralOptions = LineInput(1)
-            FixedSearchDepth = Val(LineInput(1))
-            Dim temp As String = GeneralOptions(7) 'Tests that the General Options are the correct length.
-        Catch ex As Exception
-            'Sets all settings to their default values.
-            ColourScheme = "def"
-            AnimationSpeed = GlobalConstants.DefaultAnimationSpeed
-            GeneralOptions = GlobalConstants.DefaultGeneralOptions
-            FixedSearchDepth = 0
-        End Try
-        FileClose(1)
+        LoadUserProfile()
 
         'Checks, or unckecks the general options based on the user's profile.
         AnimationRunning = True
@@ -103,6 +88,28 @@ Public Class Settings
 
         SpeedSetter.Value = AnimationSpeed
         AnimationSettingsChanged = False
+    End Sub
+    Public Sub LoadUserProfile()
+        'Algorithm which retrieves the colour scheme from a file (represented by mnemonics).
+        Try
+            FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Input)
+            ColourScheme = LineInput(1)
+            AnimationSpeed = Val(LineInput(1))
+            GeneralOptions = LineInput(1)
+            FixedSearchDepth = Val(LineInput(1))
+            Dim temp As String = GeneralOptions(7) 'Tests that the General Options are the correct length.
+        Catch ex As Exception
+            'Sets all settings to their default values.
+            Console.ForegroundColor = ConsoleColor.DarkRed
+            Console.WriteLine("Error in retrieving User Profile - reverting to default settings.")
+            Console.ForegroundColor = ConsoleColor.White
+            ColourScheme = "def"
+            AnimationSpeed = GlobalConstants.DefaultAnimationSpeed
+            GeneralOptions = GlobalConstants.DefaultGeneralOptions
+            FixedSearchDepth = 0
+            SaveSettings()
+        End Try
+        FileClose(1)
     End Sub
 
 
@@ -138,6 +145,8 @@ Public Class Settings
 
     'Subroutine that saves the user's settings to the UserProfile file, whenever any settings are modified.
     Private Sub SaveSettings()
+        'Creates the folder structure if needed.
+        Directory.CreateDirectory(Path.Combine(GlobalConstants.StartupPath, "Assets", "User"))
         'Writes the colour preferences to a file (creates the file if one does not exist).
         Try
             FileOpen(1, GlobalConstants.StartupPath & "\Assets\User\UserProfile.txt", OpenMode.Output)
@@ -668,7 +677,6 @@ Public Class Settings
             'Reconfigures the (default) settings.
             ConfigureSettings()
             Checkerboard.Refresh()
-            SaveSettings()
         End If
     End Sub
 
