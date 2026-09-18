@@ -41,24 +41,19 @@ Partial Public Class CoreMethods
 
         'Fills ZobristHasTable with pseudo-random 64-bit numbers
         Static RND As New Random()
-        Dim RNDOne, RNDTwo As UInt64
+        Dim Buffer(7) As Byte
         For PieceIndex = 0 To 5
             For Turn = 0 To 1
                 For Square = 0 To 63
-                    'Produce two random 32-bit numbers
-                    RNDOne = CULng(RND.Next())
-                    RNDTwo = CULng(RND.Next())
-                    'Combine these numbers together into a 64-bit number by applying a 32-bit left shift to RNDOne,
-                    'then combining this with RNDTwo via a bitwise OR operation.
-                    ZobristHashTable((128 * PieceIndex) + (64 * Turn) + Square) = (RNDOne << 32) Or RNDTwo
+                    RND.NextBytes(Buffer)
+                    ZobristHashTable((128 * PieceIndex) + (64 * Turn) + Square) = BitConverter.ToUInt64(Buffer, 0)
                 Next
             Next
         Next
         'Fills HasConstants with random 64-bit numbers.
         For n As Byte = 0 To 12
-            RNDOne = CULng(RND.Next())
-            RNDTwo = CULng(RND.Next())
-            ZobristHashConstants(n) = (RNDOne << 32) Or RNDTwo
+            RND.NextBytes(Buffer)
+            ZobristHashConstants(n) = BitConverter.ToUInt64(Buffer, 0)
         Next
     End Sub
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
@@ -491,7 +486,7 @@ Partial Public Class CoreMethods
     'This creates a 'field' around the king (stating where its legal moves are), along with creating pinned pieces
     'and checks.
     'This method returns true if the player to move contains at least 1 piece (ie: anything other than pawns). This will be useful for detecting Zugzwang in Null Move Pruning.
-    Public Function CalibrateForMoveGeneration(ByRef Board As BoardState, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal isWhite As Boolean, Optional ByRef PieceInPos As Boolean = True) As NegaMaxSearchTools
+    Public Function CalibrateForMoveGeneration(ByRef Board As BoardState, ByVal MeKPos As UInt16, ByVal EnemyKPos As UInt16, ByVal isWhite As Boolean, Optional ByRef PieceInPos As Boolean = False) As NegaMaxSearchTools
         Dim TFTable, PinInfoStraight, PinInfoDiag, OccupancyMask, EnemyPieceMask As UInt64
         Dim CheckInfo As UInt16
         'We construct the full bitboards of all pieces, minus the kings (allows rooks to 'see' through them so the king cannot move backwards when in check).
@@ -504,7 +499,7 @@ Partial Public Class CoreMethods
         Dim TempMask As UInt64
         If isWhite Then
             FriendlyPieceMask = Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite
-            If FriendlyPieceMask = 0UL Then PieceInPos = False
+            If FriendlyPieceMask <> 0UL Then PieceInPos = True 'Our position contains at least one minor / major piece, and so we are _probably_ not in Zugzwang.
             FriendlyPieceMask = FriendlyPieceMask Or Board.BitboardPawnWhite
 
             EnemyPieceMask = Board.BitboardPawnBlack Or Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack Or (1UL << EnemyKPos)
@@ -545,7 +540,7 @@ Partial Public Class CoreMethods
 
         Else 'Identical code but for the white pieces (fixing the Black TFTable).
             FriendlyPieceMask = Board.BitboardKnightBlack Or Board.BitboardBishopBlack Or Board.BitboardRookBlack Or Board.BitboardQueenBlack
-            If FriendlyPieceMask = 0UL Then PieceInPos = False
+            If FriendlyPieceMask <> 0UL Then PieceInPos = True
             FriendlyPieceMask = FriendlyPieceMask Or Board.BitboardPawnBlack
 
             EnemyPieceMask = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite Or (1UL << EnemyKPos)

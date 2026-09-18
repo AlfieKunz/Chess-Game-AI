@@ -87,7 +87,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
     'Stored as a hashed array so that the overall size of the Table can be reduced (would need to be 2^64 elements large otherwise).
     'This structure uses the 'Greatest Depth' replacement scheme, where each entry is timestamped for 3 moves.
     'Table will contain 2^n entries, where n is the value set in TranspositionTableSize (in the brackets).
-    Private TranspositionTable(1 << (64 - GlobalConstants.TranspositionTableSize) - 1) As TTEntry
+    Private TranspositionTable((1 << (64 - GlobalConstants.TranspositionTableSize)) - 1) As TTEntry
     Private TTIsEmpty As Boolean
     Private TTGeneration As Byte 'Represents the current move count of the position, so that we can index when TTEntries are made.
 
@@ -716,7 +716,6 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         'Copies primary board attributes to their temporary counterparts.
         Dim isWhite As Boolean = PlayerTurn
         Dim TempState As BoardState = PrimaryState
-        Dim TempWCanCastle, TempBCanCastle As New CanCastle
         Dim TempWKPos, TempBKPos As UInt16
         If PlayerTurn Then
             TempWKPos = PrimaryMeKPos
@@ -753,11 +752,11 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 Exit For
             End If
 
-            If TempTTEntry.BestMove <> 0 Then
+            If TempTTEntry.BestMove <> 0US Then
                 'As this node in the TranspositionTable is involved in the set of best moves (as predicted by the AI), we
                 'keep it alive by resetting its TimeToLive value. This ensures that the AI does not 'forget' its most vital
                 'nodes, due to them expiring.
-                TranspositionTable(EntryInTT).Generation = CByte(3 + TTGeneration)
+                TranspositionTable(EntryInTT).Generation = CByte(Math.Min(3 + TTGeneration, Byte.MaxValue))
                 'We have stored a move in this position - retrieve this move, then add the PGN version of it to BestLine.
                 BestMove = TempTTEntry.BestMove
                 ConvertBitMoveToMove(TempMove, BestMove)
@@ -1612,7 +1611,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             'Locates TTMoves immediately.
             If TTMoveFlag = 0 AndAlso Move = TTMove Then
                 TTMoveFlag = 1
-                'Continue For
+                Continue For
             End If
             If NeedValidateMoves AndAlso Not ValidateMove(Move, State, isWhite, PieceIndex, MeKPos, SearchInfo.CheckInfo, SearchInfo.OccupancyMask) Then Continue For
 
@@ -1730,12 +1729,13 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Dim OldEval, NewEval As Int16
         If SearchSettings.UsePieceHeatMaps Then OldEval = Evaluate(State, isWhite, MeKPos, EnemyKPos)
 
-        Dim BaseEntryInTT As Integer = If(SearchSettings.UseTranspositionTable AndAlso TranspositionTable(CInt(State.ZobristValue >> GlobalConstants.TranspositionTableSize)).Key = State.ZobristValue, CInt(State.ZobristValue >> GlobalConstants.TranspositionTableSize), 0)
+        Dim IndexInTT As Integer = CInt(State.ZobristValue >> GlobalConstants.TranspositionTableSize)
+        Dim BaseEntryInTT As Integer = If(SearchSettings.UseTranspositionTable AndAlso TranspositionTable(IndexInTT).Key = State.ZobristValue, IndexInTT, -1)
         For n = 0 To Moves.Length - 1
             MoveScores(n) = 10000
 
             'If the Transposition Table has an entry for the current position, and we are looking at the best move found, give this a bloody massive bonus.
-            If BaseEntryInTT > 0 AndAlso TranspositionTable(BaseEntryInTT).BestMove = Moves(n) Then
+            If BaseEntryInTT >= 0 AndAlso TranspositionTable(BaseEntryInTT).BestMove = Moves(n) Then
                 MoveScores(n) = 100000
             Else
                 Dim OldSquare As UInt16 = (Moves(n) And 4032US) >> 6
@@ -2213,7 +2213,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 ReplaceTTNode = True
             Else
                 'Make sure recommended move isn't passed into the move generation code (as move may not be a capture move).
-                TempTTEntry.BestMove = 0
+                TempTTEntry.BestMove = 0US
             End If
 
         ElseIf depth > 0 AndAlso (TranspositionTable(EntryInTT).Depth < depth OrElse TTGeneration - TranspositionTable(EntryInTT).Generation >= SearchSettings.TimeToLive) AndAlso SearchSettings.UseTranspositionTable Then
@@ -2231,8 +2231,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Dim DepthExt, NoLegalMoves As Integer
         Dim NeedFullSearch As Boolean
         'Creates and forms the TFTable for the player to move. This subroutine will also flag for Minor & Major piece in the position.
-        Dim NoPieceInPos As Boolean
-        SearchVars = CalibrateForMoveGeneration(State, MeKPos, EnemyKPos, isWhite, NoPieceInPos)
+        Dim PieceInPos As Boolean
+        SearchVars = CalibrateForMoveGeneration(State, MeKPos, EnemyKPos, isWhite, PieceInPos)
 
         If Not (depth > 0 OrElse SearchVars.CheckInfo <> 0US) Then 'Quiescence mode activated.
             'Evaluation of board is the current move to beat.
@@ -2245,7 +2245,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             'opponent, and search this new positon at a reduced depth. If this new position is *not* good enough to cause a Alpha-Beta cutoff (note that we
             'only pass in Beta) then we are clearly _much_ better than the opponent. Treat this as an Alpha-Beta cutoff.
             Dim NMPRValue As Integer = SearchSettings.NullMoveRValue + If(depth > 6, 1, 0) 'Don't eliminate too many nodes for a shallow search.
-            If depth >= NMPRValue AndAlso CanTakeNullMove AndAlso SearchVars.CheckInfo = 0US AndAlso Not NoPieceInPos Then
+            If depth >= NMPRValue AndAlso CanTakeNullMove AndAlso SearchVars.CheckInfo = 0US AndAlso PieceInPos Then
                 'If we are doing very well indeed, taking a Null Move is meaningless (already likely to fail-high).
                 If Evaluate(State, isWhite, MeKPos, EnemyKPos) < Beta + GlobalConstants.PieceWeight.Pawn Then
                     Dim OldEnPassant As UInt16 = State.EnPassant

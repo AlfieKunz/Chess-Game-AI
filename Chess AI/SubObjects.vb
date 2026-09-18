@@ -12,7 +12,7 @@ Public Class GlobalConstants
     Public Const ProgramVersion As String = "b11.0"
     Public Shared ReadOnly StartupPath As String = (AppDomain.CurrentDomain.BaseDirectory).TrimEnd("\"c)
 
-    Public Const TranspositionTableSize As Byte = 64 - ((23)) 'Constant referring to how large the TranspositionTable object is.
+    Public Const TranspositionTableSize As Byte = 64 - ((26)) 'Constant referring to how large the TranspositionTable object is.
     'Used to determine how much to scate the ZobristValue by.
 
     'Structure holding the relative weights of all the pieces on the board.
