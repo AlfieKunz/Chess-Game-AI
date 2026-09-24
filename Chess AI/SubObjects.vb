@@ -154,6 +154,15 @@ Public Class AISearchSettings
     'Denotes all the variables that should not be displayed in the 'Modify AI Settings' panel.
     Public NonDisplayable() As String = {"NonDisplayable", "ReturnBestMove"}
 
+    'Constants that determine the 'off' values for each field
+    Public ReadOnly Property DisabledValues As New Dictionary(Of String, Object) From {
+        {"TimeToLive", CSByte(0)},
+        {"NullMoveRValue", Integer.MaxValue - 1},
+        {"MaxDepthExt", 0},
+        {"ReductionThreshold", Integer.MaxValue},
+        {"AspirationWidth", 0S}
+    }
+
     Public UseQuiescence As Boolean 'Will the AI use the Quiescence algorithm?
     Public UsePieceHeatMaps As Boolean 'Will the AI use PieceHeatMaps in its search?
     Public UseTranspositionTable As Boolean 'Will the AI use the Transposition Table in its search?
@@ -174,10 +183,10 @@ Public Class AISearchSettings
     'in checks, late move reductions, etc).
     Public MaxDepthExt As Integer 'Each time the AI is put into check, it increases its search depth by 1. This value limits the number of these 'extensions'
     'in a given path.
-    Public MoveReductionThreshold As Integer 'Denotes how many legal moves will be searched at the full depth (with the remaining, 'late' moves being
+    Public ReductionThreshold As Integer 'Denotes how many legal moves will be searched at the full depth (with the remaining, 'late' moves being
     'searched at a reduced depth to save time).
-    Public AspirationWindowWidth As Int16 'Denotes the (half) width of the Aspiration Window, for use in iterative deepening. Measured in centipawns (100 = pawn weight).
-    Public UseBitMasks As Boolean 'Denotes whether the AI is able to use bit-masks, for use in past pawn & isolated pawn detection.
+    Public AspirationWidth As Int16 'Denotes the (half) width of the Aspiration Window, for use in iterative deepening. Measured in centipawns (100 = pawn weight).
+    Public EvaluatePawnStructure As Boolean 'Denotes whether the AI is able to use bit-masks, for use in past pawn & isolated pawn detection.
     Public UsePVS As Boolean 'Can the AI use Principle Variation Search, for the root node?
 
 
@@ -192,6 +201,13 @@ Public Class AISearchSettings
         SetDefaultSettings()
     End Sub
 
+    Public ReadOnly Property DefaultValues As New Dictionary(Of String, Object) From {
+        {"TimeToLive", CSByte(4)},
+        {"NullMoveRValue", 3},
+        {"MaxDepthExt", 8},
+        {"ReductionThreshold", 4},
+        {"AspirationWidth", CShort(40)}
+    }
     Public Sub SetDefaultSettings()
         UseQuiescence = True
         UsePieceHeatMaps = True
@@ -202,13 +218,13 @@ Public Class AISearchSettings
         ReturnBestMove = True
         UpdateLifetimeStats = True
         NodeSearchUseHashing = False
-        TimeToLive = 4
-        NullMoveRValue = 3
+        TimeToLive = CSByte(DefaultValues("TimeToLive"))
+        NullMoveRValue = CInt(DefaultValues("NullMoveRValue"))
         StableSearch = False
-        MaxDepthExt = 8
-        MoveReductionThreshold = 4
-        AspirationWindowWidth = 40
-        UseBitMasks = True
+        MaxDepthExt = CInt(DefaultValues("MaxDepthExt"))
+        ReductionThreshold = CInt(DefaultValues("ReductionThreshold"))
+        AspirationWidth = CShort(DefaultValues("AspirationWidth"))
+        EvaluatePawnStructure = True
         UsePVS = True
     End Sub
 
@@ -229,9 +245,9 @@ Public Class AISearchSettings
         NullMoveRValue = Copier.NullMoveRValue
         If StableSearch <> Copier.StableSearch Then CoreAISettingsChanged = True : StableSearch = Copier.StableSearch
         MaxDepthExt = Copier.MaxDepthExt
-        MoveReductionThreshold = Copier.MoveReductionThreshold
-        If AspirationWindowWidth <> Copier.AspirationWindowWidth Then CoreAISettingsChanged = True : AspirationWindowWidth = Copier.AspirationWindowWidth
-        If UseBitMasks <> Copier.UseBitMasks Then CoreAISettingsChanged = True : UseBitMasks = Copier.UseBitMasks
+        ReductionThreshold = Copier.ReductionThreshold
+        If AspirationWidth <> Copier.AspirationWidth Then CoreAISettingsChanged = True : AspirationWidth = Copier.AspirationWidth
+        If EvaluatePawnStructure <> Copier.EvaluatePawnStructure Then CoreAISettingsChanged = True : EvaluatePawnStructure = Copier.EvaluatePawnStructure
         If UsePVS <> Copier.UsePVS Then CoreAISettingsChanged = True : UsePVS = Copier.UsePVS
         Return CoreAISettingsChanged
     End Function

@@ -21,7 +21,9 @@
 - Actually realised that Release version of .NET projects exist: ~6x performance boost :O.
 - Migration to flat bitmove buffer for all depths, rather than heap-heavy uint16() allocation per node.
 - Addition of Span.CopyTo instead of Array.Copy, for fast move sorting and allocation.
+- Refactored move ordering system (terrible --> amazing bucketing)
 
+- Improved efficiency and readability for adjusting AI settings, allowing the user to disable key elements such as NMP with a simple checkbox (resetting to a constant 'disabled' value).
 - Handed more control to the AI, for handling check states, TFTable, invalid position handling, and converting between Moves and PGNs.
 - Massively redesigned generation of PGN moves using bitboards, for speedy generation of an AI's best line.
 - Toggleable setting to allow MakeMove to skip MaterialCount, PHM and Zobrist updates - provides faster Perft Test results.
@@ -55,4 +57,5 @@
 - Added error handling to changing of AI settings.
 - Fixed User Assets not being re-created upon program reset or being missing.
 - Fixed invalid generation of Zobrist keys.
+- Improved robustness of PGN move inputting.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

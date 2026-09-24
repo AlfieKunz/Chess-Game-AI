@@ -98,27 +98,43 @@ Partial Public Class Chess 'ew- danny
             For Each Field As FieldInfo In AISettingsFields
                 If Not SearchSettings.NonDisplayable.Contains(Field.Name) Then
                     'Adds all the fields to the panel, with decent spacing.
-                    Dim AISetting As Control = If(Field.FieldType = GetType(Boolean), New CheckBox(), New Label())
-                    'Converts the Field Name into a readable name, by inserting spaces before each capital letter.
-                    AISetting.Text = Regex.Replace(Field.Name, "([A-Z])", " $1").TrimStart()
-                    AISetting.Location = New Point(15 + If(Field.FieldType = GetType(Boolean), 0, 22), CheckBoxHeight)
-                    AISetting.Width = 180
-                    AISettingsPanel.Size = New Size(AISettingsPanel.Size.Width, AISettingsPanel.Size.Height + 25)
-
                     If Field.FieldType = GetType(Boolean) Then
-                        AISetting.Name = Field.Name 'Represents the item that will be assigned values by the settings (indexed by name).
-                        AddHandler DirectCast(AISetting, CheckBox).CheckedChanged, AddressOf AISettingValueChanged
-                    Else
-                        'Adds a textbox to enable the user to enter their own value.
-                        Dim SettingBox As New System.Windows.Forms.TextBox With {
-                            .Location = New Point(8, CheckBoxHeight - 2),
-                            .Size = New Size(30, 20)
+                        'Converts the Field Name into a readable name, by inserting spaces before each capital letter.
+                        Dim AISetting As New CheckBox With {
+                            .Name = Field.Name, 'Represents the item that will be assigned values by the settings (indexed by name).
+                            .Text = Regex.Replace(Field.Name, "([A-Z])", " $1").TrimStart(),
+                            .Location = New Point(8, CheckBoxHeight),
+                            .Width = 180
                         }
-                        SettingBox.Name = Field.Name
+                        AddHandler AISetting.CheckedChanged, AddressOf AISettingValueChanged
+                        AISettingsPanel.Controls.Add(AISetting)
+                    Else 'Allows all numerical values to be toggled off, setting to an 'off' value.
+                        Dim SettingToggle As New CheckBox With {
+                            .Name = "Check_" & Field.Name,
+                            .Location = New Point(8, CheckBoxHeight),
+                            .Size = New Size(18, 18),
+                            .Checked = True 'Active by default
+                        }
+                        AddHandler SettingToggle.CheckedChanged, AddressOf AISettingValueChanged
+                        AISettingsPanel.Controls.Add(SettingToggle)
+
+                        Dim SettingBox As New System.Windows.Forms.TextBox With {
+                            .Name = Field.Name,
+                            .Location = New Point(28, CheckBoxHeight - 2),
+                            .Size = New Size(32, 20)
+                        }
                         AddHandler SettingBox.TextChanged, AddressOf AISettingValueChanged
                         AISettingsPanel.Controls.Add(SettingBox)
+
+                        Dim SettingLabel As New Label With {
+                            .Text = Regex.Replace(Field.Name, "([A-Z])", " $1").TrimStart(),
+                            .Location = New Point(60, CheckBoxHeight),
+                            .Width = 150
+                        }
+                        AISettingsPanel.Controls.Add(SettingLabel) 'Adds to the settings panel.
                     End If
-                    AISettingsPanel.Controls.Add(AISetting) 'Adds to the settings panel.
+
+                    AISettingsPanel.Size = New Size(AISettingsPanel.Size.Width, AISettingsPanel.Size.Height + 25)
                     CheckBoxHeight += 25
                 End If
             Next
@@ -681,7 +697,8 @@ Partial Public Class Chess 'ew- danny
         Dim FormattedPGN As String = ""
         If NeedsFormatting Then
             Try
-                Moves = Regex.Replace(Moves, "[\(\[\{].*?[\)\]\}]", String.Empty) 'Removes pairs of brackets, and everything inside them.
+                Moves = Regex.Replace(Moves, "\{[^}]*\}|\([^)]*\)|\[[^\]]*\]", String.Empty) 'Removes pairs of brackets, and everything inside them.
+                Moves = Regex.Replace(Moves, "[?!]+|\$\d+|\b\d+\s*\.{2,3}\s*", String.Empty) 'Removes annotation marks, and cleans up moves as a result of said annotation (eg: 3... e6).
                 Moves = Moves.Replace(",", " ") 'Generalises format.
                 Moves = Regex.Replace(Moves, "\s{2,}", " ").Trim(" ") 'Puts everything onto one line, and removes double-spaces.
 

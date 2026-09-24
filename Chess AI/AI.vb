@@ -309,8 +309,10 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             'Stored as a set of strings in the format 0="xy", 1="XY", xy = start coors, XY = end coors.
             Dim FormattedMoves(BasePieceMoves.Length - 1, 1) As String
             For n = 0 To BasePieceMoves.Length - 1
-                FormattedMoves(n, 0) = ((BasePieceMoves(n) And 3584) >> 9).ToString() & ((BasePieceMoves(n) And 448) >> 6).ToString()
-                FormattedMoves(n, 1) = ((BasePieceMoves(n) And 56) >> 3).ToString() & (BasePieceMoves(n) And 7).ToString()
+                Dim OldSquare As Integer = (BasePieceMoves(n) And 4032US) >> 6
+                Dim NewSquare As Integer = BasePieceMoves(n) And 63US
+                FormattedMoves(n, 0) = (OldSquare Mod 8).ToString() & (OldSquare \ 8).ToString()
+                FormattedMoves(n, 1) = (NewSquare Mod 8).ToString() & (NewSquare \ 8).ToString()
             Next
             Return FormattedMoves
         End If
@@ -427,7 +429,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             'deeper, the position is significantly better / worse than the previous score suggested) then we must repeat the whole search again, this time with
             'an infinite window. To make things easier, we set this 'cut-off' move to be the next move to search, as it is likely very good :D.
             Dim AspirationWindow() As Int16
-            Dim DynamicAWWidth As Int16 = SearchSettings.AspirationWindowWidth
+            Dim DynamicAWWidth As Int16 = SearchSettings.AspirationWidth
             Dim AspirationWindowCode As String = ""
             Dim AWFailCount(1) As Integer
             If PreviousBestScore = -InfScore OrElse DynamicAWWidth <= 0 OrElse Depth < 4 Then
@@ -1257,7 +1259,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                     ElseIf (Move And 28672US) = 28672US Then 'Knight Promotion.
                         State.BitboardKnightWhite = State.BitboardKnightWhite Xor NewPieceMap
                     Else
-                        If (Move And 28672US) = 8192US AndAlso ((((NewPieceMap And &HFEFEFEFEFEFEFEFEUL) >> 1) Or ((NewPieceMap And &H7F7F7F7F7F7F7FUL) << 1)) And State.BitboardPawnBlack) <> 0UL Then
+                        If (Move And 28672US) = 8192US AndAlso ((((NewPieceMap And &HFEFEFEFEFEFEFEFEUL) >> 1) Or ((NewPieceMap And &H7F7F7F7F7F7F7F7FUL) << 1)) And State.BitboardPawnBlack) <> 0UL Then
                             'EnPassant creation, if we are neighbouring an enemy pawn. First removes old data.
                             If State.EnPassant <> 0US Then State.ZobristValue = State.ZobristValue Xor ZobristHashConstants(State.EnPassant Mod 8)
                             State.EnPassant = NewSquare + 8US
@@ -1341,7 +1343,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                     ElseIf (Move And 28672US) = 28672US Then ' Knight Promotion
                         State.BitboardKnightBlack = State.BitboardKnightBlack Xor NewPieceMap
                     Else
-                        If (Move And 28672US) = 8192US AndAlso ((((NewPieceMap And &HFEFEFEFEFEFEFEFEUL) >> 1) Or ((NewPieceMap And &H7F7F7F7F7F7F7FUL) << 1)) And State.BitboardPawnWhite) <> 0UL Then
+                        If (Move And 28672US) = 8192US AndAlso ((((NewPieceMap And &HFEFEFEFEFEFEFEFEUL) >> 1) Or ((NewPieceMap And &H7F7F7F7F7F7F7F7FUL) << 1)) And State.BitboardPawnWhite) <> 0UL Then
                             If State.EnPassant <> 0US Then State.ZobristValue = State.ZobristValue Xor ZobristHashConstants(State.EnPassant Mod 8)
                             State.EnPassant = NewSquare - 8US
                             DontResetEnPassant = True
@@ -1661,24 +1663,24 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                     KillerOneFlag = 1
                 ElseIf KillerTwoFlag = 0 AndAlso Move = KillerTwoMove Then
                     KillerTwoFlag = 1
-                Else
+                Else '"Bucket" based move ordering system - get rid of bad moves first!!
                     Dim TargetSquare As UInt16 = Move And 63US
-                    If PieceIndex = GlobalConstants.PieceIndex.Pawn AndAlso (TargetSquare < 16US OrElse TargetSquare > 48US) Then 'User is promoting a pawn (or is very close to).
+                    If PieceIndex = GlobalConstants.PieceIndex.Pawn AndAlso (TargetSquare < 16US OrElse TargetSquare > 47US) Then 'User is promoting a pawn (or is very close to).
                         PawnPromotionMoves(0) += 1US
                         PawnPromotionMoves(PawnPromotionMoves(0)) = Move
-                    ElseIf If(isWhite, ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((PieceMap And &H7F7F7F7F7F7F7FUL) >> 7)) And State.BitboardPawnBlack),
-                       ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((PieceMap And &H7F7F7F7F7F7F7FUL) << 9)) And State.BitboardPawnWhite)) <> 0UL Then
+                    ElseIf If(isWhite, ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((PieceMap And &H7F7F7F7F7F7F7F7FUL) >> 7)) And State.BitboardPawnBlack),
+                       (((PieceMap And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((PieceMap And &H7F7F7F7F7F7F7F7FUL) << 9)) And State.BitboardPawnWhite) <> 0UL Then
                         'New square is controlled by an enemy pawn - ammend move list.
                         TerribleMoves(0) += 1US
                         TerribleMoves(TerribleMoves(0)) = Move
-                    ElseIf (KingDangerMapKnight(EnemyKPos) And PieceMap) <> 0UL Then
-                        'Piece moves to a location close to the enemy king - leading to a possible check / attack.
-                        GoodMoves(0) += 1US
-                        GoodMoves(GoodMoves(0)) = Move
                     ElseIf (SearchInfo.TFTable And PieceMap) = 0UL Then
                         'Piece is positioned on a "False" on the TFTable, meaning the square is controlled by an enemy piece.
                         BadMoves(0) += 1US
                         BadMoves(BadMoves(0)) = Move
+                    ElseIf (KingDangerMapKnight(EnemyKPos) And PieceMap) <> 0UL Then
+                        'Piece moves to a location close to the enemy king - leading to a possible check / attack.
+                        GoodMoves(0) += 1US
+                        GoodMoves(GoodMoves(0)) = Move
                     Else 'Is a regular move. Ammend move list.
                         OtherMoves(0) += 1US
                         OtherMoves(OtherMoves(0)) = Move
@@ -1733,21 +1735,23 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
         Dim BaseEntryInTT As Integer = If(SearchSettings.UseTranspositionTable AndAlso TranspositionTable(IndexInTT).Key = State.ZobristValue, IndexInTT, -1)
         For n = 0 To Moves.Length - 1
             MoveScores(n) = 10000
+            Dim MoveIsCapture As Boolean = (Moves(n) >= 32768US) OrElse (Moves(n) And 28672US) = 12288US
 
             'If the Transposition Table has an entry for the current position, and we are looking at the best move found, give this a bloody massive bonus.
             If BaseEntryInTT >= 0 AndAlso TranspositionTable(BaseEntryInTT).BestMove = Moves(n) Then
                 MoveScores(n) = 100000
+                If MoveIsCapture Then NumCapturesThreatsInBasePos += 1
             Else
                 Dim OldSquare As UInt16 = (Moves(n) And 4032US) >> 6
                 Dim NewSquare As UInt16 = Moves(n) And 63US
                 Dim PieceIndex As Integer = GetPieceIndexFromSquare(OldSquare, State, isWhite)
                 Dim PieceWeight As Integer = PieceValue(PieceIndex)
                 IsCaptureMove = False
-                If (Moves(n) >= 32768US) OrElse (Moves(n) And 28672US) = 12288US Then '= capture move.
+                If MoveIsCapture Then '= capture move.
                     NumCapturesThreatsInBasePos += 1
                     IsCaptureMove = True
                     'Gets the difference in weight between the capturing piece, and the captured piece (MVV-LVA).
-                    Dim PieceValueDiff As Double = If((Moves(n) And 32768) = 32768, 6 * PieceValue(GetPieceIndexFromSquare(NewSquare, State, Not isWhite)) - PieceWeight, 4 * GlobalConstants.PieceWeight.Pawn)
+                    Dim PieceValueDiff As Double = If((Moves(n) And 32768) = 32768, 6 * PieceValue(GetPieceIndexFromSquare(NewSquare, State, Not isWhite)) - PieceWeight, 5 * GlobalConstants.PieceWeight.Pawn)
                     MoveScores(n) += 5000 + 5 * PieceValueDiff 'Huge bonus for taking pieces, and especially relatively heavy pieces.
                 End If
 
@@ -1758,18 +1762,18 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         MoveScores(n) += 250
                     End If
                 End If
-                If Math.Max(Math.Abs((EnemyKPos Mod 8US) - (NewSquare Mod 8US)), Math.Abs((EnemyKPos \ 8US) - (NewSquare \ 8US))) <= 3 Then
+                Dim PieceMap As UInt64 = 1UL << OldSquare
+                If (KingDangerMapKnight(EnemyKPos) And PieceMap) <> 0UL Then
                     'Piece moves to a location close to the enemy king - leading to a possible check / attack.
                     MoveScores(n) += 50
                 End If
 
                 'Checks if the old square is controlled by an enemy pawn. If so, we should encourage moving it.
-                Dim PieceMap As UInt64 = 1UL << OldSquare
                 Dim SquareIsControlledByPawn As Boolean
                 If isWhite Then
-                    SquareIsControlledByPawn = (((PieceMap And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((PieceMap And &H7F7F7F7F7F7F7FUL) >> 7) And State.BitboardPawnBlack) <> 0UL
+                    SquareIsControlledByPawn = ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((PieceMap And &H7F7F7F7F7F7F7F7FUL) >> 7)) And State.BitboardPawnBlack) <> 0UL
                 Else
-                    SquareIsControlledByPawn = (((PieceMap And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((PieceMap And &H7F7F7F7F7F7F7FUL) << 9) And State.BitboardPawnWhite) <> 0UL
+                    SquareIsControlledByPawn = ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((PieceMap And &H7F7F7F7F7F7F7F7FUL) << 9)) And State.BitboardPawnWhite) <> 0UL
                 End If
                 If SquareIsControlledByPawn Then
                     MoveScores(n) += PieceWeight * PieceWeight \ 500
@@ -1780,9 +1784,9 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 'Checks if the new square is controlled by an enemy pawn.
                 PieceMap = 1UL << NewSquare
                 If isWhite Then
-                    SquareIsControlledByPawn = (((PieceMap And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((PieceMap And &H7F7F7F7F7F7F7FUL) >> 7) And State.BitboardPawnBlack) <> 0UL
+                    SquareIsControlledByPawn = ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((PieceMap And &H7F7F7F7F7F7F7F7FUL) >> 7)) And State.BitboardPawnBlack) <> 0UL
                 Else
-                    SquareIsControlledByPawn = (((PieceMap And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((PieceMap And &H7F7F7F7F7F7F7FUL) << 9) And State.BitboardPawnWhite) <> 0UL
+                    SquareIsControlledByPawn = ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((PieceMap And &H7F7F7F7F7F7F7F7FUL) << 9)) And State.BitboardPawnWhite) <> 0UL
                 End If
                 If SquareIsControlledByPawn Then
                     MoveScores(n) -= (PieceWeight * PieceWeight \ 250) * If(IsCaptureMove, 1, 2)
@@ -1799,7 +1803,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 Dim TempState As BoardState = State
                 Dim TempMeKPos As UInt16 = MeKPos
                 MakeMove(Moves(n), TempState, isWhite, TempMeKPos)
-                Dim TempSearchVars As NegaMaxSearchTools = CalibrateForMoveGeneration(State, TempMeKPos, EnemyKPos, Not isWhite)
+                Dim TempSearchVars As NegaMaxSearchTools = CalibrateForMoveGeneration(TempState, TempMeKPos, EnemyKPos, Not isWhite)
                 If TempSearchVars.CheckInfo <> 0US Then
                     'The move has put the enemy king in check - give a big bonus.
                     MoveScores(n) += 2500
@@ -1808,7 +1812,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
                 'Evaluates how this move improves the player's position, using the PieceHeatMaps.
                 If SearchSettings.UsePieceHeatMaps Then
-                    NewEval = Evaluate(State, isWhite, TempMeKPos, EnemyKPos)
+                    NewEval = Evaluate(TempState, isWhite, TempMeKPos, EnemyKPos)
                     MoveScores(n) += (NewEval - OldEval) * 4
                 End If
             End If
@@ -1864,7 +1868,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         State.ZobristValue = State.ZobristValue Xor GetZobristHashTableValue(GlobalConstants.PieceIndex.Knight, 0, NewSquare)
                         State.PHMValueWhite += GetPHMValue(GlobalConstants.PieceIndex.Knight, 0, NewSquare, 16)
                     Else
-                        If (Move And 28672US) = 8192US AndAlso ((((NewPieceMap And &HFEFEFEFEFEFEFEFEUL) >> 1) Or ((NewPieceMap And &H7F7F7F7F7F7F7FUL) << 1)) And State.BitboardPawnBlack) <> 0UL Then
+                        If (Move And 28672US) = 8192US AndAlso ((((NewPieceMap And &HFEFEFEFEFEFEFEFEUL) >> 1) Or ((NewPieceMap And &H7F7F7F7F7F7F7F7FUL) << 1)) And State.BitboardPawnBlack) <> 0UL Then
                             'EnPassant creation, if we are neighbouring an enemy pawn. First removes old data.
                             If State.EnPassant <> 0US Then State.ZobristValue = State.ZobristValue Xor ZobristHashConstants(State.EnPassant Mod 8)
                             State.ZobristValue = State.ZobristValue Xor ZobristHashConstants(NewSquare Mod 8) 'Ammended for en passant creation.
@@ -1998,7 +2002,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         State.ZobristValue = State.ZobristValue Xor GetZobristHashTableValue(GlobalConstants.PieceIndex.Knight, 1, NewSquare)
                         State.PHMValueBlack += GetPHMValue(GlobalConstants.PieceIndex.Knight, 1, NewSquare, 16)
                     Else
-                        If (Move And 28672US) = 8192US AndAlso ((((NewPieceMap And &HFEFEFEFEFEFEFEFEUL) >> 1) Or ((NewPieceMap And &H7F7F7F7F7F7F7FUL) << 1)) And State.BitboardPawnWhite) <> 0UL Then
+                        If (Move And 28672US) = 8192US AndAlso ((((NewPieceMap And &HFEFEFEFEFEFEFEFEUL) >> 1) Or ((NewPieceMap And &H7F7F7F7F7F7F7F7FUL) << 1)) And State.BitboardPawnWhite) <> 0UL Then
                             If State.EnPassant <> 0US Then State.ZobristValue = State.ZobristValue Xor ZobristHashConstants(State.EnPassant Mod 8)
                             State.ZobristValue = State.ZobristValue Xor ZobristHashConstants(NewSquare Mod 8)
                             State.EnPassant = NewSquare - 8US
@@ -2342,7 +2346,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         'is deemed 'more quiet', and so more moves are searched at a reduced depth.
                         'We disable this feature if there are no search extensions, as these are put into place when a position is deemed 'crutial' enough for a full search.
                         NeedFullSearch = True
-                        If Not SearchSettings.StableSearch AndAlso depth >= 3 AndAlso DepthExt = 0 AndAlso (n - MoveBufferStrafe + If(TempTTEntry.BestMove = 0, 1, 2)) >= SearchSettings.MoveReductionThreshold Then
+                        If Not SearchSettings.StableSearch AndAlso depth >= 3 AndAlso DepthExt = 0 AndAlso (n - MoveBufferStrafe + If(TempTTEntry.BestMove = 0, 1, 2)) >= SearchSettings.ReductionThreshold Then
                             'We use a tightened Alpha-Beta window here, so that if any fail-high nodes then are detected and sent back up the tree instantly.
                             CurrentMove = -NegaMax(NegaMaxBoardStates(DepthFromRoot), depth - 2, NumDepthExt, Not isWhite, EnemyKPos, TempMeKPos, -Alpha - 1S, -Alpha, True)
                             If CurrentMove > Alpha Then
@@ -2486,7 +2490,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
         'We check for past pawns, isolated pawns, and doubled pawns, using the pawn bit masks.
         'For each of these, we apply bonuses & penalties based on how far the pawn is away from promoting.
-        If SearchSettings.UseBitMasks Then
+        If SearchSettings.EvaluatePawnStructure Then
             'Note that the Pawn Masks are constructed by shifting 1UL based on the pawn's position, s.t the h1 square is the first bit, the a1 square
             'is the 8th bit, and the a8 square is the last (64th) bit.
             Dim PawnPosition, PawnRank, PawnFile As Integer

@@ -116,8 +116,8 @@ Public Class OnePlayerCustomisation
             UserSearchSettings.UseTranspositionTable = False
             UserSearchSettings.StableSearch = True
             UserSearchSettings.NullMoveRValue = Int16.MaxValue
-            UserSearchSettings.AspirationWindowWidth = 0
-            UserSearchSettings.UseBitMasks = False
+            UserSearchSettings.AspirationWidth = 0
+            UserSearchSettings.EvaluatePawnStructure = False
             UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 3 Then
             'Easy AI. 0.5s per search. Same as Beginner; with PieceHeatMaps & Null Move Pruning turned on.
@@ -125,8 +125,8 @@ Public Class OnePlayerCustomisation
             UserSearchSettings.UseQuiescence = False
             UserSearchSettings.UseTranspositionTable = False
             UserSearchSettings.StableSearch = True
-            UserSearchSettings.AspirationWindowWidth = 0
-            UserSearchSettings.UseBitMasks = False
+            UserSearchSettings.AspirationWidth = 0
+            UserSearchSettings.EvaluatePawnStructure = False
             UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 4 Then
             'Medium AI. 1s per search. Same as Beginner; with Quiescence, TranspositionTable & Aspiration Windows turned on.
@@ -134,13 +134,13 @@ Public Class OnePlayerCustomisation
             UserSearchSettings.UsePieceHeatMaps = False
             UserSearchSettings.StableSearch = True
             UserSearchSettings.NullMoveRValue = Int16.MaxValue
-            UserSearchSettings.UseBitMasks = False
+            UserSearchSettings.EvaluatePawnStructure = False
             UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 5 Then
             'Hard AI. 2s per search. Same as Medium; with PieceHeatMaps and Null-Pruning turned on.
             UserTimeForSearch = 2
             UserSearchSettings.StableSearch = True
-            UserSearchSettings.UseBitMasks = False
+            UserSearchSettings.EvaluatePawnStructure = False
             UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 6 Then
             'Expert AI. 5s per search. Same as Hard; with Dynamic Depths, Pawn Bitboards, PVS and Opponent Thinking Time turned on.

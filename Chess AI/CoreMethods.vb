@@ -507,7 +507,7 @@ Partial Public Class CoreMethods
 
             'Shifts all the enemy pawns at once to generate the full attack map instantly. If we intersect the king, place a friendly pawn
             'at the king's location and intersect to find the (single) attacking pawn.
-            TempMask = ((Board.BitboardPawnBlack And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((Board.BitboardPawnBlack And &H7F7F7F7F7F7F7FUL) << 9)
+            TempMask = ((Board.BitboardPawnBlack And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((Board.BitboardPawnBlack And &H7F7F7F7F7F7F7F7FUL) << 9)
             TFTable = TFTable Or TempMask
             'Check for checks! (time for thyme?) Double checks must incorporate at least one sliding piece - can't have happened yet.
             If (TempMask And MeKingMask) <> 0UL Then
@@ -546,7 +546,7 @@ Partial Public Class CoreMethods
             EnemyPieceMask = Board.BitboardPawnWhite Or Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite Or (1UL << EnemyKPos)
             OccupancyMask = FriendlyPieceMask Or EnemyPieceMask
 
-            TempMask = ((Board.BitboardPawnWhite And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((Board.BitboardPawnWhite And &H7F7F7F7F7F7F7FUL) >> 7)
+            TempMask = ((Board.BitboardPawnWhite And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((Board.BitboardPawnWhite And &H7F7F7F7F7F7F7F7FUL) >> 7)
             TFTable = TFTable Or TempMask
             If (TempMask And MeKingMask) <> 0UL Then
                 TempMask = Board.BitboardPawnWhite And PawnBlackAttackMap(MeKPos)

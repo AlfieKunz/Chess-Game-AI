@@ -6,6 +6,7 @@ Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Windows.Forms.VisualStyles.VisualStyleElement
+Imports Microsoft.VisualBasic.FileIO
 
 'Class that holds all the methods referring to GUI controls in the Chess form (ie: buttons, text boxes, sliders, etc).
 Partial Public Class Chess 'GUI Objects
@@ -828,46 +829,65 @@ Partial Public Class Chess 'GUI Objects
 
     'Subroutine that sets all values in the AISettingsPanel, based on the current AI settings.
     Private Sub SetAISettingPanelValues()
+        Dim CanChangeState As Boolean = UserCanChangeAISettings
+        UserCanChangeAISettings = False
         For Each Field As FieldInfo In AISettingsFields
             For Each c As Control In AISettingsPanel.Controls
                 'Finds the control in the Settings Panel that matches the Field in AISettings.
-                If c.Name = Field.Name Then
+                If c.Name.Substring(c.Name.IndexOf("_"c) + 1) = Field.Name Then
                     'There are two types of controls - numerical, and boolean. Set either the checkbox or the textbox values accordingly (for textbox,
                     'we also have a label, that contains no name).
-                    If Field.FieldType = GetType(Boolean) Then
-                        'CheckBox.
-                        DirectCast(c, CheckBox).Checked = Field.GetValue(SearchSettings)
-                    Else
-                        'TextBox.
-                        c.Text = Field.GetValue(SearchSettings)
+                    Dim FieldValue As Object = Field.GetValue(SearchSettings)
+                    If Field.FieldType = GetType(Boolean) Then 'CheckBox.
+                        DirectCast(c, CheckBox).Checked = CBool(FieldValue)
+                    Else 'TextBox.
+                        Dim IsDisabled As Boolean = FieldValue.Equals(SearchSettings.DisabledValues(Field.Name))
+                        If TypeOf c Is CheckBox Then
+                            DirectCast(c, CheckBox).Checked = Not IsDisabled
+                        Else
+                            c.Text = If(IsDisabled, SearchSettings.DefaultValues(Field.Name).ToString(), FieldValue.ToString())
+                            c.Enabled = Not IsDisabled
+                        End If
                     End If
                 End If
             Next
         Next
+        UserCanChangeAISettings = CanChangeState
     End Sub
 
     'Modifies the AI settings in case the user changes anything.
     Private Sub AISettingValueChanged(sender As Object, e As EventArgs)
         If UserCanChangeAISettings Then
             'Finds the field associated with this value, then modifies it directly.
-            For Each Field As FieldInfo In AISettingsFields
-                If sender.Name = Field.Name Then
-                    If Field.FieldType = GetType(Boolean) Then
-                        'Set the boolean value based on the state of the check.
-                        Field.SetValue(SearchSettings, DirectCast(sender, CheckBox).Checked)
-                    ElseIf System.Text.RegularExpressions.Regex.IsMatch(sender.Text, "^[0-9]+$") Then
-                        'If we are using numerical values, we need to ensure that there purely numbers. If so, we convert the value to the
-                        'specific numerical type that that field uses, then assigns it.
-                        Try
-                            Field.SetValue(SearchSettings, Convert.ChangeType(sender.Text, Field.FieldType))
-                        Catch ex As Exception
-                            Console.ForegroundColor = ConsoleColor.DarkRed
-                            Console.WriteLine("Unable to Calibrate AI based on Settings. Reverting back to old state...")
-                            Console.ResetColor()
-                        End Try
+            Try
+                Dim Ctrl As Control = DirectCast(sender, Control)
+                For Each Field As FieldInfo In AISettingsFields
+                    If Ctrl.Name.Substring(Ctrl.Name.IndexOf("_") + 1) = Field.Name Then
+                        Console.WriteLine(Field.GetValue(SearchSettings))
+                        If Field.FieldType = GetType(Boolean) Then
+                            'Set the boolean value based on the state of the check.
+                            Field.SetValue(SearchSettings, DirectCast(Ctrl, CheckBox).Checked)
+                        ElseIf Ctrl.Name.StartsWith("Check_") Then
+                            'We're pressing the checkbox of a numerical value setting - set to default value, and show/hide the textbox.
+                            Dim TextBox As Control = AISettingsPanel.Controls(Field.Name)
+                            Dim IsChecked As Boolean = DirectCast(Ctrl, CheckBox).Checked
+                            TextBox.Enabled = IsChecked
+                            Dim TargetVal As Object = If(IsChecked, If(System.Text.RegularExpressions.Regex.IsMatch(TextBox.Text, "^[0-9]+$"), TextBox.Text, SearchSettings.DefaultValues(Field.Name)), SearchSettings.DisabledValues(Field.Name))
+                            Field.SetValue(SearchSettings, Convert.ChangeType(TargetVal, Field.FieldType))
+                        ElseIf System.Text.RegularExpressions.Regex.IsMatch(Ctrl.Text, "^[0-9]+$") Then
+                            'If we are using numerical values, we need to ensure that there purely numbers. If so, we convert the value to the
+                            'specific numerical type that that field uses, then assigns it.
+                            Field.SetValue(SearchSettings, Convert.ChangeType(Ctrl.Text, Field.FieldType))
+                        End If
+                        Console.WriteLine(Field.GetValue(SearchSettings))
                     End If
-                End If
-            Next
+                Next
+            Catch ex As Exception
+                Console.ForegroundColor = ConsoleColor.DarkRed
+                Console.WriteLine("Unable to Calibrate AI based on Settings. Reverting back to old state...")
+                Console.ResetColor()
+            End Try
+
             'Modifies the TimeBar colour to represent if we are pushing the AI a little too much.
             Dim TimeBarColourChangeObjects() As String = {"UseQuiescence", "UsePieceHeatMaps", "UseTranspositionTable"}
             If TimeBarColourChangeObjects.Contains(sender.Name) Then ChangeUserTimeBarBackColour()
