@@ -17,6 +17,7 @@ Partial Public Class Chess 'AI Handles
     Public Structure AIHandleInfo
         Public StartingDepth As Integer 'Estimate of the optimal depth used for searching.
         Public FixedSearchDepth As Byte 'Number representing the fixed depth the AI will search to (0 = off).
+        Public DepthLimit As Integer 'Represents the maximum depth the AI can search at (0,1 = 99).
         Public TimeForSearch As Decimal 'Time the AI is allowed to search for.
         Public AdvancedTimeForSearch As Decimal 'Buffer that holds the original TimeForSearch, when the user is using 'Advanced Search Time' Mode.
         Public JustMadePremove As Boolean
@@ -178,7 +179,7 @@ Partial Public Class Chess 'AI Handles
     'the subroutine makes this move on the board.
     Private Sub InitialiseAISystem() Handles AIMoveBtn.Click
         If AIEndlessMode.Checked AndAlso AutoResetter.Checked AndAlso Not GameRunning Then AcceptFENIntoSystem(AIHandles.FENToResetTo, False) 'Enables AI Endless Mode (across multiple games).
-        If GameRunning AndAlso (Not ComputerIsSearching OrElse AIEndlessMode.Checked) Then
+        If GameRunning AndAlso Not ComputerIsSearching Then
             If ClickMoveMode Then ClickMoveMode = False : ResetLMS(True)
             Dim BestMove As Move = MainAI.CheckForEndState() 'Ensures that the position is valid, and that the
             'AI will (hopefully) not crash whilst searching on the position.
@@ -252,6 +253,7 @@ Partial Public Class Chess 'AI Handles
                         'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
                         If MainAI.IsInCheck() AndAlso GameRunning Then PGNMove &= "+"
                         BoardHistory.PushPGN(PGNMove, GameMode <> 1) 'Adds this new move to the History of the game.
+                        ComputerIsSearching = False
                         Dim NextPositionState As Char = EnforceEndStates() 'Checks for end states found from the AI's move.
                         'As two moves are made in one game 'state', we do not copy BoardHistory to its Buffer (so we don't false-trigger 3FR).
                         OutputDebugInfo(Not UpdateAllGUI)
@@ -260,14 +262,14 @@ Partial Public Class Chess 'AI Handles
                         End If
 
                         'The below lines fix a bug, where the AI wouldn't make a move after the user restarts their game (1P mode only).
-                        If GameRunning AndAlso (AIEndlessMode.Checked OrElse (GameMode = 1 AndAlso CurrentFEN = PreviousFEN AndAlso Not UserPlayer = PlayerTurn)) Then
+                        If AIEndlessMode.Checked OrElse (GameMode = 1 AndAlso CurrentFEN = PreviousFEN AndAlso Not UserPlayer = PlayerTurn) Then
+                            Application.DoEvents()
                             Thread.Sleep(1) 'Allows the system to recalibrate (to prevent spam).
                             Me.BeginInvoke(New Action(AddressOf InitialiseAISystem)) 'Runs the AI again, in such a way that does not add InitialiseAISystem()
                             'to the stack for every move (causing stack overflows).
                         Else
                             'Resets GUI objects & cursor design.
                             UserTimeBar.Enabled = True
-                            ComputerIsSearching = False
                             If UpdateAllGUI Then
                                 Me.Cursor = Cursors.Default
                                 Me.Text = GlobalConstants.ProgramName
@@ -475,11 +477,11 @@ Partial Public Class Chess 'AI Handles
         Dim CurrentAIDepth As Integer = AIHandles.StartingDepth
         Dim MemoryUsage As UInt64
         Dim PreviousEvaluation As Double
-        While CurrentAIDepth < 100
+        While CurrentAIDepth <= AIHandles.DepthLimit
             CurrentSearchStopwatch.Restart()
             'Performs a new search using iterative deepening. For all searches apart from the first, feed the previous search's best
             'move into the new search. This is so that this previous best move can be searched first, resulting in more AlphaBeta prunes.
-            If CurrentAIDepth = AIHandles.StartingDepth Then
+            If (CurrentAIDepth = AIHandles.StartingDepth) OrElse Not SearchSettings.UseIterativeDeepening Then
                 AICurrentMove = MainAI.Search(CurrentAIDepth)
             Else
                 AICurrentMove = MainAI.Search(CurrentAIDepth, AIHandles.AIBestMove)

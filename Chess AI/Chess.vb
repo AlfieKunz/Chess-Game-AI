@@ -82,7 +82,7 @@ Partial Public Class Chess 'ew- danny
         Me.New(Mode, GlobalConstants.StartingFENPosition)
     End Sub
     Public Sub New(ByVal Mode As Byte, ByVal UserStartingFEN As String)
-        Me.New(Mode, UserStartingFEN, 0, New AISearchSettings(), False, False, True, Nothing)
+        Me.New(Mode, UserStartingFEN, 0, New AISearchSettings(), 0, False, False, True, Nothing)
     End Sub
 
     Public Sub New(ByRef InputBook As List(Of OpeningBookEntry)) 'Call used for a standard game of chess.
@@ -108,6 +108,14 @@ Partial Public Class Chess 'ew- danny
                         }
                         AddHandler AISetting.CheckedChanged, AddressOf AISettingValueChanged
                         AISettingsPanel.Controls.Add(AISetting)
+
+                        'Adds a popup containing the details of that setting.
+                        Dim InfoToolTip As New System.Windows.Forms.ToolTip With {
+                            .InitialDelay = 500,
+                            .ToolTipTitle = "Info",
+                            .ToolTipIcon = ToolTipIcon.Info
+                        }
+                        InfoToolTip.SetToolTip(AISetting, SearchSettings.InfoDescriptions(Field.Name))
                     Else 'Allows all numerical values to be toggled off, setting to an 'off' value.
                         Dim SettingToggle As New CheckBox With {
                             .Name = "Check_" & Field.Name,
@@ -132,6 +140,13 @@ Partial Public Class Chess 'ew- danny
                             .Width = 150
                         }
                         AISettingsPanel.Controls.Add(SettingLabel) 'Adds to the settings panel.
+
+                        Dim InfoToolTip As New System.Windows.Forms.ToolTip With {
+                            .InitialDelay = 500,
+                            .ToolTipTitle = "Info",
+                            .ToolTipIcon = ToolTipIcon.Info
+                        }
+                        InfoToolTip.SetToolTip(SettingLabel, SearchSettings.InfoDescriptions(Field.Name))
                     End If
 
                     AISettingsPanel.Size = New Size(AISettingsPanel.Size.Width, AISettingsPanel.Size.Height + 25)
@@ -140,11 +155,12 @@ Partial Public Class Chess 'ew- danny
             Next
             AISettingResetBtn.Top += CheckBoxHeight
         End If
+        AIHandles.DepthLimit = 99
     End Sub
 
     'The below constructor method rearranges the location of objects on the form (to save space on the screen).
     'This will be called for 1-Player Games and 2-Player Games.
-    Public Sub New(ByVal Mode As Byte, ByVal UserStartingFEN As String, ByVal UserTimeForSearch As Decimal, ByVal UserSearchSettings As AISearchSettings, ByVal UserAICanSearchOnUsersTurn As Boolean, ByVal UserAdvancedSearchTime As Boolean, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry))
+    Public Sub New(ByVal Mode As Byte, ByVal UserStartingFEN As String, ByVal UserTimeForSearch As Decimal, ByVal UserSearchSettings As AISearchSettings, ByVal DepthLimit As Integer, ByVal UserAICanSearchOnUsersTurn As Boolean, ByVal UserAdvancedSearchTime As Boolean, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry))
         Me.New(InputBook)
         GameMode = Mode
         StartingFEN = UserStartingFEN
@@ -186,6 +202,7 @@ Partial Public Class Chess 'ew- danny
                 AIHandles.TimeForSearch = UserTimeForSearch
                 If UserAdvancedSearchTime Then AIHandles.AdvancedTimeForSearch = UserTimeForSearch
                 SearchSettings.CopyFrom(UserSearchSettings)
+                If DepthLimit > 1 Then AIHandles.DepthLimit = DepthLimit
                 AICanSearchOnUsersTurn = UserAICanSearchOnUsersTurn
             End If
         ElseIf Mode = 2 Then '2P Mode
@@ -293,7 +310,7 @@ Partial Public Class Chess 'ew- danny
 
     'Constructor Subroutines for the Remote Mode feature.
     Public Sub New(ByVal UsingRemoteMode As Boolean, ByVal UserStartingFEN As String, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry))
-        Me.New(UsingRemoteMode, UserStartingFEN, PlayAsWhite, InputBook, 0, Nothing, False, False)
+        Me.New(UsingRemoteMode, UserStartingFEN, PlayAsWhite, InputBook, 0, Nothing, 0, False, False)
         'Removes all the objects that are not intrinsic to Remote Mode.
         RemoteMode.AIEnabled = False
         Dim ObjectsToRemove() As Object = {ProgressBar, CurrentAIDepth, CurrentAIMove, CurrentAIEval, AITerminator}
@@ -302,9 +319,9 @@ Partial Public Class Chess 'ew- danny
         Next
         RemoteModeBtn.Top += 36
     End Sub
-    Public Sub New(ByVal UsingRemoteMode As Boolean, ByVal UserStartingFEN As String, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry), ByVal UserTimeForSearch As Decimal, ByVal UserSearchSettings As AISearchSettings, ByVal UserAICanSearchOnUsersTurn As Boolean, ByVal UserAdvancedSearchTime As Boolean)
+    Public Sub New(ByVal UsingRemoteMode As Boolean, ByVal UserStartingFEN As String, ByVal PlayAsWhite As Boolean, ByRef InputBook As List(Of OpeningBookEntry), ByVal UserTimeForSearch As Decimal, ByVal UserSearchSettings As AISearchSettings, ByVal DepthLimit As Integer, ByVal UserAICanSearchOnUsersTurn As Boolean, ByVal UserAdvancedSearchTime As Boolean)
         'Positions the Form.
-        Me.New(1, UserStartingFEN, UserTimeForSearch, UserSearchSettings, UserAICanSearchOnUsersTurn, UserAdvancedSearchTime, PlayAsWhite, InputBook)
+        Me.New(1, UserStartingFEN, UserTimeForSearch, UserSearchSettings, DepthLimit, UserAICanSearchOnUsersTurn, UserAdvancedSearchTime, PlayAsWhite, InputBook)
         'Sets up & positions all objects used for Remote Mode.
         GameMode = 0
         RemoteMode = New RemoteModeInfo With {
@@ -853,7 +870,6 @@ Partial Public Class Chess 'ew- danny
                         End If
                         'Resets LegalMoveSquares.
                         ResetLMS(False)
-                        Checkerboard.Refresh()
                         EditCheckText()
 
                         'Ends the turn, then calculates the new position's FEN.
@@ -861,6 +877,7 @@ Partial Public Class Chess 'ew- danny
                         If FirstMove Then PreviousFEN = CurrentFEN
                         CurrentFEN = Helper.ConvertToFEN(MasterBoard, MasterWCanCastle, MasterBCanCastle, Helper.ConvertStringToBitCoor(MasterEnPassant), PlayerTurn)
                         MainAI.Reconfigure(CurrentFEN, False) 'Recalibrates AI.
+                        Checkerboard.Refresh()
                         'If the player has been put in check, and has not been checkmated, then add the + symbol to the end of the move.
                         If MainAI.IsInCheck() AndAlso GameRunning AndAlso TempPGNMove.Last() <> "+" Then TempPGNMove &= "+"
                         BoardHistory.PushPGN(TempPGNMove, FirstMove)

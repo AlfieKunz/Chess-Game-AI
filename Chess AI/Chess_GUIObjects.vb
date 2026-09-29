@@ -231,10 +231,10 @@ Partial Public Class Chess 'GUI Objects
             SquareHistory(0, 1) = -1
             SquareHistory(1, 0) = -1
             SquareHistory(1, 1) = -1
-            Checkerboard.Refresh()
             AnimateBoard(PreviousFEN)
             MainAI.Reconfigure(CurrentFEN, True)
             EditCheckText()
+            Checkerboard.Refresh()
 
             Select Case GameMode
                 Case 0
@@ -863,7 +863,6 @@ Partial Public Class Chess 'GUI Objects
                 Dim Ctrl As Control = DirectCast(sender, Control)
                 For Each Field As FieldInfo In AISettingsFields
                     If Ctrl.Name.Substring(Ctrl.Name.IndexOf("_") + 1) = Field.Name Then
-                        Console.WriteLine(Field.GetValue(SearchSettings))
                         If Field.FieldType = GetType(Boolean) Then
                             'Set the boolean value based on the state of the check.
                             Field.SetValue(SearchSettings, DirectCast(Ctrl, CheckBox).Checked)
@@ -879,7 +878,6 @@ Partial Public Class Chess 'GUI Objects
                             'specific numerical type that that field uses, then assigns it.
                             Field.SetValue(SearchSettings, Convert.ChangeType(Ctrl.Text, Field.FieldType))
                         End If
-                        Console.WriteLine(Field.GetValue(SearchSettings))
                     End If
                 Next
             Catch ex As Exception

@@ -130,7 +130,7 @@ Public Class GameHistory
                 If n Mod 2 = 1 Then GetFormattedPGNString &= (n \ 2 + 1) & ". "
                 GetFormattedPGNString &= PGNMain(n) & " "
             Next
-            GetFormattedPGNString = GetFormattedPGNString.TrimEnd(" "c)
+            GetFormattedPGNString = GetFormattedPGNString.Trim(" "c)
             'If the game has been terminated, we add the # symbol at the end to represent this.
             If GameEnded Then GetFormattedPGNString &= "#"
         End If

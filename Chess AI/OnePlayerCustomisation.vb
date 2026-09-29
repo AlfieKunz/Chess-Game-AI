@@ -100,6 +100,7 @@ Public Class OnePlayerCustomisation
             .OutputPath = RemoteMode
         }
         Dim UserAICanSearchOnUsersTurn As Boolean
+        Dim UserDepthLimit As Integer = 0
 
         If Not UseBook.Checked Then OpeningBook.Clear()
         If DifficultySlider.Value = 1 Then
@@ -109,44 +110,56 @@ Public Class OnePlayerCustomisation
             UserSearchSettings.UsePieceHeatMaps = PieceHeatMapBox.Checked
             UserAICanSearchOnUsersTurn = AISearchOnUsersTurnBox.Checked
         ElseIf DifficultySlider.Value = 2 Then
-            'Beginner AI. 0.1s per search. Makes the AI as bad as possible...
+            'Beginner AI.
             UserTimeForSearch = 0.1
+            UserDepthLimit = 3
+            UserSearchSettings.BlunderTemperature = 150
             UserSearchSettings.UseQuiescence = False
             UserSearchSettings.UsePieceHeatMaps = False
             UserSearchSettings.UseTranspositionTable = False
+            UserSearchSettings.UseIterativeDeepening = False
             UserSearchSettings.StableSearch = True
             UserSearchSettings.NullMoveRValue = Int16.MaxValue
             UserSearchSettings.AspirationWidth = 0
             UserSearchSettings.EvaluatePawnStructure = False
             UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 3 Then
-            'Easy AI. 0.5s per search. Same as Beginner; with PieceHeatMaps & Null Move Pruning turned on.
-            UserTimeForSearch = 0.5
+            'Easy AI.
+            UserTimeForSearch = 0.1
+            UserDepthLimit = 4
+            UserSearchSettings.BlunderTemperature = 80
             UserSearchSettings.UseQuiescence = False
             UserSearchSettings.UseTranspositionTable = False
+            UserSearchSettings.UseIterativeDeepening = False
             UserSearchSettings.StableSearch = True
             UserSearchSettings.AspirationWidth = 0
             UserSearchSettings.EvaluatePawnStructure = False
             UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 4 Then
-            'Medium AI. 1s per search. Same as Beginner; with Quiescence, TranspositionTable & Aspiration Windows turned on.
-            UserTimeForSearch = 1
+            'Medium AI.
+            UserTimeForSearch = 0.5
+            UserDepthLimit = 6
+            UserSearchSettings.BlunderTemperature = 50
             UserSearchSettings.UsePieceHeatMaps = False
+            UserSearchSettings.UseIterativeDeepening = False
             UserSearchSettings.StableSearch = True
             UserSearchSettings.NullMoveRValue = Int16.MaxValue
             UserSearchSettings.EvaluatePawnStructure = False
             UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 5 Then
-            'Hard AI. 2s per search. Same as Medium; with PieceHeatMaps and Null-Pruning turned on.
-            UserTimeForSearch = 2
+            'Hard AI.
+            UserTimeForSearch = 1
+            UserDepthLimit = 7
+            UserSearchSettings.BlunderTemperature = 30
+            UserSearchSettings.UseIterativeDeepening = False
             UserSearchSettings.StableSearch = True
             UserSearchSettings.EvaluatePawnStructure = False
             UserSearchSettings.UsePVS = False
         ElseIf DifficultySlider.Value = 6 Then
-            'Expert AI. 5s per search. Same as Hard; with Dynamic Depths, Pawn Bitboards, PVS and Opponent Thinking Time turned on.
-            UserTimeForSearch = 5
+            'Expert AI.
+            UserTimeForSearch = 3
             UserAICanSearchOnUsersTurn = True
-        Else 'Pain AI. Same as Expert, but with 6x thinking time.
+        Else 'Pain AI.
             UserTimeForSearch = 30
             UserAICanSearchOnUsersTurn = True
         End If
@@ -155,12 +168,12 @@ Public Class OnePlayerCustomisation
         Dim ChessGame As Chess
         If RemoteMode Then
             If AIBox.Checked Then
-                ChessGame = New Chess(True, UserStartingFEN, PlayAsWhite, OpeningBook, UserTimeForSearch, UserSearchSettings, UserAICanSearchOnUsersTurn, AdvancedSearchTimeBox.Checked)
+                ChessGame = New Chess(True, UserStartingFEN, PlayAsWhite, OpeningBook, UserTimeForSearch, UserSearchSettings, UserDepthLimit, UserAICanSearchOnUsersTurn, AdvancedSearchTimeBox.Checked)
             Else
                 ChessGame = New Chess(True, UserStartingFEN, PlayAsWhite, OpeningBook)
             End If
         Else
-            ChessGame = New Chess(1, UserStartingFEN, UserTimeForSearch, UserSearchSettings, UserAICanSearchOnUsersTurn, AdvancedSearchTimeBox.Checked, PlayAsWhite, OpeningBook)
+            ChessGame = New Chess(1, UserStartingFEN, UserTimeForSearch, UserSearchSettings, UserDepthLimit, UserAICanSearchOnUsersTurn, AdvancedSearchTimeBox.Checked, PlayAsWhite, OpeningBook)
         End If
         ChessGame.Show()
     End Sub
@@ -195,11 +208,12 @@ Public Class OnePlayerCustomisation
 
     'Button that displays information regarding the various AI difficulties.
     Private Sub InfoBtn_Click() Handles InfoBtn.Click
-        MsgBox("• Beginner: 0.1s per search. Turns off Quiescence, PieceHeatMaps, TranspositionTable, Dynamic Depths, and Null-Pruning." & vbCrLf &
-               "• Easy: 0.5s per search. Same as Beginner; with PieceHeatMaps turned on." & vbCrLf &
-               "• Medium: 1s per search. Same as Beginner; with Quiescence and TranspositionTable turned on." & vbCrLf &
-               "• Hard: 2s per search. Same as Medium; with PieceHeatMaps and Null-Pruning turned on." & vbCrLf &
-               "• Expert: 5s per search. Same as Hard; with Dynamic Depths, Pawn Bitboards, and Opponent Thinking Time turned on." & vbCrLf &
+        MsgBox("Note: All Difficulties until 'Expert' involve decreasing blunder probabilities." & vbCrLf &
+               "• Beginner: Depth Limit 3 (0.1s per search). Turns off Quiescence, PieceHeatMaps, TranspositionTable, Dynamic Depths, and Null-Pruning." & vbCrLf &
+               "• Easy: Depth Limit 4 (0.1s per search). Same as Beginner; with PieceHeatMaps turned on." & vbCrLf &
+               "• Medium: Depth Limit 6 (0.5s per search). Same as Beginner; with Quiescence and TranspositionTable turned on." & vbCrLf &
+               "• Hard: Depth Limit 7 (1s per search). Same as Medium; with PieceHeatMaps and Null-Pruning turned on." & vbCrLf &
+               "• Expert: Depth Limit Off (3s per search). Same as Hard; with Dynamic Depths, Iterative Deepening, Pawn Bitboards, and Opponent Thinking Time turned on." & vbCrLf &
                "• Pain: Same as Expert, but with 'Deep Search' Mode on - 30s per search (good luck ;D).",
                vbInformation + vbApplicationModal, "AI Difficulty Information")
     End Sub

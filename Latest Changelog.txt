@@ -21,9 +21,15 @@
 - Actually realised that Release version of .NET projects exist: ~6x performance boost :O.
 - Migration to flat bitmove buffer for all depths, rather than heap-heavy uint16() allocation per node.
 - Addition of Span.CopyTo instead of Array.Copy, for fast move sorting and allocation.
-- Refactored move ordering system (terrible --> amazing bucketing)
+- Refactored move ordering system (terrible --> amazing bucketing).
+- Improved draw detection to accommodate for the full range of draw by insufficient material (using dampened eval gradients to incentivise capturing of material whilst correctly identifying drawn states).
+- Added History array to quiet move ordering, with insertion sort bonus sorting, malus bucketing, and gravity.
 
 - Improved efficiency and readability for adjusting AI settings, allowing the user to disable key elements such as NMP with a simple checkbox (resetting to a constant 'disabled' value).
+- Added toggle for Iterative Deepening.
+- Given the AI a "Depth Limit" for beginner difficulties.
+- Added blunder probabilities for beginner AIs, using the Boltzmann Distribution of candidate moves and Gumbel-max to select sub-optimal moves with probability P = 1 - e^[s/T].
+- Tweaked difficulty values for different AI strengths.
 - Handed more control to the AI, for handling check states, TFTable, invalid position handling, and converting between Moves and PGNs.
 - Massively redesigned generation of PGN moves using bitboards, for speedy generation of an AI's best line.
 - Toggleable setting to allow MakeMove to skip MaterialCount, PHM and Zobrist updates - provides faster Perft Test results.
@@ -58,4 +64,6 @@
 - Fixed User Assets not being re-created upon program reset or being missing.
 - Fixed invalid generation of Zobrist keys.
 - Improved robustness of PGN move inputting.
+- Fixed AI Endless Mode breaking when spamming "Make Computer Move".
+- Applied Late Move Reduction to quiet moves only, and when we're not in check.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
