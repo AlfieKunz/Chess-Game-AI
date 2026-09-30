@@ -56,7 +56,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
 
     Private SearchSettings As New AISearchSettings 'Settings of the current search.
-    Private TotalPositionsSearched, TranspositionsFound, WinsFound As UInt64 'Numbers showing the stats of the current search.
+    Private TotalPositionsSearched, TotalFirstMoveBetaCuts, TotalBetaCutoffs, TranspositionsFound, WinsFound As UInt64 'Numbers showing the stats of the current search.
     Private LifetimePositions, LifetimeTranspositions, LifetimeCheckmates As UInt64 'Numbers showing the lifetime stats of the AI (persists
     'across multiple boot-ups).
     Private DetailedMoveOutput As Boolean = True
@@ -407,6 +407,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
             InAspirationBreak = False
             TTIsEmpty = False
             TotalPositionsSearched = 0
+            TotalFirstMoveBetaCuts = 0
+            TotalBetaCutoffs = 0
             TranspositionsFound = 0
             WinsFound = 0
             HighestQuiescenceDepth = 1
@@ -613,6 +615,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
 
             If SearchSettings.OutputToConsole AndAlso DetailedMoveOutput Then
                 Console.WriteLine("Positions Searched: " & TotalPositionsSearched.ToString("N0"))
+                Console.WriteLine("First Move Cutoffs: " & Math.Round(100 * TotalFirstMoveBetaCuts / TotalBetaCutoffs, 2) & "%.")
                 If SearchSettings.UseTranspositionTable Then Console.WriteLine("Transposition Hits: " & TranspositionsFound.ToString("N0"))
                 If Not SearchSettings.StableSearch Then Console.WriteLine("Late Fail-High Pos: " & NoRepeatedSearches.ToString("N0"))
                 Console.WriteLine("Win Sequence Count: " & WinsFound.ToString("N0") & vbCr)
@@ -1710,16 +1713,16 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                     If PieceIndex = GlobalConstants.PieceIndex.Pawn AndAlso (TargetSquare < 16US OrElse TargetSquare > 47US) Then 'User is promoting a pawn (or is very close to).
                         PawnPromotionMoves(0) += 1US
                         PawnPromotionMoves(PawnPromotionMoves(0)) = Move
-                    ElseIf HistoryScore > 300 Then
-                        'Move has consistently caused beta cutoffs elsewhere in the search.
-                        HistoryMoves(0) += 1US
-                        HistoryMoves(HistoryMoves(0)) = Move
                     ElseIf If(isWhite, ((((PieceMap And &HFEFEFEFEFEFEFEFEUL) >> 9) Or ((PieceMap And &H7F7F7F7F7F7F7F7FUL) >> 7)) And State.BitboardPawnBlack),
                        (((PieceMap And &HFEFEFEFEFEFEFEFEUL) << 7) Or ((PieceMap And &H7F7F7F7F7F7F7F7FUL) << 9)) And State.BitboardPawnWhite) <> 0UL Then
                         'New square is controlled by an enemy pawn - ammend move list.
                         TerribleMoves(0) += 1US
                         TerribleMoves(TerribleMoves(0)) = Move
-                    ElseIf (SearchInfo.TFTable And PieceMap) = 0UL OrElse HistoryScore < -300 Then
+                    ElseIf HistoryScore > 200 Then
+                        'Move has consistently caused beta cutoffs elsewhere in the search.
+                        HistoryMoves(0) += 1US
+                        HistoryMoves(HistoryMoves(0)) = Move
+                    ElseIf (SearchInfo.TFTable And PieceMap) = 0UL OrElse HistoryScore < -200 Then
                         'Piece is positioned on a "False" on the TFTable (meaning the square is controlled by an enemy piece), or has a history of causing no beta cutoffs. 
                         BadMoves(0) += 1US
                         BadMoves(BadMoves(0)) = Move
@@ -2376,7 +2379,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                 'Saves the first quiet move index we come across. As we search ALL captures and pawn promotions before quiet moves, this serves as a buffer index for all quiet moves.
                 'A quiet move is classified by it not being a capture, an en-passant capture, or a pawn promotion. In my code, the latter two are well-handled by
                 'the 3rd flag bit being set. This has the unintended side affect of also labelling KS castling as non quiet moves - ahhh that's annoying :(.
-                Dim MoveIsQuiet As Boolean = Move < 32768US AndAlso ((Move And 4096US) = 0US OrElse (Move And 28672US) = 20480US)
+                Dim MoveIsQuiet As Boolean = Move <> TempTTEntry.BestMove AndAlso Move < 32768US AndAlso ((Move And 4096US) = 0US OrElse (Move And 28672US) = 20480US)
                 If QuietMoveStartIndex = -1 AndAlso MoveIsQuiet Then QuietMoveStartIndex = n
 
                 'Copies board info to temp variables.
@@ -2405,7 +2408,7 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                         'is deemed 'more quiet', and so more moves are searched at a reduced depth.
                         'We disable this feature if there are no search extensions, as these are put into place when a position is deemed 'crutial' enough for a full search.
                         NeedFullSearch = True
-                        If Not SearchSettings.StableSearch AndAlso depth >= 3 AndAlso MoveIsQuiet AndAlso SearchVars.CheckInfo = 0US AndAlso DepthExt = 0 AndAlso (n - MoveBufferStrafe + If(TempTTEntry.BestMove = 0, 1, 2)) >= SearchSettings.ReductionThreshold Then
+                        If Not SearchSettings.StableSearch AndAlso depth >= 3 AndAlso MoveIsQuiet AndAlso SearchVars.CheckInfo = 0US AndAlso DepthExt = 0 AndAlso (n - MoveBufferStrafe + If(TempTTEntry.BestMove = 0US, 1, 2)) >= SearchSettings.ReductionThreshold Then
                             'We use a tightened Alpha-Beta window here, so that if any fail-high nodes then are detected and sent back up the tree instantly.
                             CurrentScore = -NegaMax(NegaMaxBoardStates(DepthFromRoot), depth - 2, NumDepthExt, Not isWhite, EnemyKPos, TempMeKPos, -Alpha - 1S, -Alpha, True)
                             If CurrentScore > Alpha Then
@@ -2486,6 +2489,8 @@ Partial Public Class AI 'i shall thy the Alfie Alphafish (bit optimistic, I know
                             TranspositionTable(EntryInTT) = TempTTEntry 'Replaces entry.
                         End If
 
+                        If n = MoveBufferStrafe Then TotalFirstMoveBetaCuts += 1UL
+                        TotalBetaCutoffs += 1UL
                         Return BestScore 'Alpha-Beta Pruning - return best move.
                     End If
                 End If
