@@ -245,9 +245,8 @@ Partial Public Class CoreMethods
 
 
 
-    'Converts Legal Move Maps into legal moves. TODO: ADD FLAGS!!!!!!
     Private LegalMoveArray(GlobalConstants.MaxPieceLegalMoves + 1) As UInt16
-    Private Sub PopulateLegalMoveArray(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal MoveMap As UInt64, ByVal IncludeNonCaptures As Boolean, Optional ByVal n As UInt16 = 0)
+    Private Sub PopulateLegalMoveArray(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal MoveMap As UInt64, ByVal IncludeQuiet As Boolean, Optional ByVal n As UInt16 = 0)
         Dim StartValue As UInt16 = Square << 6
         Dim TempMap As UInt64 = MoveMap And EnemyPieceMask
         While TempMap <> 0UL
@@ -255,7 +254,7 @@ Partial Public Class CoreMethods
             LegalMoveArray(n) = 32768US Or StartValue Or CUShort(BitOperations.TrailingZeroCount(TempMap))
             TempMap = TempMap And (TempMap - 1UL)
         End While
-        If IncludeNonCaptures Then
+        If IncludeQuiet Then
             TempMap = MoveMap And Not OccupancyMask 'Looks at non-capture moves only.
             While TempMap <> 0UL
                 n += 1US
@@ -267,7 +266,7 @@ Partial Public Class CoreMethods
     End Sub
 
 
-    Public Function WhitePawnLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, ByVal EnPassant As UInt16, Optional ByVal IncludeNonCaptures As Boolean = True) As UInt16()
+    Public Function WhitePawnLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, ByVal EnPassant As UInt16, Optional ByVal IncludeQuiet As Boolean = True) As UInt16()
         Dim n As UInt16
         Dim StartValue As UInt16 = Square << 6
         Dim PieceMap As UInt64 = 1UL << Square
@@ -290,8 +289,10 @@ Partial Public Class CoreMethods
                 If EndSquare < 8US Then
                     'We're promoting a pawn! Run for both queen & knight.
                     LegalMoveArray(n) = 36864US Or MoveBase
-                    n += 1US
-                    LegalMoveArray(n) = 61440US Or MoveBase
+                    If IncludeQuiet Then
+                        n += 1US
+                        LegalMoveArray(n) = 61440US Or MoveBase
+                    End If
                 Else
                     LegalMoveArray(n) = 32768US Or MoveBase
                 End If
@@ -299,18 +300,21 @@ Partial Public Class CoreMethods
             End While
         End If
 
-        If IncludeNonCaptures Then
+        Dim AboutToPromote As Boolean = Square < 16US
+        If IncludeQuiet OrElse AboutToPromote Then
             'Must not be pinned anything other than vertically.
             If (PinInfoDiag And PieceMap) = 0UL AndAlso ((PinInfoStraight And PieceMap) = 0UL OrElse (MeKPos Mod 8) = (Square Mod 8)) Then
                 Dim EndSquare As UInt16 = Square - 8US
                 If ((1UL << EndSquare) And OccupancyMask) = 0UL Then
                     Dim MoveBase As UInt16 = StartValue Or EndSquare
-                    If Square < 16US Then
+                    If AboutToPromote Then
                         'Adds flags for pawn promotion.
                         n += 1US
                         LegalMoveArray(n) = 4096US Or MoveBase
-                        n += 1US
-                        LegalMoveArray(n) = 28672US Or MoveBase
+                        If IncludeQuiet Then
+                            n += 1US
+                            LegalMoveArray(n) = 28672US Or MoveBase
+                        End If
                     Else
                         n += 1US
                         LegalMoveArray(n) = MoveBase
@@ -330,7 +334,7 @@ Partial Public Class CoreMethods
         LegalMoveArray(0) = n
         Return LegalMoveArray
     End Function
-    Public Function BlackPawnLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, ByVal EnPassant As UInt16, Optional ByVal IncludeNonCaptures As Boolean = True) As UInt16()
+    Public Function BlackPawnLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, ByVal EnPassant As UInt16, Optional ByVal IncludeQuiet As Boolean = True) As UInt16()
         Dim n As UInt16 = 0
         Dim StartValue As UInt16 = Square << 6
         Dim PieceMap As UInt64 = 1UL << Square
@@ -348,24 +352,29 @@ Partial Public Class CoreMethods
                 n += 1US
                 If EndSquare > 55US Then
                     LegalMoveArray(n) = 36864US Or StartValue Or EndSquare
-                    n += 1US
-                    LegalMoveArray(n) = 61440US Or StartValue Or EndSquare
+                    If IncludeQuiet Then
+                        n += 1US
+                        LegalMoveArray(n) = 61440US Or StartValue Or EndSquare
+                    End If
                 Else
                     LegalMoveArray(n) = 32768US Or StartValue Or EndSquare
                 End If
                 AttackMap = AttackMap And (AttackMap - 1UL)
             End While
         End If
-        If IncludeNonCaptures Then
+        Dim AboutToPromote As Boolean = Square > 47US
+        If IncludeQuiet OrElse AboutToPromote Then
             If (PinInfoDiag And PieceMap) = 0UL AndAlso ((PinInfoStraight And PieceMap) = 0UL OrElse (MeKPos Mod 8) = (Square Mod 8)) Then
                 Dim EndSquare As UInt16 = Square + 8US
                 If ((1UL << EndSquare) And OccupancyMask) = 0UL Then
                     Dim MoveBase As UInt16 = StartValue Or EndSquare
-                    If Square > 47US Then
+                    If AboutToPromote Then
                         n += 1US
                         LegalMoveArray(n) = 4096US Or MoveBase
-                        n += 1US
-                        LegalMoveArray(n) = 28672US Or MoveBase
+                        If IncludeQuiet Then
+                            n += 1US
+                            LegalMoveArray(n) = 28672US Or MoveBase
+                        End If
                     Else
                         n += 1US
                         LegalMoveArray(n) = MoveBase
@@ -384,7 +393,7 @@ Partial Public Class CoreMethods
         Return LegalMoveArray
     End Function
 
-    Public Function KingLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal TFTable As UInt64, ByVal MeCanCastle As CanCastle, ByVal MeInCheck As UInt16, Optional ByVal IncludeNonCaptures As Boolean = True) As UInt16()
+    Public Function KingLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal TFTable As UInt64, ByVal MeCanCastle As CanCastle, ByVal MeInCheck As UInt16, Optional ByVal IncludeQuiet As Boolean = True) As UInt16()
         Dim n As UInt16 = 0
         Dim StartValue As UInt16 = Square << 6
         'Note that kings cannot be pinned (that would be funny though). Calculaes movement mask through the TFTable, saying which squares are not protected.
@@ -395,7 +404,7 @@ Partial Public Class CoreMethods
             LegalMoveArray(n) = 32768US Or StartValue Or CUShort(BitOperations.TrailingZeroCount(TempMap))
             TempMap = TempMap And (TempMap - 1UL)
         End While
-        If IncludeNonCaptures Then
+        If IncludeQuiet Then
             TempMap = MoveMap And Not OccupancyMask 'Looks at non-capture moves only.
             While TempMap <> 0UL
                 n += 1US
@@ -432,39 +441,39 @@ Partial Public Class CoreMethods
         Return LegalMoveArray
     End Function
 
-    Public Function KnightLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfo As UInt64, Optional ByVal IncludeNonCaptures As Boolean = True) As UInt16()
+    Public Function KnightLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfo As UInt64, Optional ByVal IncludeQuiet As Boolean = True) As UInt16()
         'Knights cannot move at all if they are pinned.
-        If (PinInfo And (1UL << Square)) = 0UL Then PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, KnightMoveMap(Square), IncludeNonCaptures) Else LegalMoveArray(0) = 0
+        If (PinInfo And (1UL << Square)) = 0UL Then PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, KnightMoveMap(Square), IncludeQuiet) Else LegalMoveArray(0) = 0
         Return LegalMoveArray
     End Function
 
-    Public Function BishopLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, Optional ByVal IncludeNonCaptures As Boolean = True) As UInt16()
+    Public Function BishopLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, Optional ByVal IncludeQuiet As Boolean = True) As UInt16()
         Dim PieceMap As UInt64 = 1UL << Square
         'Bishops cannot move at all if they are pinned straight.
         If (PinInfoStraight And PieceMap) = 0UL Then
             Dim MoveMap As UInt64 = BishopMagicLookup(Square, OccupancyMask)
             If (PinInfoDiag And PieceMap) <> 0UL Then MoveMap = MoveMap And BishopMoveMap(MeKPos) 'Only allows the pinned piece to move along the king's ray.
-            PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, MoveMap, IncludeNonCaptures)
+            PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, MoveMap, IncludeQuiet)
         Else
             LegalMoveArray(0) = 0
         End If
         Return LegalMoveArray
     End Function
 
-    Public Function RookLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, Optional ByVal IncludeNonCaptures As Boolean = True) As UInt16()
+    Public Function RookLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, Optional ByVal IncludeQuiet As Boolean = True) As UInt16()
         Dim PieceMap As UInt64 = 1UL << Square
         'Rooks cannot move at all if they are pinned diagonally.
         If (PinInfoDiag And PieceMap) = 0UL Then
             Dim MoveMap As UInt64 = RookMagicLookup(Square, OccupancyMask)
             If (PinInfoStraight And PieceMap) <> 0UL Then MoveMap = MoveMap And RookMoveMap(MeKPos) 'Only allows the pinned piece to move along the king's ray.
-            PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, MoveMap, IncludeNonCaptures)
+            PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, MoveMap, IncludeQuiet)
         Else
             LegalMoveArray(0) = 0
         End If
         Return LegalMoveArray
     End Function
 
-    Public Function QueenLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, Optional ByVal IncludeNonCaptures As Boolean = True) As UInt16()
+    Public Function QueenLegalMoves(ByVal Square As UInt16, ByVal EnemyPieceMask As UInt64, ByVal OccupancyMask As UInt64, ByVal PinInfoStraight As UInt64, ByVal PinInfoDiag As UInt64, ByVal MeKPos As UInt16, Optional ByVal IncludeQuiet As Boolean = True) As UInt16()
         Dim PieceMap As UInt64 = 1UL << Square
         Dim MoveMap As UInt64
         LegalMoveArray(0) = 0
@@ -473,13 +482,13 @@ Partial Public Class CoreMethods
         If (PinInfoDiag And PieceMap) = 0UL Then
             MoveMap = RookMagicLookup(Square, OccupancyMask)
             If (PinInfoStraight And PieceMap) <> 0UL Then MoveMap = MoveMap And RookMoveMap(MeKPos) 'Only allows the pinned piece to move along the king's ray.
-            PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, MoveMap, IncludeNonCaptures)
+            PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, MoveMap, IncludeQuiet)
         End If
         'Restrict diagonal queen moves if is pinned straight.
         If (PinInfoStraight And PieceMap) = 0UL Then
             MoveMap = BishopMagicLookup(Square, OccupancyMask)
             If (PinInfoDiag And PieceMap) <> 0UL Then MoveMap = MoveMap And BishopMoveMap(MeKPos) 'Only allows the pinned piece to move along the king's ray.
-            PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, MoveMap, IncludeNonCaptures, LegalMoveArray(0))
+            PopulateLegalMoveArray(Square, EnemyPieceMask, OccupancyMask, MoveMap, IncludeQuiet, LegalMoveArray(0))
         End If
         Return LegalMoveArray
     End Function

@@ -215,13 +215,13 @@ Partial Public Class AI
                 If MeKPos = EnemyKPos Then Continue For 'The two kings cannot be on the same square.
 
                 'Finds distances between kings.
-                KingDeltaX = Math.Abs(((MeKPos And 56) >> 3) - ((EnemyKPos And 56) >> 3))
-                KingDeltaY = Math.Abs((MeKPos And 7) - (EnemyKPos And 7))
+                KingDeltaX = Math.Abs((MeKPos Mod 8) - (EnemyKPos Mod 8))
+                KingDeltaY = Math.Abs((MeKPos \ 8) - (EnemyKPos \ 8))
                 KingDistance = (KingDeltaX + KingDeltaY) / 2
 
                 'Calculates the distance from the player's king to the edges of the board.
-                KingCentreDistanceX = Math.Max(((MeKPos And 56) >> 3) - 4, 3 - ((MeKPos And 56) >> 3))
-                KingCentreDistanceY = Math.Max((MeKPos And 7) - 4, 3 - (MeKPos And 7))
+                KingCentreDistanceX = Math.Max((MeKPos Mod 8) - 4, 3 - (MeKPos Mod 8))
+                KingCentreDistanceY = Math.Max((MeKPos \ 8) - 4, 3 - (MeKPos \ 8))
                 KingCentreDistance = KingCentreDistanceX + KingCentreDistanceY
 
                 'Uses the above data (along with the player's material count), to calculate the penalty that should be applied to that player,

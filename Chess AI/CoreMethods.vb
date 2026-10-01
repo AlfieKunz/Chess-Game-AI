@@ -13,7 +13,7 @@ Imports Chess_AI.GlobalConstants
 Partial Public Class CoreMethods
     Protected Shared LegacyPieceIndexConverter(9) As Integer 'Methods using the Board(,) structure use "Asc(PIECE) Mod 11" or "(Asc(piece) + 1) Mod 11"
     'for indexing into PieceValue, MVVLVAValues, ZobristHashTable. We convert this to the structure that bitboards use (indexing through unique
-    'PieceIndex.Piece value) by storing said indices in this array. TODO: clear these from AI.vb
+    'PieceIndex.Piece value) by storing said indices in this array.
     Protected Shared ReadOnly PieceValue(5) As Integer 'Array Containing the Value or Weight of each Piece.
     Protected Shared MVVLVAValues(29) As UInt16 'Array Containing the score associated with each possible capture configuration in chess.
     'This is used for move ordering, and represents the premise of encouraging high captures, and capturing _with_ low material.
@@ -506,7 +506,6 @@ Partial Public Class CoreMethods
 
         'Calibrates TFTable by checking all pieces which could influence the king. For all heavy pieces, we AND the bitboard with a pre-computed
         '"danger" map of where these pieces need to be to influence the king - this allows for fewer computation of a piece's legal moves.
-        'TODO: Try relax initially first and see what kinda difference that makes.
         Dim TempMask As UInt64
         If isWhite Then
             FriendlyPieceMask = Board.BitboardKnightWhite Or Board.BitboardBishopWhite Or Board.BitboardRookWhite Or Board.BitboardQueenWhite

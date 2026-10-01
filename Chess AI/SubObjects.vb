@@ -9,10 +9,10 @@ Imports Microsoft.VisualBasic.ApplicationServices
 Public Class GlobalConstants
     Public Const StartingFENPosition As String = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     Public Const ProgramName As String = "Chess Game & Artificial Intelligence" 'also known as 'chessbot 9000' - thanks stroganoff <3
-    Public Const ProgramVersion As String = "b11.0"
+    Public Const ProgramVersion As String = "v11.0"
     Public Shared ReadOnly StartupPath As String = (AppDomain.CurrentDomain.BaseDirectory).TrimEnd("\"c)
 
-    Public Const TranspositionTableSize As Byte = 64 - ((26)) 'Constant referring to how large the TranspositionTable object is.
+    Public Const TranspositionTableSize As Integer = 26 'Constant referring to how large the TranspositionTable object is.
     'Used to determine how much to scate the ZobristValue by.
 
     'Structure holding the relative weights of all the pieces on the board.
@@ -164,7 +164,7 @@ Public Class AISearchSettings
     Public BlunderTemperature As UInt16
     Public UpdateLifetimeStats As Boolean
     Public NodeSearchUseHashing As Boolean
-    Public TimeToLive As SByte
+    Public TimeToLive As Integer
     Public NullMoveRValue As Integer
     Public UseIterativeDeepening As Boolean
     Public StableSearch As Boolean
@@ -198,7 +198,7 @@ Public Class AISearchSettings
     'Constants that determine the 'off' values for each field
     Public ReadOnly Property DisabledValues As New Dictionary(Of String, Object) From {
         {"BlunderTemperature", 0US},
-        {"TimeToLive", CSByte(0)},
+        {"TimeToLive", 0},
         {"NullMoveRValue", Integer.MaxValue - 1},
         {"MaxDepthExt", 0},
         {"ReductionThreshold", Integer.MaxValue},
@@ -219,7 +219,7 @@ Public Class AISearchSettings
 
     Public ReadOnly Property DefaultValues As New Dictionary(Of String, Object) From {
         {"BlunderTemperature", 0US},
-        {"TimeToLive", CSByte(4)},
+        {"TimeToLive", 4},
         {"NullMoveRValue", 3},
         {"MaxDepthExt", 8},
         {"ReductionThreshold", 4},

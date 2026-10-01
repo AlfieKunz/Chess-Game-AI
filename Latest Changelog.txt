@@ -24,6 +24,9 @@
 - Refactored move ordering system (terrible --> amazing bucketing).
 - Improved draw detection to accommodate for the full range of draw by insufficient material (using dampened eval gradients to incentivise capturing of material whilst correctly identifying drawn states).
 - Added History array to quiet move ordering, with insertion sort bonus sorting, malus bucketing, and gravity.
+- Modified Quiescence to add non-capture pawn promotions to queens and removed capture promotions to knights.
+- Removed promotions from Delta Pruning.
+- 
 
 - Improved efficiency and readability for adjusting AI settings, allowing the user to disable key elements such as NMP with a simple checkbox (resetting to a constant 'disabled' value).
 - Added toggle for Iterative Deepening.
@@ -66,4 +69,7 @@
 - Improved robustness of PGN move inputting.
 - Fixed AI Endless Mode breaking when spamming "Make Computer Move".
 - Applied Late Move Reduction to quiet moves only, and when we're not in check.
+- Fixed bad depth information being stored in TT for NMP.
+- Fixed flag 4 TT nodes from being replaced.
+- Fixed LMR interaction with TT moves.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
