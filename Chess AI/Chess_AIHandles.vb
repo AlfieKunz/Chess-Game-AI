@@ -40,12 +40,14 @@ Partial Public Class Chess 'AI Handles
         'or changing the FEN resets this to the Starting Position). Used for knowing what position to reset to for AI AutoResetter.
 
         Public MoveWasAIPredicted As Boolean 'Was the last move entered into the system the move predicted by the Transposition Table of the AI?
+        Public OutputFullDebugInfo As Boolean 'Will we output the full debug info for every move at every depth?
     End Structure
 
     Private AIHandles As New AIHandleInfo With {
     .FixedSearchDepth = 0,
     .TimeForSearch = 10,
-    .AIStopwatch = New Stopwatch
+    .AIStopwatch = New Stopwatch,
+    .OutputFullDebugInfo = True
     }
 
     Private TerminateSearch As Boolean 'Set to True if the user preemptively aborts the AI search.
@@ -315,6 +317,7 @@ Partial Public Class Chess 'AI Handles
     Private Function InitialiseAI() As Move
         SetAdvancedSearchTime()
         Dim UpdateAllGUI As Boolean = AIHandles.TimeForSearch >= 0.5
+        AIHandles.OutputFullDebugInfo = UpdateAllGUI AndAlso GameMode >= 3
         Dim BestMove As New Move
         'Creates the AI thread (to enable backgound searching / multithreading).
         Dim AIThread As Task
@@ -342,7 +345,7 @@ Partial Public Class Chess 'AI Handles
         'Prepares the AI for its search.
         MainAI.AddBoardHistory(BoardHistory.GetZobristArray(), BoardHistory.GetHalfSize)
         MainAI.ConfigureSettings(SearchSettings, True)
-        MainAI.SetDetailedMoveOutput(UpdateAllGUI)
+        MainAI.SetOutputSearchDebugInfo(AIHandles.OutputFullDebugInfo)
 
         'Begins the search.
         ComputerIsSearching = True
@@ -498,9 +501,11 @@ Partial Public Class Chess 'AI Handles
                 If CurrentAIDepth > AIHandles.StartingDepth + 2 Then PreviousEvaluation = AIHandles.AIBestMove.Score
                 AIHandles.AIBestMove = AICurrentMove
                 Console.ForegroundColor = ConsoleColor.DarkGreen
-                Console.Write("Depth Of " & CurrentAIDepth)
-                If SearchSettings.UseQuiescence Then Console.Write("-" & MainAI.GetHighestQuiescenceDepth())
-                Console.WriteLine(" Completed in: " & AIHandles.AIStopwatch.ElapsedMilliseconds.ToString("N0") & " Milliseconds (" & CurrentSearchStopwatch.ElapsedMilliseconds.ToString("N0") & "ms)")
+                If AIHandles.OutputFullDebugInfo Then
+                    Console.Write("Depth Of " & CurrentAIDepth)
+                    If SearchSettings.UseQuiescence Then Console.Write("-" & MainAI.GetHighestQuiescenceDepth() & " Completed")
+                End If
+                Console.WriteLine(" in: " & AIHandles.AIStopwatch.ElapsedMilliseconds.ToString("N0") & " Milliseconds (" & CurrentSearchStopwatch.ElapsedMilliseconds.ToString("N0") & "ms)")
                 Console.ForegroundColor = ConsoleColor.White
 
 
@@ -581,9 +586,11 @@ Partial Public Class Chess 'AI Handles
         If Not (MainAI.GetABORTState() OrElse AIHandles.AIBestMove.Code = "a") Then
             'Outputs the information of the AI's search time.
             Console.ForegroundColor = ConsoleColor.DarkGreen
-            Console.Write("Depth Of " & AIHandles.StartingDepth)
-            If SearchSettings.UseQuiescence Then Console.Write("-" & MainAI.GetHighestQuiescenceDepth())
-            Console.Write(" Completed in: " & AIHandles.AIStopwatch.ElapsedMilliseconds.ToString("N0") & " Milliseconds." & vbCrLf)
+            If AIHandles.OutputFullDebugInfo Then
+                Console.Write("Depth Of " & AIHandles.StartingDepth)
+                If SearchSettings.UseQuiescence Then Console.Write("-" & MainAI.GetHighestQuiescenceDepth() & " Completed")
+            End If
+            Console.Write(" in: " & AIHandles.AIStopwatch.ElapsedMilliseconds.ToString("N0") & " Milliseconds." & vbCrLf)
             Console.ForegroundColor = ConsoleColor.White
             'Updates GUI elements.
             AIHandles.CurrentMove = MainAI.GetPGNFromMove(AIHandles.AIBestMove)

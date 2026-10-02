@@ -26,7 +26,6 @@
 - Added History array to quiet move ordering, with insertion sort bonus sorting, malus bucketing, and gravity.
 - Modified Quiescence to add non-capture pawn promotions to queens and removed capture promotions to knights.
 - Removed promotions from Delta Pruning.
-- 
 
 - Improved efficiency and readability for adjusting AI settings, allowing the user to disable key elements such as NMP with a simple checkbox (resetting to a constant 'disabled' value).
 - Added toggle for Iterative Deepening.
@@ -44,7 +43,9 @@
 - Performance increases from Option Strict On in AI files.
 - Performance boosts to compiler settings and Server GC management.
 - Reduced size of Transposition Table elements.
-- Increased size of Transposition Table (64MB --> 1024MB) to better handle faster move generation.
+- Increased size of Transposition Table (64MB --> 1024MB) and increased indexing speed to better handle faster move generation.
+- Improved console outputs for AI moves, for both a detailed and shortened view.
+- Addition of new debug outputs, including the "first move beta cutoff" value.
 - Refactored Assets.
 - General Code Condensing, Refactoring, and Efficiency Improvements :D.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
