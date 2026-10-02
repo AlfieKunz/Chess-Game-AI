@@ -104,7 +104,7 @@ Alternatively, one can download the source code, as instructed below, for full c
 <table align="center" width="100%">
   <tr>
     <td align="center" valign="middle" width="50%">
-        <p align="center"><b>AI Puzzle Showcase</b></p>
+        <p align="center"><b>AI Solving my Database's Hardest Puzzle (0.6s)</b></p>
         <img height="300" alt="ChessPuzzle" src="./readme_img/ChessPuzzle.png" />
     </td>
     <td align="center" valign="middle" width="50%">
@@ -114,7 +114,7 @@ Alternatively, one can download the source code, as instructed below, for full c
   </tr>
   <tr>
     <td align="center" valign="middle">
-      <p align="center"><b>AI Finding Checkmate in 35 Moves</b></p>
+      <p align="center"><b>AI Finding Checkmate in 49 Moves</b></p>
       <img height="350" alt="ChessEndgame" src="./readme_img/ChessEndgame.png" />
     </td>
     <td align="center" valign="middle">
