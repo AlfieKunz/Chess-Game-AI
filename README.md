@@ -7,11 +7,11 @@
 
 ---
 
-v10.0 of my commercial-quality **Chess AI Project**, originally for my A-Level Computer Science NEA (which my supervisor called the "best he had ever seen" in his years of teaching), for which I was awarded 100%. This features a strong Artificial Intelligence (built upon a highly-optimised, original NegaMax algorithm), created around a sophisticated chess-playing interface, packed to the brim with classic and original ideas alike.
+v11.0 of my commercial-quality **Chess AI Project**, originally for my A-Level Computer Science NEA (which my supervisor called the "best he had ever seen" in his years of teaching), for which I was awarded 100%. This features a strong Artificial Intelligence (built upon a highly-optimised, original NegaMax algorithm), created around a sophisticated chess-playing interface, packed to the brim with classic and original ideas alike.
 > **Online Rating:** ~2850 ELO (Lichess).  
 **Puzzle Rating:** ~3125 ELO (hand-crafted database from Lichess).
 
-This project forms the backbone of other hand-crafted work, including an [**Opening Book Builder**](https://github.com/AlfieKunz/Chess-Book-Builder), a [**Swiss-Style Benchmarking System**](https://github.com/AlfieKunz/Chess-Tournament), and a [**'Fancy Magic' Number Generator**](https://github.com/AlfieKunz/Chess-Magic).
+This project forms the backbone of other hand-crafted work, including an [**Opening Book Builder**](https://github.com/AlfieKunz/Chess-Book-Builder), a [**Swiss-Style Benchmarking System**](https://github.com/AlfieKunz/Chess-Tournament), and a theoretically optimal [**'Fancy Magic' Number Generator**](https://github.com/AlfieKunz/Chess-Magic).
 
 This work is self-motivated and self-funded, and is written primarily in VB.NET as a Visual Studio WinForms application.
 
@@ -23,65 +23,77 @@ This work is self-motivated and self-funded, and is written primarily in VB.NET 
 
 ## Features and Highlights
 
+### AI Engine Features
+✅ Fully covers the legal moves of chess, including castling, en passant (including the rare en passant pin), moves in check, and choice of promotion.  
+✅ Full bitboard architecture, using a UInt64 per piece type, and 6-bit 0-63 square indices (for InCheck, Move, KingPos, and EnPassant). Delivers a ~5x Perft speed increase, over previous 2D Char arrays and (x,y) coordinates.  
+✅ Heavily optimised Move Generation via pre-computed and hand-crafted [**'Fancy Magic' bitboards**](https://github.com/AlfieKunz/Chess-Magic) for sliding pieces, and bit-shifting for other pieces. Magic numbers are pre-tuned to be 87.5% set sparse and >5-bit set, and achieve the theoretical optimal size of 841KB. Achieves up to ~220MNps on the starting positions, on a single-thread laptop processor (Intel i5-12500H, bulk counting).  
+✅ Full pre-computation and storing of all piece's pseudo-legal moves in the BitMove format (with injected flags).  
+✅ Pins / checks / king moves integrated directly into pseudo-legal generation, through a novel method I call 'TFTables', a set of three UInt64 values: legal king moves mask (with x-ray masking), diagonal & straight pin masks (using king ray-casting). Hence, a pinned piece's movement is efficiently restricted by simply ANDing with the legal moves of a bishop / rook placed on the king's square.  
+✅ Pre-computed 'DangerMaps' for every piece, giving instant calculations of whether a piece can influence a king, and thus how to efficiently generate TFTable.  
+✅ Addition of RayMap data, returning the squares exposed between any two squares. Allows for powerful pin detection, check evasion, and castling-rule enforcement.  
+✅ Discards illegal moves (or non-quiet moves in Quiscence) at generation time, minimising waste and buffer space.  
+✅ Lightweight move generation and inputting in Perft / node testing, for faster searching.  
+✅ NegaMax search backbone, with Alpha-Beta Pruning.  
+✅ Principal Variation Search (PVS).  
+✅ Iterative Deepening, with adaptive starting depth based on the current position details.  
+✅ Quiescence Search, which includes non-capture queen promotions (and drops capture promotions to knights).  
+✅ Delta Pruning.  
+✅ Transposition Table via Zobrist Hashing ('deep' replacement scheme with TTL attribute): retained across searches and moves. 1GB size with compact entries for fast indexing and minimised collisions, despite fast move generation.  
+✅ Advanced draw detection: threefold repetition (correct with or without the Transposition Table enabled), 50-move rule, and the full range of insufficient material (using dampened evaluation gradients), integrated directly into both the AI's search tree and the UI game state.  
+✅ Search Extensions, and Late Move Reductions (applied to quiet moves only, never when in check, dynamic according to the Transposition Table).  
+✅ Internal Iterative Reductions (IIR).  
+✅ Null Move Pruning, with narrow StandPat windows and adaptable Zugzwang detection.  
+✅ Dynamic Aspiration Windows.  
+✅ Detailed search diagnostics: node counts, leaf-node counts, position-collision tracking, and the first-move beta-cutoff rate (a direct measure of move-ordering quality).  
+✅ Extensively tuned, tiered move-ordering system, refactored into a clean bucketing structure (with an advanced system for the base position), using techniques such as MVV-LVA, Killer Moves, Transposition-Table-aware ordering, trades vs. open captures, near-promotions, moves closing in on the enemy king, moves giving check, contested squares (especially by enemy pawns), and static exchange evaluation.  
+✅ Quiet moves further ordered by the History heuristic, featuring insertion-sort bonus ordering, malus bucketing, and gravity.  
+✅ Sophisticated pre-computed-driven evaluation function, involving hashed material count lookup, hand-crafted (aggressive) PieceHeatMaps (that adapt to the game phase and adjust 'on the fly' as pieces are traded), pawn bitboards (for quick identification of passed, isolated, or doubled pawns), king endgame heuristic (encouraging well-known mating patterns and hindering opposing king movement). All lookup structures (MVV-LVA, Zobrist, PieceHeatMaps, Endgame table) are flattened for a ~35% speed boost.  
+✅ Beginner-friendly difficulty scaling using probabilistic blunders, sampling sub-optimal moves from a Boltzmann distribution over the candidate moves using the Gumbel-max trick.  
+✅ Realistic AI search time mode, that mimics human-like behaviours when playing online: adapts to the complexity of the position, number of forced moves, pre-moves and book-moves, the AI's previous search information (eg: a recently broken aspiration window), win sequences found, and the estimated strength of the opponent.  
+✅ Large, hand-crafted Opening Book, built from millions of high-level games, with weighted-random move selection so more common, well-tested moves are favoured.  
+✅ AI autonomy: the engine handles its own check states, TFTable construction, invalid-position handling, and Move to PGN conversion, with PGN best lines generated at speed directly from bitboards (and with ambiguity in the best-move line eliminated).  
+✅ Modular search design: most AI features are completely modifiable via the AISettings class, allowing for a customised playing experience, easy tweaking and A/B testing in Analysis Mode, and easy resetting to hand-tuned default values.  
+
+
 ### Interface, Controls & Game Experience
 ✅ Drag & drop, and click & move functionality for pieces.  
-✅ Allows for inputting of positions (FEN) or moves in the current position (PGN move, full Lichess game, etc), dynamically choosing between them, and heavily robust validation & parsing (eg: estimating missing data). Invalid inputs flagged as such, with descriptive error messages.  
+✅ Allows for inputting of positions (FEN) or moves in the current position (PGN move, full Lichess game, etc), dynamically choosing between them, and heavily robust validation & parsing (eg: estimating missing data, correctly handling FENs whose first rank isn't fully filled, and hardened PGN move parsing). Invalid inputs flagged as such, with descriptive error messages.  
 ✅ Board highlights for legal-move highlighting, previous moves, and check highlighting.  
 ✅ Piece animations (move making) and board animations (morphing between positions: uses bespoke greedy neighbour matching algorithm).  
 ✅ Ability to flip the board for each player's perspective (+ auto-flipping support).  
 ✅ Colourful, intuitive board GUI that adapts dramatically to each game mode. Displays extra information such as live search timings (with the updating AI current move info).  
 ✅ Animated boot sequence on the main menu.  
-✅ In-depth, interactable settings form, for controls such as board colour scheme, piece animation speed, toggling highlights, fixed-depth AI searching, 'blindfold' mode, touch-move, etc. Settings persist across sessions, with robust fallback support.  
+✅ In-depth, interactable settings form, for controls such as board colour scheme, piece animation speed, toggling highlights, fixed-depth AI searching, 'blindfold' mode, touch-move, etc. Settings persist across sessions, with robust fallback support: missing or reset user assets are automatically re-created, and all changes to AI settings are error-handled.  
 ✅ Full range of sounds for each move, startup, training mode responses, and game termination.  
 ✅ Credits panel, displaying persisted lifetime AI statistics.  
 
 
-### AI Engine Features
-✅ Fully covers the legal moves of chess, including castling, moves in check, and choice of promotion.  
-✅ Optimised Move Generation, via heavily optimised Bitboards and BitMoves, precomputed lookup tables, and pins / checks / king moves integrated directly into pseudo-legal generation, through a novel method I call 'TFTables'.  
-✅ Large, hand-crafted Opening Book, built from millions of high-level games, with weighted-random move selection so more common, well-tested moves are favoured.  
-✅ NegaMax search backbone, with Alpha-Beta Pruning.  
-✅ Principal Variation Search (PVS).  
-✅ Iterative Deepening, with adaptive starting depth based on the current position details.  
-✅ Quiescence Search.  
-✅ Delta Pruning.  
-✅ Transposition Table via Zobrist Hashing ('deep' replacement scheme with TTL attribute): retained across searches and moves.  
-✅ Advanced draw detection: threefold repetition (correct with or without the Transposition Table enabled) and the 50-move rule, integrated directly into both the AI's search tree and the UI game state.  
-✅ Search Extensions, and Late Move Reductions.  
-✅ Internal Iterative Reductions (IIR).  
-✅ Null Move Pruning, with narrow StandPat windows and adaptable Zugzwang detection.  
-✅ Dynamic Aspiration Windows.  
-✅ Detailed search diagnostics: node counts, leaf-node counts, and position-collision tracking.  
-✅ Extensively tuned, tiered move-ordering system (with an advanced system for the base position), using techniques such as MVV-LVA, Killer Moves, Transposition-Table-aware ordering, trades vs. open captures, near-promotions, moves closing in on the enemy king, moves giving check, contested squares (especially by enemy pawns), and static exchange evaluation.  
-✅ Sophisticated pre-computed-driven evaluation function, involving hashed material count lookup, hand-crafted (aggressive) PieceHeatMaps (that adapt to the game phase and adjust 'on the fly' as pieces are traded), pawn bitboards (for quick identification of passed, isolated, or doubled pawns), king endgame heuristic (encouraging well-known mating patterns and hindering opposing king movement).  
-✅ Realistic AI search time mode, that mimics human-like behaviours when playing online: adapts to the complexity of the position, number of forced moves, pre-moves and book-moves, the AI's previous search information (eg: a recently broken aspiration window), win sequences found, and the estimated strength of the opponent.  
-
-
 ### Game Modes
-✅ One-Player Mode: play against the AI at a range of pre-coded strengths and behavioural styles.  
+✅ One-Player Mode: play against the AI at a range of pre-coded strengths and behavioural styles, from depth-limited, blunder-prone beginners up to the full-strength engine.  
 ✅ Two-Player Mode: local PvP, with customisable starting positions.  
-✅ Analysis Mode: a sandbox for inputting, studying, and extracting full sequences of moves, returning detailed computer analysis (evaluation, best-path, and deep node testing), and in-depth adjustment of AI strength & search time. Also contains extra features such as 'endless AI' mode, board editor (for quick editing of the position, by freely dragging pieces around or spawning new pieces, with robust illegal placement detection), and perft-style node testing.  
+✅ Analysis Mode: a sandbox for inputting, studying, and extracting full sequences of moves, returning detailed computer analysis (evaluation, best-path, and deep node testing), and in-depth adjustment of AI strength & search time. Also contains extra features such as 'endless AI' mode, board editor (for quick editing of the position, by freely dragging pieces around or spawning new pieces, with robust illegal placement detection), and perft-style node testing (now ~5x faster).  
 ✅ Puzzle Mode: solve (or give the AI to solve) over 2 million rated positions (with an 'extra hard' set). Live AI evaluation, and an optional timed 'puzzle rush' mode. Individually tracked ELO rating system (using exponential rating change weighted by puzzle rating) that persists over time.   
-✅ Training Modes: Coordinate or Move time-based drills, for square-recognition or algebraic-notation recall against random legal moves in random positions. Persistent leaderboards for each side.  
-✅ Remote Mode: locates any external chess interface (eg: lichess, chess.com) visible on the screen via computer-vision screen-reading (no matter the size, position, theme, or monitor), and connects to it by mapping all the squares and pieces to its internal structure. From here, the interface continuously tracks all moves made on the interface, then allows either the user or the AI to make their response (on my chess GUI), which is then made on the external interface by controlling the mouse. Well-handled for poor data: error tolerances, quick & deep hybrid row scans, greyscale colour switching for locating the external board, estimating promotion pieces based on available data, remote and user move verification, etc. Purpose-built for benchmarking the AI's real-world strength against other engines, on sites such as Lichess.  
+✅ Training Modes: Coordinate or Move time-based drills, for square-recognition or algebraic-notation recall against random legal moves in random positions (with hardened move-generation loop). Persistent leaderboards for each side.  
+✅ Remote Mode: locates any external chess interface (eg: lichess, chess.com) visible on the screen via computer-vision screen-reading (no matter the size, position, theme, or monitor), and connects to it by mapping all the squares and pieces to its internal structure. From here, the interface continuously tracks all moves made on the interface, then allows either the user or the AI to make their response (on my chess GUI), which is then made on the external interface by controlling the mouse. Well-handled for poor data: error tolerances, quick & deep hybrid row scans, greyscale colour switching for locating the external board, estimating promotion pieces based on available data, remote and user move verification, correct DPI scaling, etc. Purpose-built for benchmarking the AI's real-world strength against other engines, on sites such as Lichess.  
 
 
 ### Quality of Life, and Code Profiling
-✅ Colourful, information-dense console window containing board states, live AI search and move information, colour-coded evaluation, and debug information for each game mode.  
+✅ Colourful, information-dense console window containing board states, live AI search and move information (in either a detailed or condensed view), colour-coded evaluation, and debug information for each game mode.  
 ✅ Custom cursor states (macOS-style "open hand") on sliders and pieces for drag & drop.  
-✅ Support for undoing moves, and copying or exporting of current FEN / PGN.  
+✅ Support for undoing moves (with audio feedback), and copying or exporting of current FEN / PGN.  
 ✅ Lazy-loaded database entries: only key information of puzzle & opening book entries are parsed on boot-up, with full detail computed on demand. The user can also choose a smaller opening book, if preferred.  
 ✅ Adaptive, dynamic program title reflecting the current game state.  
-✅ Correct handling of multi-monitor setups and High-DPI displays.  
+✅ Correct handling of multi-monitor setups and High-DPI displays (including inside Remote Mode).  
 ✅ External tool compatibility: creation of novel tools and controls for the optimisation of this project, such as a Version Comparer to allow different AIs to compete against each other, or the hand-picked opening book.  
-✅ Grounded in code profiling and managing garbage collection: latency tuning, live Transposition Table memory management, and handling of deep searches.  
+✅ Grounded in code profiling and managing garbage collection: latency tuning, Server GC management, live Transposition Table memory management, and handling of deep searches.  
+✅ Compiler-level performance work: Release-mode builds (a ~6x speed boost), tuned compiler settings, Option Strict On throughout the AI files, and vast use of 'Const' values for faster reads.  
 ✅ Use of multithreading to allow both GUI control and AI searching.  
 
 ---
 
 ## Project Showcase
 
-> **Project Demo:** You can see this project live directly through the [**v10.0 release**](https://drive.google.com/open?id=1sIJN5SI466Z6pHWhx42FbaHb7Ml4dm82) (64-bit). Simply click the 'Download All' button in the link attached, unzip and run the "Chess AI.exe" application. All instructions of use are provided throughout.
+> **Project Demo:** You can see this project live directly through the [**v11.0 release**](https://drive.google.com/open?id=1sIJN5SI466Z6pHWhx42FbaHb7Ml4dm82) (64-bit). Simply click the 'Download All' button in the link attached, unzip and run the "Chess AI.exe" application. All instructions of use are provided throughout.
 
 Alternatively, one can download the source code, as instructed below, for full control.
 
@@ -148,11 +160,11 @@ Chess AI
 │  ├─ AI.vb                                             // Main Chess AI code, built about the NegaMax algorithm with Alpha-Beta Pruning, and interactions with the main chess environment
 │  ├─ AILookupTables.vb                                 // List of PieceHeatMaps, Endgame Lookup table, and pawn bonus tables
 │  ├─ bin                                               //
-│  │  └─ Debug                                          //
+│  │  └─ Release                                        //
 │  │     └─ net8.0-windows                              //
 │  │        ├─ Assets                                   //
-│  │        │  ├─ Chess960 FENs.txt                     // List of all possible Chess960 starting positions.
 │  │        │  ├─ Images                                // Pictures of each chess piece, with room for extra themes
+│  │        │  ├─ MagicData.bin                         // Full pre-computed fancy magic bitboard generation data, including Movement Masks, sparse Magic Numbers, Shift Values, and Move Arrays
 │  │        │  ├─ LargeOpeningBook.txt                  // A bespoke list of over 530,000 opening chess positions, and their expert-recommended moves
 │  │        │  ├─ Puzzle Database                       // List of over 2 million puzzle FENs (and their moves), sorted by rating into 8 equal buckets (only 1 loaded per session to save time), and a small set of the highest-rated puzzles 
 │  │        │  ├─ RandomFENs.txt                        // 10,000 chess positions taken from random online games, for use in Move Training mode.
@@ -202,15 +214,15 @@ Chess AI
 This work is self-motivated and self-funded. If you use this code or data in your work, please cite the associated preprint:
 
 **Text Citation:**
-> Kunz, A. (2025). *Chess Game & Artificial Intelligence (Version 10.0)*. Available at https://github.com/AlfieKunz/Chess-Game-AI.
+> Kunz, A. (2026). *Chess Game & Artificial Intelligence (Version 11.0)*. Available at https://github.com/AlfieKunz/Chess-Game-AI.
 
 **BibTeX:**
 ```bibtex
 @software{Kunz2025Chess,
   title = {Chess Game & Artificial Intelligence},
   author = {Kunz, Alfie},
-  version = {v10.0},
-  year = {2025},
+  version = {v11.0},
+  year = {2026},
   url = {https://github.com/AlfieKunz/Chess-Game-AI}
 }
 ```
