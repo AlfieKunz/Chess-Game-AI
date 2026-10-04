@@ -97,7 +97,7 @@ This work is self-motivated and self-funded, and is written primarily in VB.NET 
 
 Alternatively, one can download the source code, as instructed below, for full control.
 
-> This project was originally developed as my A-level Computer Science NEA project (which uses v5.2): you can access the <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Alfie%20Kunz%20Computer%20Science%20NEA%20Project%20Report.pdf" target="_blank" rel="noopener noreferrer">**original report here**</a>, or <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Previous%20AI%20Search%20Efficiency%20Tracking%20(Plotted%20-%2027.12.24).pdf" target="_blank" rel="noopener noreferrer">**track my AI's searching speed**</a> for all versions before v10.0.
+> This project was originally developed as my A-level Computer Science NEA project (which uses v5.2): you can access the <a href="https://www.alfiekunz.co.uk/assets/projects/ProjectChess/Alfie%20Kunz%20Computer%20Science%20NEA%20Project%20Report.pdf" target="_blank" rel="noopener noreferrer">**original report here**</a>, or <a href="https://www.alfiekunz.co.uk/assets/projects/ProjectChess/Previous%20AI%20Search%20Efficiency%20Tracking%20(Plotted%20-%2027.12.24).pdf" target="_blank" rel="noopener noreferrer">**track my AI's searching speed**</a> for all versions before v10.0.
 
 > As of v5.2, I began rigorously comparing each subsequent AI iteration, by integrating models into a sophisticated, custom-made swiss-style benchmarking system. You can see the <a href="https://docs.google.com/document/d/1l2azNiomihHmkGiXxQ9ZlNTO_YLcn6JF" target="_blank" rel="noopener noreferrer">**results of those tournaments here**</a>, and the program by which I carry out said tournaments [**here**](https://github.com/AlfieKunz/Chess-Tournament).
 
@@ -136,7 +136,7 @@ Once a branch is proven no better than an already-found alternative, there is no
 
 To correctly evaluate a board position, we keep track of its details down the tree (hence motivating the use of storing the board, its pieces, and its data in efficient 'bit' form). From this, we can use the piece material, the activity of each piece, what phase of the game we are in, how likely pawns are to promote, king safety, etc to judge the strength of a given position for each player.
 
-For effective move generation (amongst numerous optimisation practices), we introduce a novel technique I call 'TFTables'. This contains an 8x8 lookup table which stores the 'mobility' of each piece. This involves restricting pinned pieces, the movement of the king, and check handling and resolution. For more information on its intricacies, and how it interacts with the MiniMax algorithm, see the <a href="https://www.alfiekunz.co.uk/academia/assets/projects/ProjectChess/Alfie%20Kunz%20Computer%20Science%20NEA%20Project%20Report.pdf#page=27" target="_blank" rel="noopener noreferrer">**original NEA report**</a>.
+For effective move generation (amongst numerous optimisation practices), we introduce a novel technique I call 'TFTables'. This contains an 8x8 lookup table which stores the 'mobility' of each piece. This involves restricting pinned pieces, the movement of the king, and check handling and resolution. For more information on its intricacies, and how it interacts with the MiniMax algorithm, see the <a href="https://www.alfiekunz.co.uk/assets/projects/ProjectChess/Alfie%20Kunz%20Computer%20Science%20NEA%20Project%20Report.pdf#page=27" target="_blank" rel="noopener noreferrer">**original NEA report**</a>.
 
 ---
 
