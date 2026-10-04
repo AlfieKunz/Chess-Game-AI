@@ -8,8 +8,8 @@
 ---
 
 v11.0 of my commercial-quality **Chess AI Project**, originally for my A-Level Computer Science NEA (which my supervisor called the "best he had ever seen" in his years of teaching), for which I was awarded 100%. This features a strong Artificial Intelligence (built upon a highly-optimised, original NegaMax algorithm), created around a sophisticated chess-playing interface, packed to the brim with classic and original ideas alike.
-> **Online Rating:** ~2850 ELO (Lichess).  
-**Puzzle Rating:** ~3125 ELO (hand-crafted database from Lichess).
+> **Online Rating:** ~2850 ELO (chess.com).  
+**Puzzle Rating:** >3200 ELO (hand-crafted database from Lichess).
 
 This project forms the backbone of other hand-crafted work, including an [**Opening Book Builder**](https://github.com/AlfieKunz/Chess-Book-Builder), a [**Swiss-Style Benchmarking System**](https://github.com/AlfieKunz/Chess-Tournament), and a theoretically optimal [**'Fancy Magic' Number Generator**](https://github.com/AlfieKunz/Chess-Magic).
 
